@@ -32,8 +32,12 @@ module.exports = (sequelize, DataTypes) => {
   AiConversationContext.associate = (models) => {
     models.AiConversationContext.belongsTo(models.AiConversation, {
       foreignKey: "conversation_id",
+      onDelete: "CASCADE",
     });
-    models.AiConversationContext.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.AiConversationContext.belongsTo(models.Team, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
   };
 
   return AiConversationContext;

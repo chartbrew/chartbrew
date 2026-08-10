@@ -75,7 +75,10 @@ function ObservationCard({ observation }) {
         <Card.Title className="text-base font-semibold">{observation.title}</Card.Title>
         <p className="text-sm text-muted">{observation.summary}</p>
         <p className="mt-1 text-xs text-muted">
-          {[observation.chart?.name, formatPeriod(observation.currentPeriod)]
+          {[
+            observation.chart?.name,
+            observation.comparisonLabel || formatPeriod(observation.currentPeriod),
+          ]
             .filter(Boolean)
             .join(" · ")}
         </p>

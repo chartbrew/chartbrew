@@ -13,7 +13,7 @@ async function evaluateDuePeriods(now = new Date()) {
       next_evaluation_at: { [Op.lte]: now },
     },
   });
-  const report = { evaluated: 0, failed: 0, waiting: 0 };
+  const report = { evaluated: 0, failed: 0, published: 0, waiting: 0 };
   for (const monitor of monitors) {
     try {
       // Evaluation uses stored snapshots and never requests source data.
@@ -21,6 +21,9 @@ async function evaluateDuePeriods(now = new Date()) {
       const result = await evaluateMonitorPeriod(monitor, { asOf: now });
       if (["final", "revised", "settling"].includes(result.status)) report.evaluated += 1;
       else report.waiting += 1;
+      if (["corrected", "published", "updated"].includes(result.publication?.status)) {
+        report.published += 1;
+      }
     } catch (error) {
       report.failed += 1;
       console.error("[period-evaluation] Evaluation failed", error.message); // oxlint-disable-line no-console

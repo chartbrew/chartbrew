@@ -64,6 +64,8 @@ function serializeMonitor(monitor) {
     statusReason: monitor.status_reason,
     valueFormat: getValueFormat(monitor.metric_spec),
     comparisonMethod: monitor.baseline_policy?.type || null,
+    comparisonPeriod: monitor.baseline_policy?.comparisonPeriod || null,
+    comparisonTimezone: monitor.baseline_policy?.calendarTimezone || null,
   };
 }
 
@@ -73,9 +75,21 @@ function serializeObservation(observation, options = {}) {
     ? formatObservationText(observation.MetricMonitor, {
       absoluteDelta: Number(observation.absolute_delta),
       baselineValue: Number(observation.baseline_value),
+      calendarTimezone: observation.MetricMonitor?.baseline_policy?.calendarTimezone,
+      comparisonPeriod: {
+        end: observation.comparison_period_end,
+        start: observation.comparison_period_start,
+      },
+      comparisonPeriodType: observation.MetricMonitor?.baseline_policy?.comparisonPeriod,
       currentValue: Number(observation.current_value),
+      currentPeriod: {
+        end: observation.current_period_end,
+        start: observation.current_period_start,
+      },
       direction: observation.direction,
-      relativeDelta: Number(observation.relative_delta),
+      relativeDelta: observation.relative_delta === null
+        ? null
+        : Number(observation.relative_delta),
     })
     : null;
   const desiredDirection = normalizeDesiredDirection(
@@ -93,12 +107,23 @@ function serializeObservation(observation, options = {}) {
       start: observation.comparison_period_start,
     },
     confidence: observation.confidence,
+    corrected: Boolean(observation.evidence?.correction),
+    comparisonLabel: displayText?.comparisonLabel
+      || observation.evidence?.comparisonLabel
+      || null,
     currentPeriod: {
       end: observation.current_period_end,
       start: observation.current_period_start,
     },
     currentValue: observation.current_value,
     direction: observation.direction,
+    evaluation: observation.metric_evaluation_id ? {
+      correctedAt: observation.MetricEvaluation?.corrected_at || null,
+      finality: observation.MetricEvaluation?.finality || null,
+      id: observation.metric_evaluation_id,
+      revision: observation.MetricEvaluation?.revision
+        || observation.evidence_revision,
+    } : null,
     feedback: serializeFeedback(getFeedback(observation)),
     firstDetectedAt: observation.first_detected_at,
     id: observation.id,
@@ -142,6 +167,11 @@ function getIncludes(userId) {
         "status",
         "status_reason",
       ],
+      required: false,
+    },
+    {
+      model: db.MetricEvaluation,
+      attributes: ["corrected_at", "finality", "id", "revision"],
       required: false,
     },
     {

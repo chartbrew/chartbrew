@@ -116,17 +116,6 @@ export function getMonitorOptions(teamId, chartId) {
   return observationRequest(`/team/${teamId}/charts/${chartId}/monitor-options`);
 }
 
-export function getRecordCountOptions(teamId) {
-  return observationRequest(`/team/${teamId}/record-count-options`);
-}
-
-export function createRecordCountMonitor(teamId, monitor) {
-  return observationRequest(`/team/${teamId}/record-count-monitors`, {
-    body: JSON.stringify(monitor),
-    method: "POST",
-  });
-}
-
 export function createMonitor(teamId, monitor) {
   return observationRequest(`/team/${teamId}/monitors`, {
     body: JSON.stringify(monitor),

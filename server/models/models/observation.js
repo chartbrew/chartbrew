@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
     chart_id: DataTypes.INTEGER,
     dataset_id: DataTypes.INTEGER,
     monitor_id: DataTypes.UUID,
+    metric_evaluation_id: DataTypes.UUID,
     type: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -114,16 +115,36 @@ module.exports = (sequelize, DataTypes) => {
       { fields: ["team_id", "status", "last_detected_at"] },
       { fields: ["project_id", "status", "last_detected_at"] },
       { fields: ["monitor_id", "last_detected_at"] },
+      { unique: true, fields: ["metric_evaluation_id"] },
       { fields: ["resolved_at"] },
     ],
   });
 
   Observation.associate = (models) => {
-    models.Observation.belongsTo(models.Team, { foreignKey: "team_id" });
-    models.Observation.belongsTo(models.Project, { foreignKey: "project_id" });
-    models.Observation.belongsTo(models.Chart, { foreignKey: "chart_id" });
-    models.Observation.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
-    models.Observation.belongsTo(models.MetricMonitor, { foreignKey: "monitor_id" });
+    models.Observation.belongsTo(models.Team, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
+    models.Observation.belongsTo(models.Project, {
+      foreignKey: "project_id",
+      onDelete: "SET NULL",
+    });
+    models.Observation.belongsTo(models.Chart, {
+      foreignKey: "chart_id",
+      onDelete: "SET NULL",
+    });
+    models.Observation.belongsTo(models.Dataset, {
+      foreignKey: "dataset_id",
+      onDelete: "SET NULL",
+    });
+    models.Observation.belongsTo(models.MetricMonitor, {
+      foreignKey: "monitor_id",
+      onDelete: "SET NULL",
+    });
+    models.Observation.belongsTo(models.MetricEvaluation, {
+      foreignKey: "metric_evaluation_id",
+      onDelete: "SET NULL",
+    });
     models.Observation.hasMany(models.ObservationPreference, { foreignKey: "observation_id" });
     models.Observation.hasMany(models.ObservationFeedback, { foreignKey: "observation_id" });
     models.Observation.hasMany(models.ObservationAudit, { foreignKey: "observation_id" });

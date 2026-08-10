@@ -78,13 +78,19 @@ function getNativePeriodValue(snapshots, window) {
 function getStateCheckpoint(snapshots, boundary, toleranceMinutes) {
   const toleranceMs = toleranceMinutes * 60 * 1000;
   const selected = snapshots
-    .map((snapshot) => ({
-      distance: Math.abs(snapshot.periodStart.getTime() - boundary.getTime()),
-      snapshot,
-    }))
+    .map((snapshot) => {
+      const startDistance = Math.abs(snapshot.periodStart.getTime() - boundary.getTime());
+      const endDistance = Math.abs(snapshot.periodEnd.getTime() - boundary.getTime());
+      return {
+        boundaryRank: endDistance === 0 ? 0 : 1,
+        distance: Math.min(startDistance, endDistance),
+        snapshot,
+      };
+    })
     .filter((candidate) => candidate.distance <= toleranceMs && isComplete(candidate.snapshot))
     .sort((left, right) => {
       if (left.distance !== right.distance) return left.distance - right.distance;
+      if (left.boundaryRank !== right.boundaryRank) return left.boundaryRank - right.boundaryRank;
       return right.snapshot.periodStart - left.snapshot.periodStart;
     })[0];
   if (!selected) return { reason: "checkpoint_missing" };

@@ -22,7 +22,6 @@ import toast from "react-hot-toast";
 
 import {
   acceptMonitorRecommendation,
-  createRecordCountMonitor,
   dismissMonitorRecommendation,
   getHome,
   getMonitorRecommendations,
@@ -35,7 +34,6 @@ import ObservationCard from "../Activity/ObservationCard";
 import SummaryScheduleModal from "../Activity/SummaryScheduleModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
 import HomeDiscover from "./HomeDiscover";
-import RecordCountMonitorModal from "./RecordCountMonitorModal";
 import WatchMetricModal from "../Chart/components/WatchMetricModal";
 
 function SectionHeading({ action, eyebrow, id, title }) {
@@ -61,15 +59,15 @@ SectionHeading.propTypes = {
   title: PropTypes.string.isRequired,
 };
 
-function SetupState({ onWatchRecords, state }) {
+function SetupState({ state }) {
   const navigate = useNavigate();
   const content = {
     collecting_baseline: {
       action: "View watched metrics",
-      description: "Chartbrew is collecting enough history to compare your metrics reliably.",
+      description: "Chartbrew needs two complete periods or values near two period boundaries.",
       icon: <LuRefreshCw aria-hidden />,
       onPress: () => navigate("/activity?tab=monitors"),
-      title: "Building a baseline",
+      title: "Waiting for a complete comparison",
     },
     connect_data: {
       action: "Connect data",
@@ -99,17 +97,10 @@ function SetupState({ onWatchRecords, state }) {
     },
     watch_metric: {
       action: "Browse dashboards",
-      description: "Choose an eligible chart metric to establish a baseline and detect changes.",
+      description: "Choose a chart metric and how Chartbrew should compare it.",
       icon: <LuActivity aria-hidden />,
       onPress: () => navigate("/dashboards"),
       title: "Watch a metric to get started",
-    },
-    watch_record_count: {
-      action: "Watch records",
-      description: "Track unexpected changes in how many records a dataset returns.",
-      icon: <LuDatabase aria-hidden />,
-      onPress: onWatchRecords,
-      title: "Start by watching data volume",
     },
     waiting_for_metrics: {
       action: "Browse dashboards",
@@ -149,12 +140,7 @@ function SetupState({ onWatchRecords, state }) {
 }
 
 SetupState.propTypes = {
-  onWatchRecords: PropTypes.func,
   state: PropTypes.string.isRequired,
-};
-
-SetupState.defaultProps = {
-  onWatchRecords: undefined,
 };
 
 function DataHealthAttention({ count, onPress }) {
@@ -262,8 +248,6 @@ function Home() {
   const [data, setData] = useState(null);
   const [digests, setDigests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [recordCountModalOpen, setRecordCountModalOpen] = useState(false);
-  const [recordCountPending, setRecordCountPending] = useState(false);
   const [recommendation, setRecommendation] = useState(null);
   const [recommendationPending, setRecommendationPending] = useState(false);
   const [recommendationReviewOpen, setRecommendationReviewOpen] = useState(false);
@@ -300,20 +284,6 @@ function Home() {
         ? current.map((item) => item.id === subscription.id ? subscription : item)
         : [subscription, ...current];
     });
-  };
-
-  const createRecordCount = async (monitor) => {
-    setRecordCountPending(true);
-    try {
-      await createRecordCountMonitor(team.id, monitor);
-      setData(await getHome(team.id));
-      setRecordCountModalOpen(false);
-      toast.success("Dataset records are now being watched");
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setRecordCountPending(false);
-    }
   };
 
   const acceptRecommendation = async (settings) => {
@@ -410,10 +380,7 @@ function Home() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            <SetupState
-              onWatchRecords={() => setRecordCountModalOpen(true)}
-              state={data.setupState}
-            />
+            <SetupState state={data.setupState} />
             {showRecommendation ? (
               <MetricRecommendation
                 isPending={recommendationPending}
@@ -508,13 +475,12 @@ function Home() {
           "waiting_for_metrics",
           "waiting_for_setup",
           "watch_metric",
-          "watch_record_count",
         ].includes(data.setupState) ? (
         <div className="flex flex-col items-start gap-3 rounded-3xl border border-divider bg-content1 px-4 py-4 md:flex-row md:items-center">
           <div className="min-w-0 flex-1">
-            <p className="font-medium">Get an Activity digest</p>
+            <p className="font-medium">Get a KPI review</p>
             <p className="text-sm text-foreground-500">
-              Choose when Chartbrew emails changes and data-health issues you can access.
+              Get the latest result for each watched metric in one email.
             </p>
           </div>
           <Button
@@ -522,7 +488,7 @@ function Home() {
             size="sm"
             variant="secondary"
           >
-            Schedule digest
+            Schedule review
           </Button>
         </div>
       ) : null}
@@ -532,13 +498,6 @@ function Home() {
         onClose={() => setSummaryModalOpen(false)}
         onSaved={saveSummary}
         teamId={team.id}
-      />
-      <RecordCountMonitorModal
-        isOpen={recordCountModalOpen}
-        isPending={recordCountPending}
-        onClose={() => setRecordCountModalOpen(false)}
-        onSubmit={createRecordCount}
-        options={data.recordCountOptions || []}
       />
       <WatchMetricModal
         chartName={recommendation?.chart?.name}

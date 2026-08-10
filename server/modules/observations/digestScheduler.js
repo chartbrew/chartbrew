@@ -4,7 +4,7 @@ const { DateTime } = require("luxon");
 const db = require("../../models/models");
 const DigestController = require("../../controllers/DigestController");
 const { getObservationAccess } = require("./access");
-const { isDigestDue } = require("./digestSchedule");
+const { isDigestDue, isLateKpiDeliveryDue } = require("./digestSchedule");
 
 async function deliverDueDigests(now = DateTime.utc()) {
   const subscriptions = await db.ObservationDigestSubscription.findAll({
@@ -13,7 +13,7 @@ async function deliverDueDigests(now = DateTime.utc()) {
     where: { enabled: true, channel: "email" },
   });
   const controller = new DigestController();
-  const report = { delivered: 0, failed: 0, noops: 0 };
+  const report = { delivered: 0, failed: 0, noops: 0, pending: 0 };
   for (const subscription of subscriptions) {
     if (isDigestDue(subscription, now)) {
       try {
@@ -21,8 +21,12 @@ async function deliverDueDigests(now = DateTime.utc()) {
         // oxlint-disable-next-line no-await-in-loop
         const access = await getObservationAccess(subscription.team_id, subscription.user_id);
         // oxlint-disable-next-line no-await-in-loop
-        const result = await controller.deliver(access, subscription);
+        const result = await controller.deliver(access, subscription, {
+          lateRetry: isLateKpiDeliveryDue(subscription, now.setZone(subscription.timezone)),
+          now: now.toJSDate(),
+        });
         if (result.delivered) report.delivered += 1;
+        else if (result.deferred || result.pending) report.pending += 1;
         else report.noops += 1;
       } catch (error) {
         // Record one failed attempt so the same schedule is not retried every 15 minutes.

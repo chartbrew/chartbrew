@@ -3,6 +3,7 @@ const {
   assertCanViewProject,
   createHttpError,
 } = require("../observations/access");
+const { formatComparisonLabel } = require("../observations/periodLabels");
 
 const MAX_CONTEXT_ITEMS = 10;
 
@@ -113,19 +114,37 @@ async function validateObservation(access, observationId) {
       model: db.Dataset,
       attributes: ["id", "legend", "name"],
       required: false,
+    }, {
+      model: db.MetricMonitor,
+      attributes: ["baseline_policy"],
+      required: false,
     }],
     where: { id: observationId, team_id: access.teamId },
   });
   if (!observation) throw createHttpError("Context is not available", 404);
   assertCanViewProject(access, observation.project_id);
+  const comparisonPeriod = observation.MetricMonitor?.baseline_policy?.comparisonPeriod;
+  const comparisonLabel = comparisonPeriod ? formatComparisonLabel({
+    comparison: {
+      end: observation.comparison_period_end,
+      start: observation.comparison_period_start,
+    },
+    current: {
+      end: observation.current_period_end,
+      start: observation.current_period_start,
+    },
+    period: comparisonPeriod,
+    timezone: observation.MetricMonitor?.baseline_policy?.calendarTimezone || "UTC",
+  }) : null;
   const contextLines = [
     `Detected change: ${observation.title}`,
     observation.summary,
+    comparisonLabel ? `Business comparison: ${comparisonLabel}` : null,
     `Current value: ${observation.current_value} (${observation.unit || "number"})`,
     `Comparison value: ${observation.baseline_value} (${observation.unit || "number"})`,
     `Current period: ${observation.current_period_start?.toISOString() || "unavailable"} to ${observation.current_period_end?.toISOString() || "unavailable"}`,
     `Comparison period: ${observation.comparison_period_start?.toISOString() || "unavailable"} to ${observation.comparison_period_end?.toISOString() || "unavailable"}`,
-  ];
+  ].filter(Boolean);
   if (observation.Chart) {
     contextLines.push(`Source chart: ${observation.Chart.name} (ID ${observation.Chart.id})`);
   }

@@ -5,7 +5,10 @@ function serializeChange(change) {
   return {
     baselineValue: change.baselineValue,
     chart: change.chart?.name || null,
+    comparisonLabel: change.comparisonLabel || null,
+    comparisonPeriod: change.comparisonPeriod,
     currentValue: change.currentValue,
+    currentPeriod: change.currentPeriod,
     direction: change.direction,
     impact: change.impact,
     lastDetectedAt: change.lastDetectedAt,

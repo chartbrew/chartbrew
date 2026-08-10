@@ -4,12 +4,10 @@ const DatasetController = require("./DatasetController");
 const {
   assertCanEditProject,
   assertCanViewProject,
-  canEditProject,
   createHttpError,
   getProjectScope,
 } = require("../modules/observations/access");
 const {
-  buildDatasetRecordCountDefinition,
   buildDefinitionFingerprint,
   buildMonitorDefinition,
   getEligibleLayers,
@@ -32,13 +30,33 @@ const { normalizeDesiredDirection } = require("../modules/observations/metricDir
 
 const ALLOWED_IMPORTANCE = new Set([1, 2, 3]);
 
+function getProjectRefreshIntervalSeconds(schedule = {}) {
+  const frequencyNumber = Number(schedule.frequencyNumber);
+  if (schedule.frequency === "every_x_minutes" && frequencyNumber > 0) {
+    return frequencyNumber * 60;
+  }
+  if (schedule.frequency === "every_x_hours" && frequencyNumber > 0) {
+    return frequencyNumber * 60 * 60;
+  }
+  if (schedule.frequency === "every_x_days" && frequencyNumber > 0) {
+    return frequencyNumber * 24 * 60 * 60;
+  }
+  if (schedule.frequency === "daily") return 24 * 60 * 60;
+  if (schedule.frequency === "weekly") return 7 * 24 * 60 * 60;
+  return null;
+}
+
+function getRefreshSchedule(chart) {
+  const chartInterval = Number(chart.autoUpdate) > 0 ? Number(chart.autoUpdate) : null;
+  const projectInterval = getProjectRefreshIntervalSeconds(chart.Project?.updateSchedule);
+  const intervals = [chartInterval, projectInterval].filter(Boolean);
+  return {
+    automatic: intervals.length > 0,
+    intervalSeconds: intervals.length > 0 ? Math.min(...intervals) : null,
+  };
+}
+
 async function serializeMonitor(monitor) {
-  const sampleCount = await db.MetricSnapshot.count({
-    where: {
-      definition_fingerprint: monitor.definition_fingerprint,
-      monitor_id: monitor.id,
-    },
-  });
   const baselinePolicy = monitor.baseline_policy?.type === "completed_period"
     ? monitor.baseline_policy
     : null;
@@ -72,7 +90,6 @@ async function serializeMonitor(monitor) {
     nextEvaluationAt: monitor.next_evaluation_at,
     projectId: monitor.project_id,
     projectName: monitor.Project?.name || null,
-    sampleCount,
     sourceName: monitor.metric_spec?.metricTitle || monitor.name,
     status: monitor.status,
     statusReason: monitor.status_reason,
@@ -122,7 +139,7 @@ class MonitorController {
         include: [{ model: db.Dataset, attributes: ["id"] }],
       }, {
         model: db.Project,
-        attributes: ["id", "name", "team_id", "timezone"],
+        attributes: ["id", "name", "team_id", "timezone", "updateSchedule"],
       }],
       where: { id: chartId },
     });
@@ -138,129 +155,9 @@ class MonitorController {
     return getEligibleLayers(chart.visualization).map((option) => ({
       ...option,
       calendarTimezone: chart.Project?.timezone || "UTC",
+      refreshSchedule: getRefreshSchedule(chart),
       timeUnit: option.timeUnit || chart.timeInterval || "day",
     }));
-  }
-
-  async recordCountOptions(access) {
-    const datasets = await db.Dataset.findAll({
-      attributes: ["id", "name", "project_ids", "updatedAt"],
-      limit: 100,
-      order: [["updatedAt", "DESC"]],
-      where: {
-        draft: false,
-        team_id: access.teamId,
-      },
-    });
-
-    return datasets.flatMap((dataset) => {
-      const datasetProjectIds = Array.isArray(dataset.project_ids)
-        ? dataset.project_ids.map(Number)
-        : [];
-      const projectIds = datasetProjectIds
-        .filter((projectId) => canEditProject(access, projectId));
-      if (!access.canConfigureTeam && projectIds.length === 0) return [];
-      return [{
-        id: dataset.id,
-        name: dataset.name || `Dataset ${dataset.id}`,
-        projectIds: access.canConfigureTeam ? datasetProjectIds : projectIds,
-      }];
-    });
-  }
-
-  async createRecordCount(access, data = {}) {
-    const dataset = await db.Dataset.findOne({
-      where: {
-        draft: false,
-        id: Number(data.datasetId),
-        team_id: access.teamId,
-      },
-    });
-    if (!dataset) throw createHttpError("Dataset not found", 404);
-
-    const datasetProjectIds = (Array.isArray(dataset.project_ids) ? dataset.project_ids : [])
-      .map(Number);
-    const requestedProjectId = Number(data.projectId);
-    const projectId = datasetProjectIds.includes(requestedProjectId)
-      ? requestedProjectId
-      : datasetProjectIds.find((id) => canEditProject(access, id)) || null;
-    if (!access.canConfigureTeam && !projectId) {
-      throw createHttpError("You do not have permission to watch this dataset", 403);
-    }
-    assertCanEditProject(access, projectId);
-
-    const policy = getObservationPolicy();
-    const definition = buildDatasetRecordCountDefinition({
-      dataset,
-      desiredDirection: data.desiredDirection,
-    });
-    const existingMonitor = await db.MetricMonitor.findOne({
-      where: {
-        binding_key: definition.bindingKey,
-        chart_id: null,
-        dataset_id: dataset.id,
-        team_id: access.teamId,
-      },
-    });
-    if (!existingMonitor?.is_active) {
-      const monitorCount = await db.MetricMonitor.count({
-        where: { is_active: true, team_id: access.teamId },
-      });
-      if (monitorCount >= policy.maximumMonitors) {
-        throw createHttpError("This workspace has reached its watched metric limit", 400);
-      }
-    }
-    const values = {
-      baseline_policy: definition.baselinePolicy,
-      binding_key: definition.bindingKey,
-      chart_id: null,
-      created_by: access.userId,
-      dataset_id: dataset.id,
-      definition_fingerprint: definition.definitionFingerprint,
-      importance: 1,
-      is_active: true,
-      kind: definition.kind,
-      metric_spec: definition.metricSpec,
-      minimum_samples: getMinimumSamples(definition.kind, policy.minimumSamples),
-      name: data.name?.trim() || definition.name,
-      project_id: projectId,
-      status: "collecting",
-      status_reason: "needs_more_history",
-      team_id: access.teamId,
-    };
-    let monitor;
-    if (existingMonitor) {
-      const definitionChanged = existingMonitor.definition_fingerprint
-        !== definition.definitionFingerprint;
-      monitor = await existingMonitor.update({
-        ...values,
-        created_by: existingMonitor.created_by || access.userId,
-        last_sampled_at: definitionChanged ? null : existingMonitor.last_sampled_at,
-        status: definitionChanged ? "collecting" : existingMonitor.status,
-        status_reason: definitionChanged ? "definition_changed" : existingMonitor.status_reason,
-      });
-    } else {
-      monitor = await db.MetricMonitor.create(values);
-    }
-
-    try {
-      const datasetController = new DatasetController();
-      await datasetController.runRequest({
-        dataset_id: dataset.id,
-        getCache: false,
-        noSource: false,
-        projectId,
-        teamId: access.teamId,
-        team_id: access.teamId,
-      });
-    } catch (error) {
-      await monitor.update({
-        status: "waiting_for_data",
-        status_reason: "initial_evaluation_failed",
-      });
-    }
-
-    return this.findById(access, monitor.id).then(serializeMonitor);
   }
 
   async create(access, data = {}, user = null) {
@@ -547,4 +444,6 @@ class MonitorController {
 }
 
 module.exports = MonitorController;
+module.exports.getProjectRefreshIntervalSeconds = getProjectRefreshIntervalSeconds;
+module.exports.getRefreshSchedule = getRefreshSchedule;
 module.exports.serializeMonitor = serializeMonitor;

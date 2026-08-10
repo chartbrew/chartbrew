@@ -32,7 +32,22 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 1,
     },
+    day_of_month: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+    },
     delivery_days: DataTypes.JSON,
+    content_mode: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "kpi_review",
+    },
+    evaluation_wait_minutes: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 120,
+    },
     channel: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -56,10 +71,25 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ObservationDigestSubscription.associate = (models) => {
-    models.ObservationDigestSubscription.belongsTo(models.Team, { foreignKey: "team_id" });
-    models.ObservationDigestSubscription.belongsTo(models.User, { foreignKey: "user_id" });
-    models.ObservationDigestSubscription.belongsTo(models.Project, { foreignKey: "project_id" });
-    models.ObservationDigestSubscription.belongsTo(models.MetricMonitor, { foreignKey: "monitor_id" });
+    models.ObservationDigestSubscription.belongsTo(models.Team, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
+    models.ObservationDigestSubscription.belongsTo(models.User, {
+      foreignKey: "user_id",
+      onDelete: "CASCADE",
+    });
+    models.ObservationDigestSubscription.belongsTo(models.Project, {
+      foreignKey: "project_id",
+      onDelete: "CASCADE",
+    });
+    models.ObservationDigestSubscription.belongsTo(models.MetricMonitor, {
+      foreignKey: "monitor_id",
+      onDelete: "CASCADE",
+    });
+    models.ObservationDigestSubscription.hasMany(models.ObservationDigestDeliveryItem, {
+      foreignKey: "subscription_id",
+    });
   };
 
   return ObservationDigestSubscription;

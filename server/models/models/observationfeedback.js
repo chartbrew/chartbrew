@@ -27,8 +27,14 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ObservationFeedback.associate = (models) => {
-    models.ObservationFeedback.belongsTo(models.Observation, { foreignKey: "observation_id" });
-    models.ObservationFeedback.belongsTo(models.User, { foreignKey: "user_id" });
+    models.ObservationFeedback.belongsTo(models.Observation, {
+      foreignKey: "observation_id",
+      onDelete: "CASCADE",
+    });
+    models.ObservationFeedback.belongsTo(models.User, {
+      foreignKey: "user_id",
+      onDelete: "CASCADE",
+    });
   };
 
   return ObservationFeedback;

@@ -3,10 +3,13 @@ import PropTypes from "prop-types";
 import {
   Autocomplete,
   Button,
+  Description,
   EmptyState,
   Label,
   ListBox,
   Modal,
+  Radio,
+  RadioGroup,
   SearchField,
   Select,
   Spinner,
@@ -14,7 +17,11 @@ import {
   useFilter,
 } from "@heroui/react";
 import { Time } from "@internationalized/date";
-import { LuMapPin } from "react-icons/lu";
+import {
+  LuChartNoAxesColumnIncreasing,
+  LuListFilter,
+  LuMapPin,
+} from "react-icons/lu";
 import toast from "react-hot-toast";
 
 import {
@@ -39,6 +46,16 @@ const DELIVERY_DAYS = [
   { id: 7, name: "Sunday" },
 ];
 
+const MONTH_DAYS = Array.from({ length: 31 }, (_, index) => index + 1);
+
+function formatMonthDay(day) {
+  const remainder = day % 100;
+  const suffix = remainder >= 11 && remainder <= 13
+    ? "th"
+    : day % 10 === 1 ? "st" : day % 10 === 2 ? "nd" : day % 10 === 3 ? "rd" : "th";
+  return `${day}${suffix}`;
+}
+
 function getMachineTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
@@ -51,9 +68,12 @@ function parseTime(value) {
 function getInitialSchedule(subscription) {
   return {
     cadence: subscription?.cadence || "weekly",
+    contentMode: subscription?.contentMode || "kpi_review",
+    dayOfMonth: subscription?.dayOfMonth || 1,
     dayOfWeek: subscription?.dayOfWeek || 1,
     deliveryDays: subscription?.deliveryDays || undefined,
     enabled: subscription?.enabled ?? true,
+    evaluationWaitMinutes: subscription?.evaluationWaitMinutes || 120,
     monitorId: subscription?.monitorId || null,
     projectId: subscription?.projectId || null,
     scopeType: subscription?.monitorId
@@ -67,6 +87,8 @@ function getInitialSchedule(subscription) {
 function getSchedulePayload(schedule) {
   return {
     cadence: schedule.cadence,
+    contentMode: schedule.contentMode,
+    dayOfMonth: schedule.dayOfMonth,
     dayOfWeek: schedule.dayOfWeek,
     deliveryDays: schedule.cadence === "daily"
       && Array.isArray(schedule.deliveryDays)
@@ -74,11 +96,27 @@ function getSchedulePayload(schedule) {
       ? schedule.deliveryDays
       : null,
     enabled: true,
+    evaluationWaitMinutes: schedule.evaluationWaitMinutes,
     localDeliveryTime: `${`${schedule.time.hour}`.padStart(2, "0")}:${`${schedule.time.minute}`.padStart(2, "0")}`,
     monitorId: schedule.scopeType === "monitor" ? schedule.monitorId : null,
     projectId: schedule.scopeType === "project" ? schedule.projectId : null,
     timezone: schedule.timezone,
   };
+}
+
+function getRecommendedCadence(options, schedule) {
+  const scopedMonitors = (options?.monitors || []).filter((monitor) => {
+    if (schedule.scopeType === "monitor") return monitor.id === schedule.monitorId;
+    if (schedule.scopeType === "project") {
+      return Number(monitor.projectId) === Number(schedule.projectId);
+    }
+    return true;
+  });
+  const periods = scopedMonitors.map((monitor) => monitor.comparisonPeriod).filter(Boolean);
+  if (periods.includes("day")) return "daily";
+  if (periods.includes("week")) return "weekly";
+  if (periods.length > 0 && periods.every((period) => period === "month")) return "monthly";
+  return options?.recommendedCadence || "weekly";
 }
 
 function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }) {
@@ -94,7 +132,15 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
     setSchedule(getInitialSchedule(subscription));
     setOptions(null);
     getObservationDigestOptions(teamId)
-      .then(setOptions)
+      .then((data) => {
+        setOptions(data);
+        if (!subscription) {
+          setSchedule((current) => ({
+            ...current,
+            cadence: data.recommendedCadence || current.cadence,
+          }));
+        }
+      })
       .catch((error) => toast.error(error.message));
   }, [isOpen, subscription, teamId]);
 
@@ -112,12 +158,18 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
     return options.monitors;
   }, [options?.monitors, schedule.projectId, schedule.scopeType]);
 
+  const recommendedCadence = useMemo(() => (
+    getRecommendedCadence(options, schedule)
+  ), [options, schedule]);
+
   const canSave = Boolean(
     schedule.cadence
     && schedule.time
     && schedule.timezone
     && options?.recipient?.email
     && (schedule.cadence !== "daily" || hasValidDailyDays(schedule.deliveryDays))
+    && (schedule.cadence !== "monthly"
+      || (schedule.dayOfMonth >= 1 && schedule.dayOfMonth <= 31))
     && (schedule.scopeType !== "project" || schedule.projectId)
     && (schedule.scopeType !== "monitor" || schedule.monitorId)
   );
@@ -130,7 +182,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
         ? await updateObservationDigest(teamId, subscription.id, payload)
         : await createObservationDigest(teamId, payload);
       onSaved(saved);
-      toast.success(subscription ? "Activity digest updated" : "Activity digest scheduled");
+      toast.success(subscription ? "Email update saved" : "KPI review scheduled");
       onClose();
     } catch (error) {
       toast.error(error.message);
@@ -155,7 +207,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
     try {
       const saved = await updateObservationDigest(teamId, subscription.id, { enabled: false });
       onSaved(saved);
-      toast.success("Activity digest disabled");
+      toast.success("KPI review paused");
       onClose();
     } catch (error) {
       toast.error(error.message);
@@ -170,16 +222,49 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
         <Modal.Dialog className="sm:max-w-2xl">
           <Modal.Header>
             <Modal.Heading>
-              {subscription ? "Edit Activity digest" : "Schedule an Activity digest"}
+              {subscription ? "Edit email update" : "Schedule a KPI review"}
             </Modal.Heading>
           </Modal.Header>
           <Modal.Body className="flex flex-col gap-5">
             {!options ? (
               <div className="flex min-h-40 items-center justify-center">
-                <Spinner aria-label="Loading Activity digest options" />
+                <Spinner aria-label="Loading KPI review options" />
               </div>
             ) : (
               <>
+                <RadioGroup
+                  aria-label="Email content"
+                  name="kpi-review-content"
+                  onChange={(contentMode) => setSchedule((current) => ({
+                    ...current,
+                    contentMode,
+                  }))}
+                  value={schedule.contentMode}
+                  variant="secondary"
+                >
+                  <Label>What should the email include?</Label>
+                  <Radio value="kpi_review">
+                    <Radio.Content>
+                      <Radio.Control><Radio.Indicator /></Radio.Control>
+                      <LuChartNoAxesColumnIncreasing className="text-primary" aria-hidden />
+                      KPI review
+                    </Radio.Content>
+                    <Description>
+                      The latest result for each watched metric, including results without a large change.
+                    </Description>
+                  </Radio>
+                  <Radio value="changes_only">
+                    <Radio.Content>
+                      <Radio.Control><Radio.Indicator /></Radio.Control>
+                      <LuListFilter className="text-foreground-500" aria-hidden />
+                      Changes only
+                    </Radio.Content>
+                    <Description>
+                      Only important metric changes and data issues.
+                    </Description>
+                  </Radio>
+                </RadioGroup>
+
                 <div className="flex flex-col gap-1">
                   <p className="text-sm font-medium">Delivery</p>
                   <div className="rounded-lg border border-divider px-3 py-2 text-sm">
@@ -189,24 +274,34 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                   <Select
-                    aria-label="Activity digest frequency"
+                    aria-label="Email frequency"
                     onChange={(cadence) => setSchedule((current) => ({ ...current, cadence }))}
                     value={schedule.cadence}
                     variant="secondary"
                     fullWidth
                   >
-                    <Label>Frequency</Label>
+                    <Label>How often?</Label>
                     <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
                     <Select.Popover>
                       <ListBox>
-                        <ListBox.Item id="daily" textValue="Daily">Daily<ListBox.ItemIndicator /></ListBox.Item>
-                        <ListBox.Item id="weekly" textValue="Weekly">Weekly<ListBox.ItemIndicator /></ListBox.Item>
+                        <ListBox.Item id="daily" textValue="Daily">
+                          Daily{recommendedCadence === "daily" ? " · Recommended" : ""}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="weekly" textValue="Weekly">
+                          Weekly{recommendedCadence === "weekly" ? " · Recommended" : ""}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item id="monthly" textValue="Monthly">
+                          Monthly{recommendedCadence === "monthly" ? " · Recommended" : ""}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
                       </ListBox>
                     </Select.Popover>
                   </Select>
                   {schedule.cadence === "weekly" ? (
                     <Select
-                      aria-label="Activity digest delivery day"
+                      aria-label="Weekly delivery day"
                       onChange={(dayOfWeek) => setSchedule((current) => ({
                         ...current,
                         dayOfWeek: Number(dayOfWeek),
@@ -228,8 +323,38 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                       </Select.Popover>
                     </Select>
                   ) : null}
+                  {schedule.cadence === "monthly" ? (
+                    <Select
+                      aria-label="Monthly delivery day"
+                      onChange={(dayOfMonth) => setSchedule((current) => ({
+                        ...current,
+                        dayOfMonth: Number(dayOfMonth),
+                      }))}
+                      value={`${schedule.dayOfMonth}`}
+                      variant="secondary"
+                      fullWidth
+                    >
+                      <Label>Send on</Label>
+                      <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {MONTH_DAYS.map((day) => (
+                            <ListBox.Item
+                              id={`${day}`}
+                              key={day}
+                              textValue={formatMonthDay(day)}
+                            >
+                              {formatMonthDay(day)}
+                              {day > 28 ? " · Last day in shorter months" : ""}
+                              <ListBox.ItemIndicator />
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                  ) : null}
                   <TimeField
-                    aria-label="Activity digest delivery time"
+                    aria-label="Email delivery time"
                     className="min-w-36"
                     hourCycle={12}
                     onChange={(time) => setSchedule((current) => ({ ...current, time }))}
@@ -256,7 +381,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
 
                 <div className="flex items-end gap-2">
                   <Autocomplete
-                    aria-label="Activity digest timezone"
+                    aria-label="Email timezone"
                     onChange={(timezone) => setSchedule((current) => ({
                       ...current,
                       timezone: timezone || "",
@@ -304,7 +429,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                 </div>
 
                 <Select
-                  aria-label="Activity digest scope"
+                  aria-label="Metrics included in the email"
                   onChange={(scopeType) => setSchedule((current) => ({
                     ...current,
                     monitorId: null,
@@ -328,7 +453,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
 
                 {schedule.scopeType === "project" ? (
                   <Select
-                    aria-label="Dashboard included in Activity digest"
+                    aria-label="Dashboard included in the email"
                     onChange={(projectId) => setSchedule((current) => ({ ...current, projectId }))}
                     placeholder="Choose a dashboard"
                     value={schedule.projectId ? `${schedule.projectId}` : null}
@@ -351,7 +476,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
 
                 {schedule.scopeType === "monitor" ? (
                   <Select
-                    aria-label="Watched metric included in Activity digest"
+                    aria-label="Watched metric included in the email"
                     onChange={(monitorId) => setSchedule((current) => ({ ...current, monitorId }))}
                     placeholder="Choose a watched metric"
                     value={schedule.monitorId || null}
@@ -380,7 +505,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                       className="h-[32rem] w-full rounded-lg border border-divider bg-white"
                       sandbox=""
                       srcDoc={previewData.html}
-                      title="Activity digest email preview"
+                      title="KPI review email preview"
                     />
                   </div>
                 ) : null}
@@ -391,7 +516,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
             <div className="flex flex-row items-center gap-2">
               {subscription?.enabled ? (
                 <Button isPending={pending} onPress={disable} variant="danger-soft">
-                  Disable schedule
+                  Pause schedule
                 </Button>
               ) : null}
               <Button
@@ -406,7 +531,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
             <div className="flex flex-row items-center gap-2">
               <Button onPress={onClose} variant="tertiary">Cancel</Button>
               <Button isDisabled={!canSave} isPending={pending} onPress={save} variant="primary">
-                {subscription ? "Save changes" : "Schedule digest"}
+                {subscription ? "Save changes" : "Schedule review"}
               </Button>
             </div>
           </Modal.Footer>

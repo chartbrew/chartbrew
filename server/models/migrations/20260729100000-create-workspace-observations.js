@@ -196,11 +196,11 @@ module.exports = {
         allowNull: false,
       },
       granularity: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(32),
         allowNull: false,
       },
       rollup: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(32),
         allowNull: false,
         defaultValue: "raw",
       },
@@ -219,7 +219,7 @@ module.exports = {
         defaultValue: 1,
       },
       definition_fingerprint: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(64),
         allowNull: false,
       },
       ...timestamps(),

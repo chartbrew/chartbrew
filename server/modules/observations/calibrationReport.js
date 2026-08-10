@@ -4,7 +4,7 @@ const {
 } = require("./metricDirection");
 
 const LOW_SAMPLE_THRESHOLD = 5;
-const REPORT_VERSION = "observation-calibration-v1";
+const REPORT_VERSION = "observation-calibration-v2";
 
 function toPlain(record) {
   return typeof record?.get === "function" ? record.get({ plain: true }) : record;
@@ -82,6 +82,7 @@ function normalizeFeedback(rawFeedback, latestAudits) {
   const observation = toPlain(feedback?.Observation);
   if (!observation) return null;
   const monitor = toPlain(observation.MetricMonitor) || {};
+  const evaluation = toPlain(observation.MetricEvaluation) || {};
   const evidence = observation.evidence || {};
   const featureValues = evidence.featureValues || {};
   const desiredDirection = normalizeDesiredDirection(monitor.metric_spec?.desiredDirection);
@@ -92,11 +93,14 @@ function normalizeFeedback(rawFeedback, latestAudits) {
       ? auditVerdict.relevant
       : null,
     baselineType: monitor.baseline_policy?.type || evidence.baselinePolicy || "unknown",
+    comparisonPeriod: monitor.baseline_policy?.comparisonPeriod || "unknown",
     completeness: finiteNumber(evidence.completeness ?? featureValues.completeness),
+    completionState: evaluation.finality || evaluation.readiness || "unknown",
     desiredDirection,
     features: featureValues,
     impact: getObservationImpact(desiredDirection, observation.direction),
     magnitudeBucket: getMagnitudeBucket(observation.relative_delta),
+    metricBehavior: monitor.metric_spec?.metricBehavior || "unknown",
     monitorKind: monitor.kind || "unknown",
     observedDirection: observation.direction || "unknown",
     policyVersion: observation.score_version || "unknown",
@@ -104,6 +108,9 @@ function normalizeFeedback(rawFeedback, latestAudits) {
     sampleCount: finiteNumber(evidence.sampleCount),
     score: finiteNumber(observation.score),
     severity: observation.severity || "unknown",
+    thresholdType: monitor.publication_policy?.thresholdType
+      || evaluation.publication_threshold_type
+      || "unknown",
     verdict: feedback.verdict,
   };
 }
@@ -160,13 +167,17 @@ function buildCalibrationReport(options = {}) {
   const overall = createCohort();
   const cohortFields = {
     baselineType: {},
+    comparisonPeriod: {},
+    completionState: {},
     desiredDirection: {},
     impact: {},
     magnitude: {},
+    metricBehavior: {},
     monitorKind: {},
     observedDirection: {},
     policyVersion: {},
     severity: {},
+    thresholdType: {},
   };
   const reasons = {};
   const llmAgreement = {
@@ -178,13 +189,17 @@ function buildCalibrationReport(options = {}) {
   records.forEach((record) => {
     addVerdict(overall, record.verdict);
     addToCohorts(cohortFields.baselineType, record.baselineType, record.verdict);
+    addToCohorts(cohortFields.comparisonPeriod, record.comparisonPeriod, record.verdict);
+    addToCohorts(cohortFields.completionState, record.completionState, record.verdict);
     addToCohorts(cohortFields.desiredDirection, record.desiredDirection, record.verdict);
     addToCohorts(cohortFields.impact, record.impact, record.verdict);
     addToCohorts(cohortFields.magnitude, record.magnitudeBucket, record.verdict);
+    addToCohorts(cohortFields.metricBehavior, record.metricBehavior, record.verdict);
     addToCohorts(cohortFields.monitorKind, record.monitorKind, record.verdict);
     addToCohorts(cohortFields.observedDirection, record.observedDirection, record.verdict);
     addToCohorts(cohortFields.policyVersion, record.policyVersion, record.verdict);
     addToCohorts(cohortFields.severity, record.severity, record.verdict);
+    addToCohorts(cohortFields.thresholdType, record.thresholdType, record.verdict);
     if (record.verdict === "not_relevant") {
       const reasonCode = record.reasonCode || "unspecified";
       reasons[reasonCode] = (reasons[reasonCode] || 0) + 1;

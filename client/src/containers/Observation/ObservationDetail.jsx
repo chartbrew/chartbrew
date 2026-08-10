@@ -58,16 +58,12 @@ function formatPeriod(period) {
 }
 
 function getComparisonDescription(observation) {
-  if (observation.monitor?.comparisonMethod === "previous_period") {
-    return `Previous period · ${formatPeriod(observation.comparisonPeriod)}`;
-  }
-  return `Usual value from earlier refreshes · ${formatPeriod(observation.comparisonPeriod)}`;
+  if (observation.comparisonLabel) return observation.comparisonLabel;
+  return `Earlier result · ${formatPeriod(observation.comparisonPeriod)}`;
 }
 
 function getComparisonBasis(observation) {
-  return observation.monitor?.comparisonMethod === "previous_period"
-    ? "Previous period"
-    : "Recent history";
+  return observation.comparisonLabel || "Earlier result";
 }
 
 function getCoverageLabel(value) {
@@ -236,6 +232,8 @@ function ObservationDetail() {
   );
   const metricName = observation.monitor?.name || "This metric";
   const completeness = Number(observation.evidence?.completeness);
+  const valuesUsed = Number(observation.evidence?.sourceBucketCount || 0)
+    + Number(observation.evidence?.sourceCheckpointCount || 0);
   const openStatusLabel = observation.impact === "positive"
     ? "Notable change"
     : "Needs attention";
@@ -273,6 +271,11 @@ function ObservationDetail() {
                 <Chip.Label>
                   {observation.monitor.active ? "Watched" : "No longer watched"}
                 </Chip.Label>
+              </Chip>
+            ) : null}
+            {observation.corrected ? (
+              <Chip color="warning" variant="soft">
+                <Chip.Label>Corrected</Chip.Label>
               </Chip>
             ) : null}
             <span className="inline-flex items-center gap-1.5 text-sm text-muted">
@@ -376,7 +379,7 @@ function ObservationDetail() {
               Change
             </h2>
             <span className="text-sm text-muted">
-              {formatPeriod(observation.currentPeriod)}
+              {observation.comparisonLabel || formatPeriod(observation.currentPeriod)}
             </span>
           </div>
           <div className="mt-3 flex flex-wrap items-end gap-3">
@@ -475,8 +478,10 @@ function ObservationDetail() {
                 <dd className="text-right font-medium">{getComparisonBasis(observation)}</dd>
               </div>
               <div className="flex items-center justify-between gap-4 py-3">
-                <dt className="text-muted">Data points</dt>
-                <dd className="font-medium">{observation.evidence?.sampleCount || "—"}</dd>
+                <dt className="text-muted">Values used</dt>
+                <dd className="font-medium">
+                  {valuesUsed || "—"}
+                </dd>
               </div>
               <div className="flex items-center justify-between gap-4 py-3">
                 <dt className="text-muted">Data coverage</dt>

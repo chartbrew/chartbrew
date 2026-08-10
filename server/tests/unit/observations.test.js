@@ -9,7 +9,6 @@ const { calculateBaseline, median } = require("../../modules/observations/baseli
 const { extractMonitorSnapshots } = require("../../modules/observations/extractMetrics");
 const { analyzeDimension } = require("../../modules/observations/driverAnalysis");
 const {
-  buildDatasetRecordCountDefinition,
   buildMonitorDefinition,
   getMinimumSamples,
 } = require("../../modules/observations/monitorSchema");
@@ -34,6 +33,7 @@ const { replayCorpus } = require("../../modules/observations/policyReplay");
 const {
   getNextDigestDelivery,
   isDigestDue,
+  isLateKpiDeliveryDue,
 } = require("../../modules/observations/digestSchedule");
 const { getObservationImpact } = require("../../modules/observations/metricDirection");
 const {
@@ -52,13 +52,16 @@ const ObservationController = require("../../controllers/ObservationController")
 const MetricRecommendationController = require("../../controllers/MetricRecommendationController");
 const MonitorController = require("../../controllers/MonitorController");
 const {
+  getProjectRefreshIntervalSeconds,
+  getRefreshSchedule,
+} = MonitorController;
+const {
   getIncludes: getObservationIncludes,
   serializeFeedback,
   serializeObservation,
 } = require("../../controllers/ObservationController");
 const db = require("../../models/models");
 const {
-  countDatasetRecords,
   persistSnapshots,
   processMonitor,
 } = require("../../modules/observations/processChartResult");
@@ -297,28 +300,24 @@ describe("workspace observations", () => {
     expect(definition.definitionFingerprint).toHaveLength(64);
   });
 
-  it("builds a dataset record-count monitor without requiring a chart", () => {
-    const definition = buildDatasetRecordCountDefinition({
-      dataset: { id: 9, name: "Orders" },
-      desiredDirection: "higher",
+  it("reports the fastest automatic refresh available to a watched chart", () => {
+    expect(getProjectRefreshIntervalSeconds({
+      frequency: "every_x_hours",
+      frequencyNumber: 6,
+    })).toBe(21600);
+    expect(getRefreshSchedule({
+      autoUpdate: 3600,
+      Project: {
+        updateSchedule: { frequency: "daily" },
+      },
+    })).toEqual({
+      automatic: true,
+      intervalSeconds: 3600,
     });
-
-    expect(definition.kind).toBe("record_count");
-    expect(definition.bindingKey).toBe("dataset-record-count");
-    expect(definition.metricSpec).toMatchObject({
-      aggregate: "count",
-      desiredDirection: "higher",
-      metricTitle: "Orders records",
-      unit: "number",
+    expect(getRefreshSchedule({ autoUpdate: 0, Project: { updateSchedule: {} } })).toEqual({
+      automatic: false,
+      intervalSeconds: null,
     });
-    expect(definition.definitionFingerprint).toHaveLength(64);
-  });
-
-  it("counts top-level and simply wrapped dataset records", () => {
-    expect(countDatasetRecords([{ id: 1 }, { id: 2 }])).toBe(2);
-    expect(countDatasetRecords({ results: [{ id: 1 }, { id: 2 }, { id: 3 }] })).toBe(3);
-    expect(countDatasetRecords({ id: 1, name: "Single record" })).toBe(1);
-    expect(countDatasetRecords(null)).toBe(0);
   });
 
   it("uses the healthy direction to distinguish useful movement from regressions", () => {
@@ -608,6 +607,39 @@ describe("workspace observations", () => {
     })).toThrow("percentage values");
   });
 
+  it("formats observations with the exact completed business periods", () => {
+    const text = formatObservationText({
+      baseline_policy: {
+        calendarTimezone: "UTC",
+        comparisonPeriod: "month",
+      },
+      metric_spec: {
+        valueFormat: {
+          display: { decimals: 0, scale: 1 },
+          meaning: "number",
+        },
+      },
+      name: "Revenue",
+    }, {
+      absoluteDelta: 20000,
+      baselineValue: 100000,
+      comparisonPeriod: {
+        end: new Date("2026-07-01T00:00:00.000Z"),
+        start: new Date("2026-06-01T00:00:00.000Z"),
+      },
+      currentPeriod: {
+        end: new Date("2026-08-01T00:00:00.000Z"),
+        start: new Date("2026-07-01T00:00:00.000Z"),
+      },
+      currentValue: 120000,
+      direction: "increase",
+      relativeDelta: 0.2,
+    });
+
+    expect(text.comparisonLabel).toBe("July 2026 compared with June 2026");
+    expect(text.summary).toBe("July 2026: 120,000, compared with 100,000 in June 2026.");
+  });
+
   it("serializes observations with the monitor's current value formatting", () => {
     const observation = serializeObservation({
       absolute_delta: -0.022,
@@ -704,6 +736,33 @@ describe("workspace observations", () => {
     expect(extraction.status).toBe("ready");
     expect(extraction.snapshots.map((snapshot) => snapshot.value)).toEqual([100, 82]);
     expect(extraction.snapshots[0].periodStart).toEqual(new Date("2026-07-27T00:00:00.000Z"));
+    expect(extraction.snapshots[0].periodEnd).toEqual(new Date("2026-07-28T00:00:00.000Z"));
+  });
+
+  it("preserves a missing source bucket instead of stretching the previous bucket", () => {
+    const extraction = extractMonitorSnapshots(createMonitor(), {
+      layers: [{
+        fields: {
+          time: { field: "date" },
+          value: { field: "amount" },
+        },
+        id: "revenue",
+        mark: "line",
+        rows: [
+          { time: Date.UTC(2026, 6, 27), value: 100 },
+          { time: Date.UTC(2026, 6, 29), value: 82 },
+        ],
+        warnings: [],
+      }],
+    });
+
+    expect(extraction.snapshots[0]).toEqual(expect.objectContaining({
+      periodEnd: new Date("2026-07-28T00:00:00.000Z"),
+      periodStart: new Date("2026-07-27T00:00:00.000Z"),
+    }));
+    expect(extraction.snapshots[1]).toEqual(expect.objectContaining({
+      periodStart: new Date("2026-07-29T00:00:00.000Z"),
+    }));
   });
 
   it("calculates previous-period baseline and publishes a material deterministic change", () => {
@@ -819,6 +878,8 @@ describe("workspace observations", () => {
     expect(result).toEqual({
       evaluationStatus: "review_required",
       monitorId: "monitor-1",
+      observationId: null,
+      publicationStatus: null,
       reason: null,
       status: "captured",
     });
@@ -1027,10 +1088,16 @@ describe("workspace observations", () => {
       verdict,
     }) => ({
       Observation: {
+        MetricEvaluation: {
+          finality: "final",
+          publication_threshold_type: "relative",
+          readiness: "eligible",
+        },
         MetricMonitor: {
-          baseline_policy: { type: "rolling_median" },
+          baseline_policy: { comparisonPeriod: "day", type: "completed_period" },
           kind,
-          metric_spec: { desiredDirection },
+          metric_spec: { desiredDirection, metricBehavior: "flow" },
+          publication_policy: { thresholdType: "relative", thresholdValue: 0.1 },
         },
         direction: "decrease",
         evidence: {
@@ -1084,6 +1151,10 @@ describe("workspace observations", () => {
       total: 2,
     });
     expect(report.feedback.cohorts.monitorKind.timeseries.relevant).toBe(1);
+    expect(report.feedback.cohorts.comparisonPeriod.day.relevant).toBe(1);
+    expect(report.feedback.cohorts.completionState.final.relevant).toBe(1);
+    expect(report.feedback.cohorts.metricBehavior.flow.relevant).toBe(1);
+    expect(report.feedback.cohorts.thresholdType.relative.relevant).toBe(1);
     expect(report.feedback.cohorts.impact.negative.relevant).toBe(1);
     expect(report.feedback.falsePositiveReasons.expected_change).toBe(1);
     expect(report.feedback.llmAgreement).toMatchObject({
@@ -1144,5 +1215,59 @@ describe("workspace observations", () => {
       subscription,
       DateTime.fromISO("2026-08-04T10:00:00", { zone: "UTC" }),
     )).toBe("2026-08-05T09:00:00.000Z");
+  });
+
+  it("schedules monthly KPI reviews on the selected calendar day", () => {
+    const subscription = {
+      cadence: "monthly",
+      content_mode: "kpi_review",
+      day_of_month: 31,
+      enabled: true,
+      evaluation_wait_minutes: 120,
+      last_attempted_at: null,
+      last_delivered_at: null,
+      last_noop_at: null,
+      local_delivery_time: "09:00",
+      timezone: "UTC",
+    };
+
+    expect(isDigestDue(
+      subscription,
+      DateTime.fromISO("2026-09-30T10:30:00", { zone: "UTC" }),
+    )).toBe(true);
+    expect(isDigestDue(
+      subscription,
+      DateTime.fromISO("2026-09-29T10:30:00", { zone: "UTC" }),
+    )).toBe(false);
+    expect(getNextDigestDelivery(
+      subscription,
+      DateTime.fromISO("2026-09-30T12:00:00", { zone: "UTC" }),
+    )).toBe("2026-10-31T09:00:00.000Z");
+  });
+
+  it("rechecks a KPI review that is waiting for a late final result", () => {
+    const subscription = {
+      cadence: "weekly",
+      content_mode: "kpi_review",
+      day_of_week: 1,
+      enabled: true,
+      last_attempted_at: new Date("2026-08-03T09:00:00.000Z"),
+      last_delivery_status: "waiting_for_data",
+      local_delivery_time: "09:00",
+      timezone: "UTC",
+    };
+
+    expect(isLateKpiDeliveryDue(
+      subscription,
+      DateTime.fromISO("2026-08-04T12:00:00", { zone: "UTC" }),
+    )).toBe(true);
+    expect(isDigestDue(
+      subscription,
+      DateTime.fromISO("2026-08-04T12:00:00", { zone: "UTC" }),
+    )).toBe(true);
+    expect(isLateKpiDeliveryDue(
+      subscription,
+      DateTime.fromISO("2026-08-10T09:00:00", { zone: "UTC" }),
+    )).toBe(false);
   });
 });

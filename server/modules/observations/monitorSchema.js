@@ -143,49 +143,9 @@ function buildMonitorDefinition({
   };
 }
 
-function buildDatasetRecordCountDefinition({ dataset, desiredDirection = "neutral" }) {
-  const valueFormat = normalizeValueFormat({
-    mode: "override",
-    scale: 1,
-    type: "number",
-  });
-  const metricSpec = {
-    aggregate: "count",
-    desiredDirection: normalizeDesiredDirection(desiredDirection),
-    formula: null,
-    layerId: "dataset-record-count",
-    metricField: "recordCount",
-    metricTitle: `${dataset.name} records`,
-    timeField: null,
-    timeUnit: "refresh",
-    unit: toLegacyUnit(valueFormat),
-    valueFormat,
-  };
-  const baselinePolicy = { type: "rolling_median" };
-
-  return {
-    baselinePolicy,
-    bindingKey: "dataset-record-count",
-    definitionFingerprint: createHash({
-      baselinePolicy,
-      datasetId: dataset.id,
-      metricSpec: {
-        aggregate: metricSpec.aggregate,
-        layerId: metricSpec.layerId,
-        metricField: metricSpec.metricField,
-        timeUnit: metricSpec.timeUnit,
-      },
-    }),
-    kind: "record_count",
-    metricSpec,
-    name: metricSpec.metricTitle,
-  };
-}
-
 module.exports = {
   SCALAR_MARKS,
   TIMESERIES_MARKS,
-  buildDatasetRecordCountDefinition,
   buildDefinitionFingerprint,
   buildMonitorDefinition,
   getEligibleLayer,

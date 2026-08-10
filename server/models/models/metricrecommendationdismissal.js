@@ -44,12 +44,22 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   MetricRecommendationDismissal.associate = (models) => {
-    models.MetricRecommendationDismissal.belongsTo(models.Team, { foreignKey: "team_id" });
-    models.MetricRecommendationDismissal.belongsTo(models.Project, { foreignKey: "project_id" });
-    models.MetricRecommendationDismissal.belongsTo(models.Chart, { foreignKey: "chart_id" });
+    models.MetricRecommendationDismissal.belongsTo(models.Team, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricRecommendationDismissal.belongsTo(models.Project, {
+      foreignKey: "project_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricRecommendationDismissal.belongsTo(models.Chart, {
+      foreignKey: "chart_id",
+      onDelete: "CASCADE",
+    });
     models.MetricRecommendationDismissal.belongsTo(models.User, {
       as: "dismissedBy",
       foreignKey: "dismissed_by",
+      onDelete: "SET NULL",
     });
   };
 

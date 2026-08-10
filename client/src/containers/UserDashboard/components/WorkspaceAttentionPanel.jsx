@@ -18,11 +18,11 @@ function getSetupAction(home) {
   return {
     collecting_baseline: {
       action: "View progress",
-      description: "Chartbrew is collecting enough history to compare your watched metrics.",
+      description: "Chartbrew needs two complete periods or values near two period boundaries.",
       icon: LuRefreshCw,
       iconClassName: "text-foreground-400",
       path: "/activity?tab=monitors",
-      title: "Building a baseline",
+      title: "Waiting for a complete comparison",
     },
     connect_data: {
       action: "Connect data",
@@ -50,7 +50,7 @@ function getSetupAction(home) {
     },
     watch_metric: {
       action: firstDashboard ? "Open a dashboard" : "Create a dashboard",
-      description: "Choose an eligible chart metric to start detecting material changes.",
+      description: "Choose a chart metric and how Chartbrew should compare it.",
       icon: LuActivity,
       iconClassName: "text-foreground-400",
       path: firstDashboard ? `/dashboard/${firstDashboard.id}` : "/dashboards?create=dashboard",

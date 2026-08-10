@@ -141,6 +141,8 @@ function getDigestMeta(subscription) {
   let schedule = `Daily at ${subscription.localDeliveryTime}`;
   if (subscription.cadence === "weekly") {
     schedule = `${DELIVERY_DAY_LABELS[subscription.dayOfWeek] || "Monday"} at ${subscription.localDeliveryTime}`;
+  } else if (subscription.cadence === "monthly") {
+    schedule = `Day ${subscription.dayOfMonth || 1} at ${subscription.localDeliveryTime}`;
   } else if (subscription.deliveryDays?.length) {
     const selectedDays = subscription.deliveryDays
       .map((day) => `${day}`.slice(0, 3))
@@ -153,6 +155,8 @@ function getDigestMeta(subscription) {
     : "No upcoming delivery";
   const lastStatus = subscription.lastDelivery?.status === "delivered"
     ? `Last delivered ${formatTimeAgo(subscription.lastDelivery.attemptedAt)}`
+    : subscription.lastDelivery?.status === "waiting_for_data"
+      ? `Last delivered ${formatTimeAgo(subscription.lastDelivery.attemptedAt)} · Waiting for a final result`
     : subscription.lastDelivery?.status === "no_updates"
       ? `Last checked ${formatTimeAgo(subscription.lastDelivery.attemptedAt)} · No updates`
       : subscription.lastDelivery?.status === "failed"
@@ -488,7 +492,7 @@ function Activity() {
       await deleteObservationDigest(team.id, subscriptionId);
       setDigests((current) => current.filter((item) => item.id !== subscriptionId));
       setDigestToRemove(null);
-      toast.success("Activity digest removed");
+      toast.success("KPI review schedule removed");
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -504,7 +508,7 @@ function Activity() {
       setDigests((current) => current.map((item) => (
         item.id === updated.id ? updated : item
       )));
-      toast.success(updated.enabled ? "Activity digest resumed" : "Activity digest paused");
+      toast.success(updated.enabled ? "KPI review resumed" : "KPI review paused");
     } catch (error) {
       toast.error(error.message);
     }
@@ -514,7 +518,7 @@ function Activity() {
     setTestDigestPendingId(subscriptionId);
     try {
       await sendTestObservationDigest(team.id, subscriptionId);
-      toast.success("Test Activity digest sent");
+      toast.success("Test email sent");
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -559,7 +563,7 @@ function Activity() {
             variant="primary"
           >
             <LuPlus size={16} aria-hidden />
-            Schedule digest
+            Schedule review
           </Button>
         ) : null}
       </header>
@@ -590,7 +594,7 @@ function Activity() {
               <Tabs.Indicator />
             </Tabs.Tab>
             <Tabs.Tab id="summaries">
-              Activity digests
+              KPI reviews
               <Tabs.Indicator />
             </Tabs.Tab>
           </Tabs.List>
@@ -689,7 +693,7 @@ function Activity() {
                               </div>
                             </Table.Cell>
                             <Table.Cell className="whitespace-nowrap text-sm text-muted">
-                              {formatPeriod(observation.currentPeriod)}
+                              {observation.comparisonLabel || formatPeriod(observation.currentPeriod)}
                             </Table.Cell>
                             <Table.Cell>
                               <Chip className="whitespace-nowrap" size="sm" variant="soft">
@@ -1079,11 +1083,11 @@ function Activity() {
                       >
                         {subscription.enabled ? "Pause" : "Resume"}
                       </Button>
-                      <Dropdown aria-label="Activity digest options">
+                      <Dropdown aria-label="KPI review options">
                         <Dropdown.Trigger
                           aria-label={testDigestPendingId === subscription.id
-                            ? "Sending test Activity digest"
-                            : "Open Activity digest options"}
+                            ? "Sending test email"
+                            : "Open KPI review options"}
                           className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
                           isDisabled={Boolean(testDigestPendingId)}
                         >
@@ -1132,7 +1136,10 @@ function Activity() {
                   title={(
                     <>
                       <span className="font-medium text-foreground">
-                        {subscription.cadence === "weekly" ? "Weekly" : "Daily"} Activity digest
+                        {subscription.cadence === "monthly"
+                          ? "Monthly"
+                          : subscription.cadence === "weekly" ? "Weekly" : "Daily"}{" "}
+                        {subscription.contentMode === "changes_only" ? "changes only" : "KPI review"}
                       </span>
                       {!subscription.enabled ? (
                         <Chip size="sm" variant="soft">
@@ -1146,8 +1153,8 @@ function Activity() {
             </ItemList>
           ) : (
             <EmptyState
-              description="Choose when Chartbrew should email changes and data-health issues."
-              title="No Activity digests scheduled"
+              description="Choose when Chartbrew should email your latest KPI results."
+              title="No KPI reviews scheduled"
             />
           )}
         </Tabs.Panel>
@@ -1222,11 +1229,11 @@ function Activity() {
         <Modal.Container>
           <Modal.Dialog className="sm:max-w-md">
             <Modal.Header>
-              <Modal.Heading>Delete this Activity digest?</Modal.Heading>
+              <Modal.Heading>Delete this KPI review schedule?</Modal.Heading>
             </Modal.Header>
             <Modal.Body>
               <p className="text-sm text-foreground-500">
-                Chartbrew will stop sending this digest. Activity and emails already sent
+                Chartbrew will stop sending this email. Activity and emails already sent
                 will not be removed.
               </p>
             </Modal.Body>

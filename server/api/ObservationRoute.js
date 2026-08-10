@@ -238,25 +238,6 @@ module.exports = (app) => {
     }
   });
 
-  app.get("/team/:team_id/record-count-options", ...routeAccess, async (req, res) => {
-    try {
-      return res.send(await monitorController.recordCountOptions(req.observationAccess));
-    } catch (error) {
-      return sendError(res, error);
-    }
-  });
-
-  app.post("/team/:team_id/record-count-monitors", ...routeAccess, async (req, res) => {
-    try {
-      return res.status(201).send(await monitorController.createRecordCount(
-        req.observationAccess,
-        req.body
-      ));
-    } catch (error) {
-      return sendError(res, error);
-    }
-  });
-
   app.post("/team/:team_id/monitors", ...routeAccess, async (req, res) => {
     try {
       return res.status(201).send(await monitorController.create(

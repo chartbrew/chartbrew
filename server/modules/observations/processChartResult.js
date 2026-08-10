@@ -80,6 +80,8 @@ async function processMonitor(monitor, frame, options, policy) {
   return {
     evaluationStatus: evaluation.status,
     monitorId: monitor.id,
+    observationId: evaluation.publication?.observation?.id || null,
+    publicationStatus: evaluation.publication?.status || null,
     reason: persistence.changed ? null : "no_new_data",
     status: "captured",
   };
@@ -107,70 +109,15 @@ async function processChartResult(options) {
 
   return {
     processed: results.length,
-    published: 0,
-    results,
-  };
-}
-
-function countDatasetRecords(data, depth = 0) {
-  if (Array.isArray(data)) return data.length;
-  if (data === null || data === undefined) return 0;
-  if (typeof data === "object" && depth < 3) {
-    const values = Object.values(data);
-    const arrays = values.filter(Array.isArray);
-    if (arrays.length === 1) return arrays[0].length;
-    const nestedObjects = values.filter((value) => {
-      return value && typeof value === "object" && !Array.isArray(value);
-    });
-    if (arrays.length === 0 && nestedObjects.length === 1) {
-      return countDatasetRecords(nestedObjects[0], depth + 1);
-    }
-  }
-  return 1;
-}
-
-async function processDatasetResult(options) {
-  const policy = getObservationPolicy();
-  if (!policy.enabled || !options.dataset?.id || !options.teamId) {
-    return { processed: 0, published: 0 };
-  }
-
-  const monitors = await db.MetricMonitor.findAll({
-    where: {
-      chart_id: null,
-      dataset_id: options.dataset.id,
-      is_active: true,
-      kind: "record_count",
-      team_id: options.teamId,
-    },
-  });
-  const recordCount = countDatasetRecords(options.data);
-  const results = await Promise.all(monitors.map((monitor) => {
-    return processMonitor(monitor, {
-      layers: [{
-        fields: { value: "recordCount" },
-        id: monitor.metric_spec.layerId,
-        mark: "kpi",
-        rows: [{ value: recordCount }],
-        warnings: [],
-      }],
-    }, {
-      refreshedAt: options.refreshedAt || new Date(),
-      updateRunId: options.updateRunId,
-    }, policy);
-  }));
-
-  return {
-    processed: results.length,
-    published: 0,
+    published: results.filter((result) => {
+      return ["corrected", "published", "updated"].includes(result.publicationStatus);
+    }).length,
     results,
   };
 }
 
 module.exports = {
-  countDatasetRecords,
   persistSnapshots,
   processChartResult,
-  processDatasetResult,
   processMonitor,
 };

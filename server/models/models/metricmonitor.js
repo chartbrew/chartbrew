@@ -100,11 +100,27 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   MetricMonitor.associate = (models) => {
-    models.MetricMonitor.belongsTo(models.Team, { foreignKey: "team_id" });
-    models.MetricMonitor.belongsTo(models.Project, { foreignKey: "project_id" });
-    models.MetricMonitor.belongsTo(models.Chart, { foreignKey: "chart_id" });
-    models.MetricMonitor.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
-    models.MetricMonitor.belongsTo(models.User, { foreignKey: "created_by", as: "creator" });
+    models.MetricMonitor.belongsTo(models.Team, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricMonitor.belongsTo(models.Project, {
+      foreignKey: "project_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricMonitor.belongsTo(models.Chart, {
+      foreignKey: "chart_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricMonitor.belongsTo(models.Dataset, {
+      foreignKey: "dataset_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricMonitor.belongsTo(models.User, {
+      as: "creator",
+      foreignKey: "created_by",
+      onDelete: "SET NULL",
+    });
     models.MetricMonitor.hasMany(models.MetricSnapshot, { foreignKey: "monitor_id" });
     models.MetricMonitor.hasMany(models.MetricEvaluation, { foreignKey: "monitor_id" });
     models.MetricMonitor.hasMany(models.Observation, { foreignKey: "monitor_id" });

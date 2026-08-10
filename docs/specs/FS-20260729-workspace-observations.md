@@ -2,7 +2,7 @@
 
 Status: draft
 
-Roadmap revision: 2026-08-09 — period-aware KPI evaluation replaces refresh-bound comparison.
+Roadmap revision: 2026-08-10 — period-aware KPI evaluation replaces refresh-bound comparison.
 
 ## Summary
 
@@ -441,11 +441,11 @@ canonical result states that the requested interval is complete and the aggregat
 zero-fill behavior. If coverage is partial or unknown, the period is incomplete. Renderer warnings
 alone are not a complete coverage contract.
 
-The number of rows returned by a normal dataset refresh is a result-volume health signal, not a
-business record-count KPI. It belongs in Data health and can detect an empty, truncated, or unusual
-result. A business count monitor must use an explicit complete count definition and must declare
-whether it is a flow, such as orders created in a month, or a state, such as total active accounts at
-month end.
+The number of rows returned by a normal dataset refresh is not a business record-count KPI. The
+first period-aware release does not create a monitor from this sampled row count. Empty and failed
+dataset refreshes remain Data health issues. A business count monitor must use an explicit complete
+count definition and must declare whether it is a flow, such as orders created in a month, or a
+state, such as total active accounts at month end.
 
 ### Metric comparison periods
 
@@ -499,22 +499,14 @@ Users can change the recommended period to a supported option. The monitor store
 timezone and week start. The initial release uses normal calendar periods. Fiscal calendars and
 custom comparison windows are deferred.
 
-Existing monitors migrate to a bounded default without keeping refresh-to-refresh publication:
+This implementation has not been released. Its migration removes all legacy watched metrics and
+their monitor-backed observations instead of converting refresh-bound content. Related snapshots,
+evaluations, and delivery records are removed through their monitor relationships. Other observation
+history is not changed. Users recreate watched metrics with an explicit period contract. No source
+request or snapshot backfill runs during this one-time development reset.
 
-- Explicit daily, weekly, and monthly time-series buckets can keep their native calendar period when
-  the metric behavior is reproducible.
-- Hourly time series pause publication and ask the user to choose day, week, or month.
-- Quarterly and yearly monitors pause until those periods are supported.
-- Count and scalar monitors ask the user to confirm both behavior and daily, weekly, or monthly
-  period.
-- Existing dataset returned-row monitors stop business observation publication and remain result-
-  volume signals in Data health.
-- A count or scalar without an explicit point-in-time or period contract pauses publication and asks
-  for review. The same rule applies to an ambiguous average, ratio, distribution, distinct count, or
-  formula instead of applying an unsafe rollup.
-
-The management UI labels any monitor without a complete safe contract as **Review comparison** until
-an authorized user saves it. Capture can continue while publication is paused.
+After this engine is released, later migrations must preserve production monitor content unless a
+separate approved migration plan says otherwise.
 
 ### Period eligibility and finality
 
@@ -585,10 +577,11 @@ recovery or an authorized user resolves it.
 Digest cadence does not determine metric comparison periods. A weekly digest may summarize a new
 month-over-month or weekly evaluation.
 
-Chartbrew may recommend delivery cadence from the selected monitor scope: weekly when the scope
-contains weekly comparisons, and monthly when all comparisons are monthly. Existing daily delivery
-remains available for changes-only subscriptions and is always an explicit user choice. The
-recommendation is visible and editable before setup.
+Chartbrew may recommend delivery cadence from the selected monitor scope: daily when it contains
+daily comparisons, weekly when it contains weekly comparisons but no daily comparisons, and monthly
+when all comparisons are monthly. Daily, weekly, and monthly delivery are available for KPI reviews.
+Changes-only subscriptions can also use daily delivery. The recommendation is visible and editable
+before setup.
 
 The digest reads final metric-evaluation revisions that have not been delivered to that
 subscription. It does not select content from successful refreshes, a timestamp alone, or only
@@ -843,7 +836,8 @@ window.
 ### `Observation`
 
 - UUID `id`, team/project/chart/dataset/monitor references and `metric_evaluation_id`. The evaluation
-  reference is required for new period observations and nullable only for legacy history.
+  reference is required for new business-period observations and nullable only for non-period legacy
+  history.
 - Type, lifecycle status, severity, confidence band, score, direction, and deduplication key.
 - Current/baseline values, units, periods, absolute/relative deltas.
 - Encrypted bounded evidence and deterministic summary.
@@ -1131,7 +1125,8 @@ this specification describe the target architecture, but they do not add work to
 - Observation publication from final evaluations only.
 - Daily, weekly, and monthly KPI reviews. Existing daily changes-only delivery can remain available.
 - One delivery record per subscription, metric evaluation, and revision.
-- Safe migration that pauses every monitor without a complete reproducible period contract.
+- One-time development migration that removes unreleased refresh-bound monitors and their
+  monitor-backed observations so users can recreate them with explicit period contracts.
 - Exact period and readiness copy in setup, watched metrics, Home, Activity, detail, Ask context, and
   email.
 - Offline and production-like replay with publication off before release.
@@ -1167,17 +1162,18 @@ this specification describe the target architecture, but they do not add work to
 ## Rollout
 
 The implementation foundation includes retention, explicit monitors, refresh-based snapshot
-capture, deterministic publication, Home and Activity, scoped Ask, supporting analysis,
-record-count monitoring, data health, digests, feedback, and metric recommendations. Its current
-refresh-bound comparison model is not ready for broad proactive rollout because it can produce
-correct calculations at unhelpful business boundaries.
+capture, deterministic publication, Home and Activity, scoped Ask, supporting analysis, explicit
+chart count metrics, data health, digests, feedback, and metric recommendations. The earlier
+refresh-bound comparison model was not ready for broad proactive rollout because it could produce
+correct calculations at unhelpful business boundaries. Iteration Four replaces that model with
+completed-period evaluation.
 
 The revised rollout order is:
 
 1. **Stop refresh noise:** keep snapshot capture, but replace refresh-to-refresh publication with
-   explicit completed-week or completed-month eligibility.
+   explicit completed-day, completed-week, or completed-month eligibility.
 2. **Add period contracts:** store metric behavior, comparison period, period mode, calendar rules,
-   and safe migration defaults on each monitor.
+   and an explicit publication threshold on each new monitor.
 3. **Persist metric evaluations:** create one reproducible result per comparison window, including
    stable results, and make observations a filtered result of those evaluations.
 4. **Make reviews KPI-style:** update monitor setup, Home, Activity, detail, and email so they name
@@ -1277,8 +1273,8 @@ publication jobs without changing chart refresh success or hiding existing dashb
 ## Acceptance Gates
 
 - A published observation can be reproduced from stored deterministic evidence.
-- Every observation references one stored metric evaluation with aligned current and comparison
-  windows.
+- Every new business-period observation references one stored metric evaluation with aligned
+  current and comparison windows.
 - Automatic processing issues zero additional source requests for chart-backed monitors.
 - No observation is published from stale, failed, partial, or insufficient data.
 - No completed-period monitor publishes before its current period closes.
@@ -1330,6 +1326,14 @@ Run a bounded UpdateRun cleanup:
 
 ```bash
 npm run retention:run -- --category=update-runs --limit=5000
+```
+
+Replay the completed-day evaluator against the external Synthbrew watched-metrics catalogue without
+publishing observations or making source requests:
+
+```bash
+cd server
+npm run observations:replay:synthbrew -- all
 ```
 
 In a test team, watch one eligible time-series chart with a completed-week comparison and refresh it
@@ -1495,9 +1499,8 @@ comparison wording and renames the scheduled Activity digest to KPI review in us
   action.
 - [x] Separate current failures from recently recovered refreshes so historical problems do not look
   active.
-- [x] Add dataset result-volume monitoring where business metrics are not configured yet, using the
-  rows returned by normal dataset refreshes as samples in the deterministic observation pipeline.
-  Iteration Four keeps this signal in Data health and removes it from business observations.
+- [x] Remove dataset returned-row monitoring from business observations. Keep sampled row counts out
+  of the observation pipeline and require an explicit chart count metric for a business count.
 - [x] Make the first-run Home useful when a workspace has connections or datasets but no eligible
   watched metrics.
 - [x] Show which setup step is missing without implying that “no changes” were evaluated.
@@ -1634,9 +1637,9 @@ or partial source bucket cannot become a completed-period result before runtime 
 - [x] Add `MetricEvaluation` storage with idempotent window keys, readiness, finality, and bounded
   revision evidence.
 - [x] Add `MetricEvaluation` retention cleanup.
-- [ ] Add `ObservationDigestDeliveryItem` with a unique subscription/evaluation/revision key.
-- [ ] Add a required evaluation reference to new observations while retaining old observation
-  history during migration.
+- [x] Add `ObservationDigestDeliveryItem` with a unique subscription/evaluation/revision key.
+- [x] Add a required evaluation reference to new business-period observations while allowing
+  non-period legacy observation history to remain nullable.
 - [x] Return user-facing comparison settings, last evaluated period, and next expected evaluation
   from monitor APIs.
 
@@ -1650,96 +1653,89 @@ eligible comparison without publishing an observation.
 - [x] Implement complete-window flow summation for explicit `sum` and `count` metrics.
 - [x] Accept a native complete daily, weekly, or monthly value without rolling up its internal
   calculation.
-- [ ] Preserve canonical interval coverage and zero-fill evidence; reject partial or unknown flow
+- [x] Preserve canonical interval coverage and zero-fill evidence; reject partial or unknown flow
   windows instead of treating missing buckets as zero.
 - [x] Implement aligned boundary checkpoints for explicit state scalar and count metrics.
 - [x] Reject open periods, missing buckets, stale checkpoints, changed definitions, and unsupported
   non-additive rollups.
-- [ ] Use the user-confirmed threshold as the publication gate. Use importance and robust history
+- [x] Use the user-confirmed threshold as the publication gate. Use importance and robust history
   only as optional ranking context.
 - [x] Upsert one evaluation per period pair, apply the settling delay, and preserve bounded revisions
   for late data.
 - [x] Finalize due evaluations from stored snapshots without a source request.
-- [ ] Publish only from final evaluations.
+- [x] Publish only from final evaluations.
 - [x] Keep LLM audit off and do not add a new period-evaluation audit path in this release.
-- [ ] Publish observations from evaluations and replace direction/cooldown deduplication with the
+- [x] Publish observations from evaluations and replace direction/cooldown deduplication with the
   evaluation window identity.
-- [ ] Supersede positive and neutral period changes when a newer evaluation arrives; keep unhealthy
+- [x] Supersede positive and neutral period changes when a newer evaluation arrives; keep unhealthy
   attention open until a later aligned evaluation shows recovery or an authorized user resolves it.
 
 **Exit condition:** many refreshes during July can produce at most one final July-versus-June
 evaluation and at most one observation, after July closes.
 
-### 4. Migrate existing watched metrics safely
+### 4. Reset unreleased watched metrics
 
-- [ ] Keep explicit daily, weekly, and monthly time-series periods only when metric behavior and coverage
-  are reproducible.
-- [ ] Pause hourly monitors until the user chooses day, week, or month.
-- [ ] Pause quarterly and yearly monitors until those periods are supported.
-- [ ] Ask users to confirm behavior, period, and threshold for count and scalar metrics.
-- [ ] Move dataset returned-row monitoring to Data health and stop publishing it as a business
-  record-count observation.
-- [ ] Pause count or scalar metrics without a period contract, plus ambiguous average, ratio,
-  distribution, distinct-count, and formula monitors, with **Review comparison** instead of applying
-  an unsafe rule.
-- [ ] Backfill only from retained snapshots that fully satisfy the new period contract. Do not issue
-  a source request for migration and do not treat uneven scalar samples as aligned checkpoints.
-- [ ] Preserve old observations as history and stop revising them with new refresh-bound evidence.
+- [x] Add a database migration that removes legacy monitor-backed observations before it removes all
+  unreleased `MetricMonitor` rows.
+- [x] Let monitor relationships remove related snapshots, evaluations, and delivery records. Do not
+  issue source requests or backfill snapshots during the reset.
+- [x] Keep unrelated observation history unchanged and document that users must recreate watched
+  metrics with an explicit period contract.
 
-**Exit condition:** existing users stop receiving refresh-based changes, and every active monitor
-either has a safe explicit period contract or asks for review.
+**Exit condition:** no refresh-bound monitor or monitor-backed observation remains, and a fresh
+database plus an upgraded development database can both apply all migrations.
 
 ### 5. Update setup, management, and evidence UI
 
 - [x] Let the user choose how Chartbrew compares the metric independently from chart refresh and
   digest cadence.
-- [ ] Show a recommended period and metric behavior, with an exact example such as `July compared
+- [x] Show a recommended period and metric behavior, with an exact example such as `July compared
   with June` before confirmation.
 - [x] Ask for one relative, absolute, or percentage-point meaningful-change threshold.
-- [ ] Preview the threshold effect before confirmation.
+- [x] Preview the threshold effect before confirmation.
 - [x] Require recommendation acceptance to confirm the same behavior, period, and threshold contract
   as manual setup.
-- [ ] Remove `Compared after each refresh` from scalar and record-count UI.
+- [x] Remove `Compared after each refresh` from scalar and record-count UI.
 - [x] Show the last completed evaluation, the next expected evaluation, and missing comparison data in
   watched-metric management.
-- [ ] Warn when the current refresh schedule cannot supply complete flow windows or a fresh state
+- [x] Warn when the current refresh schedule cannot supply complete flow windows or a fresh state
   checkpoint near the selected period boundary.
-- [ ] Update Home, Activity, detail, email, and Ask context to use exact current and comparison period
+- [x] Update Home, Activity, detail, email, and Ask context to use exact current and comparison period
   labels.
-- [ ] Replace baseline sample progress with period or aligned-checkpoint progress.
+- [x] Replace baseline sample progress with period or aligned-checkpoint progress.
 
 **Exit condition:** Benji can predict when the next evaluation will happen and Maya can identify the
 two compared business windows without opening calculation details.
 
 ### 6. Make Activity digests into KPI reviews
 
-- [ ] Add `kpi_review` and `changes_only` content modes plus monthly cadence to digest setup and
+- [x] Add `kpi_review` and `changes_only` content modes plus monthly cadence to digest setup and
   persistence.
-- [ ] Recommend daily delivery when the scope contains daily comparisons, weekly delivery when it
+- [x] Recommend daily delivery when the scope contains daily comparisons, weekly delivery when it
   contains weekly comparisons, and monthly delivery when all comparisons are monthly; require user
   confirmation.
-- [ ] Select undelivered final metric-evaluation revisions, independent of source refresh count,
+- [x] Select undelivered final metric-evaluation revisions, independent of source refresh count,
   observation `last_detected_at`, or a last-delivery timestamp alone.
-- [ ] Rank unhealthy and material results first, then show stable scoped metrics in a compact group.
-- [ ] Deliver each evaluation once per subscription, with unresolved attention as an explicit carry-
+- [x] Rank unhealthy and material results first, then show stable scoped metrics in a compact group.
+- [x] Deliver each evaluation once per subscription, with unresolved attention as an explicit carry-
   over section.
-- [ ] Hold a scheduled review for a bounded window when an expected evaluation is settling, then
+- [x] Hold a scheduled review for a bounded window when an expected evaluation is settling, then
   report its waiting state and deliver one late KPI update after finalization without waiting for the
   next monthly cycle.
-- [ ] Label late correction revisions as **Corrected** and deliver each revision once.
-- [ ] Explain stale, incomplete, and not-yet-closed metrics without calling them stable.
-- [ ] Use the same evaluation selection and rendering for preview and external delivery.
+- [x] Label late correction revisions as **Corrected** and deliver each revision once.
+- [x] Explain stale, incomplete, and not-yet-closed metrics without calling them stable.
+- [x] Use the same evaluation selection and rendering for preview and external delivery.
 
 **Exit condition:** a Monday weekly review can include one new July-versus-June KPI result, can show
 valid stable metrics, and does not repeat facts because charts refreshed many times.
 
 ### 7. Calibrate and release completed periods
 
-- [ ] Run policy replay on the new period corpus and representative real-workspace snapshots with
+- [x] Run policy replay on the new period corpus and representative real-workspace snapshots with
   publication off.
-- [ ] Measure useful/not-useful feedback by metric behavior, comparison period, threshold type,
+- [x] Measure useful/not-useful feedback by metric behavior, comparison period, threshold type,
   completion state, and observation impact.
-- [ ] Keep LLM auditing off during this release calibration.
+- [x] Keep LLM auditing off during this release calibration.
 - [ ] Review KPI-review opens, observation detail opens, dismissals, and incorrect-comparison reasons.
 - [ ] Release completed-period publication as the only observation publication path after all
   acceptance gates pass.

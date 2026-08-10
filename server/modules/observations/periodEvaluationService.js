@@ -4,6 +4,7 @@ const db = require("../../models/models");
 const { evaluateCompletedPeriod } = require("./evaluatePeriod");
 const { getMonitorPeriodContract } = require("./periodContract");
 const { getPeriodEvaluationSchedule } = require("./periodWindows");
+const { publishMetricEvaluation } = require("./publishEvaluation");
 
 const MAXIMUM_REVISIONS = 3;
 
@@ -167,6 +168,9 @@ async function evaluateMonitorPeriod(monitor, options = {}) {
   if (!result.eligible) return updateWaitingMonitor(monitor, result, schedule);
 
   const evaluation = await persistEvaluation(monitor, contract, result, asOf);
+  const publication = ["final", "revised"].includes(evaluation.finality)
+    ? await publishMetricEvaluation(monitor, evaluation)
+    : { status: "not_final" };
   const nextEvaluationAt = ["final", "revised"].includes(evaluation.finality)
     ? schedule.nextDueAt
     : schedule.currentDueAt;
@@ -176,7 +180,9 @@ async function evaluateMonitorPeriod(monitor, options = {}) {
     status: "ready",
     status_reason: evaluation.finality === "settling" ? "settling" : null,
   });
-  return { evaluation, result, status: evaluation.finality };
+  return {
+    evaluation, publication, result, status: evaluation.finality,
+  };
 }
 
 module.exports = {

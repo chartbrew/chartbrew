@@ -196,25 +196,43 @@ async function renderObservationDigest(data) {
   const activityUrl = `${settings.client}/activity`;
   return renderEmailTemplate("observationSummary", {
     activityUrl,
-    healthItems: data.healthItems,
-    observations: data.observations,
+    attentionItems: data.attentionItems || [],
+    contentMode: data.contentMode || "kpi_review",
+    healthItems: data.healthItems || [],
+    kpis: data.kpis || [],
+    observations: data.observations || [],
     recipientName: data.recipientName,
     scopeName: data.scopeName,
     teamName: data.teamName,
+    waitingMetrics: data.waitingMetrics || [],
   });
 }
 
 module.exports.renderObservationDigest = renderObservationDigest;
 
 module.exports.sendObservationDigest = async (data) => {
-  const observationLines = data.observations.map((item) => (
+  const contentMode = data.contentMode || "kpi_review";
+  const observationLines = (data.observations || []).map((item) => (
     `• ${item.title}: ${item.summary}`
   ));
-  const healthLines = data.healthItems.map((item) => `• ${item.message}`);
+  const kpiLines = (data.kpis || []).map((item) => (
+    `• ${item.name} — ${item.comparisonLabel}: ${item.currentValueLabel} from ${item.comparisonValueLabel} (${item.statusLabel}${item.corrected ? ", corrected" : ""})`
+  ));
+  const attentionLines = (data.attentionItems || []).map((item) => (
+    `• Still needs attention: ${item.title}`
+  ));
+  const waitingLines = (data.waitingMetrics || []).map((item) => (
+    `• ${item.name}: ${item.reason}`
+  ));
+  const healthLines = (data.healthItems || []).map((item) => `• ${item.message}`);
+  const emailName = contentMode === "kpi_review" ? "KPI review" : "Changes only";
   const textLines = [
-    `Your Chartbrew Activity digest for ${data.teamName}`,
+    `Your Chartbrew ${emailName} email for ${data.teamName}`,
     "",
+    ...kpiLines,
     ...observationLines,
+    ...attentionLines,
+    ...waitingLines,
     ...healthLines,
     "",
     `Open Chartbrew: ${settings.client}`,
@@ -223,7 +241,7 @@ module.exports.sendObservationDigest = async (data) => {
   return nodemail.sendMail({
     from: settings.adminMail,
     html: emailHtml,
-    subject: `Chartbrew Activity digest — ${data.teamName}`,
+    subject: `Chartbrew ${emailName} — ${data.teamName}`,
     text: textLines.join("\n"),
     to: data.recipient,
   });

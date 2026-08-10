@@ -59,8 +59,14 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ObservationAudit.associate = (models) => {
-    models.ObservationAudit.belongsTo(models.Observation, { foreignKey: "observation_id" });
-    models.ObservationAudit.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.ObservationAudit.belongsTo(models.Observation, {
+      foreignKey: "observation_id",
+      onDelete: "CASCADE",
+    });
+    models.ObservationAudit.belongsTo(models.Team, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
     models.ObservationAudit.belongsTo(models.AiUsage, {
       foreignKey: "usage_id",
       constraints: false,

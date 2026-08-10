@@ -48,10 +48,8 @@ function extractTimeseries(monitor, layer, options) {
   const timezone = monitor.baseline_policy?.calendarTimezone || "UTC";
   return {
     reason: rows.length < 2 ? "needs_more_history" : null,
-    snapshots: rows.map((row, index) => {
-      const periodEnd = rows[index + 1]
-        ? new Date(rows[index + 1].time)
-        : addPeriod(new Date(row.time), granularity, timezone);
+    snapshots: rows.map((row) => {
+      const periodEnd = addPeriod(new Date(row.time), granularity, timezone);
       const coverage = hasCompleteResult && periodEnd <= refreshedAt ? "complete" : "partial";
       return {
         completeness: coverage === "complete" ? 1 : 0,

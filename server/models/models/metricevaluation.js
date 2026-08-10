@@ -137,8 +137,18 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   MetricEvaluation.associate = (models) => {
-    models.MetricEvaluation.belongsTo(models.MetricMonitor, { foreignKey: "monitor_id" });
-    models.MetricEvaluation.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.MetricEvaluation.belongsTo(models.MetricMonitor, {
+      foreignKey: "monitor_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricEvaluation.belongsTo(models.Team, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricEvaluation.hasOne(models.Observation, { foreignKey: "metric_evaluation_id" });
+    models.MetricEvaluation.hasMany(models.ObservationDigestDeliveryItem, {
+      foreignKey: "metric_evaluation_id",
+    });
   };
 
   return MetricEvaluation;

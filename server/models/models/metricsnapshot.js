@@ -23,11 +23,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     granularity: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(32),
       allowNull: false,
     },
     rollup: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(32),
       allowNull: false,
       defaultValue: "raw",
     },
@@ -52,13 +52,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     result_as_of: DataTypes.DATE,
     definition_fingerprint: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(64),
       allowNull: false,
     },
   }, {
     freezeTableName: true,
     indexes: [
       {
+        name: "metric_snapshot_period_unique",
         unique: true,
         fields: [
           "monitor_id",
@@ -69,18 +70,24 @@ module.exports = (sequelize, DataTypes) => {
           "rollup",
         ],
       },
-      { fields: ["monitor_id", "period_end"] },
-      { fields: ["team_id", "period_end"] },
-      { fields: ["period_end"] },
+      { fields: ["monitor_id", "period_end"], name: "metric_snapshot_monitor_period" },
+      { fields: ["team_id", "period_end"], name: "metric_snapshot_team_period" },
+      { fields: ["period_end"], name: "metric_snapshot_period_end" },
     ],
   });
 
   MetricSnapshot.associate = (models) => {
-    models.MetricSnapshot.belongsTo(models.MetricMonitor, { foreignKey: "monitor_id" });
-    models.MetricSnapshot.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.MetricSnapshot.belongsTo(models.MetricMonitor, {
+      foreignKey: "monitor_id",
+      onDelete: "CASCADE",
+    });
+    models.MetricSnapshot.belongsTo(models.Team, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
     models.MetricSnapshot.belongsTo(models.UpdateRun, {
       foreignKey: "update_run_id",
-      constraints: false,
+      onDelete: "SET NULL",
     });
   };
 

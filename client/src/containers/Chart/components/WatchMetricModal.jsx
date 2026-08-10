@@ -15,6 +15,7 @@ import PeriodComparisonFields, {
   getPeriodComparisonPayload,
   getPeriodCopy,
   getThresholdCopy,
+  getThresholdEffectCopy,
   isPeriodSettingsValid,
   PeriodCalendarFields,
 } from "./PeriodComparisonFields";
@@ -114,6 +115,10 @@ function WatchMetricModal({
     periodSettings.thresholdType,
     periodSettings.thresholdValue
   );
+  const thresholdEffectCopy = getThresholdEffectCopy(
+    periodSettings.thresholdType,
+    periodSettings.thresholdValue
+  );
   const metricName = selectedOption?.name || name.trim() || chartName;
   const directionCopy = {
     higher: "Higher results are good.",
@@ -209,6 +214,8 @@ function WatchMetricModal({
                   aggregate={selectedOption?.aggregate}
                   kind={selectedOption?.kind}
                   onChange={setPeriodSettings}
+                  recommendedMetricBehavior={selectedOption?.recommendedMetricBehavior}
+                  refreshSchedule={selectedOption?.refreshSchedule}
                   timeUnit={selectedOption?.timeUnit}
                   value={periodSettings}
                   valueMeaning={previewFormat.meaning}
@@ -223,12 +230,11 @@ function WatchMetricModal({
                   <div className="flex flex-col gap-1">
                     <p className="font-medium text-foreground">{periodCopy.label}</p>
                     <p className="text-sm text-foreground-500">
-                      Chartbrew compares {behaviorCopy.summary} with the {periodCopy.singular}
-                      {" before it."}
+                      {periodCopy.example} Chartbrew uses {behaviorCopy.summary}.
                     </p>
                     <p className="text-sm text-foreground-500">
                       A change appears when <span className="font-medium text-foreground">{metricName}</span>
-                      {" moves by "}{thresholdCopy.summary}. {directionCopy}
+                      {" moves by "}{thresholdCopy.summary}. {thresholdEffectCopy} {directionCopy}
                     </p>
                   </div>
                 </div>
@@ -506,6 +512,10 @@ WatchMetricModal.propTypes = {
     kind: PropTypes.string.isRequired,
     name: PropTypes.string,
     recommendedMetricBehavior: PropTypes.string,
+    refreshSchedule: PropTypes.shape({
+      automatic: PropTypes.bool,
+      intervalSeconds: PropTypes.number,
+    }),
     timeUnit: PropTypes.string,
     valueFormat: PropTypes.shape({
       display: PropTypes.shape({

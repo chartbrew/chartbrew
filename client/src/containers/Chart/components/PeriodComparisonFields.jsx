@@ -35,6 +35,7 @@ const WEEK_DAYS = [
 const PERIOD_OPTIONS = {
   day: {
     description: "Yesterday compared with the day before",
+    example: "For example, August 8 compared with August 7.",
     icon: LuCalendarDays,
     label: "Day over day",
     plural: "days",
@@ -42,6 +43,7 @@ const PERIOD_OPTIONS = {
   },
   month: {
     description: "Last complete month compared with the month before",
+    example: "For example, July compared with June.",
     icon: LuCalendarClock,
     label: "Month over month",
     plural: "months",
@@ -49,6 +51,7 @@ const PERIOD_OPTIONS = {
   },
   week: {
     description: "Last complete week compared with the week before",
+    example: "For example, July 27–August 2 compared with July 20–26.",
     icon: LuCalendarRange,
     label: "Week over week",
     plural: "weeks",
@@ -59,6 +62,7 @@ const PERIOD_OPTIONS = {
 function getPeriodCopy(period) {
   return PERIOD_OPTIONS[period] || {
     description: "Last complete period versus the one before",
+    example: "The last complete period compared with the one before it.",
     icon: LuCalendarRange,
     label: "Period over period",
     plural: "periods",
@@ -115,12 +119,33 @@ function getThresholdCopy(type, value) {
   };
 }
 
-function OptionContent({ description, icon: Icon, label }) {
+function formatExampleNumber(value) {
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
+}
+
+function getThresholdEffectCopy(type, value) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return null;
+  if (type === "absolute") {
+    return `For example, 100 to ${formatExampleNumber(100 + number)} would create a change.`;
+  }
+  if (type === "percentage_points") {
+    return `For example, 10% to ${formatExampleNumber(10 + number)}% would create a change.`;
+  }
+  return `For example, 100 to ${formatExampleNumber(100 * (1 + (number / 100)))} would create a change.`;
+}
+
+function OptionContent({ description, icon: Icon, label, recommended = false }) {
   return (
     <div className="flex items-start gap-3 py-1">
       <Icon className="mt-0.5 shrink-0 text-foreground-400" size={17} aria-hidden />
       <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground">{label}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-foreground">{label}</p>
+          {recommended ? (
+            <span className="text-xs font-medium text-primary">Recommended</span>
+          ) : null}
+        </div>
         <p className="text-xs text-foreground-500">{description}</p>
       </div>
     </div>
@@ -131,6 +156,11 @@ OptionContent.propTypes = {
   description: PropTypes.string.isRequired,
   icon: PropTypes.elementType.isRequired,
   label: PropTypes.string.isRequired,
+  recommended: PropTypes.bool,
+};
+
+OptionContent.defaultProps = {
+  recommended: false,
 };
 
 function getMachineTimezone() {
@@ -138,11 +168,14 @@ function getMachineTimezone() {
 }
 
 function getDefaultPeriodSettings(source = {}) {
+  const supportedSourcePeriod = ["day", "week", "month"].includes(source.timeUnit)
+    ? source.timeUnit
+    : null;
   return {
     calendarTimezone: source.comparison?.timezone
       || source.calendarTimezone
       || getMachineTimezone(),
-    comparisonPeriod: source.comparison?.period || "month",
+    comparisonPeriod: source.comparison?.period || supportedSourcePeriod || "month",
     metricBehavior: source.metricBehavior
       || source.recommendedMetricBehavior
       || (["count", "sum"].includes(source.aggregate) ? "flow" : "state"),
@@ -152,6 +185,42 @@ function getDefaultPeriodSettings(source = {}) {
       : `${source.threshold?.value || 10}`,
     weekStartsOn: `${source.comparison?.weekStartsOn || 1}`,
   };
+}
+
+function getRecommendedBehavior(aggregate, recommendedMetricBehavior) {
+  return recommendedMetricBehavior
+    || (["count", "sum"].includes(aggregate) ? "flow" : "state");
+}
+
+function canBuildCompleteFlow(timeUnit, comparisonPeriod) {
+  if (!timeUnit || timeUnit === comparisonPeriod) return true;
+  const supportedRollups = {
+    day: new Set(["week", "month"]),
+    hour: new Set(["day", "week"]),
+  };
+  return supportedRollups[timeUnit]?.has(comparisonPeriod) || false;
+}
+
+function getRefreshScheduleWarning({
+  comparisonPeriod,
+  metricBehavior,
+  refreshSchedule,
+  timeUnit,
+}) {
+  const periodCopy = getPeriodCopy(comparisonPeriod);
+  if (metricBehavior === "flow" && !canBuildCompleteFlow(timeUnit, comparisonPeriod)) {
+    return `This chart may not contain every value needed for a complete ${periodCopy.singular}. Group the chart by ${periodCopy.singular} or use a smaller time unit.`;
+  }
+  if (!refreshSchedule?.automatic) {
+    return `This chart has no automatic update schedule. Refresh it after each ${periodCopy.singular} closes so Chartbrew can compare it.`;
+  }
+  if (metricBehavior === "state" && refreshSchedule.intervalSeconds) {
+    const toleranceSeconds = comparisonPeriod === "day" ? 6 * 60 * 60 : 24 * 60 * 60;
+    if (refreshSchedule.intervalSeconds > toleranceSeconds * 2) {
+      return `This chart may not update near the end of each ${periodCopy.singular}. Use a more frequent update schedule.`;
+    }
+  }
+  return null;
 }
 
 function getPeriodComparisonPayload(settings) {
@@ -192,6 +261,8 @@ function PeriodComparisonFields({
   aggregate,
   kind,
   onChange,
+  recommendedMetricBehavior,
+  refreshSchedule,
   timeUnit,
   value,
   valueMeaning,
@@ -201,6 +272,14 @@ function PeriodComparisonFields({
   const nativePeriodAvailable = kind === "timeseries" && timeUnit === value.comparisonPeriod;
   const flowAvailable = ["count", "sum"].includes(aggregate);
   const behaviorOptions = ["flow", "state", "ratio", "distribution"];
+  const recommendedPeriod = ["day", "week", "month"].includes(timeUnit) ? timeUnit : "month";
+  const recommendedBehavior = getRecommendedBehavior(aggregate, recommendedMetricBehavior);
+  const scheduleWarning = getRefreshScheduleWarning({
+    comparisonPeriod: value.comparisonPeriod,
+    metricBehavior: value.metricBehavior,
+    refreshSchedule,
+    timeUnit,
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -217,7 +296,7 @@ function PeriodComparisonFields({
               const option = getPeriodCopy(period);
               return (
                 <ListBox.Item id={period} key={period} textValue={option.label}>
-                  <OptionContent {...option} />
+                  <OptionContent {...option} recommended={period === recommendedPeriod} />
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
               );
@@ -253,7 +332,11 @@ function PeriodComparisonFields({
                   key={behavior}
                   textValue={option.label}
                 >
-                  <OptionContent {...option} description={description} />
+                  <OptionContent
+                    {...option}
+                    description={description}
+                    recommended={!disabled && behavior === recommendedBehavior}
+                  />
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
               );
@@ -310,6 +393,12 @@ function PeriodComparisonFields({
           </Select>
         </div>
       </div>
+
+      {scheduleWarning ? (
+        <p className="text-sm text-warning-600 dark:text-warning-400" role="status">
+          {scheduleWarning}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -388,6 +477,11 @@ PeriodComparisonFields.propTypes = {
   aggregate: PropTypes.string,
   kind: PropTypes.string,
   onChange: PropTypes.func.isRequired,
+  recommendedMetricBehavior: PropTypes.string,
+  refreshSchedule: PropTypes.shape({
+    automatic: PropTypes.bool,
+    intervalSeconds: PropTypes.number,
+  }),
   timeUnit: PropTypes.string,
   value: periodSettingsShape.isRequired,
   valueMeaning: PropTypes.string,
@@ -396,6 +490,8 @@ PeriodComparisonFields.propTypes = {
 PeriodComparisonFields.defaultProps = {
   aggregate: "none",
   kind: null,
+  recommendedMetricBehavior: null,
+  refreshSchedule: null,
   timeUnit: null,
   valueMeaning: "number",
 };
@@ -411,6 +507,7 @@ export {
   getPeriodComparisonPayload,
   getPeriodCopy,
   getThresholdCopy,
+  getThresholdEffectCopy,
   isPeriodSettingsValid,
   PeriodCalendarFields,
 };

@@ -1,7 +1,6 @@
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
-const MonitorController = require("./MonitorController");
 const ObservationController = require("./ObservationController");
 const {
   PROJECT_EDITOR_ROLES,
@@ -358,7 +357,6 @@ class HomeController {
   }
 
   async getHome(access) {
-    const monitorController = new MonitorController();
     const observationController = new ObservationController();
     const [
       changes,
@@ -387,26 +385,18 @@ class HomeController {
     });
     const attention = prioritizeHomeAttention(visibleObservations, dataHealth.count);
     const observations = attention.observations;
-    let recordCountOptions = [];
-
     let setupState = "active";
     if (monitors.length === 0) {
-      const [connectionCount, datasetCount, availableDatasets] = await Promise.all([
+      const [connectionCount, datasetCount] = await Promise.all([
         db.Connection.count({ where: { team_id: access.teamId } }),
         db.Dataset.count({ where: { draft: false, team_id: access.teamId } }),
-        access.allProjects || PROJECT_EDITOR_ROLES.has(access.role)
-          ? monitorController.recordCountOptions(access)
-          : Promise.resolve([]),
       ]);
-      recordCountOptions = availableDatasets;
       if (!(access.allProjects || PROJECT_EDITOR_ROLES.has(access.role))) {
         setupState = "waiting_for_metrics";
       } else if (connectionCount === 0) {
         setupState = access.canConfigureTeam ? "connect_data" : "waiting_for_setup";
       } else if (datasetCount === 0) {
         setupState = "create_dataset";
-      } else if (recordCountOptions.length > 0) {
-        setupState = "watch_record_count";
       } else {
         setupState = "watch_metric";
       }
@@ -431,7 +421,6 @@ class HomeController {
       observations,
       needsAttention: attention.needsAttention,
       notableChanges: attention.notableChanges,
-      recordCountOptions: recordCountOptions.slice(0, 20),
       setupState,
       unreadCount: unreadChanges + dataHealth.count,
     };

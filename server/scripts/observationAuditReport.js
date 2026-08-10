@@ -26,8 +26,12 @@ async function run() {
             "severity",
           ],
           include: [{
-            attributes: ["baseline_policy", "kind", "metric_spec"],
+            attributes: ["baseline_policy", "kind", "metric_spec", "publication_policy"],
             model: db.MetricMonitor,
+            required: false,
+          }, {
+            attributes: ["finality", "publication_threshold_type", "readiness"],
+            model: db.MetricEvaluation,
             required: false,
           }],
           model: db.Observation,

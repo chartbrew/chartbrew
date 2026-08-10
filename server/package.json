@@ -23,6 +23,7 @@
     "retention:run": "node scripts/runRetention.js",
     "observations:audit-report": "node scripts/observationAuditReport.js",
     "observations:replay": "node scripts/replayObservationPolicy.js",
+    "observations:replay:synthbrew": "node scripts/replaySynthbrewPeriods.js",
     "viz:migration-audit": "node scripts/auditVisualizationMigration.js",
     "viz:corpus-audit": "node scripts/auditVisualizationCorpus.js",
     "precommit": "lint-staged",
