@@ -580,54 +580,188 @@ async function recordInstantEvent(traceContext, stage, payload = {}, status = "s
   return finishEvent(traceContext, event, status, payload);
 }
 
-async function cleanupExpiredRuns(retentionDays) {
-  if (!db.UpdateRun || !db.UpdateRunEvent) {
-    return { deletedRuns: 0, deletedEvents: 0 };
+const DEFAULT_RUN_RETENTION_DAYS = 30;
+const DEFAULT_FAILED_RUN_RETENTION_DAYS = 90;
+const DEFAULT_RETENTION_BATCH_SIZE = 1000;
+const DEFAULT_RETENTION_MAX_RUNTIME_SECONDS = 300;
+
+function parseNonNegativeInteger(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function normalizeCleanupOptions(options = {}) {
+  if (typeof options !== "object" || Array.isArray(options)) {
+    const retentionDays = parseNonNegativeInteger(options, DEFAULT_RUN_RETENTION_DAYS);
+    return {
+      retentionDays,
+      failedRetentionDays: retentionDays,
+      batchSize: DEFAULT_RETENTION_BATCH_SIZE,
+      maxRuntimeSeconds: DEFAULT_RETENTION_MAX_RUNTIME_SECONDS,
+      limit: null,
+      dryRun: false,
+      now: new Date(),
+    };
   }
 
-  const parsedRetentionDays = Number.parseInt(retentionDays, 10);
-  const effectiveRetentionDays = Number.isInteger(parsedRetentionDays) && parsedRetentionDays > 0
-    ? parsedRetentionDays
-    : 30;
-  const cutoff = new Date(Date.now() - (effectiveRetentionDays * 24 * 60 * 60 * 1000));
+  return {
+    retentionDays: parseNonNegativeInteger(
+      options.retentionDays,
+      DEFAULT_RUN_RETENTION_DAYS
+    ),
+    failedRetentionDays: parseNonNegativeInteger(
+      options.failedRetentionDays,
+      DEFAULT_FAILED_RUN_RETENTION_DAYS
+    ),
+    batchSize: Math.max(1, parseNonNegativeInteger(
+      options.batchSize,
+      DEFAULT_RETENTION_BATCH_SIZE
+    )),
+    maxRuntimeSeconds: Math.max(1, parseNonNegativeInteger(
+      options.maxRuntimeSeconds,
+      DEFAULT_RETENTION_MAX_RUNTIME_SECONDS
+    )),
+    limit: options.limit === undefined || options.limit === null
+      ? null
+      : Math.max(1, parseNonNegativeInteger(options.limit, 1)),
+    dryRun: options.dryRun === true,
+    now: hydrateDate(options.now) || new Date(),
+  };
+}
+
+function buildExpiredRunWhere(options) {
+  const conditions = [];
+  const failedCutoff = options.failedRetentionDays > 0
+    ? new Date(options.now.getTime() - (options.failedRetentionDays * 24 * 60 * 60 * 1000))
+    : null;
+  const standardCutoff = options.retentionDays > 0
+    ? new Date(options.now.getTime() - (options.retentionDays * 24 * 60 * 60 * 1000))
+    : null;
+
+  if (failedCutoff) {
+    conditions.push({
+      status: "failed",
+      startedAt: { [Op.lt]: failedCutoff },
+    });
+  }
+
+  if (standardCutoff) {
+    conditions.push({
+      status: { [Op.ne]: "failed" },
+      startedAt: { [Op.lt]: standardCutoff },
+    });
+  }
+
+  if (conditions.length === 0) return null;
+  if (conditions.length === 1) return conditions[0];
+  return { [Op.or]: conditions };
+}
+
+async function cleanupExpiredRuns(cleanupOptions = {}) {
+  if (!db.UpdateRun || !db.UpdateRunEvent) {
+    return {
+      deletedRuns: 0,
+      deletedEvents: 0,
+      batches: 0,
+      matchedRuns: 0,
+    };
+  }
+
+  const options = normalizeCleanupOptions(cleanupOptions);
+  const where = buildExpiredRunWhere(options);
+  if (!where) {
+    return {
+      deletedRuns: 0,
+      deletedEvents: 0,
+      batches: 0,
+      matchedRuns: 0,
+      disabled: true,
+    };
+  }
 
   try {
-    const expiredRuns = await db.UpdateRun.findAll({
-      where: {
-        startedAt: {
-          [Op.lt]: cutoff,
-        },
-      },
-      attributes: ["id"],
-    });
-    const runIds = expiredRuns.map((run) => run.id);
+    if (options.dryRun) {
+      const matchedRuns = await db.UpdateRun.count({ where });
+      const oldestRun = await db.UpdateRun.findOne({
+        where,
+        attributes: ["startedAt"],
+        order: [["startedAt", "ASC"], ["id", "ASC"]],
+      });
 
-    if (runIds.length === 0) {
-      return { deletedRuns: 0, deletedEvents: 0 };
+      return {
+        deletedRuns: 0,
+        deletedEvents: 0,
+        batches: 0,
+        matchedRuns,
+        oldestStartedAt: oldestRun?.startedAt || null,
+        dryRun: true,
+      };
     }
 
-    const deletedEvents = await db.UpdateRunEvent.destroy({
-      where: {
-        runId: runIds,
-      },
-    });
-    const deletedRuns = await db.UpdateRun.destroy({
-      where: {
-        id: runIds,
-      },
-    });
+    const startedAt = Date.now();
+    let deletedRuns = 0;
+    let deletedEvents = 0;
+    let batches = 0;
+
+    while ((Date.now() - startedAt) < (options.maxRuntimeSeconds * 1000)) {
+      const remaining = options.limit === null ? options.batchSize : options.limit - deletedRuns;
+      if (remaining <= 0) break;
+
+      // Batches are intentionally sequential to keep database load bounded.
+      // eslint-disable-next-line no-await-in-loop
+      const expiredRuns = await db.UpdateRun.findAll({
+        where,
+        attributes: ["id"],
+        order: [["id", "ASC"]],
+        limit: Math.min(options.batchSize, remaining),
+      });
+      const runIds = expiredRuns.map((run) => run.id);
+      if (runIds.length === 0) break;
+
+      // eslint-disable-next-line no-await-in-loop
+      const result = await db.sequelize.transaction(async (transaction) => {
+        const batchDeletedEvents = await db.UpdateRunEvent.destroy({
+          where: { runId: { [Op.in]: runIds } },
+          transaction,
+        });
+        const batchDeletedRuns = await db.UpdateRun.destroy({
+          where: { id: { [Op.in]: runIds } },
+          transaction,
+        });
+
+        return {
+          deletedEvents: batchDeletedEvents,
+          deletedRuns: batchDeletedRuns,
+        };
+      });
+
+      deletedEvents += result.deletedEvents;
+      deletedRuns += result.deletedRuns;
+      batches += 1;
+
+      if (result.deletedRuns === 0 || runIds.length < Math.min(options.batchSize, remaining)) {
+        break;
+      }
+    }
 
     emitStructuredAuditLog("cleanup_completed", {
-      cutoff: cutoff.toISOString(),
-      retentionDays: effectiveRetentionDays,
+      retentionDays: options.retentionDays,
+      failedRetentionDays: options.failedRetentionDays,
       deletedRuns,
       deletedEvents,
+      batches,
     });
 
-    return { deletedRuns, deletedEvents };
+    return {
+      deletedRuns,
+      deletedEvents,
+      batches,
+      matchedRuns: deletedRuns,
+      runtimeMs: Date.now() - startedAt,
+    };
   } catch (error) {
     emitAuditInternalError("[updateAudit] failed to cleanup expired runs", error);
-    return { deletedRuns: 0, deletedEvents: 0 };
+    throw error;
   }
 }
 
@@ -649,4 +783,6 @@ module.exports = {
   failRun,
   updateRunContext,
   cleanupExpiredRuns,
+  buildExpiredRunWhere,
+  normalizeCleanupOptions,
 };

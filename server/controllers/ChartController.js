@@ -15,6 +15,7 @@ const {
   markChartDatasetIntelligenceStale,
   markDatasetIntelligenceStale,
 } = require("../modules/datasetIntelligence/profileLifecycle");
+const { processChartResult } = require("../modules/observations/processChartResult");
 
 const db = require("../models/models");
 const DatasetController = require("./DatasetController");
@@ -1040,6 +1041,31 @@ class ChartController {
                 variantHash: runtimeContext.chartVariantHash,
               });
             }
+          }
+        }
+
+        const hasObservationRuntimePayload = ((effectiveFilters && effectiveFilters.length > 0)
+          || (effectiveVariables && Object.keys(effectiveVariables).length > 0)
+          || runtimeOnly);
+        const shouldProcessObservations = !isExport
+          && !skipSave
+          && !runtimeOnly
+          && !effectiveGetCache
+          && !effectiveNoSource
+          && !hasObservationRuntimePayload
+          && Boolean(gChartData?.frame);
+        if (shouldProcessObservations) {
+          try {
+            await processChartResult({
+              chart: gChart,
+              frame: gChartData.frame,
+              refreshedAt: new Date(),
+              teamId: project?.team_id || chartTraceContext?.teamId || null,
+              updateRunId: chartTraceContext?.runId || null,
+              visualization: gChartData.visualization,
+            });
+          } catch (error) {
+            console.error("[observations] Chart result processing failed", error.message); // eslint-disable-line no-console
           }
         }
 

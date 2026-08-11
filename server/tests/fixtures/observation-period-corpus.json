@@ -1,0 +1,616 @@
+{
+  "version": 1,
+  "legacyPolicy": {
+    "minimumPercentagePointChange": 1,
+    "minimumRelativeChange": 0.1,
+    "publishScore": 0.75,
+    "scoringVersion": "deterministic-v1"
+  },
+  "scenarios": [
+    {
+      "id": "open-month-partial-flow",
+      "description": "An open August total must not be compared with complete July revenue.",
+      "tags": ["open_month", "flow", "legacy_false_positive"],
+      "now": "2026-08-09T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "Asia/Bangkok",
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "snapshots": [
+          {
+            "periodStart": "2026-07-01T00:00:00.000Z",
+            "periodEnd": "2026-08-01T00:00:00.000Z",
+            "value": 120000,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-08-01T00:00:00.000Z",
+            "periodEnd": "2026-09-01T00:00:00.000Z",
+            "value": 25000,
+            "completeness": 1,
+            "coverage": "partial"
+          }
+        ]
+      },
+      "legacy": { "expectedPublish": true },
+      "expected": { "status": "waiting_for_period_close", "publish": false }
+    },
+    {
+      "id": "open-week-partial-flow",
+      "description": "An open week must not be compared with the complete prior week.",
+      "tags": ["open_week", "flow", "legacy_false_positive"],
+      "now": "2026-08-05T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "week",
+        "timezone": "Asia/Bangkok",
+        "weekStartsOn": 1,
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "snapshots": [
+          {
+            "periodStart": "2026-07-27T00:00:00.000Z",
+            "periodEnd": "2026-08-03T00:00:00.000Z",
+            "value": 20000,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-08-03T00:00:00.000Z",
+            "periodEnd": "2026-08-10T00:00:00.000Z",
+            "value": 2000,
+            "completeness": 1,
+            "coverage": "partial"
+          }
+        ]
+      },
+      "legacy": { "expectedPublish": true },
+      "expected": { "status": "waiting_for_period_close", "publish": false }
+    },
+    {
+      "id": "partial-daily-bucket-inside-open-month",
+      "description": "A partial current day must not become a monthly KPI comparison boundary.",
+      "tags": ["partial_bucket", "open_month", "flow", "legacy_false_positive"],
+      "now": "2026-08-09T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "Asia/Bangkok",
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "snapshots": [
+          {
+            "periodStart": "2026-08-08T00:00:00.000Z",
+            "periodEnd": "2026-08-09T00:00:00.000Z",
+            "value": 5000,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-08-09T00:00:00.000Z",
+            "periodEnd": "2026-08-10T00:00:00.000Z",
+            "value": 500,
+            "completeness": 1,
+            "coverage": "partial"
+          }
+        ]
+      },
+      "legacy": { "expectedPublish": true },
+      "expected": { "status": "waiting_for_period_close", "publish": false }
+    },
+    {
+      "id": "closed-month-additive-flow",
+      "description": "Complete July revenue can be compared with complete June revenue.",
+      "tags": ["closed_month", "month_length", "flow", "relative_threshold"],
+      "now": "2026-08-02T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "UTC",
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "confirmedAt": "2026-08-01T12:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-06-01T00:00:00.000Z",
+            "periodEnd": "2026-07-01T00:00:00.000Z",
+            "value": 100000,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-07-01T00:00:00.000Z",
+            "periodEnd": "2026-08-01T00:00:00.000Z",
+            "value": 120000,
+            "completeness": 1,
+            "coverage": "complete"
+          }
+        ]
+      },
+      "expected": {
+        "status": "final",
+        "publish": true,
+        "baselineValue": 100000,
+        "currentValue": 120000,
+        "comparisonPeriod": {
+          "start": "2026-06-01T00:00:00.000Z",
+          "end": "2026-07-01T00:00:00.000Z"
+        },
+        "currentPeriod": {
+          "start": "2026-07-01T00:00:00.000Z",
+          "end": "2026-08-01T00:00:00.000Z",
+          "durationHours": 744
+        }
+      }
+    },
+    {
+      "id": "closed-week-state-checkpoint",
+      "description": "A state metric compares aligned week-end values and does not sum them.",
+      "tags": ["closed_week", "state", "absolute_threshold"],
+      "now": "2026-08-10T12:00:00.000Z",
+      "monitor": {
+        "kind": "scalar",
+        "behavior": "state",
+        "comparisonPeriod": "week",
+        "timezone": "UTC",
+        "weekStartsOn": 1,
+        "threshold": { "type": "absolute", "value": 100 }
+      },
+      "input": {
+        "confirmedAt": "2026-08-10T08:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-08-03T23:50:00.000Z",
+            "periodEnd": "2026-08-03T23:50:00.001Z",
+            "value": 1000,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-08-10T00:00:00.000Z",
+            "periodEnd": "2026-08-10T00:00:00.001Z",
+            "value": 950,
+            "completeness": 1,
+            "coverage": "complete"
+          }
+        ]
+      },
+      "expected": {
+        "status": "final",
+        "publish": false,
+        "baselineValue": 1000,
+        "currentValue": 950
+      }
+    },
+    {
+      "id": "native-monthly-percentage-value",
+      "description": "A native monthly rate can be compared without rolling up daily rates.",
+      "tags": ["closed_month", "native_period", "percentage_point_threshold"],
+      "now": "2026-08-02T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "ratio",
+        "comparisonPeriod": "month",
+        "timezone": "UTC",
+        "threshold": { "type": "percentage_points", "value": 1 },
+        "valueScale": 100
+      },
+      "input": {
+        "nativePeriod": true,
+        "confirmedAt": "2026-08-01T12:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-06-01T00:00:00.000Z",
+            "periodEnd": "2026-07-01T00:00:00.000Z",
+            "value": 0.1,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-07-01T00:00:00.000Z",
+            "periodEnd": "2026-08-01T00:00:00.000Z",
+            "value": 0.12,
+            "completeness": 1,
+            "coverage": "complete"
+          }
+        ]
+      },
+      "expected": {
+        "status": "final",
+        "publish": true,
+        "baselineValue": 0.1,
+        "currentValue": 0.12
+      }
+    },
+    {
+      "id": "missing-flow-bucket",
+      "description": "An unexplained missing daily bucket makes the monthly flow incomplete.",
+      "tags": ["missing_bucket", "flow", "incomplete_coverage"],
+      "now": "2026-08-02T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "UTC",
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "confirmedAt": "2026-08-01T12:00:00.000Z",
+        "missingPeriods": ["2026-07-17T00:00:00.000Z"],
+        "zeroFill": false,
+        "snapshots": [
+          {
+            "periodStart": "2026-06-01T00:00:00.000Z",
+            "periodEnd": "2026-07-01T00:00:00.000Z",
+            "value": 100000,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-07-01T00:00:00.000Z",
+            "periodEnd": "2026-08-01T00:00:00.000Z",
+            "value": 130000,
+            "completeness": 1,
+            "coverage": "unknown"
+          }
+        ]
+      },
+      "expected": { "status": "incomplete", "publish": false }
+    },
+    {
+      "id": "closed-month-without-post-close-refresh",
+      "description": "A pre-close value cannot confirm the final monthly result.",
+      "tags": ["delayed_source", "closed_month", "flow", "legacy_false_positive"],
+      "now": "2026-08-02T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "UTC",
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "confirmedAt": "2026-07-31T22:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-06-01T00:00:00.000Z",
+            "periodEnd": "2026-07-01T00:00:00.000Z",
+            "value": 100000,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-07-01T00:00:00.000Z",
+            "periodEnd": "2026-08-01T00:00:00.000Z",
+            "value": 130000,
+            "completeness": 1,
+            "coverage": "complete"
+          }
+        ]
+      },
+      "legacy": { "expectedPublish": true },
+      "expected": { "status": "waiting_for_fresh_data", "publish": false }
+    },
+    {
+      "id": "late-month-backfill-correction",
+      "description": "A material late backfill creates a labelled correction revision.",
+      "tags": ["late_backfill", "closed_month", "flow", "correction"],
+      "now": "2026-08-05T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "UTC",
+        "threshold": { "type": "absolute", "value": 5000 }
+      },
+      "input": {
+        "existingEvaluation": {
+          "revision": 1,
+          "status": "final",
+          "baselineValue": 100000,
+          "currentValue": 120000,
+          "delivered": true
+        },
+        "confirmedAt": "2026-08-05T04:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-06-01T00:00:00.000Z",
+            "periodEnd": "2026-07-01T00:00:00.000Z",
+            "value": 100000,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-07-01T00:00:00.000Z",
+            "periodEnd": "2026-08-01T00:00:00.000Z",
+            "value": 128000,
+            "completeness": 1,
+            "coverage": "complete"
+          }
+        ]
+      },
+      "expected": {
+        "status": "corrected",
+        "publish": true,
+        "revision": 2,
+        "deliveryLabel": "Corrected",
+        "baselineValue": 100000,
+        "currentValue": 128000
+      }
+    },
+    {
+      "id": "bangkok-month-boundary",
+      "description": "Monthly windows use Bangkok midnight rather than UTC midnight.",
+      "tags": ["timezone", "closed_month", "native_period"],
+      "now": "2026-08-02T00:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "Asia/Bangkok",
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "nativePeriod": true,
+        "confirmedAt": "2026-08-01T00:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-05-31T17:00:00.000Z",
+            "periodEnd": "2026-06-30T17:00:00.000Z",
+            "value": 100,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-06-30T17:00:00.000Z",
+            "periodEnd": "2026-07-31T17:00:00.000Z",
+            "value": 115,
+            "completeness": 1,
+            "coverage": "complete"
+          }
+        ]
+      },
+      "expected": {
+        "status": "final",
+        "publish": true,
+        "comparisonPeriod": {
+          "start": "2026-05-31T17:00:00.000Z",
+          "end": "2026-06-30T17:00:00.000Z"
+        },
+        "currentPeriod": {
+          "start": "2026-06-30T17:00:00.000Z",
+          "end": "2026-07-31T17:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "new-york-dst-week",
+      "description": "A calendar week across daylight-saving time can contain 167 hours.",
+      "tags": ["timezone", "dst", "closed_week", "native_period"],
+      "now": "2026-03-10T12:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "week",
+        "timezone": "America/New_York",
+        "weekStartsOn": 1,
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "nativePeriod": true,
+        "confirmedAt": "2026-03-09T12:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-02-23T05:00:00.000Z",
+            "periodEnd": "2026-03-02T05:00:00.000Z",
+            "value": 100,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-03-02T05:00:00.000Z",
+            "periodEnd": "2026-03-09T04:00:00.000Z",
+            "value": 115,
+            "completeness": 1,
+            "coverage": "complete"
+          }
+        ]
+      },
+      "expected": {
+        "status": "final",
+        "publish": true,
+        "currentPeriod": {
+          "start": "2026-03-02T05:00:00.000Z",
+          "end": "2026-03-09T04:00:00.000Z",
+          "durationHours": 167
+        }
+      }
+    },
+    {
+      "id": "ambiguous-scalar-without-period-contract",
+      "description": "A scalar can be a state or a period total and must ask for review.",
+      "tags": ["ambiguous", "scalar", "review_required"],
+      "now": "2026-08-09T05:00:00.000Z",
+      "monitor": {
+        "kind": "scalar",
+        "behavior": null,
+        "comparisonPeriod": null,
+        "timezone": "Asia/Bangkok",
+        "threshold": null
+      },
+      "input": { "snapshots": [] },
+      "expected": { "status": "review_required", "publish": false }
+    },
+    {
+      "id": "dataset-returned-row-volume",
+      "description": "Returned dataset rows are a health signal and not a business KPI.",
+      "tags": ["dataset_result_volume", "data_health", "record_count"],
+      "now": "2026-08-09T05:00:00.000Z",
+      "monitor": {
+        "kind": "record_count",
+        "behavior": null,
+        "comparisonPeriod": null,
+        "timezone": "Asia/Bangkok",
+        "threshold": null
+      },
+      "input": { "returnedRows": 70, "snapshots": [] },
+      "expected": { "status": "data_health_only", "publish": false }
+    },
+    {
+      "id": "relative-threshold-below-limit",
+      "description": "An eight percent increase stays out of Activity when the threshold is ten percent.",
+      "tags": ["closed_month", "flow", "relative_threshold", "threshold_case"],
+      "now": "2026-08-02T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "UTC",
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": { "baselineValue": 100, "currentValue": 108, "snapshots": [] },
+      "expected": { "status": "final", "publish": false }
+    },
+    {
+      "id": "absolute-threshold-above-limit",
+      "description": "A six thousand unit increase passes a five thousand unit threshold.",
+      "tags": ["closed_month", "flow", "absolute_threshold", "threshold_case"],
+      "now": "2026-08-02T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "month",
+        "timezone": "UTC",
+        "threshold": { "type": "absolute", "value": 5000 }
+      },
+      "input": { "baselineValue": 100000, "currentValue": 106000, "snapshots": [] },
+      "expected": { "status": "final", "publish": true }
+    },
+    {
+      "id": "percentage-point-threshold-below-limit",
+      "description": "A half-point rate change stays out of Activity when the threshold is one point.",
+      "tags": ["closed_month", "native_period", "percentage_point_threshold", "threshold_case"],
+      "now": "2026-08-02T05:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "ratio",
+        "comparisonPeriod": "month",
+        "timezone": "UTC",
+        "threshold": { "type": "percentage_points", "value": 1 },
+        "valueScale": 100
+      },
+      "input": { "baselineValue": 0.1, "currentValue": 0.105, "snapshots": [] },
+      "expected": { "status": "final", "publish": false }
+    },
+    {
+      "id": "closed-day-failed-sync-rate",
+      "description": "A native daily failed-sync rate compares the last complete day with the day before it.",
+      "tags": ["closed_day", "daily", "native_period", "percentage_point_threshold", "ratio"],
+      "now": "2026-08-10T03:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "ratio",
+        "comparisonPeriod": "day",
+        "timezone": "Asia/Bangkok",
+        "threshold": { "type": "percentage_points", "value": 1 },
+        "valueScale": 100
+      },
+      "input": {
+        "nativePeriod": true,
+        "confirmedAt": "2026-08-09T18:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-08-07T17:00:00.000Z",
+            "periodEnd": "2026-08-08T17:00:00.000Z",
+            "value": 0.08,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-08-08T17:00:00.000Z",
+            "periodEnd": "2026-08-09T17:00:00.000Z",
+            "value": 0.12,
+            "completeness": 1,
+            "coverage": "complete"
+          }
+        ]
+      },
+      "expected": {
+        "status": "final",
+        "publish": true,
+        "comparisonPeriod": {
+          "start": "2026-08-07T17:00:00.000Z",
+          "end": "2026-08-08T17:00:00.000Z"
+        },
+        "currentPeriod": {
+          "start": "2026-08-08T17:00:00.000Z",
+          "end": "2026-08-09T17:00:00.000Z",
+          "durationHours": 24
+        }
+      }
+    },
+    {
+      "id": "open-day-is-not-a-comparison-boundary",
+      "description": "A partial current day is ignored while the two prior complete days remain comparable.",
+      "tags": ["daily", "open_day", "partial_bucket", "flow"],
+      "now": "2026-08-10T03:00:00.000Z",
+      "monitor": {
+        "kind": "timeseries",
+        "behavior": "flow",
+        "comparisonPeriod": "day",
+        "timezone": "Asia/Bangkok",
+        "threshold": { "type": "relative", "value": 0.1 }
+      },
+      "input": {
+        "confirmedAt": "2026-08-10T03:00:00.000Z",
+        "snapshots": [
+          {
+            "periodStart": "2026-08-07T17:00:00.000Z",
+            "periodEnd": "2026-08-08T17:00:00.000Z",
+            "value": 100,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-08-08T17:00:00.000Z",
+            "periodEnd": "2026-08-09T17:00:00.000Z",
+            "value": 90,
+            "completeness": 1,
+            "coverage": "complete"
+          },
+          {
+            "periodStart": "2026-08-09T17:00:00.000Z",
+            "periodEnd": "2026-08-10T03:00:00.000Z",
+            "value": 5,
+            "completeness": 0,
+            "coverage": "partial"
+          }
+        ]
+      },
+      "expected": {
+        "status": "final",
+        "publish": true,
+        "comparisonPeriod": {
+          "start": "2026-08-07T17:00:00.000Z",
+          "end": "2026-08-08T17:00:00.000Z"
+        },
+        "currentPeriod": {
+          "start": "2026-08-08T17:00:00.000Z",
+          "end": "2026-08-09T17:00:00.000Z",
+          "durationHours": 24
+        }
+      }
+    }
+  ]
+}

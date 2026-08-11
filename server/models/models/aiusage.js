@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       comment: "OpenAI model used (e.g. gpt-4o-mini)"
     },
+    purpose: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     prompt_tokens: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -56,6 +60,7 @@ module.exports = (sequelize, DataTypes) => {
       { fields: ["conversation_id"] },
       { fields: ["team_id", "createdAt"] }, // Most important for billing queries
       { fields: ["team_id", "model", "createdAt"] }, // For model-specific billing
+      { fields: ["team_id", "purpose", "createdAt"] },
     ]
   });
 

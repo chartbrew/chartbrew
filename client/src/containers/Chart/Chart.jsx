@@ -18,6 +18,7 @@ import {
   LuRefreshCw, LuSettings, LuShare, LuTrash, LuMonitor, LuMonitorX, LuX,
   LuCircleCheck, LuVariable,
   LuEllipsisVertical,
+  LuActivity,
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -52,6 +53,8 @@ import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
 import ChartSharing from "./components/ChartSharing";
 import { getExposedChartFilters } from "../../modules/getChartDatasetConditions";
 import { buildChartRuntimeRequest, normalizeChartFilterCondition } from "../../modules/chartRuntimeFilters";
+import { createMonitor, getMonitorOptions } from "../../api/observations";
+import WatchMetricModal from "./components/WatchMetricModal";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -107,6 +110,9 @@ function Chart(props) {
   const [autoUpdateError, setAutoUpdateError] = useState("");
   const [exportLoading, setExportLoading] = useState(false);
   const [alertsModal, setAlertsModal] = useState(false);
+  const [monitorModal, setMonitorModal] = useState(false);
+  const [monitorOptions, setMonitorOptions] = useState([]);
+  const [monitorLoading, setMonitorLoading] = useState(false);
   const [alertsDatasetId, setAlertsDatasetId] = useState(null);
   const chartSize = useChartSize(chart.layout);
   const [isCompact, setIsCompact] = useState(false);
@@ -372,6 +378,54 @@ function Chart(props) {
   const _openAlertsModal = () => {
     setAlertsModal(true);
     setAlertsDatasetId(chart?.ChartDatasetConfigs?.[0]?.id);
+  };
+
+  const _openMonitorModal = async () => {
+    setMonitorLoading(true);
+    try {
+      const options = await getMonitorOptions(team.id, chart.id);
+      setMonitorOptions(options);
+      setMonitorModal(true);
+    } catch (monitorError) {
+      toast.error(monitorError.message);
+    } finally {
+      setMonitorLoading(false);
+    }
+  };
+
+  const _onCreateMonitor = async ({
+    comparison, desiredDirection, importance, layerId, metricBehavior, threshold, valueFormat,
+  }) => {
+    if (!layerId) return;
+    setMonitorLoading(true);
+    try {
+      const monitor = await createMonitor(team.id, {
+        chartId: chart.id,
+        comparison,
+        desiredDirection,
+        importance,
+        layerId,
+        metricBehavior,
+        threshold,
+        valueFormat,
+      });
+      setMonitorModal(false);
+      if (monitor.status === "ready") {
+        toast.success(`Watching ${monitor.name}. Completed chart periods were evaluated.`);
+      } else if (monitor.statusReason === "initial_evaluation_failed") {
+        toast.success(
+          `Watching ${monitor.name}. Refresh it from Activity to evaluate the current data.`
+        );
+      } else {
+        toast.success(
+          `Watching ${monitor.name}. Chartbrew will evaluate its completed periods.`
+        );
+      }
+    } catch (monitorError) {
+      toast.error(monitorError.message);
+    } finally {
+      setMonitorLoading(false);
+    }
   };
 
   const _getUpdateFreqText = (value) => {
@@ -763,6 +817,16 @@ function Chart(props) {
                             Edit chart
                           </Dropdown.Item>
                         )}
+                        {_canAccess("projectEditor") && (
+                          <Dropdown.Item
+                            id="watch"
+                            onPress={_openMonitorModal}
+                            textValue="Watch metric"
+                          >
+                            <LuActivity />
+                            Watch metric
+                          </Dropdown.Item>
+                        )}
                         {_canAccess("projectEditor") && chart.draft && (
                           <Dropdown.Item
                             id="publish"
@@ -1042,6 +1106,15 @@ function Chart(props) {
           </Card.Content>
         </Card>
       )}
+
+      <WatchMetricModal
+        chartName={chart.name}
+        isOpen={monitorModal}
+        isPending={monitorLoading}
+        onClose={() => setMonitorModal(false)}
+        onSubmit={_onCreateMonitor}
+        options={monitorOptions}
+      />
 
       {/* DELETE CONFIRMATION MODAL */}
       <Modal.Backdrop variant="blur" isOpen={deleteModal} onOpenChange={setDeleteModal}>

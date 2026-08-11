@@ -11,6 +11,7 @@ const emailTemplatePaths = {
   emailUpdate: path.join(__dirname, "../email-templates/emails/email-update.tsx"),
   chartAlert: path.join(__dirname, "../email-templates/emails/chart-alert.tsx"),
   dashboardSnapshot: path.join(__dirname, "../email-templates/emails/dashboard-snapshot.tsx"),
+  observationSummary: path.join(__dirname, "../email-templates/emails/observation-summary.tsx"),
 };
 
 // setup nodemailer
@@ -188,5 +189,60 @@ module.exports.sendDashboardSnapshot = (data) => {
       })
       .then((result) => resolve(result))
       .catch((error) => reject(error));
+  });
+};
+
+async function renderObservationDigest(data) {
+  const activityUrl = `${settings.client}/activity`;
+  return renderEmailTemplate("observationSummary", {
+    activityUrl,
+    attentionItems: data.attentionItems || [],
+    contentMode: data.contentMode || "kpi_review",
+    healthItems: data.healthItems || [],
+    kpis: data.kpis || [],
+    observations: data.observations || [],
+    recipientName: data.recipientName,
+    scopeName: data.scopeName,
+    teamName: data.teamName,
+    waitingMetrics: data.waitingMetrics || [],
+  });
+}
+
+module.exports.renderObservationDigest = renderObservationDigest;
+
+module.exports.sendObservationDigest = async (data) => {
+  const contentMode = data.contentMode || "kpi_review";
+  const observationLines = (data.observations || []).map((item) => (
+    `• ${item.title}: ${item.summary}`
+  ));
+  const kpiLines = (data.kpis || []).map((item) => (
+    `• ${item.name} — ${item.comparisonLabel}: ${item.currentValueLabel} from ${item.comparisonValueLabel} (${item.statusLabel}${item.corrected ? ", corrected" : ""})`
+  ));
+  const attentionLines = (data.attentionItems || []).map((item) => (
+    `• Still needs attention: ${item.title}`
+  ));
+  const waitingLines = (data.waitingMetrics || []).map((item) => (
+    `• ${item.name}: ${item.reason}`
+  ));
+  const healthLines = (data.healthItems || []).map((item) => `• ${item.message}`);
+  const emailName = contentMode === "kpi_review" ? "KPI review" : "Changes only";
+  const textLines = [
+    `Your Chartbrew ${emailName} email for ${data.teamName}`,
+    "",
+    ...kpiLines,
+    ...observationLines,
+    ...attentionLines,
+    ...waitingLines,
+    ...healthLines,
+    "",
+    `Open Chartbrew: ${settings.client}`,
+  ];
+  const emailHtml = await renderObservationDigest(data);
+  return nodemail.sendMail({
+    from: settings.adminMail,
+    html: emailHtml,
+    subject: `Chartbrew ${emailName} — ${data.teamName}`,
+    text: textLines.join("\n"),
+    to: data.recipient,
   });
 };

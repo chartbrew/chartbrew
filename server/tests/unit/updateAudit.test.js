@@ -122,4 +122,80 @@ describe("updateAudit", () => {
       },
     });
   });
+
+  it("cleans update runs in batches while preserving recent failures", async () => {
+    const now = new Date("2026-07-29T00:00:00.000Z");
+    const oldDate = new Date("2026-05-01T00:00:00.000Z");
+    const recentFailedDate = new Date("2026-06-01T00:00:00.000Z");
+    const runs = await Promise.all([
+      models.UpdateRun.create({
+        traceId: "old-success-1",
+        rootTraceId: "old-success-1",
+        triggerType: "chart_auto",
+        entityType: "chart",
+        status: "success",
+        startedAt: oldDate,
+      }),
+      models.UpdateRun.create({
+        traceId: "old-success-2",
+        rootTraceId: "old-success-2",
+        triggerType: "chart_auto",
+        entityType: "chart",
+        status: "success",
+        startedAt: oldDate,
+      }),
+      models.UpdateRun.create({
+        traceId: "recent-failed",
+        rootTraceId: "recent-failed",
+        triggerType: "chart_auto",
+        entityType: "chart",
+        status: "failed",
+        startedAt: recentFailedDate,
+      }),
+    ]);
+
+    await models.UpdateRunEvent.bulkCreate(runs.map((run, index) => ({
+      runId: run.id,
+      sequence: 1,
+      stage: "run_finished",
+      status: "success",
+      startedAt: oldDate,
+      payload: { index },
+    })));
+
+    const report = await updateAudit.cleanupExpiredRuns({
+      retentionDays: 30,
+      failedRetentionDays: 90,
+      batchSize: 1,
+      now,
+    });
+
+    expect(report.deletedRuns).toBe(2);
+    expect(report.deletedEvents).toBe(2);
+    expect(report.batches).toBe(2);
+    expect(await models.UpdateRun.count()).toBe(1);
+    expect((await models.UpdateRun.findOne()).status).toBe("failed");
+  });
+
+  it("reports expired update runs without deleting them in dry-run mode", async () => {
+    await models.UpdateRun.create({
+      traceId: "dry-run",
+      rootTraceId: "dry-run",
+      triggerType: "chart_auto",
+      entityType: "chart",
+      status: "success",
+      startedAt: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    const report = await updateAudit.cleanupExpiredRuns({
+      retentionDays: 30,
+      failedRetentionDays: 90,
+      dryRun: true,
+      now: new Date("2026-07-29T00:00:00.000Z"),
+    });
+
+    expect(report.matchedRuns).toBe(1);
+    expect(report.deletedRuns).toBe(0);
+    expect(await models.UpdateRun.count()).toBe(1);
+  });
 });

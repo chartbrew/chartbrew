@@ -1,37 +1,72 @@
+const crypto = require("crypto");
 const { fn, col, Op } = require("sequelize");
 
 const { orchestrate, availableTools } = require("../modules/ai/orchestrator/orchestrator");
 const db = require("../models/models");
+const runtimeCache = require("../modules/runtimeCache");
 const socketManager = require("../modules/socketManager");
+const { validateAiContext } = require("../modules/ai/contextAuthorization");
+const { getObservationAccess } = require("../modules/observations/access");
+
+const READ_ONLY_AI_TOOLS = [
+  "get_dataset_intelligence",
+  "get_workspace_activity",
+  "run_existing_dataset",
+  "search_datasets",
+  "summarize",
+];
+const MAX_SESSION_MESSAGES = 60;
+const MAX_SESSION_CHARACTERS = 100000;
+const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function validateSessionId(sessionId) {
+  if (!sessionId) return crypto.randomUUID();
+  if (!SESSION_ID_PATTERN.test(sessionId)) {
+    const error = new Error("This chat session is not valid");
+    error.statusCode = 400;
+    throw error;
+  }
+  return sessionId;
+}
+
+function createAiError(message, statusCode) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
 
 function assertConversationOwnership(conversation, userId) {
   if (!conversation) {
-    throw new Error("Conversation not found");
+    throw createAiError("Conversation not found", 404);
   }
 
   if (`${conversation.user_id}` !== `${userId}`) {
-    throw new Error("Conversation does not belong to this user");
+    throw createAiError("Conversation does not belong to this user", 403);
   }
 }
 
 async function getOrchestration(
   teamId,
   question,
-  conversationHistory,
+  _conversationHistory,
   aiConversationId,
   userId,
   context = null,
 ) {
+  const access = await getObservationAccess(teamId, userId);
+  const requestedContext = Array.isArray(context) && context.length > 0
+    ? await validateAiContext(access, context)
+    : null;
   let conversation;
 
   // Load existing conversation or create new one
   if (aiConversationId) {
     conversation = await db.AiConversation.findByPk(aiConversationId);
     if (!conversation) {
-      throw new Error("Conversation not found");
+      throw createAiError("Conversation not found", 404);
     }
     if (`${conversation.team_id}` !== `${teamId}`) {
-      throw new Error("Conversation does not belong to this team");
+      throw createAiError("Conversation does not belong to this team", 403);
     }
     assertConversationOwnership(conversation, userId);
   } else {
@@ -49,40 +84,53 @@ async function getOrchestration(
     });
   }
 
-  // Load conversation history from database if not provided
-  let fullHistory = conversationHistory;
-  if (!conversationHistory || conversationHistory.length === 0) {
-    // Rebuild history from AiMessage table
-    const messages = await db.AiMessage.findAll({
-      where: { conversation_id: conversation.id },
-      order: [["sequence", "ASC"]],
-    });
+  const storedContext = aiConversationId
+    ? await db.AiConversationContext.findAll({
+      attributes: ["entity_id", "entity_type"],
+      where: { conversation_id: conversation.id, team_id: teamId },
+    })
+    : [];
+  const validatedContext = requestedContext || await validateAiContext(
+    access,
+    storedContext.map((item) => ({
+      entityId: item.entity_id,
+      entityType: item.entity_type,
+    })),
+  );
 
-    fullHistory = messages.map((msg) => {
-      const messageObj = {
-        role: msg.role,
-        content: msg.content,
-      };
+  // Conversation history is always rebuilt on the server.
+  const messages = await db.AiMessage.findAll({
+    where: { conversation_id: conversation.id },
+    order: [["sequence", "ASC"]],
+  });
 
-      // Add tool-specific fields
-      if (msg.tool_calls) {
-        messageObj.tool_calls = msg.tool_calls;
-      }
-      if (msg.tool_name) {
-        messageObj.name = msg.tool_name;
-      }
-      if (msg.tool_call_id) {
-        messageObj.tool_call_id = msg.tool_call_id;
-      }
+  const fullHistory = messages.map((msg) => {
+    const messageObj = {
+      role: msg.role,
+      content: msg.content,
+    };
 
-      return messageObj;
-    });
+    if (msg.tool_calls) messageObj.tool_calls = msg.tool_calls;
+    if (msg.tool_name) messageObj.name = msg.tool_name;
+    if (msg.tool_call_id) messageObj.tool_call_id = msg.tool_call_id;
+    return messageObj;
+  });
+
+  if (Array.isArray(context) && context.length > 0) {
+    await saveConversationContext(conversation.id, teamId, validatedContext);
   }
 
   try {
-    const orchestration = await orchestrate(teamId, question, fullHistory, conversation, context, {
-      userId,
-    });
+    const orchestration = await orchestrate(
+      teamId,
+      question,
+      fullHistory,
+      conversation,
+      messages.length === 0 || (Array.isArray(context) && context.length > 0)
+        ? validatedContext
+        : [],
+      getOrchestrationOptions(access, userId),
+    );
 
     // Extract title from AI response for new conversations
     let finalMessage = orchestration.message;
@@ -138,6 +186,7 @@ async function getOrchestration(
       team_id: teamId,
       model: usage.model,
       prompt_tokens: usage.prompt_tokens,
+      purpose: "ask_data",
       completion_tokens: usage.completion_tokens,
       total_tokens: usage.total_tokens,
       elapsed_ms: usage.elapsed_ms,
@@ -182,6 +231,169 @@ async function getOrchestration(
 
     throw error;
   }
+}
+
+function getOrchestrationOptions(access, userId) {
+  return {
+    allowedProjectIds: access.allProjects ? undefined : access.projectIds,
+    allowedToolNames: access.canConfigureTeam ? undefined : READ_ONLY_AI_TOOLS,
+    canConfigureTeam: access.canConfigureTeam,
+    userId,
+  };
+}
+
+function trimSessionHistory(history = []) {
+  const selected = history.slice(-MAX_SESSION_MESSAGES);
+  let characters = 0;
+  const bounded = [];
+  for (let index = selected.length - 1; index >= 0; index--) {
+    const message = selected[index];
+    const length = typeof message.content === "string"
+      ? message.content.length
+      : JSON.stringify(message.content || "").length;
+    if (characters + length > MAX_SESSION_CHARACTERS) break;
+    characters += length;
+    bounded.unshift(message);
+  }
+  return bounded;
+}
+
+async function saveUsageRecords(teamId, conversationId, usageRecords = []) {
+  return Promise.all(usageRecords.map((usage) => db.AiUsage.create({
+    completion_tokens: usage.completion_tokens,
+    conversation_id: conversationId,
+    cost_micros: 0,
+    elapsed_ms: usage.elapsed_ms,
+    model: usage.model,
+    prompt_tokens: usage.prompt_tokens,
+    purpose: "ask_data",
+    team_id: teamId,
+    total_tokens: usage.total_tokens,
+  })));
+}
+
+async function saveConversationContext(conversationId, teamId, context = []) {
+  if (!conversationId || context.length === 0) return;
+  await Promise.all(context.map((item) => db.AiConversationContext.findOrCreate({
+    where: {
+      conversation_id: conversationId,
+      entity_id: item.entityId,
+      entity_type: item.entityType,
+    },
+    defaults: { team_id: teamId },
+  })));
+}
+
+async function respond({
+  aiConversationId,
+  context,
+  message,
+  persistence = "ephemeral",
+  sessionId,
+  teamId,
+  userId,
+}) {
+  if (!message || !`${message}`.trim()) {
+    throw createAiError("Ask a question about your data", 400);
+  }
+  if (persistence === "persistent") {
+    const orchestration = await getOrchestration(
+      teamId,
+      `${message}`.trim(),
+      [],
+      aiConversationId,
+      userId,
+      context,
+    );
+    return {
+      ...orchestration,
+      conversationHistory: undefined,
+      persistence: "persistent",
+    };
+  }
+  if (persistence !== "ephemeral") {
+    throw createAiError("Choose a valid conversation mode", 400);
+  }
+
+  const access = await getObservationAccess(teamId, userId);
+  const resolvedSessionId = validateSessionId(sessionId);
+  const existingSession = await runtimeCache.getAiSession({
+    sessionId: resolvedSessionId,
+    teamId,
+    userId,
+  });
+  const validatedContext = context?.length
+    ? await validateAiContext(access, context)
+    : await validateAiContext(access, existingSession?.context || []);
+  const promptContext = existingSession && !context?.length ? [] : validatedContext;
+  const orchestration = await orchestrate(
+    teamId,
+    `${message}`.trim(),
+    existingSession?.history || [],
+    { id: resolvedSessionId, message_count: existingSession?.messageCount || 0 },
+    promptContext,
+    getOrchestrationOptions(access, userId),
+  );
+  const history = trimSessionHistory(orchestration.conversationHistory);
+  const messageCount = history.filter((item) => item.role === "user").length;
+  await Promise.all([
+    runtimeCache.setAiSession({
+      payload: {
+        context: validatedContext.map((item) => ({
+          entityId: item.entityId,
+          entityType: item.entityType,
+        })),
+        history,
+        messageCount,
+      },
+      sessionId: resolvedSessionId,
+      teamId,
+      userId,
+    }),
+    saveUsageRecords(teamId, null, orchestration.usageRecords),
+  ]);
+  return {
+    ...orchestration,
+    conversationHistory: undefined,
+    persistence: "ephemeral",
+    sessionId: resolvedSessionId,
+  };
+}
+
+async function promoteSession({ sessionId, teamId, userId }) {
+  const validSessionId = validateSessionId(sessionId);
+  const session = await runtimeCache.getAiSession({
+    sessionId: validSessionId,
+    teamId,
+    userId,
+  });
+  if (!session) throw createAiError("This chat has expired", 404);
+  const access = await getObservationAccess(teamId, userId);
+  const validatedContext = await validateAiContext(access, session.context || []);
+  const conversation = await db.AiConversation.create({
+    message_count: session.messageCount || 0,
+    source: "app",
+    status: "active",
+    team_id: teamId,
+    title: "Saved conversation",
+    user_id: userId,
+  });
+  const history = trimSessionHistory(session.history);
+  await Promise.all(history.map((message, sequence) => db.AiMessage.create({
+    content: message.content,
+    conversation_id: conversation.id,
+    role: message.role,
+    sequence,
+    tool_call_id: message.tool_call_id,
+    tool_calls: message.tool_calls,
+    tool_name: message.name,
+  })));
+  await saveConversationContext(conversation.id, teamId, validatedContext);
+  await runtimeCache.deleteAiSession({ sessionId: validSessionId, teamId, userId });
+  return {
+    aiConversationId: conversation.id,
+    success: true,
+  };
 }
 
 async function getAvailableTools() {
@@ -391,6 +603,8 @@ async function getAiUsage(teamId, startDate, endDate) {
 
 module.exports = {
   getOrchestration,
+  respond,
+  promoteSession,
   getAvailableTools,
   getConversations,
   getConversation,

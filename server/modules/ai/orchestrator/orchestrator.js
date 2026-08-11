@@ -13,6 +13,7 @@
  */
 
 const OpenAI = require("openai");
+const { Op } = require("sequelize");
 const db = require("../../../models/models");
 const socketManager = require("../../socketManager");
 const { sanitizeSnippet } = require("../../updateAudit");
@@ -48,6 +49,8 @@ const {
   getSchema,
   searchDatasets,
   getDatasetIntelligence,
+  getWorkspaceActivity,
+  runExistingDataset,
   generateQuery,
   validateQuery,
   runQuery,
@@ -159,6 +162,8 @@ const TEAM_SCOPED_TOOLS = new Set([
   "get_schema",
   "search_datasets",
   "get_dataset_intelligence",
+  "get_workspace_activity",
+  "run_existing_dataset",
   "validate_query",
   "run_query",
   "create_dataset",
@@ -189,6 +194,8 @@ const TEAM_SCOPED_TOOLS = new Set([
 const USER_SCOPED_TOOLS = new Set([
   "create_dashboard",
   "create_dashboard_from_template",
+  "get_workspace_activity",
+  "run_existing_dataset",
 ]);
 
 const ORIGINAL_QUESTION_TOOLS = new Set([
@@ -213,6 +220,16 @@ async function availableTools() {
 
   return [
     {
+      name: "get_workspace_activity",
+      displayName: "Review workspace activity",
+      description: "Get the current watched-metric changes and data-health issues visible to the user. Use this immediately for requests about recent changes, metrics needing attention, notable improvements, workspace summaries, or data freshness. Answer from the result instead of asking the user to choose a connection or dashboard.",
+      parameters: {
+        type: "object",
+        properties: {},
+        additionalProperties: false,
+      },
+    },
+    {
       name: "search_datasets",
       displayName: "Find existing datasets",
       description: "Search reusable Chartbrew datasets by business concept, field, metric, dimension, chart, or dashboard. Use this before creating a new dataset when existing data may satisfy the request.",
@@ -234,6 +251,19 @@ async function availableTools() {
         type: "object",
         properties: {
           dataset_id: { type: "integer" }
+        },
+        required: ["dataset_id"]
+      }
+    },
+    {
+      name: "run_existing_dataset",
+      displayName: "Read existing dataset",
+      description: "Run one authorized reusable dataset and return at most 200 rows. Use this after search_datasets when current values are needed.",
+      parameters: {
+        type: "object",
+        properties: {
+          dataset_id: { type: "integer" },
+          row_limit: { type: "integer", default: 100 }
         },
         required: ["dataset_id"]
       }
@@ -951,6 +981,10 @@ async function callTool(name, payload) {
         return searchDatasets(payload);
       case "get_dataset_intelligence":
         return getDatasetIntelligence(payload);
+      case "get_workspace_activity":
+        return getWorkspaceActivity(payload);
+      case "run_existing_dataset":
+        return runExistingDataset(payload);
       case "generate_query":
         return generateQuery(payload);
       case "validate_query":
@@ -1069,6 +1103,7 @@ ${chartCatalog.map((catalog) => Object.entries(catalog).map(([type, info]) => `-
 ${ENTITY_CREATION_RULES}
 
 ## Your Capabilities
+- Review the user's current watched-metric changes and data-health issues
 - List and identify appropriate supported source connections
 - Retrieve database schemas with tables, columns, and sample data
 - Search existing reusable datasets and retrieve their semantic intelligence
@@ -1183,6 +1218,7 @@ ${ENTITY_CREATION_RULES}
    - **REMEMBER: Temporary charts give users control over what gets saved to their dashboards. Users can always edit charts and datasets afterwards**
 
 3. Best practices:
+   - For requests to summarize recent changes, identify metrics needing attention, describe notable improvements, or check data freshness, call get_workspace_activity first and answer directly from its result. Do not ask the user to choose between a connection, database, or dashboard for these workspace-level questions.
    - **CRITICAL: Default to temporary charts.** Only place in dashboards when explicitly requested.
    - **CRITICAL: Respect user instructions exactly.** If the user specifies a dashboard, use that exact dashboard. Never create charts in other dashboards for any reason.
    - **CRITICAL: No validation or test runs.** Create charts once, as temporary previews by default.
@@ -1685,24 +1721,37 @@ function buildLegacyUsageFromResponse(response) {
   };
 }
 
-async function buildSemanticLayer(teamId) {
+async function buildSemanticLayer(teamId, options = {}) {
+  const {
+    allowedProjectIds,
+    canConfigureTeam = true,
+  } = options;
   const team = await db.Team.findByPk(teamId);
   if (!team) {
     throw new Error("Team not found");
   }
 
-  const connections = await db.Connection.findAll({
-    where: {
-      team_id: teamId,
-    },
-    attributes: ["id", "type", "subType", "name", "schema"],
-  });
+  const connections = canConfigureTeam
+    ? await db.Connection.findAll({
+      where: {
+        team_id: teamId,
+      },
+      attributes: ["id", "type", "subType", "name", "schema"],
+    })
+    : [];
+
+  const projectWhere = {
+    team_id: teamId,
+    ghost: false,
+  };
+  if (Array.isArray(allowedProjectIds)) {
+    projectWhere.id = {
+      [Op.in]: allowedProjectIds.length > 0 ? allowedProjectIds : [-1],
+    };
+  }
 
   const projects = await db.Project.findAll({
-    where: {
-      team_id: teamId,
-      ghost: false,
-    },
+    where: projectWhere,
     attributes: ["id", "name"],
     include: [
       {
@@ -1767,7 +1816,13 @@ async function orchestrate(
   teamId, question, conversationHistory = [], conversation = null, context = null, options = {}
 ) {
   // Extract optional tool progress callback
-  const { toolProgressCallback, userId } = options;
+  const {
+    allowedProjectIds,
+    allowedToolNames,
+    canConfigureTeam = true,
+    toolProgressCallback,
+    userId,
+  } = options;
   if (!openaiClient) {
     throw new Error("OpenAI client is not initialized. Please check your environment variables.");
   }
@@ -1781,7 +1836,10 @@ async function orchestrate(
     emitProgressEvent(socketManager, conversation.id, "PROCESSING_START", { question });
   }
 
-  const semanticLayer = await buildSemanticLayer(teamId);
+  const semanticLayer = await buildSemanticLayer(teamId, {
+    allowedProjectIds,
+    canConfigureTeam,
+  });
 
   // Check if this is a capability question
   if (isCapabilityQuestion(question)) {
@@ -1821,7 +1879,10 @@ async function orchestrate(
     };
   }
 
-  const systemPrompt = buildSystemPrompt(semanticLayer, conversation);
+  const baseSystemPrompt = buildSystemPrompt(semanticLayer, conversation);
+  const systemPrompt = Array.isArray(allowedToolNames)
+    ? `${baseSystemPrompt}\n\n## Authorized capability scope\nOnly use these tools for this user: ${allowedToolNames.join(", ")}. Do not describe or propose unavailable connection, schema, query-generation, or creation actions.`
+    : baseSystemPrompt;
   const modelName = openAiModel || "gpt-5.4-nano";
   const persistedMessages = [...sanitizedHistory];
   const modelMessages = sanitizedHistory.filter((message) => message.role !== "system");
@@ -1854,7 +1915,11 @@ async function orchestrate(
   modelMessages.push(userMessage);
 
   // Get available tools in Responses API format
-  const toolDefinitions = await availableTools();
+  const allToolDefinitions = await availableTools();
+  const toolDefinitions = Array.isArray(allowedToolNames)
+    ? allToolDefinitions.filter((tool) => allowedToolNames.includes(tool.name))
+    : allToolDefinitions;
+  const permittedToolNames = new Set(toolDefinitions.map((tool) => tool.name));
   const tools = buildResponseTools(toolDefinitions);
   const toolDisplayNameByName = new Map(
     toolDefinitions.map((tool) => [tool.name, tool.displayName || tool.name])
@@ -1932,13 +1997,29 @@ async function orchestrate(
       assistantMessage.tool_calls.map(async (toolCall) => {
         const toolName = toolCall.function.name;
         const toolArgs = JSON.parse(toolCall.function.arguments);
+        if (!permittedToolNames.has(toolName)) {
+          return {
+            tool_call_id: toolCall.id,
+            role: "tool",
+            name: toolName,
+            content: JSON.stringify({
+              error: "This action is not available for your role",
+            }),
+          };
+        }
 
         // Inject team_id into all team-scoped tools so they cannot access cross-team resources.
         if (TEAM_SCOPED_TOOLS.has(toolName)) {
           toolArgs.team_id = teamId;
         }
+        if (Array.isArray(allowedProjectIds)) {
+          toolArgs.allowed_project_ids = allowedProjectIds;
+        }
         if (USER_SCOPED_TOOLS.has(toolName)) {
           toolArgs.user_id = userId;
+        }
+        if (toolName === "run_existing_dataset") {
+          toolArgs.can_configure_team = canConfigureTeam;
         }
         if (ORIGINAL_QUESTION_TOOLS.has(toolName)) {
           toolArgs.original_question = question;

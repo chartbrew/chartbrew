@@ -13,6 +13,7 @@ const update = require("./UpdateRoute");
 const integration = require("./IntegrationRoute");
 const ai = require("./AiRoute");
 const updateRun = require("./UpdateRunRoute");
+const observation = require("./ObservationRoute");
 
 module.exports = {
   team,
@@ -30,4 +31,5 @@ module.exports = {
   updateRun,
   integration,
   ai,
+  observation,
 };

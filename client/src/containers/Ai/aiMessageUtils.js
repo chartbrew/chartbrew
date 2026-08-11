@@ -1,17 +1,37 @@
-export function humanizeToolName(toolName) {
-  if (!toolName) return "Run step";
+const TOOL_ACTIVITY_LABELS = {
+  create_chart: "Created a chart",
+  create_dashboard: "Created a dashboard",
+  create_dashboard_chart: "Added a chart to a dashboard",
+  create_dataset: "Prepared a dataset",
+  create_temporary_chart: "Prepared a chart preview",
+  generate_query: "Prepared a data request",
+  get_dataset_intelligence: "Reviewed dataset context",
+  get_workspace_activity: "Reviewed workspace activity",
+  get_schema: "Checked the data structure",
+  list_connections: "Checked available connections",
+  move_chart_to_dashboard: "Added the chart to a dashboard",
+  run_existing_dataset: "Analyzed the dataset",
+  run_query: "Retrieved the requested data",
+  search_datasets: "Found relevant datasets",
+  suggest_chart: "Selected a visualization",
+  summarize: "Analyzed the results",
+  update_chart: "Updated the chart",
+  update_dataset: "Updated the dataset",
+  validate_query: "Checked the data request",
+};
 
-  return toolName
-    .replace(/^source_/, "")
-    .replace(/^stripe_official_/, "stripe_")
-    .split("_")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function cleanActivityLabel(value) {
+  return `${value || ""}`
+    .replace(/[\p{Extended_Pictographic}\uFE0F]/gu, "")
+    .replace(/\.{3}$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function getToolDisplayName(toolName, displayNames = {}) {
-  return displayNames[toolName] || humanizeToolName(toolName);
+  return TOOL_ACTIVITY_LABELS[toolName]
+    || cleanActivityLabel(displayNames[toolName])
+    || "Analyzed the data";
 }
 
 export function getOperationSummary(operations, displayNames = {}) {
@@ -23,20 +43,19 @@ export function getOperationSummary(operations, displayNames = {}) {
   const hiddenCount = Math.max(uniqueTools.length - visibleTools.length, 0);
 
   if (visibleTools.length === 0) {
-    return `${operations.length} tool ${operations.length === 1 ? "step" : "steps"}`;
+    return "Completed the data analysis";
   }
 
   return `${visibleTools.join(", ")}${hiddenCount > 0 ? `, +${hiddenCount} more` : ""}`;
 }
 
 export function getProgressEventMessage(event, displayNames = {}) {
-  if (event.type !== "execution" && event.type !== "tool_started") {
-    return event.message;
-  }
-
   if (event.toolEvents?.length > 0) {
     return event.toolEvents
-      .map((toolEvent) => toolEvent.displayName || getToolDisplayName(toolEvent.toolName, displayNames))
+      .map((toolEvent) => getToolDisplayName(toolEvent.toolName, {
+        ...displayNames,
+        [toolEvent.toolName]: toolEvent.displayName,
+      }))
       .join(", ");
   }
 
@@ -48,6 +67,19 @@ export function getProgressEventMessage(event, displayNames = {}) {
     return event.tools.map((toolName) => getToolDisplayName(toolName, displayNames)).join(", ");
   }
 
+  const eventLabels = {
+    analysis: "Reviewed the available data",
+    connection: "Checked the available data sources",
+    error: "Could not complete the analysis",
+    execution: "Analyzed the data",
+    general: "Reviewed the request",
+    processing: "Prepared the answer",
+    query_generation: "Prepared the analysis",
+    visualization: "Prepared a visualization",
+  };
+
+  if (eventLabels[event.type]) return eventLabels[event.type];
+
   const toolMatch = event.message?.match(/:\s*(.+)$/);
   if (toolMatch?.[1]) {
     return toolMatch[1]
@@ -56,7 +88,7 @@ export function getProgressEventMessage(event, displayNames = {}) {
       .join(", ");
   }
 
-  return event.message;
+  return "Analyzing the data";
 }
 
 function parseJson(value) {
@@ -65,6 +97,13 @@ function parseJson(value) {
   } catch (e) {
     return null;
   }
+}
+
+export function getUserMessageDisplayContent(content) {
+  const prefix = "Please execute this action:";
+  if (!content?.startsWith(prefix)) return content;
+  const action = parseJson(content.slice(prefix.length).trim());
+  return action?.label || "Continue with the selected action";
 }
 
 function stripGeneratedTitle(content) {
@@ -149,16 +188,25 @@ export function parseAiMessage(message) {
       }
     }
 
+    const contentWithoutActions = message.content
+      .replace(/```cb-actions[\s\S]*?```/g, "")
+      .replace(/cb-actions[\s\S]*$/g, "")
+      .trim();
+
     if (suggestionsData && suggestionsData.version === 1 && Array.isArray(suggestionsData.suggestions)) {
-      const content = stripGeneratedTitle(message.content
-        .replace(/```cb-actions\s*\n[\s\S]*?\n```/, "")
-        .replace(/cb-actions\s*\{[\s\S]*?\}/, "")
-        .trim());
+      const content = stripGeneratedTitle(contentWithoutActions);
 
       return {
         type: "message_with_suggestions",
         content,
         suggestions: suggestionsData.suggestions,
+      };
+    }
+
+    if (contentWithoutActions !== message.content) {
+      return {
+        type: "message",
+        content: stripGeneratedTitle(contentWithoutActions),
       };
     }
   }

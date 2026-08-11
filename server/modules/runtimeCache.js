@@ -422,6 +422,38 @@ class RuntimeCacheService {
     return `runtime-cache:v${RUNTIME_CACHE_CONFIG.cacheSchemaVersion}:registry:${scope}:${id}`;
   }
 
+  aiSessionKey({ sessionId, teamId, userId }) {
+    return `ai-session:v1:${teamId}:${userId}:${sessionId}`;
+  }
+
+  async getAiSession(params = {}) {
+    const rawValue = await this.store.get(this.aiSessionKey(params));
+    if (!rawValue) return null;
+
+    try {
+      return typeof rawValue === "string" ? JSON.parse(rawValue) : rawValue;
+    } catch (error) {
+      await this.store.del(this.aiSessionKey(params));
+      return null;
+    }
+  }
+
+  async setAiSession(params = {}) {
+    const ttlHours = Math.min(
+      Math.max(parsePositiveInt(process.env.CB_AI_EPHEMERAL_SESSION_TTL_HOURS, 24), 1),
+      24,
+    );
+    return this.store.set(
+      this.aiSessionKey(params),
+      JSON.stringify(params.payload),
+      ttlHours * 60 * 60 * 1000,
+    );
+  }
+
+  async deleteAiSession(params = {}) {
+    return this.store.del(this.aiSessionKey(params));
+  }
+
   async getChartCache(params = {}) {
     return this.getCacheEntry({
       cacheKey: this.chartCacheKey(params),

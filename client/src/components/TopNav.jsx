@@ -19,12 +19,11 @@ import {
 import { Badge, Breadcrumbs, Button, Chip, Dropdown, Popover, Separator } from "@heroui/react";
 
 import { selectSidebarCollapsed, showFeedbackModal, toggleAiModal, toggleSidebar } from "../slices/ui";
-import canAccess from "../config/canAccess";
-import { selectUser } from "../slices/user";
 import { selectTeam } from "../slices/team";
 import { selectProject } from "../slices/project";
 import { selectChart } from "../slices/chart";
 import { selectIntegrations } from "../slices/integration";
+import { getObservation } from "../api/observations";
 import getDatasetDisplayName from "../modules/getDatasetDisplayName";
 import {
   getNewsFeedUrl,
@@ -72,7 +71,6 @@ function TopNav() {
   const params = useParams();
 
   const collapsed = useSelector(selectSidebarCollapsed);
-  const user = useSelector(selectUser);
   const team = useSelector(selectTeam);
   const project = useSelector(selectProject);
   const chart = useSelector((state) => selectChart(state, params.chartId));
@@ -80,6 +78,7 @@ function TopNav() {
   const dataset = useSelector((state) => state.dataset.data.find((item) => `${item.id}` === `${params.datasetId}`));
   const integrations = useSelector(selectIntegrations);
   const [newsItems, setNewsItems] = useState([]);
+  const [observation, setObservation] = useState(null);
   const [seenNewsIds, setSeenNewsIds] = useState(() => getSeenNewsIds());
   const [newsOpen, setNewsOpen] = useState(false);
 
@@ -108,18 +107,32 @@ function TopNav() {
     return () => controller.abort();
   }, []);
 
-  const canUserAccess = (role, teamData) => {
-    if (teamData) {
-      return canAccess(role, user.id, teamData.TeamRoles);
+  useEffect(() => {
+    if (!team?.id || !params.observationId || !location.pathname.startsWith("/activity")) {
+      setObservation(null);
+      return undefined;
     }
 
-    return canAccess(role, user.id, team.TeamRoles);
-  };
+    let cancelled = false;
+
+    getObservation(team.id, params.observationId)
+      .then((result) => {
+        if (!cancelled) setObservation(result);
+      })
+      .catch(() => {
+        if (!cancelled) setObservation(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [team?.id, params.observationId, location.pathname]);
 
   const isOnDashboard = () => location.pathname.startsWith("/dashboard/");
   const isOnConnections = () => location.pathname.startsWith("/connections");
   const isOnDatasets = () => location.pathname.startsWith("/datasets");
   const isOnIntegrations = () => location.pathname.startsWith("/integrations");
+  const isOnActivity = () => location.pathname.startsWith("/activity");
 
   const onDropdownAction = (key) => {
     switch (key) {
@@ -157,7 +170,7 @@ function TopNav() {
     const datasetName = getDatasetDisplayName(dataset);
 
     if (isOnDashboard() && project?.name) {
-      items.push({ label: "Dashboards", onPress: () => navigate("/") });
+      items.push({ label: "Dashboards", onPress: () => navigate("/dashboards") });
       items.push({ label: project.name, onPress: () => navigate(`/dashboard/${params.projectId}`) });
       if (location.pathname.includes("chart") && !params.chartId) items.push({ label: "New chart", onPress: null });
       if (params.chartId) items.push({ label: chart?.name || "Chart", onPress: null });
@@ -175,6 +188,11 @@ function TopNav() {
       items.push({ label: "Integrations", onPress: () => navigate("/integrations") });
       if (params.integrationId) {
         items.push({ label: integrations?.find((item) => item.id === params.integrationId)?.name || "Integration", onPress: null });
+      }
+    } else if (isOnActivity()) {
+      items.push({ label: "Activity", onPress: () => navigate("/activity") });
+      if (params.observationId) {
+        items.push({ label: observation?.title || "Change", onPress: null });
       }
     }
 
@@ -197,7 +215,6 @@ function TopNav() {
     );
   };
 
-  const askDataButtonClassName = "relative overflow-hidden border border-white/55 bg-linear-to-br from-primary-200/80 via-white/72 to-secondary-200/72 text-foreground shadow-[0_10px_22px_-18px_rgba(4,139,222,0.28)] backdrop-blur-md backdrop-saturate-150 transition-[border-color,box-shadow,transform,background] duration-200 hover:border-white/70 hover:shadow-[0_12px_24px_-18px_rgba(4,139,222,0.3)] active:scale-[0.99] dark:border-white/10 dark:bg-linear-to-br dark:from-primary-500/28 dark:via-content1/82 dark:to-secondary-500/22";
   const unreadNewsItems = getUnreadNewsItems(newsItems, seenNewsIds);
 
   const onNewsOpenChange = (open) => {
@@ -221,9 +238,8 @@ function TopNav() {
         </div>
 
         <div className="flex flex-row items-center">
-          {canUserAccess("teamAdmin", team) ? (
+          {team?.id ? (
             <Button
-              className={askDataButtonClassName}
               onPress={() => dispatch(toggleAiModal())}
               size="sm"
               variant="primary"
@@ -234,11 +250,9 @@ function TopNav() {
           ) : null}
 
           <Dropdown aria-label="Select a help option">
-            <Dropdown.Trigger>
-              <Button className="bg-transparent" variant="ghost">
-                <LuHeartHandshake size={18} />
-                Resources
-              </Button>
+            <Dropdown.Trigger className="flex h-8 items-center gap-2 rounded-lg px-3 text-sm hover:bg-content2">
+              <LuHeartHandshake size={18} />
+              Resources
             </Dropdown.Trigger>
             <Dropdown.Popover>
               <Dropdown.Menu onAction={(key) => onDropdownAction(key)}>

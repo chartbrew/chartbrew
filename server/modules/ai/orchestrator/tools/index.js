@@ -2,6 +2,8 @@ const listConnections = require("./listConnections");
 const getSchema = require("./getSchema");
 const searchDatasets = require("./searchDatasets");
 const getDatasetIntelligence = require("./getDatasetIntelligence");
+const getWorkspaceActivity = require("./getWorkspaceActivity");
+const runExistingDataset = require("./runExistingDataset");
 const generateQuery = require("./generateQuery");
 const validateQuery = require("./validateQuery");
 const runQuery = require("./runQuery");
@@ -42,6 +44,8 @@ module.exports = {
   getSchema,
   searchDatasets,
   getDatasetIntelligence,
+  getWorkspaceActivity,
+  runExistingDataset,
   generateQuery,
   validateQuery,
   runQuery,

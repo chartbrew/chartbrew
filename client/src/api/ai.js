@@ -1,9 +1,12 @@
 import { API_HOST } from "../config/settings";
 import { getAuthToken } from "../modules/auth";
 
-export async function getAiConversations(teamId) {
+export async function getAiConversations(teamId, options = {}) {
   const token = getAuthToken();
-  const url = `${API_HOST}/ai/conversations?teamId=${teamId}`;
+  const params = new URLSearchParams({ teamId: String(teamId) });
+  if (options.limit != null) params.set("limit", String(options.limit));
+  if (options.offset != null) params.set("offset", String(options.offset));
+  const url = `${API_HOST}/ai/conversations?${params.toString()}`;
   const headers = new Headers({
     "Accept": "application/json",
     "Authorization": `Bearer ${token}`,
@@ -77,6 +80,56 @@ export async function orchestrateAi(teamId, question, conversationHistory = [], 
     throw new Error(error.error || "Failed to orchestrate AI");
   }
 
+  return response.json();
+}
+
+export async function respondAi({
+  aiConversationId,
+  context = null,
+  message,
+  persistence = "ephemeral",
+  sessionId,
+  teamId,
+}) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_HOST}/ai/respond`, {
+    headers: new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    }),
+    method: "POST",
+    body: JSON.stringify({
+      aiConversationId,
+      context,
+      message,
+      persistence,
+      sessionId,
+      teamId,
+    }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Chartbrew could not answer right now");
+  }
+  return response.json();
+}
+
+export async function promoteAiSession(teamId, sessionId) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_HOST}/ai/sessions/${sessionId}/promote`, {
+    headers: new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    }),
+    method: "POST",
+    body: JSON.stringify({ teamId }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "This chat could not be saved");
+  }
   return response.json();
 }
 

@@ -3,7 +3,7 @@ const LineChart = require("../../charts/LineChart");
 const { chartColors } = require("../../charts/colors");
 const { buildChartMetrics } = require("../metrics");
 const { serializeTypedValue } = require("../seriesIdentity");
-const { expandTimeValues, formatTimeValues } = require("../time");
+const { createMoment, expandTimeValues, formatTimeValues } = require("../time");
 const { applyValueFormula } = require("../valueFormula");
 
 const SERIES_COLORS = Object.values(chartColors).map((color) => color.hex);
@@ -70,6 +70,29 @@ function getDomain(frame) {
   });
 
   return domain;
+}
+
+function buildTimeRange(runtimeContext, values, timeUnit, timezone) {
+  const effectiveRange = runtimeContext?.effectiveDateRange;
+  const configuredStart = createMoment(effectiveRange?.startDate, timezone);
+  const configuredEnd = createMoment(effectiveRange?.endDate, timezone);
+  if (configuredStart?.isValid() && configuredEnd?.isValid()) {
+    return {
+      end: configuredEnd.clone().add(1, "millisecond").toISOString(),
+      start: configuredStart.toISOString(),
+    };
+  }
+
+  const parsed = values
+    .map((value) => createMoment(value, timezone))
+    .filter((value) => value?.isValid())
+    .sort((left, right) => left.valueOf() - right.valueOf());
+  if (parsed.length === 0) return null;
+
+  return {
+    end: parsed[parsed.length - 1].clone().add(1, timeUnit || "day").toISOString(),
+    start: parsed[0].toISOString(),
+  };
 }
 
 function getSeriesStyle(layer, series, options = {}) {
@@ -228,12 +251,13 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
 
   let domain = getDomain(frame);
   const timeLayer = frame.layers.find((layer) => layer.fields.time);
-  if (timeLayer) {
-    const timeEncoding = visualization.layers.find((layer) => layer.id === timeLayer.id)?.encoding.time;
-    const timeUnit = timeEncoding?.timeUnit
+  const timeUnit = timeLayer
+    ? visualization.layers.find((layer) => layer.id === timeLayer.id)?.encoding.time?.timeUnit
       || visualization.settings?.timeInterval
       || chart.timeInterval
-      || "day";
+      || "day"
+    : null;
+  if (timeLayer) {
     const includeZeros = visualization.settings?.includeZeros ?? chart.includeZeros;
     const canExpand = !["minute", "second"].includes(timeUnit);
     if (includeZeros && canExpand) {
@@ -262,14 +286,7 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
   };
   const domainValues = [...domain.values()];
   const formattedTime = timeLayer
-    ? formatTimeValues(
-      domainValues,
-      visualization.layers.find((layer) => layer.id === timeLayer.id)?.encoding.time?.timeUnit
-        || visualization.settings?.timeInterval
-        || chart.timeInterval
-        || "day",
-      timezone
-    )
+    ? formatTimeValues(domainValues, timeUnit, timezone)
     : null;
   const axisData = {
     x: formattedTime?.labels || domainValues,
@@ -285,6 +302,9 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
     availableSeries: buildAvailableSeriesMetadata(frame, visualization),
     frameVersion: frame.version,
     series: buildSeriesMetadata(frame, visualization),
+    timeRange: timeLayer
+      ? buildTimeRange(runtimeContext, domainValues, timeUnit, timezone)
+      : null,
     visualizationVersion: visualization.version,
     warnings: frame.warnings,
   };
@@ -304,6 +324,7 @@ module.exports = {
   buildAvailableSeriesMetadata,
   buildSeriesMetadata,
   buildSeriesStyleMap,
+  buildTimeRange,
   compileChartJsCartesian,
   getDomain,
   getAvailableCatalog,

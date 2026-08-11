@@ -12,6 +12,8 @@ import {
   LuCalendar,
 } from "react-icons/lu";
 
+import { toggleAiModal } from "../../../slices/ui";
+
 /**
  * @typedef {"newFeature"|"releaseHighlight"|"underusedCapability"|"tip"} WhatsNewItemType
  *
@@ -181,4 +183,98 @@ export function getTone(colorScheme) {
 
 export function getIconComponent(iconName) {
   return ICON_REGISTRY[iconName] || null;
+}
+
+export function getWhatsNewContent({ navigate, dispatch }) {
+  return {
+    groups: [
+      {
+        key: "features",
+        title: "New features",
+        items: [
+          {
+            id: "slack-ai-integration",
+            type: "newFeature",
+            title: "Ask Chartbrew from Slack",
+            body: "Use Slack to ask Chartbrew questions and get instant insights.",
+            icon: "slack",
+            colorScheme: "primary",
+            ctaLabel: "Open integrations",
+            timestampLabel: "Just added",
+            action: {
+              label: "Open integrations",
+              onPress: () => navigate("/integrations"),
+            },
+          },
+          {
+            id: "ai-chart-builder",
+            type: "newFeature",
+            title: "AI chart builder",
+            body: "Describe the chart you want, Chartbrew creates the first draft.",
+            icon: "brain",
+            colorScheme: "primary",
+            ctaLabel: "Open AI assistant",
+            timestampLabel: "Just added",
+            action: {
+              label: "Open AI assistant",
+              onPress: () => dispatch(toggleAiModal()),
+            },
+          },
+        ],
+      },
+      {
+        key: "underusedCapabilities",
+        title: "Underused capabilities",
+        items: [
+          {
+            id: "scheduled-reports",
+            type: "underusedCapability",
+            title: "Scheduled reports",
+            body: "Send chart snapshots automatically to your inbox.",
+            icon: "calendar",
+            colorScheme: "warning",
+            ctaLabel: "Read tutorial",
+            timestampLabel: "Often missed",
+            action: {
+              label: "Read tutorial",
+              onPress: () => window.open("https://chartbrew.com/blog/automated-dashboard-snapshots-in-chartbrew", "_blank"),
+              type: "external",
+            },
+          },
+        ],
+      },
+    ],
+    tip: {
+      id: "tip-variables",
+      type: "tip",
+      variant: "tip",
+      eyebrow: "Pro tip",
+      title: "One dashboard, many views",
+      body: "Variables help you reuse the same charts across date ranges, filters, and segments.",
+      icon: "sparkles",
+      colorScheme: "tip",
+      ctaLabel: "Open variables guide",
+      action: {
+        label: "Open variables guide",
+        onPress: () => window.open("https://chartbrew.com/blog/how-to-use-variables-in-chartbrew", "_blank"),
+        type: "external",
+      },
+    },
+  };
+}
+
+export function getDiscoverSlides({ navigate, dispatch }) {
+  const { groups, tip } = getWhatsNewContent({ navigate, dispatch });
+  const slides = groups.flatMap((group) => (
+    group.items.map((item) => ({
+      ...item,
+      eyebrow: item.eyebrow || group.title,
+    }))
+  ));
+
+  if (tip) {
+    slides.push(tip);
+  }
+
+  return slides;
 }

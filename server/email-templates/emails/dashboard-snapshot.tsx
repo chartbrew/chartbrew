@@ -17,7 +17,7 @@ export type DashboardSnapshotEmailProps = {
 
 export const DEFAULT_DASHBOARD_SNAPSHOT_EMAIL_PROPS = {
   appName: "Chartbrew",
-  logoUrl: "https://cdn2.chartbrew.com/logos/cb_logo_light.svg",
+  logoUrl: "https://cdn2.chartbrew.com/logos/logo-light.png",
   supportEmail: "",
 } as const;
 

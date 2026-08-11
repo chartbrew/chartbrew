@@ -1,101 +1,77 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Avatar, Button, Chip, ProgressCircle } from "@heroui/react";
-import { LuBrainCircuit } from "react-icons/lu";
+import { Button, Chip, ProgressCircle } from "@heroui/react";
+import {
+  LuChartNoAxesColumnIncreasing, LuExternalLink, LuPencil,
+} from "react-icons/lu";
 
 import Chart from "../Chart/Chart";
 
 function AiChartPreview({ parsed, chartData }) {
   const isTemporary = parsed.type === "chart_temporary" || parsed.visibility === "temporary";
   const isCreated = parsed.type === "chart_created";
-  const color = isTemporary ? "primary" : isCreated ? "success" : "warning";
+  const title = parsed.chartName || chartData?.name || "Generated chart";
 
   return (
-    <div className="flex justify-center mb-4 px-4">
-      <div className="w-full max-w-[90%]">
-        <div className={`px-6 py-4 rounded-lg border ${
-          isTemporary ? "border-primary-200 bg-primary-50/50" : isCreated ? "border-success-200" : "border-warning-200"
-        }`}>
-          <div className="flex items-start gap-3">
-            <Avatar
-              size="sm"
-              color={isTemporary ? undefined : color}
-              variant={isTemporary ? "soft" : undefined}
-            >
-              <Avatar.Fallback>
-                <LuBrainCircuit size={16} className="text-accent" />
-              </Avatar.Fallback>
-            </Avatar>
-            <div className="w-full">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-medium">
-                  {isTemporary ? "Temporary Chart Preview" : isCreated ? "Chart Created" : "Chart Updated"}
-                </span>
-                <Chip
-                  size="sm"
-                  variant={isTemporary ? "primary" : "soft"}
-                  color={isTemporary ? undefined : color}
-                >
-                  {parsed.chartName}
-                </Chip>
-                {isTemporary && (
-                  <Chip
-                    size="sm"
-                    variant="soft"
-                    color="default"
-                    className="ml-auto"
-                  >
-                    Not saved to dashboard
-                  </Chip>
-                )}
-              </div>
-              {chartData ? (
-                <div className="overflow-hidden h-[300px]">
-                  <Chart
-                    chart={chartData}
-                    isPublic={false}
-                    showExport={false}
-                  />
-                </div>
-              ) : (
-                <div className={`border ${
-                  isTemporary ? "border-primary-200" : isCreated ? "border-success-200" : "border-warning-200"
-                } rounded-lg p-8`}>
-                  <ProgressCircle aria-label="Loading chart" />
-                  <div className="text-sm mt-2">Loading chart...</div>
-                </div>
-              )}
-              {isTemporary ? (
-                <div className="text-xs text-foreground-500 mt-3 mb-2">
-                  {"This chart is temporary. Tell me which dashboard you'd like to add it to."}
-                </div>
-              ) : (
-                <div className="flex gap-2 mt-3">
-                  <a href={`/dashboard/${parsed.projectId}`} target="_blank" rel="noopener noreferrer">
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      className="pointer-events-none"
-                    >
-                      View on Dashboard
-                    </Button>
-                  </a>
-                  <a href={`/dashboard/${parsed.projectId}/chart/${parsed.chartId}/edit`} target="_blank" rel="noopener noreferrer">
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      className="pointer-events-none"
-                    >
-                      Edit Chart
-                    </Button>
-                  </a>
-                </div>
-              )}
-            </div>
+    <figure className="mx-auto mb-6 w-full max-w-3xl overflow-hidden rounded-2xl border border-divider bg-content1">
+      <figcaption className="flex flex-col gap-2 border-b border-divider px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <LuChartNoAxesColumnIncreasing className="shrink-0 text-accent" size={18} aria-hidden />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">{title}</p>
+            <p className="text-xs text-muted">Chartbrew visualization</p>
           </div>
         </div>
+        <Chip color={isTemporary ? "warning" : "success"} size="sm" variant="soft">
+          <Chip.Label>{isTemporary ? "Preview" : isCreated ? "Created" : "Updated"}</Chip.Label>
+        </Chip>
+      </figcaption>
+
+      <div className="min-h-80 p-3">
+        {chartData ? (
+          <div className="h-80 overflow-hidden">
+            <Chart chart={chartData} isPublic={false} showExport={false} />
+          </div>
+        ) : (
+          <div className="flex h-80 flex-col items-center justify-center gap-2 text-muted">
+            <ProgressCircle aria-label="Loading generated chart" />
+            <p className="text-sm">Loading visualization…</p>
+          </div>
+        )}
       </div>
-    </div>
+
+      <div className="flex flex-col gap-2 border-t border-divider px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-muted">
+          {isTemporary
+            ? "This preview has not been added to a dashboard."
+            : "This visualization is available in your workspace."}
+        </p>
+        {!isTemporary ? (
+          <div className="flex flex-row items-center gap-1">
+            <Button
+              onPress={() => window.open(`/dashboard/${parsed.projectId}`, "_blank", "noopener,noreferrer")}
+              size="sm"
+              variant="ghost"
+            >
+              <LuExternalLink size={15} aria-hidden />
+              Open dashboard
+            </Button>
+            <Button
+              onPress={() => window.open(
+                `/dashboard/${parsed.projectId}/chart/${parsed.chartId}/edit`,
+                "_blank",
+                "noopener,noreferrer"
+              )}
+              size="sm"
+              variant="ghost"
+            >
+              <LuPencil size={15} aria-hidden />
+              Edit chart
+            </Button>
+          </div>
+        ) : null}
+      </div>
+    </figure>
   );
 }
 
