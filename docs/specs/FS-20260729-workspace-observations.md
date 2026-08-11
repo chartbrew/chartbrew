@@ -2,7 +2,8 @@
 
 Status: draft
 
-Roadmap revision: 2026-08-10 — period-aware KPI evaluation replaces refresh-bound comparison.
+Roadmap revision: 2026-08-11 — add local workspace learning and defer product telemetry to
+Chartbrew Cloud.
 
 ## Summary
 
@@ -21,9 +22,13 @@ KPI review can be useful without filling Activity after every refresh.
 
 The first release is deliberately conservative. It monitors metrics whose meaning is already
 explicit in a chart or user-created monitor, uses deterministic calculations for every published
-fact, and represents missing data or insufficient history honestly. An optional, budgeted LLM audit
-runs asynchronously in shadow mode to measure relevance and recommend scoring-policy changes. It
-does not run after every refresh, invent evidence, or change production weights automatically.
+fact, and represents missing data or insufficient history honestly. Explicit feedback and monitor
+corrections become structured workspace learning data that a later LLM layer can retrieve for
+recommendations and summaries. This data stays inside the self-hosted workspace by default.
+Chartbrew OS does not send product usage telemetry to Chartbrew. If an owner configures an external
+LLM provider, a requested AI task may send only its bounded, authorized context through that
+existing provider configuration. An optional, budgeted LLM audit may run in shadow mode, but it does
+not run after every refresh, invent evidence, or change production weights automatically.
 
 Explicit monitoring is the trust-building foundation, not the final product identity. Once real
 relevance feedback has calibrated publication quality, Chartbrew should proactively recommend
@@ -85,6 +90,10 @@ accessibility conventions, colors, and light/dark behavior.
   entities remains permission-gated.
 - Intelligence data is bounded, encrypted where it contains tenant semantics, and covered by an
   explicit retention policy.
+- Workspace learning stays with the workspace. Chartbrew OS may store explicit feedback,
+  configuration corrections, and approved business context in structured local records. It does
+  not send product usage telemetry or workspace learning data to Chartbrew-operated services. A
+  workspace owner may separately configure an LLM provider for bounded, authorized AI requests.
 - Internal metadata stays internal. Model names, score versions, confidence internals, fingerprints,
   queue state, source IDs, raw errors, and retention mechanics do not appear in normal product UI.
 
@@ -107,6 +116,10 @@ accessibility conventions, colors, and light/dark behavior.
 - Add explicitly configured daily, weekly, or monthly KPI reviews without turning every refresh into
   an Activity item or immediate notification.
 - Add cost-controlled, optional LLM relevance auditing and a human-reviewed calibration report.
+- Store bounded, versioned workspace learning signals and expose a scoped retrieval view for future
+  LLM summaries, watch recommendations, and monitor setup.
+- Add permission-gated orchestrator tools that can preview and configure metric watches after the
+  user gives an explicit instruction or confirms a recommendation.
 - Graduate from manual setup to bounded, explainable metric recommendations after relevance has
   been validated against real feedback.
 - Keep Home concise and editorial: distinguish problems requiring action from positive or neutral
@@ -121,6 +134,10 @@ accessibility conventions, colors, and light/dark behavior.
 - Causal inference. Driver analysis describes contribution or concentration, not causation.
 - Automatically rewriting scoring weights from LLM output.
 - Running an LLM or a new source query after every refresh.
+- Sending product usage telemetry or workspace learning data from Chartbrew OS to Chartbrew, a
+  shared training service, or another team.
+- Treating page opens, hover events, or time on page as implicit metric feedback. Chartbrew Cloud
+  may define separate product analytics after the Chartbrew OS implementation is complete.
 - Treating each successful refresh as a meaningful KPI comparison boundary.
 - Comparing an open period with a complete prior period, or adding daily averages and percentages
   into larger periods without the values needed to calculate them correctly.
@@ -152,6 +169,7 @@ accessibility conventions, colors, and light/dark behavior.
 | Digest | Scheduled KPI review of accessible evaluations, observations, and data-health changes. |
 | Data-health issue | Refresh, freshness, connection, or result-completeness problem. |
 | Metric recommendation | A bounded suggestion to watch an existing, reproducible metric; it is not active until approved. |
+| Workspace learning signal | A bounded, structured local record of explicit feedback, a monitor correction, a recommendation decision, or approved business context. |
 
 User-facing copy should normally use **change**, **insight**, **activity**, **watch**, and
 **data freshness**. `Observation` remains the implementation term. Use **KPI review** for the
@@ -617,7 +635,65 @@ authorized dataset ID plus observation-approved periods, filters, and breakdown 
 through the existing dataset/source runtime, never returns stored query/configuration details, and
 cannot select a dataset outside the user's allowed projects.
 
-## Optional LLM Audit And Calibration
+## Workspace Learning And Optional LLM Audit
+
+### Workspace learning data
+
+Workspace learning data is tenant-owned application data, not Chartbrew product telemetry. It stays
+in the self-hosted deployment by default and follows the same authorization, encryption, export,
+deletion, and retention rules as the metric and observation records that produced it. Chartbrew OS
+does not send this data to Chartbrew Cloud or use it for shared model training. When a workspace
+owner configures an external LLM provider, Chartbrew sends only the bounded context required for an
+authorized AI task under that provider configuration.
+
+The learning layer uses bounded, versioned signal types:
+
+- Explicit useful/not-useful feedback and its bounded reason code.
+- A user's correction to comparison period, metric behavior, healthy direction, or threshold after
+  a recommendation or LLM-assisted setup.
+- Acceptance, editing, or dismissal of a metric recommendation.
+- Explicit business context that the user asks Chartbrew to remember, stored as encrypted tenant
+  semantics with a visible remove action.
+- Lifecycle actions such as save, snooze, and dismiss as supporting context only. They never imply
+  that an observation was correct or useful.
+
+Page opens, hover events, time on page, and similar engagement events are not workspace learning
+signals in Chartbrew OS.
+
+Use one canonical machine-readable projection instead of building a second copy of every source
+record. A future retrieval service converts authorized source records into a contract such as:
+
+```javascript
+{
+  schemaVersion: 1,
+  signalType: "monitor_configuration_corrected",
+  subject: {
+    metricBehavior: "ratio",
+    monitorId: "monitor-id",
+    projectId: "project-id",
+  },
+  decision: {
+    fieldsChanged: ["comparisonPeriod"],
+    previous: { comparisonPeriod: "day" },
+    selected: { comparisonPeriod: "week" },
+  },
+  context: {
+    comparisonRule: "previous_period",
+    periodMode: "completed",
+    reasonCode: "better_business_fit",
+  },
+  occurredAt: "2026-08-11T09:00:00.000Z",
+}
+```
+
+The projection contains stable enums, normalized units and periods, bounded values, provenance, and
+a schema version. It excludes raw source rows, credentials, full queries, hidden prompts, and
+unrelated workspace data. Retrieval is limited to the current team, allowed projects, requested
+metric, and task. The LLM receives only the smallest relevant set of signals.
+
+Initial LLM use is retrieval, not online training or automatic fine-tuning. The orchestrator can use
+the retrieved signals to explain a result, recommend a watch, select a better default, or summarize
+a KPI review. A learning signal cannot change a monitor or publication policy by itself.
 
 ### User relevance feedback
 
@@ -635,7 +711,8 @@ complete until feedback is explicit, reversible, and analytically useful:
   a relevance verdict.
 - Do not collect free-form tenant text in version 1.
 
-The calibration report joins feedback to the deterministic inputs that produced the observation:
+The calibration report is an operator-run, local report. It joins feedback to the deterministic
+inputs that produced the observation:
 monitor kind, configured healthy direction, observed direction and impact, severity, magnitude,
 baseline type, completeness, sample count, policy version, and whether a sampled LLM audit agreed.
 It reports cohort counts and low-sample warnings before rates, preserves team privacy, and does not
@@ -680,7 +757,9 @@ Rules:
 - Per-team daily audit count, token, and cost ceilings stop new audits when exhausted.
 - Record usage with an `AiUsage.purpose` such as `observation_audit`; do not attach shadow audits to
   user conversations.
-- Compare audit results with explicit user relevance feedback, opens, saves, snoozes, and dismissals.
+- Compare audit results with explicit relevance feedback and monitor corrections. Saves, snoozes,
+  and dismissals are supporting context, not relevance verdicts. Do not collect page opens for this
+  purpose in Chartbrew OS.
 
 Use `npm run observations:audit-report` to summarize deterministic outcomes, joined user feedback,
 LLM disagreement, false-positive proxies, costs, and suggested policy changes without printing
@@ -751,6 +830,23 @@ Replace the client contract that submits `conversationHistory` with:
   hiding UI controls is not authorization.
 - Observation context is resolved from an authorized ID on the server. The client cannot inject
   arbitrary team, dataset, chart, or connection context.
+
+The later workspace-learning release adds bounded monitor tools to the orchestrator:
+
+- `list_metric_monitors` returns accessible watches and their user-facing period contracts.
+- `preview_metric_monitor` validates a proposed series, behavior, comparison period, and threshold
+  without creating or changing a monitor.
+- `create_metric_monitor` creates the previewed watch for an editable project.
+- `update_metric_monitor` changes an accessible watch and returns the resulting period contract.
+- `get_metric_learning_context` returns the smallest relevant set of authorized workspace learning
+  signals for a metric task.
+- `record_metric_context` stores business context only when the user explicitly asks Chartbrew to
+  remember it.
+
+Read tools may support a recommendation directly. Write tools require an explicit user instruction
+or confirmation of the preview. The server repeats authorization and validation when the write tool
+runs. A model suggestion, prior correction, or recommendation acceptance is not standing permission
+for future monitor changes.
 
 ## Domain Model
 
@@ -856,6 +952,20 @@ window.
 - Optional bounded reason code (`expected_change`, `too_small`, `incorrect_context`,
   `already_known`, `not_actionable`, or `clear_and_useful`), not free-form tenant data in version 1.
 - The observation detail response includes only the authenticated user's current feedback.
+
+### Workspace learning projection
+
+- Derive versioned learning signals from authorized feedback, preferences, recommendation
+  decisions, monitor changes, and explicit saved business context.
+- Keep source rows as the system of record. Do not duplicate every observation or evaluation into a
+  separate event warehouse.
+- If monitor-change provenance is not available from the source model, add one bounded local change
+  record with changed field names and normalized before/after values. Do not store full monitor
+  payloads.
+- Build LLM retrieval objects at read time with team, project, metric, purpose, count, age, and
+  character limits.
+- Delete or make signals unreachable when their source record or saved context is deleted, subject
+  to the documented retention policy.
 
 ### `ObservationAudit`
 
@@ -1140,6 +1250,9 @@ this specification describe the target architecture, but they do not add work to
 - Rollup of averages, ratios, percentiles, medians, distributions, distinct counts, or formulas.
 - Metric-aware long-term snapshot rollups. Final metric evaluations remain self-contained.
 - Changes to LLM auditing for the new evaluator. LLM audit stays off.
+- The workspace-learning retrieval projection, saved business context, and orchestrator monitor
+  write tools. Existing explicit feedback remains available and becomes an input to that later
+  layer.
 - A standalone metric-evaluation history browser and dedicated list/detail APIs.
 - Automatic period inference from hourly chart data, metric names, source refresh cadence,
   or LLM output.
@@ -1182,12 +1295,19 @@ The revised rollout order is:
    incomplete-period, delayed-data, and timezone cases before releasing the replacement engine.
 6. **Expand carefully:** add period-to-date, prior-year, and non-additive metric support only after
    the completed-period path has strong relevance feedback.
-7. **Controlled proactivity:** after the replacement engine is released, optionally sample LLM
-   audits and review publication precision, KPI-review engagement, and recommendation acceptance
-   before expanding other proactive features.
+7. **Add workspace learning:** after the replacement engine is released, build the bounded local
+   learning projection and use explicit feedback, corrections, and recommendation decisions to
+   improve LLM summaries and watch suggestions.
+8. **Add safe monitor tools:** let the orchestrator preview and configure a metric watch only within
+   the user's permissions and after an explicit instruction or confirmation.
+9. **Run Chartbrew Cloud rollout separately:** only after the Chartbrew OS implementation and its
+   release checks are complete, Chartbrew Cloud may add its own product analytics and controlled
+   rollout. Do not add that telemetry to Chartbrew OS.
 
-The prior controlled-rollout phase is blocked by steps one through five. The LLM audit machinery
-remains off by default. Implementation completion is not permission to enable it for every team.
+The prior controlled-rollout phase is replaced by the local workspace-learning phase below and a
+separate Chartbrew Cloud phase. The LLM audit machinery remains off by default. Implementation
+completion is not permission to enable it for every team or send workspace data outside the
+self-hosted deployment.
 
 The existing observation-engine control remains the emergency kill switch. The completed-period
 path does not add a second engine or a team feature flag. Disabling observations stops capture and
@@ -1592,23 +1712,43 @@ never watches a guessed metric without approval.
 **Exit condition:** asking a question feels like watching Chartbrew investigate and produce a
 trustworthy analytical result, rather than waiting for a text chatbot to reply.
 
-### Phase 5 — Controlled proactive rollout
+### Phase 5 — Add local workspace learning and monitor tools
 
-**Blocked by Iteration Four.** Do not use refresh-bound observations as the quality baseline for a
-broad rollout.
+**Blocked by the Iteration Four release gates.** Complete the deterministic period engine before its
+records become input to LLM recommendations or summaries.
 
-- [ ] Run shadow capture on selected real workspaces before broad publication.
-- [ ] Compare deterministic outcomes with Maya/Benji feedback and enable sampled LLM auditing only
-  for selected teams with existing cost ceilings.
-- [ ] Review publication precision, recommendation acceptance, dismissals, and audit disagreement
-  before each versioned policy change.
-- [ ] Verify snapshot, audit, feedback, observation, and UpdateRun retention after a full production
-  retention window.
-- [ ] Promote Home—not Activity—as the primary proof of value in rollout review.
+- [ ] Define the versioned, bounded workspace-learning signal contract and retention rules.
+- [ ] Build one authorized projection over explicit feedback, incorrect-comparison reasons,
+  recommendation decisions, monitor corrections, and explicit saved business context.
+- [ ] Keep page opens, hover events, time on page, and other product engagement telemetry out of
+  Chartbrew OS.
+- [ ] Add scoped retrieval by team, allowed project, metric, task, age, count, and character budget.
+- [ ] Add `list_metric_monitors`, `preview_metric_monitor`, `create_metric_monitor`,
+  `update_metric_monitor`, `get_metric_learning_context`, and `record_metric_context` orchestrator
+  tools with server-side permission checks.
+- [ ] Require an explicit instruction or confirmation before a tool creates or changes a watch.
+- [ ] Use retrieval first to improve KPI summaries, comparison defaults, and watch recommendations.
+  Do not add online training, automatic fine-tuning, or automatic policy mutation.
+- [ ] Add local export, deletion, and operator-run verification for the learning records.
 
-**Exit condition:** the system proactively surfaces and recommends useful intelligence at a
-measured quality level, with Activity serving as evidence and history rather than the product's
-center of gravity.
+**Exit condition:** the LLM can retrieve a small, inspectable set of local workspace preferences and
+can preview or configure a watch without hidden learning, cross-team data, or unconfirmed writes.
+
+### Phase 6 — Chartbrew Cloud controlled rollout
+
+This phase is outside Chartbrew OS. Start it only after the self-hosted observation engine,
+workspace-learning projection, and orchestrator tools are complete and pass their release gates.
+
+- [ ] Define Chartbrew Cloud product analytics separately from workspace learning data.
+- [ ] Review publication precision, recommendation acceptance, and product engagement under the
+  Chartbrew Cloud privacy and retention policy.
+- [ ] Keep any cloud telemetry client, event contract, and delivery path out of the Chartbrew OS
+  repository.
+- [ ] Enable sampled hosted LLM auditing only for selected cloud teams with the existing privacy,
+  token, and cost limits.
+
+**Exit condition:** Chartbrew Cloud can evaluate hosted rollout quality without changing the
+self-hosted data contract or sending Chartbrew OS workspace data to Chartbrew.
 
 ## Iteration Four: Period-Aware KPI Engine
 
@@ -1741,10 +1881,12 @@ valid stable metrics, and does not repeat facts because charts refreshed many ti
 - [x] Measure useful/not-useful feedback by metric behavior, comparison period, threshold type,
   completion state, and observation impact.
 - [x] Keep LLM auditing off during this release calibration.
-- [ ] Review KPI-review opens, observation detail opens, dismissals, and incorrect-comparison reasons.
+- [ ] Run the self-hosted release audit from deterministic evaluations, explicit feedback,
+  dismissals, incorrect-comparison reasons, replay output, and retention state. Do not add page-open
+  or product usage telemetry to Chartbrew OS.
 - [ ] Release completed-period publication as the only observation publication path after all
   acceptance gates pass.
-- [ ] Resume Iteration Three Phase 5 only after completed-period precision is acceptable.
+- [ ] Start Iteration Three Phase 5 only after completed-period precision is acceptable.
 
 **Exit condition:** eligible workspaces receive a low-volume, reproducible stream of business-period
 changes and scheduled KPI reviews from the replacement engine.
@@ -1759,7 +1901,8 @@ changes and scheduled KPI reviews from the replacement engine.
 - [ ] Replace behavior-neutral long-term snapshot rollups before long-range comparisons depend on
   them.
 - [ ] Add standalone metric-evaluation history APIs only with a user-facing history surface.
-- [ ] Adapt optional LLM auditing only after deterministic completed-period quality is acceptable.
+- [ ] Adapt optional local LLM auditing only after deterministic completed-period quality is
+  acceptable and the workspace-learning input contract is bounded.
 - [ ] Evaluate fiscal calendars and custom windows as a separate product decision.
 
 **Exit condition:** each added mode passes its own replay corpus and does not weaken the completed-
