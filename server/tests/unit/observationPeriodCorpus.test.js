@@ -92,7 +92,8 @@ describe("observation period regression corpus", () => {
     corpus.scenarios
       .filter((scenario) => scenario.monitor.comparisonPeriod)
       .forEach((scenario) => {
-        expect(["day", "month", "week"]).toContain(scenario.monitor.comparisonPeriod);
+        expect(["day", "month", "quarter", "week", "year"])
+          .toContain(scenario.monitor.comparisonPeriod);
         expect(scenario.monitor.threshold).toEqual(expect.objectContaining({
           type: expect.stringMatching(/^(absolute|percentage_points|relative)$/),
           value: expect.any(Number),
@@ -190,9 +191,9 @@ describe("observation period regression corpus", () => {
       });
   });
 
-  it("rejects comparison settings outside the first period-aware release", () => {
-    expect(() => getCompletedPeriodWindows({ comparisonPeriod: "quarter" }))
-      .toThrow(/day, week, or month/);
+  it("rejects comparison modes that are not completed previous periods", () => {
+    expect(() => getCompletedPeriodWindows({ comparisonPeriod: "decade" }))
+      .toThrow(/day, week, month, quarter, or year/);
     expect(() => getCompletedPeriodWindows({
       comparisonPeriod: "month",
       periodMode: "period_to_date",

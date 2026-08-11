@@ -1216,7 +1216,7 @@ Source-specific metric planning remains source-owned and follows `source-plugin-
 observation code consumes canonical dataset/chart/runtime contracts and does not branch on source
 type.
 
-## First Period-Aware Release Scope
+## Completed-Period Release Scope
 
 This section is the binding implementation boundary for Iteration Four. The broader sections in
 this specification describe the target architecture, but they do not add work to this release.
@@ -1224,10 +1224,11 @@ this specification describe the target architecture, but they do not add work to
 ### In scope
 
 - Previous completed period only.
-- Completed day-over-day, week-over-week, and month-over-month comparisons only.
+- Completed day-over-day, week-over-week, month-over-month, quarter-over-quarter, and year-over-year
+  comparisons.
 - Normal calendar periods in the team timezone, with an editable week start and timezone.
-- An explicit user choice when hourly data does not state daily, weekly, or monthly business meaning.
-- Native complete daily, weekly, or monthly metric values.
+- An explicit user choice when the chart interval does not state the intended business period.
+- Native complete metric values when the chart uses the selected period.
 - Additive rollup for explicit `sum` and `count` flows with complete interval coverage.
 - Aligned checkpoints for explicit point-in-time state metrics.
 - One user-confirmed relative, absolute, or percentage-point publication threshold per monitor.
@@ -1243,7 +1244,6 @@ this specification describe the target architecture, but they do not add work to
 
 ### Deferred from this release
 
-- Quarterly and yearly comparison periods.
 - Period-to-date and same-period-last-year comparisons.
 - Fiscal calendars and custom windows.
 - Ratio reconstruction from numerator and denominator.
@@ -1284,7 +1284,8 @@ completed-period evaluation.
 The revised rollout order is:
 
 1. **Stop refresh noise:** keep snapshot capture, but replace refresh-to-refresh publication with
-   explicit completed-day, completed-week, or completed-month eligibility.
+   explicit completed-day, completed-week, completed-month, completed-quarter, or completed-year
+   eligibility.
 2. **Add period contracts:** store metric behavior, comparison period, period mode, calendar rules,
    and an explicit publication threshold on each new monitor.
 3. **Persist metric evaluations:** create one reproducible result per comparison window, including
@@ -1319,16 +1320,15 @@ publication jobs without changing chart refresh success or hiding existing dashb
 
 - Metric extraction from canonical line, bar, KPI, average, and count layers.
 - Rejection of ambiguous, incomplete, stale, unsupported, and high-cardinality metrics.
-- Calendar windows for week and month across timezone, daylight-saving, month-length, and week-start
-  boundaries.
+- Calendar windows for week, month, quarter, and year across timezone, daylight-saving,
+  month-length, leap-year, year, and week-start boundaries.
 - Completed-period and aligned-state comparison, plus explicit rejection of partial-current versus
   complete-prior windows.
 - Flow summation, state checkpoint selection, native-period values, and rejection of unsafe average,
   ratio, percentile, median, distinct-count, and formula rollups.
 - Complete, partial, and unknown interval coverage, including explicit zero-fill and rejection of an
   unexplained missing bucket.
-- Previous completed period, plus explicit rejection of period-to-date and prior-year modes in this
-  release.
+- Previous completed period, plus explicit rejection of period-to-date and prior-year modes.
 - Percentage-point versus relative-percent calculations and unit formatting.
 - Relative, absolute, and percentage-point monitor thresholds; ranking; versioning; deduplication;
   correction; and recovery.
@@ -1793,8 +1793,8 @@ eligible comparison without publishing an observation.
 
 ### 3. Implement completed-period evaluation
 
-- [x] Build timezone-aware calendar windows for day, week, and month.
-- [x] Reject quarter, year, period-to-date, and prior-year comparison settings in this release.
+- [x] Build timezone-aware calendar windows for day, week, month, quarter, and year.
+- [x] Reject period-to-date and prior-year comparison settings.
 - [x] Implement complete-window flow summation for explicit `sum` and `count` metrics.
 - [x] Accept a native complete daily, weekly, or monthly value without rolling up its internal
   calculation.
@@ -1834,8 +1834,10 @@ database plus an upgraded development database can both apply all migrations.
 
 - [x] Let the user choose how Chartbrew compares the metric independently from chart refresh and
   digest cadence.
-- [x] Show a recommended period and metric behavior, with an exact example such as `July compared
-  with June` before confirmation.
+- [x] Show clear period choices and a recommended metric behavior, with an exact example such as
+  `July compared with June` before confirmation.
+- [x] Keep unavailable periods visible but disabled when the chart does not contain the two complete
+  periods required for the comparison.
 - [x] Ask for one relative, absolute, or percentage-point meaningful-change threshold.
 - [x] Preview the threshold effect before confirmation.
 - [x] Require recommendation acceptance to confirm the same behavior, period, and threshold contract
@@ -1857,8 +1859,8 @@ two compared business windows without opening calculation details.
 - [x] Add `kpi_review` and `changes_only` content modes plus monthly cadence to digest setup and
   persistence.
 - [x] Recommend daily delivery when the scope contains daily comparisons, weekly delivery when it
-  contains weekly comparisons, and monthly delivery when all comparisons are monthly; require user
-  confirmation.
+  contains weekly comparisons, and monthly delivery when all comparisons are monthly, quarterly,
+  or yearly; require user confirmation.
 - [x] Select undelivered final metric-evaluation revisions, independent of source refresh count,
   observation `last_detected_at`, or a last-delivery timestamp alone.
 - [x] Rank unhealthy and material results first, then show stable scoped metrics in a compact group.
@@ -1893,7 +1895,8 @@ changes and scheduled KPI reviews from the replacement engine.
 
 ### 8. Expand comparison rules and modes only after completed periods
 
-- [ ] Add quarterly and yearly completed-period comparisons.
+- [x] Add quarterly and yearly completed-period comparisons, including chart-history eligibility
+  and exact period labels.
 - [ ] Add aligned period-to-date evaluation with equal elapsed cutoffs and explicit maturity rules.
 - [ ] Add prior-year comparison with retained-history, leap-year, and missing-period rules.
 - [ ] Add ratio rollup only when numerator and denominator are explicit and reproducible.

@@ -19,6 +19,10 @@ const {
   mergeMonitorPeriodInput,
   normalizePeriodContract,
 } = require("../modules/observations/periodContract");
+const {
+  assertPeriodAvailable,
+  getPeriodAvailability,
+} = require("../modules/observations/periodAvailability");
 const { getPeriodEvaluationSchedule } = require("../modules/observations/periodWindows");
 const { getObservationPolicy } = require("../modules/observations/policy");
 const {
@@ -62,6 +66,9 @@ async function serializeMonitor(monitor) {
     ? monitor.baseline_policy
     : null;
   const publicationPolicy = monitor.publication_policy || null;
+  const calendarTimezone = baselinePolicy?.calendarTimezone
+    || monitor.Project?.timezone
+    || "UTC";
   return {
     active: monitor.is_active,
     aggregate: monitor.metric_spec?.aggregate || "none",
@@ -93,6 +100,12 @@ async function serializeMonitor(monitor) {
     minimumSamples: monitor.minimum_samples,
     name: monitor.name,
     nextEvaluationAt: monitor.next_evaluation_at,
+    periodAvailability: monitor.Chart && monitor.kind === "timeseries"
+      ? getPeriodAvailability(monitor.Chart, {
+        timezone: calendarTimezone,
+        weekStartsOn: baselinePolicy?.weekStartsOn || 1,
+      })
+      : getPeriodAvailability({}),
     projectId: monitor.project_id,
     projectName: monitor.Project?.name || null,
     sourceName: monitor.metric_spec?.metricTitle || monitor.name,
@@ -112,7 +125,10 @@ class MonitorController {
     const monitors = await db.MetricMonitor.findAll({
       include: [{
         model: db.Chart,
-        attributes: ["id", "name"],
+        attributes: [
+          "chartData", "currentEndDate", "endDate", "fixedStartDate", "id", "name", "startDate",
+          "timeInterval",
+        ],
         required: false,
       }, {
         model: db.Dataset,
@@ -120,7 +136,7 @@ class MonitorController {
         required: false,
       }, {
         model: db.Project,
-        attributes: ["id", "name"],
+        attributes: ["id", "name", "timezone"],
         required: false,
       }, {
       model: db.User,
@@ -157,9 +173,16 @@ class MonitorController {
 
   async options(access, chartId) {
     const chart = await this.getChart(access, chartId);
+    const calendarTimezone = chart.Project?.timezone || "UTC";
+    const periodAvailability = getPeriodAvailability(chart, {
+      timezone: calendarTimezone,
+    });
     return getEligibleLayers(chart.visualization).map((option) => ({
       ...option,
-      calendarTimezone: chart.Project?.timezone || "UTC",
+      calendarTimezone,
+      periodAvailability: option.kind === "timeseries"
+        ? periodAvailability
+        : getPeriodAvailability({}),
       refreshSchedule: getRefreshSchedule(chart),
       timeUnit: option.timeUnit || chart.timeInterval || "day",
     }));
@@ -181,6 +204,13 @@ class MonitorController {
         valueFormat: data.valueFormat,
       });
       periodContract = normalizePeriodContract(data, draftDefinition.metricSpec);
+      if (draftDefinition.kind === "timeseries") {
+        assertPeriodAvailable(chart, {
+          comparisonPeriod: periodContract.baselinePolicy.comparisonPeriod,
+          timezone: periodContract.baselinePolicy.calendarTimezone,
+          weekStartsOn: periodContract.baselinePolicy.weekStartsOn,
+        });
+      }
       definition = buildMonitorDefinition({
         chart,
         desiredDirection: data.desiredDirection,
@@ -300,7 +330,10 @@ class MonitorController {
     const monitor = await db.MetricMonitor.findOne({
       include: [{
         model: db.Chart,
-        attributes: ["id", "name"],
+        attributes: [
+          "chartData", "currentEndDate", "endDate", "fixedStartDate", "id", "name", "startDate",
+          "timeInterval",
+        ],
         required: false,
       }, {
         model: db.Dataset,
@@ -308,7 +341,7 @@ class MonitorController {
         required: false,
       }, {
         model: db.Project,
-        attributes: ["id", "name"],
+        attributes: ["id", "name", "timezone"],
         required: false,
       }, {
       model: db.User,
@@ -374,6 +407,18 @@ class MonitorController {
       };
       values.baseline_policy = periodContract.baselinePolicy;
       values.publication_policy = periodContract.publicationPolicy;
+      if (monitor.chart_id && monitor.kind === "timeseries") {
+        try {
+          const chart = await this.getChart(access, monitor.chart_id);
+          assertPeriodAvailable(chart, {
+            comparisonPeriod: periodContract.baselinePolicy.comparisonPeriod,
+            timezone: periodContract.baselinePolicy.calendarTimezone,
+            weekStartsOn: periodContract.baselinePolicy.weekStartsOn,
+          });
+        } catch (error) {
+          throw createHttpError(error.message, error.statusCode || 400);
+        }
+      }
     } else {
       try {
         periodContract = getMonitorPeriodContract(monitor);

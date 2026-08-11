@@ -49,6 +49,14 @@ const PERIOD_OPTIONS = {
     plural: "months",
     singular: "month",
   },
+  quarter: {
+    description: "Last complete quarter compared with the quarter before",
+    example: "For example, April–June compared with January–March.",
+    icon: LuCalendarRange,
+    label: "Quarter over quarter",
+    plural: "quarters",
+    singular: "quarter",
+  },
   week: {
     description: "Last complete week compared with the week before",
     example: "For example, July 27–August 2 compared with July 20–26.",
@@ -57,7 +65,17 @@ const PERIOD_OPTIONS = {
     plural: "weeks",
     singular: "week",
   },
+  year: {
+    description: "Last complete year compared with the year before",
+    example: "For example, 2025 compared with 2024.",
+    icon: LuCalendarClock,
+    label: "Year over year",
+    plural: "years",
+    singular: "year",
+  },
 };
+
+const COMPARISON_PERIODS = ["day", "week", "month", "quarter", "year"];
 
 function getPeriodCopy(period) {
   return PERIOD_OPTIONS[period] || {
@@ -168,7 +186,7 @@ function getMachineTimezone() {
 }
 
 function getDefaultPeriodSettings(source = {}) {
-  const supportedSourcePeriod = ["day", "week", "month"].includes(source.timeUnit)
+  const supportedSourcePeriod = COMPARISON_PERIODS.includes(source.timeUnit)
     ? source.timeUnit
     : null;
   return {
@@ -195,8 +213,9 @@ function getRecommendedBehavior(aggregate, recommendedMetricBehavior) {
 function canBuildCompleteFlow(timeUnit, comparisonPeriod) {
   if (!timeUnit || timeUnit === comparisonPeriod) return true;
   const supportedRollups = {
-    day: new Set(["week", "month"]),
+    day: new Set(["week", "month", "quarter", "year"]),
     hour: new Set(["day", "week"]),
+    month: new Set(["quarter", "year"]),
   };
   return supportedRollups[timeUnit]?.has(comparisonPeriod) || false;
 }
@@ -244,13 +263,17 @@ function getPeriodComparisonPayload(settings) {
 }
 
 function isPeriodSettingsValid(settings, {
-  aggregate, kind, timeUnit, valueMeaning,
+  aggregate, kind, periodAvailability, timeUnit, valueMeaning,
 } = {}) {
   const thresholdValue = Number(settings.thresholdValue);
   if (!settings.calendarTimezone || !Number.isFinite(thresholdValue) || thresholdValue <= 0) {
     return false;
   }
-  if (settings.metricBehavior === "flow" && !["count", "sum"].includes(aggregate)) return false;
+  if (periodAvailability?.[settings.comparisonPeriod]?.available === false) return false;
+  if (settings.metricBehavior === "flow"
+    && (kind !== "timeseries"
+      || !["count", "sum"].includes(aggregate)
+      || !canBuildCompleteFlow(timeUnit, settings.comparisonPeriod))) return false;
   if (["distribution", "ratio"].includes(settings.metricBehavior)
     && (kind !== "timeseries" || timeUnit !== settings.comparisonPeriod)) return false;
   if (settings.thresholdType === "percentage_points" && valueMeaning !== "percentage") return false;
@@ -261,6 +284,7 @@ function PeriodComparisonFields({
   aggregate,
   kind,
   onChange,
+  periodAvailability,
   recommendedMetricBehavior,
   refreshSchedule,
   timeUnit,
@@ -270,11 +294,16 @@ function PeriodComparisonFields({
   const setValue = (field, nextValue) => onChange({ ...value, [field]: nextValue });
   const periodCopy = getPeriodCopy(value.comparisonPeriod);
   const nativePeriodAvailable = kind === "timeseries" && timeUnit === value.comparisonPeriod;
-  const flowAvailable = ["count", "sum"].includes(aggregate);
+  const flowAvailable = kind === "timeseries"
+    && ["count", "sum"].includes(aggregate)
+    && canBuildCompleteFlow(timeUnit, value.comparisonPeriod);
   const behaviorOptions = ["flow", "state", "ratio", "distribution"];
-  const recommendedPeriod = ["day", "week", "month"].includes(timeUnit) ? timeUnit : "month";
   const recommendedBehavior = getRecommendedBehavior(aggregate, recommendedMetricBehavior);
-  const scheduleWarning = getRefreshScheduleWarning({
+  const selectedPeriodAvailability = periodAvailability?.[value.comparisonPeriod];
+  const availabilityWarning = selectedPeriodAvailability?.available === false
+    ? `${selectedPeriodAvailability.reason}. Extend the chart date range and try again.`
+    : null;
+  const scheduleWarning = availabilityWarning || getRefreshScheduleWarning({
     comparisonPeriod: value.comparisonPeriod,
     metricBehavior: value.metricBehavior,
     refreshSchedule,
@@ -288,15 +317,36 @@ function PeriodComparisonFields({
         onChange={(period) => setValue("comparisonPeriod", period)}
         value={value.comparisonPeriod}
       >
-        <Label>How should Chartbrew compare it?</Label>
+        <Label>How often should Chartbrew compare results?</Label>
         <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
         <Select.Popover>
           <ListBox>
-            {["day", "week", "month"].map((period) => {
+            {COMPARISON_PERIODS.map((period) => {
               const option = getPeriodCopy(period);
+              const availability = periodAvailability?.[period];
+              const needsNativePeriod = ["ratio", "distribution"].includes(value.metricBehavior)
+                && (kind !== "timeseries" || timeUnit !== period);
+              const cannotBuildFlow = value.metricBehavior === "flow"
+                && !canBuildCompleteFlow(timeUnit, period);
+              const disabled = availability?.available === false
+                || needsNativePeriod
+                || cannotBuildFlow;
+              let description = option.description;
+              if (availability?.available === false) {
+                description = availability.reason;
+              } else if (needsNativePeriod) {
+                description = `Needs one complete ${option.singular} value from the chart`;
+              } else if (cannotBuildFlow) {
+                description = `This chart cannot build a complete ${option.singular} total`;
+              }
               return (
-                <ListBox.Item id={period} key={period} textValue={option.label}>
-                  <OptionContent {...option} recommended={period === recommendedPeriod} />
+                <ListBox.Item
+                  id={period}
+                  isDisabled={disabled}
+                  key={period}
+                  textValue={option.label}
+                >
+                  <OptionContent {...option} description={description} />
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
               );
@@ -477,6 +527,11 @@ PeriodComparisonFields.propTypes = {
   aggregate: PropTypes.string,
   kind: PropTypes.string,
   onChange: PropTypes.func.isRequired,
+  periodAvailability: PropTypes.objectOf(PropTypes.shape({
+    available: PropTypes.bool.isRequired,
+    known: PropTypes.bool,
+    reason: PropTypes.string,
+  })),
   recommendedMetricBehavior: PropTypes.string,
   refreshSchedule: PropTypes.shape({
     automatic: PropTypes.bool,
@@ -490,6 +545,7 @@ PeriodComparisonFields.propTypes = {
 PeriodComparisonFields.defaultProps = {
   aggregate: "none",
   kind: null,
+  periodAvailability: null,
   recommendedMetricBehavior: null,
   refreshSchedule: null,
   timeUnit: null,

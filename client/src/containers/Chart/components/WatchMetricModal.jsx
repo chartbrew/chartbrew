@@ -214,6 +214,7 @@ function WatchMetricModal({
                   aggregate={selectedOption?.aggregate}
                   kind={selectedOption?.kind}
                   onChange={setPeriodSettings}
+                  periodAvailability={selectedOption?.periodAvailability}
                   recommendedMetricBehavior={selectedOption?.recommendedMetricBehavior}
                   refreshSchedule={selectedOption?.refreshSchedule}
                   timeUnit={selectedOption?.timeUnit}
@@ -462,6 +463,7 @@ function WatchMetricModal({
                 || !isPeriodSettingsValid(periodSettings, {
                 aggregate: selectedOption?.aggregate,
                 kind: selectedOption?.kind,
+                periodAvailability: selectedOption?.periodAvailability,
                 timeUnit: selectedOption?.timeUnit,
                 valueMeaning: previewFormat.meaning,
               })}
@@ -511,6 +513,7 @@ WatchMetricModal.propTypes = {
     calendarTimezone: PropTypes.string,
     kind: PropTypes.string.isRequired,
     name: PropTypes.string,
+    periodAvailability: PropTypes.object,
     recommendedMetricBehavior: PropTypes.string,
     refreshSchedule: PropTypes.shape({
       automatic: PropTypes.bool,

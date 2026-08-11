@@ -228,6 +228,10 @@ describe("KPI reviews", () => {
       { baseline_policy: { comparisonPeriod: "month" } },
     ])).toBe("monthly");
     expect(getRecommendedCadence([
+      { baseline_policy: { comparisonPeriod: "quarter" } },
+      { baseline_policy: { comparisonPeriod: "year" } },
+    ])).toBe("monthly");
+    expect(getRecommendedCadence([
       { baseline_policy: { comparisonPeriod: "month" } },
       { baseline_policy: { comparisonPeriod: "day" } },
     ])).toBe("daily");

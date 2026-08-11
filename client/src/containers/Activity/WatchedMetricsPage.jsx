@@ -103,7 +103,13 @@ function getMonitorMeta(monitor) {
 
 function getComparisonLabel(monitor) {
   if (!monitor.comparison?.period) return null;
-  const periodLabels = { day: "Daily", month: "Monthly", week: "Weekly" };
+  const periodLabels = {
+    day: "Daily",
+    month: "Monthly",
+    quarter: "Quarterly",
+    week: "Weekly",
+    year: "Yearly",
+  };
   const period = periodLabels[monitor.comparison.period] || "Completed period";
   const behavior = monitor.metricBehavior === "flow"
     ? "Total"
@@ -683,6 +689,7 @@ function WatchedMetricsPage() {
           id: selectedMonitor.id,
           kind: selectedMonitor.kind,
           name: selectedMonitor.sourceName || selectedMonitor.name,
+          periodAvailability: selectedMonitor.periodAvailability,
           recommendedMetricBehavior: selectedMonitor.metricBehavior,
           timeUnit: selectedMonitor.timeUnit,
           valueFormat: selectedMonitor.valueFormat,
@@ -709,6 +716,7 @@ function WatchedMetricsPage() {
           id: selectedRecommendation.layerId,
           kind: selectedRecommendation.kind,
           name: selectedRecommendation.name,
+          periodAvailability: selectedRecommendation.periodAvailability,
           recommendedMetricBehavior: selectedRecommendation.recommendedMetricBehavior,
           timeUnit: selectedRecommendation.timeUnit,
           valueFormat: selectedRecommendation.valueFormat,

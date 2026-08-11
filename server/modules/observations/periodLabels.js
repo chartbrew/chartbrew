@@ -21,7 +21,9 @@ function formatPeriodLabel(period, window, timezone = "UTC") {
   const start = localDate(window.start, timezone);
   if (period === "day") return start.toFormat("LLLL d, yyyy");
   if (period === "month") return start.toFormat("LLLL yyyy");
+  if (period === "quarter") return `Q${start.quarter} ${start.year}`;
   if (period === "week") return formatWeekLabel(window.start, window.end, timezone);
+  if (period === "year") return start.toFormat("yyyy");
   return start.toFormat("LLLL d, yyyy");
 }
 

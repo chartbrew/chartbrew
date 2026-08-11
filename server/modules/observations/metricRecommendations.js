@@ -1,5 +1,6 @@
 const { createHash } = require("../updateAudit");
 const { buildMonitorDefinition, getEligibleLayers } = require("./monitorSchema");
+const { getPeriodAvailability } = require("./periodAvailability");
 
 const AGGREGATION_LABELS = {
   avg: "Average",
@@ -142,17 +143,24 @@ function buildMetricRecommendations({
       const aggregate = definition.metricSpec.aggregate || "none";
       const aggregateLabel = AGGREGATION_LABELS[aggregate] || "Calculated value";
       const projectName = chart.Project?.name || "Dashboard";
+      const calendarTimezone = chart.Project?.timezone || "UTC";
 
       return [{
         aggregate: option.aggregate,
-        calendarTimezone: chart.Project?.timezone || "UTC",
+        calendarTimezone,
         chart: { id: chart.id, name: chart.name || definition.name },
-        comparison: "Daily, weekly, or monthly comparison",
+        comparison: "Completed-period comparison",
         defaultImportance: activeAlertCount > 0 || pinCount > 0 ? 2 : 1,
         id: getRecommendationId(teamId, candidate),
         kind: definition.kind,
         layerId: option.id,
         name: definition.name,
+        periodAvailability: definition.kind === "timeseries"
+          ? getPeriodAvailability(chart, {
+            asOf: now,
+            timezone: calendarTimezone,
+          })
+          : getPeriodAvailability({}),
         recommendedMetricBehavior: option.recommendedMetricBehavior,
         project: { id: chart.project_id, name: projectName },
         calculation: aggregate === "none"

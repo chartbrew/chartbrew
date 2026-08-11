@@ -2,7 +2,7 @@ const { IANAZone } = require("luxon");
 
 const PERIOD_POLICY_VERSION = "completed-period-v1";
 const SUPPORTED_BEHAVIORS = new Set(["distribution", "flow", "ratio", "state"]);
-const SUPPORTED_PERIODS = new Set(["day", "month", "week"]);
+const SUPPORTED_PERIODS = new Set(["day", "month", "quarter", "week", "year"]);
 const SUPPORTED_THRESHOLDS = new Set(["absolute", "percentage_points", "relative"]);
 
 class PeriodContractError extends Error {
@@ -10,6 +10,16 @@ class PeriodContractError extends Error {
     super(message);
     this.code = code;
   }
+}
+
+function canBuildCompleteFlow(timeUnit, comparisonPeriod) {
+  if (!timeUnit || timeUnit === comparisonPeriod) return true;
+  const supportedRollups = {
+    day: new Set(["week", "month", "quarter", "year"]),
+    hour: new Set(["day", "week"]),
+    month: new Set(["quarter", "year"]),
+  };
+  return supportedRollups[timeUnit]?.has(comparisonPeriod) || false;
 }
 
 function readInput(input = {}) {
@@ -64,7 +74,7 @@ function normalizePeriodContract(input = {}, metricSpec = {}) {
   }
   if (!SUPPORTED_PERIODS.has(values.comparisonPeriod)) {
     throw new PeriodContractError(
-      "Choose a daily, weekly, or monthly comparison",
+      "Choose a daily, weekly, monthly, quarterly, or yearly comparison",
       "comparison_period_required"
     );
   }
@@ -97,6 +107,19 @@ function normalizePeriodContract(input = {}, metricSpec = {}) {
     throw new PeriodContractError(
       "Period totals require a sum or count metric",
       "flow_aggregate_unsupported"
+    );
+  }
+  if (values.metricBehavior === "flow" && metricSpec.kind && metricSpec.kind !== "timeseries") {
+    throw new PeriodContractError(
+      "Period totals require complete time-series values",
+      "flow_timeseries_required"
+    );
+  }
+  if (values.metricBehavior === "flow"
+    && !canBuildCompleteFlow(metricSpec.timeUnit, values.comparisonPeriod)) {
+    throw new PeriodContractError(
+      "This chart cannot build a complete total for the selected period",
+      "flow_period_unsupported"
     );
   }
   if (["distribution", "ratio"].includes(values.metricBehavior)
@@ -229,6 +252,7 @@ function hasPeriodContractInput(data = {}) {
 module.exports = {
   PERIOD_POLICY_VERSION,
   PeriodContractError,
+  canBuildCompleteFlow,
   getMonitorPeriodContract,
   hasPeriodContractInput,
   mergeMonitorPeriodInput,

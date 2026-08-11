@@ -519,6 +519,7 @@ function Home() {
           id: recommendation.layerId,
           kind: recommendation.kind,
           name: recommendation.name,
+          periodAvailability: recommendation.periodAvailability,
           recommendedMetricBehavior: recommendation.recommendedMetricBehavior,
           timeUnit: recommendation.timeUnit,
           valueFormat: recommendation.valueFormat,

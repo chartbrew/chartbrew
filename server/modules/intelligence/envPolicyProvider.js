@@ -18,7 +18,7 @@ const DEFAULT_OBSERVATION_POLICY = Object.freeze({
   autoMonitorCharts: false,
   minimumSamples: 7,
   maximumMonitors: 100,
-  maximumSnapshotsPerRefresh: 400,
+  maximumSnapshotsPerRefresh: 1200,
   deduplicationCooldownDays: 7,
   publishScore: 0.75,
   minimumRelativeChange: 0.1,

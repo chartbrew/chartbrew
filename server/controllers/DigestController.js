@@ -214,7 +214,10 @@ function getRecommendedCadence(monitors) {
   )).filter(Boolean);
   if (periods.includes("day")) return "daily";
   if (periods.includes("week")) return "weekly";
-  if (periods.length > 0 && periods.every((period) => period === "month")) return "monthly";
+  if (periods.length > 0
+    && periods.every((period) => ["month", "quarter", "year"].includes(period))) {
+    return "monthly";
+  }
   return "weekly";
 }
 

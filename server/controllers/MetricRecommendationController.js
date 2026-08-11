@@ -21,12 +21,12 @@ class MetricRecommendationController {
   async generate(access, { includeDismissed = false, limit = LIST_LIMIT } = {}) {
     const charts = await db.Chart.findAll({
       attributes: [
-        "id", "project_id", "name", "autoUpdate", "chartDataUpdated", "timeInterval",
-        "visualization",
+        "autoUpdate", "chartData", "chartDataUpdated", "currentEndDate", "endDate", "fixedStartDate",
+        "id", "name", "project_id", "startDate", "timeInterval", "visualization",
       ],
       include: [{
         model: db.Project,
-        attributes: ["id", "name", "team_id", "ghost"],
+        attributes: ["ghost", "id", "name", "team_id", "timezone"],
         required: true,
         where: { ghost: false, team_id: access.teamId },
       }, {

@@ -876,7 +876,7 @@ describe("workspace observations", () => {
       refreshedAt,
       updateRunId: 8,
     }, {
-      maximumSnapshotsPerRefresh: 400,
+      maximumSnapshotsPerRefresh: 1200,
     });
 
     expect(result).toEqual({

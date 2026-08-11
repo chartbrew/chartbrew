@@ -1,11 +1,13 @@
 const { DateTime, IANAZone } = require("luxon");
 
-const SUPPORTED_PERIODS = new Set(["day", "month", "week"]);
+const SUPPORTED_PERIODS = new Set(["day", "month", "quarter", "week", "year"]);
 
 function getPeriodDuration(comparisonPeriod) {
   if (comparisonPeriod === "day") return { days: 1 };
   if (comparisonPeriod === "month") return { months: 1 };
-  return { weeks: 1 };
+  if (comparisonPeriod === "quarter") return { months: 3 };
+  if (comparisonPeriod === "week") return { weeks: 1 };
+  return { years: 1 };
 }
 
 function validateOptions({
@@ -16,7 +18,7 @@ function validateOptions({
   weekStartsOn,
 }) {
   if (!SUPPORTED_PERIODS.has(comparisonPeriod)) {
-    throw new Error("Comparison period must be day, week, or month");
+    throw new Error("Comparison period must be day, week, month, quarter, or year");
   }
   if (comparison !== "previous_period") {
     throw new Error("Comparison must be previous_period");
@@ -43,6 +45,8 @@ function toDateTime(asOf, timezone) {
 function getOpenPeriodStart(instant, comparisonPeriod, weekStartsOn) {
   if (comparisonPeriod === "day") return instant.startOf("day");
   if (comparisonPeriod === "month") return instant.startOf("month");
+  if (comparisonPeriod === "quarter") return instant.startOf("quarter");
+  if (comparisonPeriod === "year") return instant.startOf("year");
 
   const startOfDay = instant.startOf("day");
   const daysSinceWeekStart = (startOfDay.weekday - weekStartsOn + 7) % 7;

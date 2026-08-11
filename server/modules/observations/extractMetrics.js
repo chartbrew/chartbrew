@@ -6,6 +6,7 @@ function addPeriod(date, granularity, timezone = "UTC") {
     hour: { hours: 1 },
     minute: { minutes: 1 },
     month: { months: 1 },
+    quarter: { months: 3 },
     second: { seconds: 1 },
     week: { weeks: 1 },
     year: { years: 1 },
@@ -106,7 +107,7 @@ function extractMonitorSnapshots(monitor, frame, options = {}) {
   }
 
   const extractionOptions = {
-    maximumSnapshotsPerRefresh: options.maximumSnapshotsPerRefresh || 400,
+    maximumSnapshotsPerRefresh: options.maximumSnapshotsPerRefresh || 1200,
     refreshedAt: options.refreshedAt || new Date(),
   };
   if (monitor.kind === "timeseries") {
