@@ -412,6 +412,7 @@ function Home() {
           action={(
             <Button onPress={() => navigate("/dashboards")} size="sm" variant="ghost">
               All dashboards
+              <LuArrowRight aria-hidden />
             </Button>
           )}
           id="dashboards-heading"
