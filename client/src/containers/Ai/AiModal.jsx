@@ -18,11 +18,16 @@ import socketClient from "../../modules/socketClient";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import canAccess from "../../config/canAccess";
 import AiComposer from "./AiComposer";
+import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiContextPicker from "./AiContextPicker";
 import AiMessageGroup from "./AiMessageGroup";
 import AiProgress from "./AiProgress";
 import { AiLoadingActivity, AiUserPrompt } from "./AiTranscript";
-import { getChartToolMessageInfo, groupAiMessages } from "./aiMessageUtils";
+import {
+  getChartToolMessageInfo,
+  getCompletedActionIds,
+  groupAiMessages,
+} from "./aiMessageUtils";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -39,6 +44,7 @@ function AiModal({ isOpen, onClose }) {
   const [isSocketReady, setIsSocketReady] = useState(false);
   const [progressEvents, setProgressEvents] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
+  const [pendingActions, setPendingActions] = useState([]);
   const [toolDisplayNames, setToolDisplayNames] = useState({});
   const [createdCharts, setCreatedCharts] = useState([]);
   const [selectedContext, setSelectedContext] = useState({
@@ -83,6 +89,17 @@ function AiModal({ isOpen, onClose }) {
   const conversationGroups = useMemo(() => (
     groupAiMessages(conversation?.full_history || [])
   ), [conversation?.full_history]);
+  const completedActionIds = useMemo(() => (
+    getCompletedActionIds(conversation?.full_history || [])
+  ), [conversation?.full_history]);
+
+  const rememberPendingAction = (pendingAction) => {
+    if (!pendingAction?.actionId) return;
+    setPendingActions((current) => [
+      ...current.filter((item) => item.actionId !== pendingAction.actionId),
+      pendingAction,
+    ]);
+  };
 
   // Helper to get display label for context entity
   const getContextLabel = (entity) => {
@@ -338,6 +355,7 @@ function AiModal({ isOpen, onClose }) {
     try {
       // If no conversation exists, create it immediately and switch to conversation view
       if (!conversation || conversation.isTemporary) {
+        setPendingActions([]);
         // Add user message to local messages immediately
         setLocalMessages([userMessage]);
         
@@ -366,6 +384,7 @@ function AiModal({ isOpen, onClose }) {
         if (!response || !response.orchestration || !response.orchestration.message) {
           throw new Error("Invalid response from AI");
         }
+        rememberPendingAction(response.orchestration.pendingAction);
 
         // Add AI response to local messages
         const aiMessage = {
@@ -413,6 +432,7 @@ function AiModal({ isOpen, onClose }) {
         if (!response || !response.orchestration || !response.orchestration.message) {
           throw new Error("Invalid response from AI");
         }
+        rememberPendingAction(response.orchestration.pendingAction);
 
         // Refresh conversation with updated history from database
         const updatedConversation = await getAiConversation(conversation.id, team.id);
@@ -455,6 +475,7 @@ function AiModal({ isOpen, onClose }) {
     setLocalMessages([]);
     setProgressEvents([]);
     setCreatedCharts([]);
+    setPendingActions([]);
     fetchedChartsRef.current.clear();
     setSelectedContext({
       multiSelect: [],
@@ -496,6 +517,7 @@ function AiModal({ isOpen, onClose }) {
         setLocalMessages([]);
         setProgressEvents([]);
         setCreatedCharts([]);
+        setPendingActions([]);
         fetchedChartsRef.current.clear();
       }
 
@@ -504,6 +526,42 @@ function AiModal({ isOpen, onClose }) {
     } catch (error) {
       toast.error(error.message);
     }
+  };
+
+  const _onConfirmPendingAction = async (pendingAction) => {
+    if (isLoading || !conversation?.id || !pendingAction?.actionId) return;
+    setIsLoading(true);
+    setProgressEvents([]);
+    try {
+      await respondAi({
+        action: {
+          actionId: pendingAction.actionId,
+          type: "confirm_pending_action",
+        },
+        aiConversationId: conversation.id,
+        persistence: "persistent",
+        teamId: team.id,
+      });
+      const updatedConversation = await getAiConversation(conversation.id, team.id);
+      if (updatedConversation?.conversation) {
+        setConversation(updatedConversation.conversation);
+      }
+      setPendingActions((current) => current.filter((item) => {
+        return item.actionId !== pendingAction.actionId;
+      }));
+      await loadConversations();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const _onChangePendingAction = async (pendingAction) => {
+    setPendingActions((current) => current.filter((item) => {
+      return item.actionId !== pendingAction.actionId;
+    }));
+    await _onAskAi("I want to change the proposed settings.");
   };
 
   const _onSuggestionClick = async (suggestion) => {
@@ -569,6 +627,7 @@ function AiModal({ isOpen, onClose }) {
       if (!response || !response.orchestration || !response.orchestration.message) {
         throw new Error("Invalid response from AI");
       }
+      rememberPendingAction(response.orchestration.pendingAction);
 
       // Add AI response to local messages
       const aiMessage = {
@@ -810,6 +869,7 @@ function AiModal({ isOpen, onClose }) {
                             setLocalMessages([]);
                             setProgressEvents([]);
                             setCreatedCharts([]);
+                            setPendingActions([]);
                             fetchedChartsRef.current.clear();
                             setSelectedContext({
                               multiSelect: [],
@@ -917,10 +977,23 @@ function AiModal({ isOpen, onClose }) {
                               group={group}
                               groupIndex={index}
                               createdCharts={createdCharts}
+                              completedActionIds={completedActionIds}
                               toolDisplayNames={toolDisplayNames}
+                              onChangeAction={_onChangePendingAction}
+                              onConfirmAction={_onConfirmPendingAction}
                               onSuggestionClick={_onSuggestionClick}
                               isLoading={isLoading}
                             />
+                          ))}
+                          {pendingActions.map((pendingAction) => (
+                            <div className="mx-auto mb-6 w-full max-w-3xl px-4" key={pendingAction.actionId}>
+                              <AiActionPreviewCard
+                                action={pendingAction}
+                                isLoading={isLoading}
+                                onChange={_onChangePendingAction}
+                                onConfirm={_onConfirmPendingAction}
+                              />
+                            </div>
                           ))}
                           <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
                           {isLoading && progressEvents.length === 0 && (

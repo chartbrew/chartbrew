@@ -48,6 +48,8 @@ function HomeAsk({ teamId }) {
             id="home-ask"
             isLoading={chat.isLoading}
             messages={chat.messages}
+            onChangeAction={chat.changeAction}
+            onConfirmAction={chat.confirmAction}
             onSave={onSave}
             onSubmit={chat.sendMessage}
             placeholder="Ask anything about your data"

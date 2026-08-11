@@ -64,8 +64,7 @@ function getReasons({
     reasons.push("An active alert already marks this chart as important.");
   }
   if (pinCount > 0) {
-    const people = pinCount === 1 ? "person has" : "people have";
-    reasons.push(`${pinCount} ${people} pinned ${projectName}.`);
+    reasons.push(`You pinned ${projectName}.`);
   }
   if (semanticConfirmed) {
     reasons.push("Its field and calculation match the dataset profile.");

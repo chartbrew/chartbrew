@@ -9,6 +9,7 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
+const runtimeCache = require("../modules/runtimeCache");
 const { decrypt, encrypt } = require("../modules/cbCrypto");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -158,6 +159,7 @@ class UserController {
         where: { "user_id": id },
         transaction
       });
+      const allTeamIds = [...new Set(teamRoles.map((teamRole) => teamRole.team_id))];
       const ownedTeamIds = [...new Set(
         teamRoles
           .filter((teamRole) => teamRole.role === "teamOwner")
@@ -264,6 +266,11 @@ class UserController {
         where: { id },
         transaction
       });
+
+      await Promise.all(allTeamIds.map((teamId) => runtimeCache.clearPendingAiActions({
+        teamId,
+        userId: id,
+      })));
 
       // Commit the transaction
       await transaction.commit();

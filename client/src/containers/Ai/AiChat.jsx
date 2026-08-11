@@ -4,8 +4,9 @@ import { Button } from "@heroui/react";
 import { LuBookmark } from "react-icons/lu";
 
 import AiComposer from "./AiComposer";
+import AiActionPreviewCard from "./AiActionPreviewCard";
 import { AiAnswer, AiLoadingActivity, AiUserPrompt } from "./AiTranscript";
-import { parseAiMessage } from "./aiMessageUtils";
+import { getCompletedActionIds, parseAiMessage } from "./aiMessageUtils";
 
 const EMPTY_CONTEXT = {
   multiSelect: [],
@@ -17,11 +18,14 @@ function AiChat({
   isLoading,
   messages,
   onSave,
+  onChangeAction,
+  onConfirmAction,
   onSubmit,
   placeholder = "Ask a question about your data",
   showSave = false,
   suggestions = [],
 }) {
+  const completedActionIds = getCompletedActionIds(messages);
   return (
     <div className="flex flex-col gap-3">
       {messages.length > 0 ? (
@@ -34,6 +38,22 @@ function AiChat({
                 );
               }
               const parsed = parseAiMessage(message);
+              const suggestionActions = parsed.type === "message_with_suggestions" ? (
+                <div className="mt-3 flex flex-row flex-wrap gap-2">
+                  {parsed.suggestions.map((suggestion) => (
+                    <Button
+                      className="h-auto min-h-8 rounded-full px-3 py-1 font-normal"
+                      isDisabled={isLoading}
+                      key={suggestion.id}
+                      onPress={() => onSubmit(suggestion.label)}
+                      size="sm"
+                      variant="secondary"
+                    >
+                      {suggestion.label}
+                    </Button>
+                  ))}
+                </div>
+              ) : null;
               return (
                 <AiAnswer
                   actions={showSave && index === messages.length - 1 ? (
@@ -47,22 +67,20 @@ function AiChat({
                       Save conversation
                     </Button>
                   ) : null}
-                  after={parsed.type === "message_with_suggestions" ? (
-                    <div className="mt-3 flex flex-row flex-wrap gap-2">
-                      {parsed.suggestions.map((suggestion) => (
-                        <Button
-                          className="h-auto min-h-8 rounded-full px-3 py-1 font-normal"
-                          isDisabled={isLoading}
-                          key={suggestion.id}
-                          onPress={() => onSubmit(suggestion.label)}
-                          size="sm"
-                          variant="secondary"
-                        >
-                          {suggestion.label}
-                        </Button>
-                      ))}
-                    </div>
-                  ) : null}
+                  after={(
+                    <>
+                      {suggestionActions}
+                      {parsed.type === "message_with_action" ? (
+                        <AiActionPreviewCard
+                          action={parsed.action}
+                          isApplied={completedActionIds.has(parsed.action.actionId)}
+                          isLoading={isLoading}
+                          onChange={onChangeAction}
+                          onConfirm={onConfirmAction}
+                        />
+                      ) : null}
+                    </>
+                  )}
                   content={parsed.content || "I need a little more information to answer that."}
                   isError={message.isError}
                   key={`${message.role}-${index}`}
@@ -99,6 +117,8 @@ AiChat.propTypes = {
     role: PropTypes.string,
   })).isRequired,
   onSave: PropTypes.func,
+  onChangeAction: PropTypes.func.isRequired,
+  onConfirmAction: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   showSave: PropTypes.bool,

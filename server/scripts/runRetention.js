@@ -1,6 +1,7 @@
 const db = require("../models/models");
 const { cleanupExpiredRuns } = require("../modules/updateAudit");
 const { cleanupObservationData } = require("../modules/observations/retention");
+const { cleanupWorkspaceLearning } = require("../modules/workspaceContext/retention");
 
 function readOption(name) {
   const prefix = `--${name}=`;
@@ -14,7 +15,7 @@ function hasFlag(name) {
 
 async function run() {
   const category = readOption("category") || "all";
-  if (!["all", "observations", "update-runs"].includes(category)) {
+  if (!["all", "observations", "update-runs", "workspace-learning"].includes(category)) {
     throw new Error(`Unknown retention category: ${category}`);
   }
 
@@ -41,6 +42,12 @@ async function run() {
         rawSnapshotDays: process.env.CB_METRIC_SNAPSHOT_RETENTION_DAYS,
         resolvedObservationDays: process.env.CB_OBSERVATION_RESOLVED_RETENTION_DAYS,
         rollupDays: process.env.CB_METRIC_ROLLUP_RETENTION_DAYS,
+      });
+    }
+    if (["all", "workspace-learning"].includes(category)) {
+      report.workspaceLearning = await cleanupWorkspaceLearning({
+        ...sharedOptions,
+        actionAuditDays: process.env.CB_ORCHESTRATOR_ACTION_AUDIT_RETENTION_DAYS,
       });
     }
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);

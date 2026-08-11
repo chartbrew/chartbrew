@@ -5,6 +5,7 @@ const { nanoid } = require("nanoid");
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const runtimeCache = require("../modules/runtimeCache");
 const UserController = require("./UserController");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -98,6 +99,7 @@ class TeamController {
       // Finally delete the team (this will cascade delete TeamRole and TeamInvitation)
       await db.Team.destroy({ where: { id: teamId }, transaction });
 
+      await runtimeCache.clearPendingAiActions({ teamId });
       // Commit the transaction
       await transaction.commit();
 

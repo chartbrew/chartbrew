@@ -66,7 +66,11 @@ class MetricRecommendationController {
       }),
       db.PinnedDashboard.findAll({
         attributes: ["project_id"],
-        where: { project_id: { [Op.in]: projectIds }, team_id: access.teamId },
+        where: {
+          project_id: { [Op.in]: projectIds },
+          team_id: access.teamId,
+          user_id: access.userId,
+        },
       }),
       includeDismissed ? [] : db.MetricRecommendationDismissal.findAll({
         attributes: [

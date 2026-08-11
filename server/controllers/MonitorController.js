@@ -1,4 +1,7 @@
+const crypto = require("crypto");
+
 const db = require("../models/models");
+const runtimeCache = require("../modules/runtimeCache");
 const ChartController = require("./ChartController");
 const DatasetController = require("./DatasetController");
 const {
@@ -31,6 +34,13 @@ const {
   toLegacyUnit,
 } = require("../modules/observations/valueFormat");
 const { normalizeDesiredDirection } = require("../modules/observations/metricDirection");
+const {
+  createActionAudit,
+  getChangedFields,
+} = require("../modules/workspaceContext/actionAudit");
+const {
+  getMonitorAuditValues,
+} = require("../modules/workspaceContext/auditValues");
 
 const ALLOWED_IMPORTANCE = new Set([1, 2, 3]);
 
@@ -61,7 +71,7 @@ function getRefreshSchedule(chart) {
   };
 }
 
-async function serializeMonitor(monitor) {
+function serializeMonitor(monitor) {
   const baselinePolicy = monitor.baseline_policy?.type === "completed_period"
     ? monitor.baseline_policy
     : null;
@@ -153,7 +163,7 @@ class MonitorController {
     return Promise.all(monitors.map(serializeMonitor));
   }
 
-  async getChart(access, chartId) {
+  async getChart(access, chartId, options = {}) {
     const chart = await db.Chart.findOne({
       include: [{
         model: db.ChartDatasetConfig,
@@ -162,6 +172,7 @@ class MonitorController {
         model: db.Project,
         attributes: ["id", "name", "team_id", "timezone", "updateSchedule"],
       }],
+      transaction: options.transaction,
       where: { id: chartId },
     });
     if (!chart || Number(chart.Project?.team_id) !== access.teamId) {
@@ -188,8 +199,8 @@ class MonitorController {
     }));
   }
 
-  async create(access, data = {}, user = null) {
-    const chart = await this.getChart(access, data.chartId);
+  async create(access, data = {}, user = null, options = {}) {
+    const chart = await this.getChart(access, data.chartId, options);
     assertCanEditProject(access, chart.project_id);
     const policy = getObservationPolicy();
 
@@ -233,22 +244,37 @@ class MonitorController {
       throw createHttpError("Choose a valid metric importance", 400);
     }
     const existingMonitor = await db.MetricMonitor.findOne({
+      transaction: options.transaction,
       where: {
         binding_key: definition.bindingKey,
         chart_id: chart.id,
         team_id: access.teamId,
       },
     });
+    if (options.createOnly && existingMonitor) {
+      throw createHttpError("This metric is already watched. Review it before making changes.", 409);
+    }
     if (!existingMonitor?.is_active) {
       const monitorCount = await db.MetricMonitor.count({
+        transaction: options.transaction,
         where: { is_active: true, team_id: access.teamId },
       });
       if (monitorCount >= policy.maximumMonitors) {
         throw createHttpError("This workspace has reached its watched metric limit", 400);
       }
     }
+    if (options.dryRun) {
+      return {
+        binding,
+        chart,
+        definition,
+        importance,
+        periodContract,
+      };
+    }
 
     const [monitor, created] = await db.MetricMonitor.findOrCreate({
+      transaction: options.transaction,
       where: {
         binding_key: definition.bindingKey,
         chart_id: chart.id,
@@ -279,6 +305,9 @@ class MonitorController {
         team_id: access.teamId,
       },
     });
+    if (!created && options.createOnly) {
+      throw createHttpError("This metric is already watched. Review it before making changes.", 409);
+    }
     if (!created) {
       const definitionChanged = monitor.definition_fingerprint !== definition.definitionFingerprint;
       await monitor.update({
@@ -306,7 +335,7 @@ class MonitorController {
         publication_policy: definition.publicationPolicy,
         status: definitionChanged ? "collecting" : monitor.status,
         status_reason: definitionChanged ? "definition_changed" : monitor.status_reason,
-      });
+      }, { transaction: options.transaction });
     }
     if (user) {
       try {
@@ -315,18 +344,26 @@ class MonitorController {
           getCache: false,
           noSource: false,
         });
-        await monitor.reload();
+        await monitor.reload({ transaction: options.transaction });
       } catch (error) {
         await monitor.update({
           status: "collecting",
           status_reason: "initial_evaluation_failed",
-        });
+        }, { transaction: options.transaction });
       }
     }
     return serializeMonitor(monitor);
   }
 
-  async findById(access, monitorId) {
+  async createStrict(access, data = {}, options = {}) {
+    return this.create(access, data, null, { ...options, createOnly: true });
+  }
+
+  async previewCreate(access, data = {}) {
+    return this.create(access, data, null, { createOnly: true, dryRun: true });
+  }
+
+  async findById(access, monitorId, options = {}) {
     const monitor = await db.MetricMonitor.findOne({
       include: [{
         model: db.Chart,
@@ -349,6 +386,7 @@ class MonitorController {
       attributes: ["id", "name", "icon"],
         required: false,
       }],
+      transaction: options.transaction,
       where: {
         id: monitorId,
         team_id: access.teamId,
@@ -359,8 +397,8 @@ class MonitorController {
     return monitor;
   }
 
-  async update(access, monitorId, data = {}) {
-    const monitor = await this.findById(access, monitorId);
+  async update(access, monitorId, data = {}, options = {}) {
+    const monitor = await this.findById(access, monitorId, options);
     assertCanEditProject(access, monitor.project_id);
     const values = {};
     if (typeof data.active === "boolean") values.is_active = data.active;
@@ -409,7 +447,7 @@ class MonitorController {
       values.publication_policy = periodContract.publicationPolicy;
       if (monitor.chart_id && monitor.kind === "timeseries") {
         try {
-          const chart = await this.getChart(access, monitor.chart_id);
+          const chart = await this.getChart(access, monitor.chart_id, options);
           assertPeriodAvailable(chart, {
             comparisonPeriod: periodContract.baselinePolicy.comparisonPeriod,
             timezone: periodContract.baselinePolicy.calendarTimezone,
@@ -456,13 +494,48 @@ class MonitorController {
         values.status_reason = "definition_changed";
       }
     }
-    await monitor.update(values);
+    if (options.dryRun) return { monitor, values };
+    await monitor.update(values, { transaction: options.transaction });
     return serializeMonitor(monitor);
+  }
+
+  async updateWithAudit(access, monitorId, data = {}) {
+    return db.sequelize.transaction(async (transaction) => {
+      const current = await this.findById(access, monitorId, { transaction });
+      const beforeValues = getMonitorAuditValues(current);
+      const resource = await this.update(access, monitorId, data, { transaction });
+      const afterValues = getMonitorAuditValues(resource);
+      if (getChangedFields(beforeValues, afterValues).length > 0) {
+        await createActionAudit({
+          access,
+          actionId: crypto.randomUUID(),
+          actionType: "metric_monitor.update",
+          afterValues,
+          authorityType: "direct_ui",
+          beforeValues,
+          projectId: resource.projectId,
+          resourceId: resource.id,
+          resourceType: "metric_monitor",
+          source: "ui",
+          status: "applied",
+          transaction,
+        });
+      }
+      return resource;
+    });
+  }
+
+  async previewUpdate(access, monitorId, data = {}) {
+    return this.update(access, monitorId, data, { dryRun: true });
   }
 
   async remove(access, monitorId) {
     const monitor = await this.findById(access, monitorId);
     assertCanEditProject(access, monitor.project_id);
+    await runtimeCache.clearPendingAiActions({
+      resourceId: monitor.id,
+      teamId: access.teamId,
+    });
     await monitor.destroy();
     return { removed: true };
   }

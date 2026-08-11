@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Button } from "@heroui/react";
 
 import AiChartPreview from "./AiChartPreview";
+import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiToolOperations from "./AiToolOperations";
 import { AiAnswer, AiUserPrompt } from "./AiTranscript";
 import { getUserMessageDisplayContent } from "./aiMessageUtils";
@@ -13,6 +14,9 @@ function AiMessageGroup({
   createdCharts,
   toolDisplayNames,
   onSuggestionClick,
+  onChangeAction,
+  onConfirmAction,
+  completedActionIds,
   isLoading,
 }) {
   if (group.type === "user") {
@@ -33,6 +37,7 @@ function AiMessageGroup({
   const operations = [];
   let finalMessage = null;
   let suggestions = [];
+  let actionPreview = null;
 
   group.items.forEach(({ message, parsed }) => {
     if (parsed.type === "tool_call") {
@@ -43,6 +48,8 @@ function AiMessageGroup({
       }));
     } else if (parsed.type === "tool_result") {
       operations.push({ data: parsed.content, name: parsed.name, type: "result" });
+    } else if (parsed.type === "action_preview") {
+      actionPreview = parsed.action;
     } else if (parsed.type === "message_with_suggestions") {
       finalMessage = { ...message, content: parsed.content };
       suggestions = parsed.suggestions || [];
@@ -51,28 +58,41 @@ function AiMessageGroup({
     }
   });
 
-  if (!finalMessage && operations.length === 0) return null;
+  if (!finalMessage && operations.length === 0 && !actionPreview) return null;
 
   return (
     <article className="mx-auto mb-6 w-full max-w-3xl px-4">
       <AiAnswer
-        after={suggestions.length > 0 ? (
-          <div className="mt-3 flex flex-row flex-wrap gap-2">
-            {suggestions.map((suggestion) => (
-              <Button
-                className="h-auto min-h-8 rounded-full px-3 py-1 font-normal"
-                isPending={isLoading}
-                key={suggestion.id}
-                onPress={() => onSuggestionClick(suggestion)}
-                size="sm"
-                type="button"
-                variant="secondary"
-              >
-                {suggestion.label}
-              </Button>
-            ))}
-          </div>
-        ) : null}
+        after={(
+          <>
+            {suggestions.length > 0 ? (
+              <div className="mt-3 flex flex-row flex-wrap gap-2">
+                {suggestions.map((suggestion) => (
+                  <Button
+                    className="h-auto min-h-8 rounded-full px-3 py-1 font-normal"
+                    isPending={isLoading}
+                    key={suggestion.id}
+                    onPress={() => onSuggestionClick(suggestion)}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {suggestion.label}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+            {actionPreview ? (
+              <AiActionPreviewCard
+                action={actionPreview}
+                isApplied={completedActionIds.has(actionPreview.actionId)}
+                isLoading={isLoading}
+                onChange={onChangeAction}
+                onConfirm={onConfirmAction}
+              />
+            ) : null}
+          </>
+        )}
         before={<AiToolOperations
           groupIndex={groupIndex}
           operations={operations}
@@ -97,6 +117,9 @@ AiMessageGroup.propTypes = {
   createdCharts: PropTypes.arrayOf(PropTypes.object).isRequired,
   toolDisplayNames: PropTypes.object.isRequired,
   onSuggestionClick: PropTypes.func.isRequired,
+  onChangeAction: PropTypes.func.isRequired,
+  onConfirmAction: PropTypes.func.isRequired,
+  completedActionIds: PropTypes.instanceOf(Set).isRequired,
   isLoading: PropTypes.bool.isRequired,
 };
 

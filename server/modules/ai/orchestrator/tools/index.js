@@ -3,6 +3,12 @@ const getSchema = require("./getSchema");
 const searchDatasets = require("./searchDatasets");
 const getDatasetIntelligence = require("./getDatasetIntelligence");
 const getWorkspaceActivity = require("./getWorkspaceActivity");
+const getWorkspaceContext = require("./getWorkspaceContext");
+const listMetricMonitors = require("./listMetricMonitors");
+const recommendMetricMonitors = require("./recommendMetricMonitors");
+const previewMetricMonitor = require("./previewMetricMonitor");
+const listKpiReviews = require("./listKpiReviews");
+const previewKpiReview = require("./previewKpiReview");
 const runExistingDataset = require("./runExistingDataset");
 const generateQuery = require("./generateQuery");
 const validateQuery = require("./validateQuery");
@@ -45,6 +51,12 @@ module.exports = {
   searchDatasets,
   getDatasetIntelligence,
   getWorkspaceActivity,
+  getWorkspaceContext,
+  listMetricMonitors,
+  recommendMetricMonitors,
+  previewMetricMonitor,
+  listKpiReviews,
+  previewKpiReview,
   runExistingDataset,
   generateQuery,
   validateQuery,

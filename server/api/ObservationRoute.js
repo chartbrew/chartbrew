@@ -5,6 +5,7 @@ const DigestController = require("../controllers/DigestController");
 const MetricRecommendationController = require("../controllers/MetricRecommendationController");
 const MonitorController = require("../controllers/MonitorController");
 const ObservationController = require("../controllers/ObservationController");
+const WorkspaceLearningController = require("../controllers/WorkspaceLearningController");
 const verifyToken = require("../modules/verifyToken");
 const { getObservationAccess } = require("../modules/observations/access");
 
@@ -33,8 +34,11 @@ const testDigestLimiter = rateLimit({
 });
 
 function sendError(res, error) {
-  return res.status(error.statusCode || 500).send({
-    error: error.message || "The request could not be completed",
+  const statusCode = error.statusCode || 500;
+  return res.status(statusCode).send({
+    error: statusCode < 500 && error.message
+      ? error.message
+      : "The request could not be completed",
   });
 }
 
@@ -55,6 +59,7 @@ module.exports = (app) => {
   const metricRecommendationController = new MetricRecommendationController();
   const monitorController = new MonitorController();
   const observationController = new ObservationController();
+  const workspaceLearningController = new WorkspaceLearningController();
   const routeAccess = [apiLimiter, verifyToken, checkAccess()];
 
   app.get("/team/:team_id/home", ...routeAccess, async (req, res) => {
@@ -84,6 +89,39 @@ module.exports = (app) => {
   app.get("/team/:team_id/alerts", ...routeAccess, async (req, res) => {
     try {
       return res.send(await homeController.getAlerts(req.observationAccess));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
+  app.get("/team/:team_id/workspace-learning/export", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await workspaceLearningController.export(
+        req.observationAccess,
+        req.query
+      ));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
+  app.get("/team/:team_id/orchestrator-audit", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await workspaceLearningController.actionAudit(
+        req.observationAccess,
+        req.query
+      ));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
+  app.get("/team/:team_id/orchestrator-egress-audit", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await workspaceLearningController.egressAudit(
+        req.observationAccess,
+        req.query
+      ));
     } catch (error) {
       return sendError(res, error);
     }
@@ -126,6 +164,17 @@ module.exports = (app) => {
         req.observationAccess,
         req.params.observation_id,
         req.body
+      ));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
+  app.delete("/team/:team_id/observations/:observation_id/feedback", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await observationController.deleteFeedback(
+        req.observationAccess,
+        req.params.observation_id
       ));
     } catch (error) {
       return sendError(res, error);
@@ -252,7 +301,7 @@ module.exports = (app) => {
 
   app.put("/team/:team_id/monitors/:monitor_id", ...routeAccess, async (req, res) => {
     try {
-      return res.send(await monitorController.update(
+      return res.send(await monitorController.updateWithAudit(
         req.observationAccess,
         req.params.monitor_id,
         req.body
@@ -325,7 +374,7 @@ module.exports = (app) => {
     ...routeAccess,
     async (req, res) => {
       try {
-        return res.send(await digestController.update(
+        return res.send(await digestController.updateWithAudit(
           req.observationAccess,
           req.params.subscription_id,
           req.body,

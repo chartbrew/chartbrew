@@ -1,23 +1,61 @@
 const crypto = require("crypto");
 const { fn, col, Op } = require("sequelize");
 
-const { orchestrate, availableTools } = require("../modules/ai/orchestrator/orchestrator");
+const {
+  availableTools,
+  orchestrate,
+  orchestrateWorkspaceSplit,
+} = require("../modules/ai/orchestrator/orchestrator");
+const {
+  runDeterministicWorkspaceRequest,
+} = require("../modules/ai/orchestrator/runtime/deterministicExecutor");
+const {
+  isTypedConfirmation,
+} = require("../modules/ai/orchestrator/runtime/deterministicRouter");
 const db = require("../models/models");
 const runtimeCache = require("../modules/runtimeCache");
 const socketManager = require("../modules/socketManager");
 const { validateAiContext } = require("../modules/ai/contextAuthorization");
 const { getObservationAccess } = require("../modules/observations/access");
+const { getWorkspaceAccessEnvelope } = require("../modules/workspaceContext/accessEnvelope");
+const { executePendingAction } = require("../modules/workspaceContext/pendingActionExecutor");
+const {
+  isDirectMetricWriteInstruction,
+} = require("../modules/workspaceContext/instructionGate");
+const {
+  clearPendingActions,
+  listPendingActions,
+} = require("../modules/workspaceContext/previewStore");
 
 const READ_ONLY_AI_TOOLS = [
   "get_dataset_intelligence",
   "get_workspace_activity",
+  "get_workspace_context",
+  "list_kpi_reviews",
+  "list_metric_monitors",
+  "preview_kpi_review",
   "run_existing_dataset",
   "search_datasets",
   "summarize",
 ];
+const PROJECT_EDITOR_AI_TOOLS = [
+  ...READ_ONLY_AI_TOOLS,
+  "recommend_metric_monitors",
+  "preview_metric_monitor",
+];
+const NON_PERSISTENT_WORKSPACE_TOOLS = new Set([
+  "get_workspace_activity",
+  "get_workspace_context",
+  "list_kpi_reviews",
+  "list_metric_monitors",
+  "preview_kpi_review",
+  "preview_metric_monitor",
+  "recommend_metric_monitors",
+]);
 const MAX_SESSION_MESSAGES = 60;
 const MAX_SESSION_CHARACTERS = 100000;
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ACTION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function validateSessionId(sessionId) {
   if (!sessionId) return crypto.randomUUID();
@@ -33,6 +71,127 @@ function createAiError(message, statusCode) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+function getAiSessionBinding(type, id) {
+  return `${type}:${id}`;
+}
+
+function validateConfirmationAction(action) {
+  if (!action || action.type !== "confirm_pending_action" || !ACTION_ID_PATTERN.test(action.actionId)) {
+    throw createAiError("This confirmation is not valid", 400);
+  }
+  return action;
+}
+
+function getSinglePendingActionId(actions = []) {
+  if (actions.length === 0) {
+    throw createAiError("There is no prepared change to confirm", 409);
+  }
+  if (actions.length > 1) {
+    throw createAiError("Choose one prepared change and confirm it from its preview", 409);
+  }
+  return actions[0].actionId;
+}
+
+function formatActionResultMessage(result) {
+  const action = result.actionType?.endsWith(".create") ? "created" : "updated";
+  if (result.actionType?.startsWith("metric_monitor.")) {
+    const details = [
+      result.applied.comparisonPeriod ? `${result.applied.comparisonPeriod} comparison` : null,
+      result.applied.thresholdValue !== null && result.applied.thresholdValue !== undefined
+        ? `${result.applied.thresholdValue} ${result.applied.thresholdType || "threshold"}`
+        : null,
+    ].filter(Boolean).join(" and ");
+    return `${result.resource.name || "The watched metric"} was ${action}${details ? ` with a ${details}` : ""}.`;
+  }
+  const schedule = [
+    result.applied.cadence,
+    result.applied.localDeliveryTime,
+    result.applied.timezone,
+  ].filter(Boolean).join(" at ");
+  return `Your KPI review was ${action}${schedule ? ` with the ${schedule} schedule` : ""}.`;
+}
+
+function replaceLastAssistantMessage(history = [], content) {
+  const messages = [...history];
+  const index = messages.findLastIndex((message) => message.role === "assistant");
+  if (index < 0) return [...messages, { content, role: "assistant" }];
+  messages[index] = {
+    ...messages[index],
+    content,
+  };
+  return messages;
+}
+
+async function applyDirectMetricInstruction({
+  access,
+  metricMonitorWritesEnabled,
+  orchestration,
+  question,
+  sessionId,
+}) {
+  const pendingAction = orchestration?.pendingAction;
+  if (!metricMonitorWritesEnabled
+    || !pendingAction?.actionId
+    || !isDirectMetricWriteInstruction(question, pendingAction.actionType)) {
+    return orchestration;
+  }
+  const result = await executePendingAction({
+    access,
+    actionId: pendingAction.actionId,
+    authorityType: "clear_instruction",
+    sessionId,
+  });
+  const message = formatActionResultMessage(result);
+  return {
+    ...orchestration,
+    actionResult: result,
+    conversationHistory: replaceLastAssistantMessage(
+      orchestration.conversationHistory,
+      message
+    ),
+    message,
+    pendingAction: null,
+  };
+}
+
+async function runExternalWorkspaceOrchestration({
+  access,
+  history,
+  options,
+  question,
+}) {
+  if (!options.canUseExternalWorkspaceContext) return null;
+  try {
+    return await orchestrateWorkspaceSplit({
+      access,
+      history,
+      options,
+      question,
+    });
+  } catch (_error) {
+    return runDeterministicWorkspaceRequest({
+      access,
+      allowPlannerFallback: true,
+      history,
+      question,
+    });
+  }
+}
+
+function getPersistedAiMessageContent(message) {
+  if (message.role === "tool" && NON_PERSISTENT_WORKSPACE_TOOLS.has(message.name)) {
+    return JSON.stringify({ status: "refresh_required" });
+  }
+  return message.content;
+}
+
+function getReplaySafeAiMessage(message) {
+  return {
+    ...message,
+    content: getPersistedAiMessageContent(message),
+  };
 }
 
 function assertConversationOwnership(conversation, userId) {
@@ -84,6 +243,11 @@ async function getOrchestration(
     });
   }
 
+  await clearPendingActions({
+    access,
+    sessionId: getAiSessionBinding("conversation", conversation.id),
+  });
+
   const storedContext = aiConversationId
     ? await db.AiConversationContext.findAll({
       attributes: ["entity_id", "entity_type"],
@@ -104,7 +268,16 @@ async function getOrchestration(
     order: [["sequence", "ASC"]],
   });
 
-  const fullHistory = messages.map((msg) => {
+  const orchestrationOptions = await getOrchestrationOptions(
+    access,
+    userId,
+    getAiSessionBinding("conversation", conversation.id)
+  );
+
+  const fullHistory = messages.filter((msg) => {
+    return !msg.sensitive_workspace_context
+      || msg.workspace_access_version === orchestrationOptions.workspaceAccessVersion;
+  }).map((msg) => {
     const messageObj = {
       role: msg.role,
       content: msg.content,
@@ -121,28 +294,67 @@ async function getOrchestration(
   }
 
   try {
-    const orchestration = await orchestrate(
-      teamId,
+    const orchestration = validatedContext.length === 0
+      ? await runDeterministicWorkspaceRequest({
+        access,
+        allowPlannerFallback: !orchestrationOptions.canUseExternalWorkspaceContext,
+        history: fullHistory,
+        question,
+      })
+      : null;
+    let resolvedOrchestration = orchestration;
+    if (!resolvedOrchestration && validatedContext.length === 0) {
+      resolvedOrchestration = await runExternalWorkspaceOrchestration({
+        access,
+        history: fullHistory,
+        options: orchestrationOptions,
+        question,
+      });
+    }
+    if (!resolvedOrchestration) {
+      try {
+        resolvedOrchestration = await orchestrate(
+          teamId,
+          question,
+          fullHistory,
+          conversation,
+          messages.length === 0 || (Array.isArray(context) && context.length > 0)
+            ? validatedContext
+            : [],
+          orchestrationOptions,
+        );
+      } catch (providerError) {
+        const fallback = validatedContext.length === 0
+          ? await runDeterministicWorkspaceRequest({
+            access,
+            allowPlannerFallback: true,
+            history: fullHistory,
+            question,
+          })
+          : null;
+        if (!fallback) throw providerError;
+        resolvedOrchestration = fallback;
+      }
+    }
+    resolvedOrchestration = await applyDirectMetricInstruction({
+      access,
+      metricMonitorWritesEnabled: orchestrationOptions.metricMonitorWritesEnabled,
+      orchestration: resolvedOrchestration,
       question,
-      fullHistory,
-      conversation,
-      messages.length === 0 || (Array.isArray(context) && context.length > 0)
-        ? validatedContext
-        : [],
-      getOrchestrationOptions(access, userId),
-    );
+      sessionId: getAiSessionBinding("conversation", conversation.id),
+    });
 
     // Extract title from AI response for new conversations
-    let finalMessage = orchestration.message;
+    let finalMessage = resolvedOrchestration.message;
     let extractedTitle = null;
 
     if (!conversation || conversation.message_count === 0) {
       // Try to extract title from the first markdown header in the response
-      const titleMatch = orchestration.message?.match(/^#{1,6}\s+(.+)$/m);
+      const titleMatch = resolvedOrchestration.message?.match(/^#{1,6}\s+(.+)$/m);
       if (titleMatch) {
         extractedTitle = titleMatch[1].trim();
         // Remove the title line from the response (including newline)
-        finalMessage = orchestration.message.replace(/^#{1,6}\s+.+\n?/, "").trim();
+        finalMessage = resolvedOrchestration.message.replace(/^#{1,6}\s+.+\n?/, "").trim();
       }
     }
 
@@ -152,13 +364,24 @@ async function getOrchestration(
     });
 
     // Save new messages to AiMessage table
-    const newMessages = orchestration.conversationHistory.slice(existingMessageCount);
+    const currentTurnStart = resolvedOrchestration.conversationHistory.findLastIndex((item) => {
+      return item.role === "user" && item.content === question;
+    });
+    const newMessages = resolvedOrchestration.conversationHistory.slice(
+      currentTurnStart >= 0 ? currentTurnStart : fullHistory.length
+    );
     const messagePromises = newMessages.map((msg, index) => {
       const messageData = {
         conversation_id: conversation.id,
         role: msg.role,
         content: msg.content,
         sequence: existingMessageCount + index,
+        sensitive_workspace_context: msg.role !== "user"
+          && Boolean(resolvedOrchestration.contextManifest),
+        workspace_access_version: msg.role !== "user"
+          && resolvedOrchestration.contextManifest
+          ? orchestrationOptions.workspaceAccessVersion
+          : null,
       };
 
       // Handle tool calls for assistant messages
@@ -170,8 +393,11 @@ async function getOrchestration(
       if (msg.role === "tool") {
         messageData.tool_name = msg.name;
         messageData.tool_call_id = msg.tool_call_id;
+        messageData.content = getPersistedAiMessageContent(msg);
         // Store preview of tool result (first 500 chars)
-        const resultStr = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
+        const resultStr = typeof messageData.content === "string"
+          ? messageData.content
+          : JSON.stringify(messageData.content);
         messageData.tool_result_preview = resultStr.substring(0, 500);
       }
 
@@ -181,12 +407,13 @@ async function getOrchestration(
     await Promise.all(messagePromises);
 
     // Save usage records to AiUsage table
-    const usagePromises = (orchestration.usageRecords || []).map((usage) => db.AiUsage.create({
+    const usagePromises = (resolvedOrchestration.usageRecords || []).map((usage) => db.AiUsage.create({
       conversation_id: conversation.id,
       team_id: teamId,
       model: usage.model,
       prompt_tokens: usage.prompt_tokens,
-      purpose: "ask_data",
+      purpose: usage.purpose || "ask_data",
+      context_manifest: usage.context_manifest || resolvedOrchestration.contextManifest || null,
       completion_tokens: usage.completion_tokens,
       total_tokens: usage.total_tokens,
       elapsed_ms: usage.elapsed_ms,
@@ -197,7 +424,7 @@ async function getOrchestration(
 
     // Update conversation metadata
     const updateData = {
-      message_count: orchestration.conversationHistory.filter((msg) => msg.role === "user").length,
+      message_count: resolvedOrchestration.conversationHistory.filter((msg) => msg.role === "user").length,
       status: "active",
       error_message: null,
     };
@@ -210,7 +437,7 @@ async function getOrchestration(
     await conversation.update(updateData);
 
     return {
-      ...orchestration,
+      ...resolvedOrchestration,
       message: finalMessage,
       aiConversationId: conversation.id,
     };
@@ -218,14 +445,13 @@ async function getOrchestration(
     // Update conversation status on error
     await conversation.update({
       status: "error",
-      error_message: error.message,
+      error_message: "Chartbrew could not complete this request. Try again.",
     });
 
     // Emit error event via socket
     if (conversation?.id) {
       socketManager.emitProgress(conversation.id, "error", {
-        message: "An error occurred during AI orchestration",
-        error: error.message
+        message: "Chartbrew could not complete this request. Try again."
       });
     }
 
@@ -233,11 +459,24 @@ async function getOrchestration(
   }
 }
 
-function getOrchestrationOptions(access, userId) {
+async function getOrchestrationOptions(access, userId, aiSessionId) {
+  const envelope = await getWorkspaceAccessEnvelope(access);
+  let allowedToolNames;
+  if (!access.canConfigureTeam) {
+    allowedToolNames = envelope.editableProjectIds.length > 0
+      ? PROJECT_EDITOR_AI_TOOLS
+      : READ_ONLY_AI_TOOLS;
+  }
   return {
     allowedProjectIds: access.allProjects ? undefined : access.projectIds,
-    allowedToolNames: access.canConfigureTeam ? undefined : READ_ONLY_AI_TOOLS,
+    allowedEditableProjectIds: envelope.editableProjectIds,
+    allowedToolNames,
     canConfigureTeam: access.canConfigureTeam,
+    canUseExternalWorkspaceContext: envelope.canUseExternalWorkspaceContext,
+    aiSessionId,
+    kpiReviewWritesEnabled: envelope.kpiReviewWritesEnabled,
+    metricMonitorWritesEnabled: envelope.metricMonitorWritesEnabled,
+    workspaceAccessVersion: envelope.accessVersion,
     userId,
   };
 }
@@ -263,10 +502,11 @@ async function saveUsageRecords(teamId, conversationId, usageRecords = []) {
     completion_tokens: usage.completion_tokens,
     conversation_id: conversationId,
     cost_micros: 0,
+    context_manifest: usage.context_manifest || null,
     elapsed_ms: usage.elapsed_ms,
     model: usage.model,
     prompt_tokens: usage.prompt_tokens,
-    purpose: "ask_data",
+    purpose: usage.purpose || "ask_data",
     team_id: teamId,
     total_tokens: usage.total_tokens,
   })));
@@ -284,7 +524,160 @@ async function saveConversationContext(conversationId, teamId, context = []) {
   })));
 }
 
+async function confirmPersistentAction({ action, aiConversationId, teamId, userId }) {
+  if (!aiConversationId || !ACTION_ID_PATTERN.test(aiConversationId)) {
+    throw createAiError("Open the conversation that prepared this change", 400);
+  }
+  const conversation = await db.AiConversation.findByPk(aiConversationId);
+  if (!conversation || `${conversation.team_id}` !== `${teamId}`) {
+    throw createAiError("Conversation not found", 404);
+  }
+  assertConversationOwnership(conversation, userId);
+  const access = await getObservationAccess(teamId, userId);
+  const envelope = await getWorkspaceAccessEnvelope(access);
+  const result = await executePendingAction({
+    access,
+    actionId: action.actionId,
+    sessionId: getAiSessionBinding("conversation", conversation.id),
+  });
+  const message = formatActionResultMessage(result);
+  const storedMessage = `${message}\n\n\`\`\`cb-action-result\n${JSON.stringify({
+    actionId: result.actionId,
+    status: result.status,
+  })}\n\`\`\``;
+  const existingMessageCount = await db.AiMessage.count({
+    where: { conversation_id: conversation.id },
+  });
+  await db.AiMessage.bulkCreate([{
+    content: "Confirm this change",
+    conversation_id: conversation.id,
+    role: "user",
+    sequence: existingMessageCount,
+  }, {
+    content: storedMessage,
+    conversation_id: conversation.id,
+    role: "assistant",
+    sensitive_workspace_context: true,
+    sequence: existingMessageCount + 1,
+    workspace_access_version: envelope.accessVersion,
+  }]);
+  await conversation.update({
+    error_message: null,
+    message_count: Number(conversation.message_count || 0) + 1,
+    status: "active",
+  });
+  return {
+    actionResult: result,
+    aiConversationId: conversation.id,
+    iterations: 0,
+    message,
+    persistence: "persistent",
+    usage: { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0 },
+    usageRecords: [],
+  };
+}
+
+async function confirmEphemeralAction({ action, sessionId, teamId, userId }) {
+  if (!sessionId) throw createAiError("This chat has expired", 404);
+  const validSessionId = validateSessionId(sessionId);
+  const session = await runtimeCache.getAiSession({
+    sessionId: validSessionId,
+    teamId,
+    userId,
+  });
+  if (!session) throw createAiError("This chat has expired", 404);
+  const access = await getObservationAccess(teamId, userId);
+  const envelope = await getWorkspaceAccessEnvelope(access);
+  if (session.accessVersion !== envelope.accessVersion) {
+    await clearPendingActions({
+      access,
+      sessionId: getAiSessionBinding("session", validSessionId),
+    });
+    await runtimeCache.deleteAiSession({ sessionId: validSessionId, teamId, userId });
+    throw createAiError("Your workspace access changed. Prepare the change again.", 409);
+  }
+  const result = await executePendingAction({
+    access,
+    actionId: action.actionId,
+    sessionId: getAiSessionBinding("session", validSessionId),
+  });
+  const message = formatActionResultMessage(result);
+  const history = trimSessionHistory([
+    ...(session.history || []),
+    { content: "Confirm this change", role: "user" },
+    { content: message, role: "assistant" },
+  ]);
+  await runtimeCache.setAiSession({
+    payload: {
+      ...session,
+      history,
+      messageCount: history.filter((item) => item.role === "user").length,
+    },
+    sessionId: validSessionId,
+    teamId,
+    userId,
+  });
+  return {
+    actionResult: result,
+    iterations: 0,
+    message,
+    persistence: "ephemeral",
+    sessionId: validSessionId,
+    usage: { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0 },
+    usageRecords: [],
+  };
+}
+
+async function confirmTypedPersistentAction({ aiConversationId, teamId, userId }) {
+  if (!aiConversationId || !ACTION_ID_PATTERN.test(aiConversationId)) {
+    throw createAiError("Open the conversation that prepared this change", 400);
+  }
+  const conversation = await db.AiConversation.findOne({
+    attributes: ["id", "team_id", "user_id"],
+    where: { id: aiConversationId, team_id: teamId },
+  });
+  assertConversationOwnership(conversation, userId);
+  const access = await getObservationAccess(teamId, userId);
+  const sessionId = getAiSessionBinding("conversation", conversation.id);
+  const actions = await listPendingActions({ access, sessionId });
+  return confirmPersistentAction({
+    action: {
+      actionId: getSinglePendingActionId(actions),
+      type: "confirm_pending_action",
+    },
+    aiConversationId: conversation.id,
+    teamId,
+    userId,
+  });
+}
+
+async function confirmTypedEphemeralAction({ sessionId, teamId, userId }) {
+  if (!sessionId) throw createAiError("This chat has expired", 404);
+  const validSessionId = validateSessionId(sessionId);
+  const session = await runtimeCache.getAiSession({
+    sessionId: validSessionId,
+    teamId,
+    userId,
+  });
+  if (!session) throw createAiError("This chat has expired", 404);
+  const access = await getObservationAccess(teamId, userId);
+  const actions = await listPendingActions({
+    access,
+    sessionId: getAiSessionBinding("session", validSessionId),
+  });
+  return confirmEphemeralAction({
+    action: {
+      actionId: getSinglePendingActionId(actions),
+      type: "confirm_pending_action",
+    },
+    sessionId: validSessionId,
+    teamId,
+    userId,
+  });
+}
+
 async function respond({
+  action,
   aiConversationId,
   context,
   message,
@@ -293,8 +686,37 @@ async function respond({
   teamId,
   userId,
 }) {
+  if (action) {
+    const confirmation = validateConfirmationAction(action);
+    if (persistence === "persistent") {
+      return confirmPersistentAction({
+        action: confirmation,
+        aiConversationId,
+        teamId,
+        userId,
+      });
+    }
+    if (persistence === "ephemeral") {
+      return confirmEphemeralAction({
+        action: confirmation,
+        sessionId,
+        teamId,
+        userId,
+      });
+    }
+    throw createAiError("Choose a valid conversation mode", 400);
+  }
   if (!message || !`${message}`.trim()) {
     throw createAiError("Ask a question about your data", 400);
+  }
+  if (isTypedConfirmation(message)) {
+    if (persistence === "persistent") {
+      return confirmTypedPersistentAction({ aiConversationId, teamId, userId });
+    }
+    if (persistence === "ephemeral") {
+      return confirmTypedEphemeralAction({ sessionId, teamId, userId });
+    }
+    throw createAiError("Choose a valid conversation mode", 400);
   }
   if (persistence === "persistent") {
     const orchestration = await getOrchestration(
@@ -316,29 +738,93 @@ async function respond({
   }
 
   const access = await getObservationAccess(teamId, userId);
+  const envelope = await getWorkspaceAccessEnvelope(access);
   const resolvedSessionId = validateSessionId(sessionId);
-  const existingSession = await runtimeCache.getAiSession({
+  let existingSession = await runtimeCache.getAiSession({
     sessionId: resolvedSessionId,
     teamId,
     userId,
+  });
+  if (existingSession && existingSession.accessVersion !== envelope.accessVersion) {
+    await clearPendingActions({
+      access,
+      sessionId: getAiSessionBinding("session", resolvedSessionId),
+    });
+    await runtimeCache.deleteAiSession({
+      sessionId: resolvedSessionId,
+      teamId,
+      userId,
+    });
+    existingSession = null;
+  }
+  await clearPendingActions({
+    access,
+    sessionId: getAiSessionBinding("session", resolvedSessionId),
   });
   const validatedContext = context?.length
     ? await validateAiContext(access, context)
     : await validateAiContext(access, existingSession?.context || []);
   const promptContext = existingSession && !context?.length ? [] : validatedContext;
-  const orchestration = await orchestrate(
-    teamId,
-    `${message}`.trim(),
-    existingSession?.history || [],
-    { id: resolvedSessionId, message_count: existingSession?.messageCount || 0 },
-    promptContext,
-    getOrchestrationOptions(access, userId),
+  const orchestrationOptions = await getOrchestrationOptions(
+    access,
+    userId,
+    getAiSessionBinding("session", resolvedSessionId)
   );
-  const history = trimSessionHistory(orchestration.conversationHistory);
+  const deterministicResult = validatedContext.length === 0
+    ? await runDeterministicWorkspaceRequest({
+      access,
+      allowPlannerFallback: !orchestrationOptions.canUseExternalWorkspaceContext,
+      history: existingSession?.history || [],
+      question: `${message}`.trim(),
+    })
+    : null;
+  let orchestration = deterministicResult;
+  if (!orchestration && validatedContext.length === 0) {
+    orchestration = await runExternalWorkspaceOrchestration({
+      access,
+      history: existingSession?.history || [],
+      options: orchestrationOptions,
+      question: `${message}`.trim(),
+    });
+  }
+  if (!orchestration) {
+    try {
+      orchestration = await orchestrate(
+        teamId,
+        `${message}`.trim(),
+        existingSession?.history || [],
+        { id: resolvedSessionId, message_count: existingSession?.messageCount || 0 },
+        promptContext,
+        orchestrationOptions,
+      );
+    } catch (providerError) {
+      const fallback = validatedContext.length === 0
+        ? await runDeterministicWorkspaceRequest({
+          access,
+          allowPlannerFallback: true,
+          history: existingSession?.history || [],
+          question: `${message}`.trim(),
+        })
+        : null;
+      if (!fallback) throw providerError;
+      orchestration = fallback;
+    }
+  }
+  orchestration = await applyDirectMetricInstruction({
+    access,
+    metricMonitorWritesEnabled: orchestrationOptions.metricMonitorWritesEnabled,
+    orchestration,
+    question: `${message}`.trim(),
+    sessionId: getAiSessionBinding("session", resolvedSessionId),
+  });
+  const history = trimSessionHistory(
+    orchestration.conversationHistory.map(getReplaySafeAiMessage)
+  );
   const messageCount = history.filter((item) => item.role === "user").length;
   await Promise.all([
     runtimeCache.setAiSession({
       payload: {
+        accessVersion: envelope.accessVersion,
         context: validatedContext.map((item) => ({
           entityId: item.entityId,
           entityType: item.entityType,
@@ -369,6 +855,15 @@ async function promoteSession({ sessionId, teamId, userId }) {
   });
   if (!session) throw createAiError("This chat has expired", 404);
   const access = await getObservationAccess(teamId, userId);
+  const envelope = await getWorkspaceAccessEnvelope(access);
+  if (session.accessVersion !== envelope.accessVersion) {
+    await clearPendingActions({
+      access,
+      sessionId: getAiSessionBinding("session", validSessionId),
+    });
+    await runtimeCache.deleteAiSession({ sessionId: validSessionId, teamId, userId });
+    throw createAiError("Your workspace access changed. Start a new chat.", 409);
+  }
   const validatedContext = await validateAiContext(access, session.context || []);
   const conversation = await db.AiConversation.create({
     message_count: session.messageCount || 0,
@@ -380,15 +875,21 @@ async function promoteSession({ sessionId, teamId, userId }) {
   });
   const history = trimSessionHistory(session.history);
   await Promise.all(history.map((message, sequence) => db.AiMessage.create({
-    content: message.content,
+    content: getPersistedAiMessageContent(message),
     conversation_id: conversation.id,
     role: message.role,
     sequence,
+    sensitive_workspace_context: message.role !== "user",
     tool_call_id: message.tool_call_id,
     tool_calls: message.tool_calls,
     tool_name: message.name,
+    workspace_access_version: message.role !== "user" ? envelope.accessVersion : null,
   })));
   await saveConversationContext(conversation.id, teamId, validatedContext);
+  await clearPendingActions({
+    access,
+    sessionId: getAiSessionBinding("session", validSessionId),
+  });
   await runtimeCache.deleteAiSession({ sessionId: validSessionId, teamId, userId });
   return {
     aiConversationId: conversation.id,
@@ -459,11 +960,21 @@ async function getConversation(conversationId, teamId, userId) {
   });
 
   assertConversationOwnership(conversation, userId);
+  const access = await getObservationAccess(teamId, userId);
+  const envelope = await getWorkspaceAccessEnvelope(access);
 
   // Load messages from AiMessage table
-  const messages = await db.AiMessage.findAll({
+  const storedMessages = await db.AiMessage.findAll({
     where: { conversation_id: conversationId },
     order: [["sequence", "ASC"]],
+  });
+  const hiddenMessageCount = storedMessages.filter((message) => {
+    return message.sensitive_workspace_context
+      && message.workspace_access_version !== envelope.accessVersion;
+  }).length;
+  const messages = storedMessages.filter((message) => {
+    return !message.sensitive_workspace_context
+      || message.workspace_access_version === envelope.accessVersion;
   });
 
   // Rebuild full_history for backward compatibility with client
@@ -486,6 +997,12 @@ async function getConversation(conversationId, teamId, userId) {
 
     return messageObj;
   });
+  if (hiddenMessageCount > 0) {
+    fullHistory.push({
+      role: "assistant",
+      content: "Some saved answers are hidden because your workspace access changed. Ask again to refresh them.",
+    });
+  }
 
   // Compute token usage stats
   const usageStats = await db.AiUsage.findAll({
@@ -519,6 +1036,11 @@ async function deleteConversation(conversationId, teamId, userId) {
   });
 
   assertConversationOwnership(conversation, userId);
+
+  await clearPendingActions({
+    access: { teamId, userId },
+    sessionId: getAiSessionBinding("conversation", conversationId),
+  });
 
   // Delete messages (AiMessage cascade delete will handle this)
   await db.AiMessage.destroy({
@@ -602,6 +1124,7 @@ async function getAiUsage(teamId, startDate, endDate) {
 }
 
 module.exports = {
+  applyDirectMetricInstruction,
   getOrchestration,
   respond,
   promoteSession,
@@ -610,4 +1133,7 @@ module.exports = {
   getConversation,
   deleteConversation,
   getAiUsage,
+  getPersistedAiMessageContent,
+  getReplaySafeAiMessage,
+  getSinglePendingActionId,
 };

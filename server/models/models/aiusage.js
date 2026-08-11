@@ -33,6 +33,21 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    context_manifest: {
+      type: DataTypes.TEXT("long"),
+      get() {
+        const value = this.getDataValue("context_manifest");
+        if (!value) return null;
+        try {
+          return JSON.parse(value);
+        } catch (error) {
+          return null;
+        }
+      },
+      set(value) {
+        this.setDataValue("context_manifest", value ? JSON.stringify(value) : null);
+      },
+    },
     prompt_tokens: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

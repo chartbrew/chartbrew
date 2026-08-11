@@ -84,6 +84,7 @@ export async function orchestrateAi(teamId, question, conversationHistory = [], 
 }
 
 export async function respondAi({
+  action,
   aiConversationId,
   context = null,
   message,
@@ -100,6 +101,7 @@ export async function respondAi({
     }),
     method: "POST",
     body: JSON.stringify({
+      action,
       aiConversationId,
       context,
       message,

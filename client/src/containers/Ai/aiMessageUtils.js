@@ -10,6 +10,9 @@ const TOOL_ACTIVITY_LABELS = {
   get_schema: "Checked the data structure",
   list_connections: "Checked available connections",
   move_chart_to_dashboard: "Added the chart to a dashboard",
+  preview_kpi_review: "Prepared a KPI review",
+  preview_metric_monitor: "Prepared a watched metric",
+  recommend_metric_monitors: "Found metrics to watch",
   run_existing_dataset: "Analyzed the dataset",
   run_query: "Retrieved the requested data",
   search_datasets: "Found relevant datasets",
@@ -166,6 +169,27 @@ export function parseAiMessage(message) {
       return chartInfo;
     }
 
+    const actionPreview = parseJson(message.content);
+    if (
+      ["preview_kpi_review", "preview_metric_monitor"].includes(message.name)
+      && actionPreview?.status === "ready_for_confirmation"
+      && actionPreview.actionId
+      && actionPreview.preview
+    ) {
+      return {
+        type: "action_preview",
+        action: {
+          actionId: actionPreview.actionId,
+          actionType: message.name === "preview_metric_monitor"
+            ? `metric_monitor.${actionPreview.preview.action}`
+            : `kpi_review.${actionPreview.preview.action}`,
+          expiresAt: actionPreview.expiresAt,
+          preview: actionPreview.preview,
+          warnings: actionPreview.warnings || [],
+        },
+      };
+    }
+
     return {
       type: "tool_result",
       name: message.name,
@@ -174,6 +198,8 @@ export function parseAiMessage(message) {
   }
 
   if (message.role === "assistant" && message.content) {
+    const actionResultMatch = message.content.match(/```cb-action-result\s*\n([\s\S]*?)\n```/);
+    const actionResult = actionResultMatch ? parseJson(actionResultMatch[1]) : message.actionResult;
     let cbActionsMatch = message.content.match(/```cb-actions\s*\n([\s\S]*?)\n```/);
     let suggestionsData = null;
 
@@ -190,6 +216,7 @@ export function parseAiMessage(message) {
 
     const contentWithoutActions = message.content
       .replace(/```cb-actions[\s\S]*?```/g, "")
+      .replace(/```cb-action-result[\s\S]*?```/g, "")
       .replace(/cb-actions[\s\S]*$/g, "")
       .trim();
 
@@ -198,6 +225,7 @@ export function parseAiMessage(message) {
 
       return {
         type: "message_with_suggestions",
+        actionResult,
         content,
         suggestions: suggestionsData.suggestions,
       };
@@ -206,15 +234,29 @@ export function parseAiMessage(message) {
     if (contentWithoutActions !== message.content) {
       return {
         type: "message",
+        actionResult,
         content: stripGeneratedTitle(contentWithoutActions),
       };
     }
   }
 
+  if (message.pendingAction) {
+    return {
+      type: "message_with_action",
+      action: message.pendingAction,
+      content: stripGeneratedTitle(message.content),
+    };
+  }
+
   return {
     type: "message",
+    actionResult: message.actionResult,
     content: stripGeneratedTitle(message.content),
   };
+}
+
+export function getCompletedActionIds(messages = []) {
+  return new Set(messages.map((message) => parseAiMessage(message).actionResult?.actionId).filter(Boolean));
 }
 
 export function groupAiMessages(messages) {

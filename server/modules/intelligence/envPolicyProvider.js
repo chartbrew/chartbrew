@@ -30,6 +30,42 @@ const DEFAULT_OBSERVATION_POLICY = Object.freeze({
   llmAuditDailyTokenLimit: 20000,
 });
 
+const DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY = Object.freeze({
+  actionAuditRetentionDays: 365,
+  enabled: true,
+  externalLearningContextEnabled: false,
+  externalWorkspaceContextEnabled: false,
+  kpiReviewWritesEnabled: false,
+  learningRetrievalEnabled: true,
+  maximumContextCharacters: 60000,
+  maximumLearningCharacters: 12000,
+  maximumLearningItems: 30,
+  maximumModelTokensPerRequest: 30000,
+  maximumParallelWorkers: 2,
+  maximumPlannerCalls: 1,
+  maximumPlannerOutputTokens: 2500,
+  maximumRequestTimeMs: 45000,
+  maximumSynthesisOutputTokens: 3000,
+  maximumSummaryLookbackDays: 180,
+  maximumSynthesisCalls: 1,
+  maximumToolCallsPerWorker: 4,
+  maximumTotalToolCalls: 6,
+  maximumWorkersPerRequest: 3,
+  maximumWorkerOutputTokens: 2000,
+  metricMonitorWritesEnabled: false,
+  metricRecommendationsEnabled: true,
+  plannerModel: "gpt-5.4-mini",
+  plannerReasoningEffort: "high",
+  plannerWorkerFallbackEnabled: false,
+  previewTtlSeconds: 600,
+  synthesisModel: "gpt-5.4-mini",
+  synthesisReasoningEffort: "high",
+  weakAttentionSignalsEnabled: true,
+  workerModel: "gpt-5.6-luna",
+  workerReasoningEffort: "low",
+  workspaceSummariesEnabled: true,
+});
+
 function parseBoolean(value, fallback) {
   if (value === undefined || value === null || value === "") return fallback;
   if (/^(1|true|yes|on)$/i.test(`${value}`)) return true;
@@ -42,6 +78,11 @@ function parsePositiveInteger(value, fallback) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function parseInteger(value, fallback, minimum = 0, maximum = Number.MAX_SAFE_INTEGER) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
+}
+
 function parseNumber(value, fallback, minimum = 0, maximum = Number.POSITIVE_INFINITY) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= minimum && parsed <= maximum
@@ -49,7 +90,14 @@ function parseNumber(value, fallback, minimum = 0, maximum = Number.POSITIVE_INF
     : fallback;
 }
 
+function parseReasoningEffort(value, fallback) {
+  return ["low", "medium", "high"].includes(value) ? value : fallback;
+}
+
 function getEnvIntelligencePolicy(env = process.env) {
+  const compatibilityModel = env.NODE_ENV === "production"
+    ? env.CB_OPENAI_MODEL
+    : env.CB_OPENAI_MODEL_DEV || env.CB_OPENAI_MODEL;
   return {
     datasetIntelligence: {
       enabled: parseBoolean(
@@ -147,14 +195,172 @@ function getEnvIntelligencePolicy(env = process.env) {
         DEFAULT_OBSERVATION_POLICY.llmAuditDailyTokenLimit
       ),
     },
+    workspaceOrchestrator: {
+      actionAuditRetentionDays: parseInteger(
+        env.CB_ORCHESTRATOR_ACTION_AUDIT_RETENTION_DAYS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.actionAuditRetentionDays,
+        0,
+        3650
+      ),
+      enabled: parseBoolean(
+        env.CB_WORKSPACE_ORCHESTRATOR_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.enabled
+      ),
+      externalLearningContextEnabled: parseBoolean(
+        env.CB_WORKSPACE_EXTERNAL_LEARNING_CONTEXT_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.externalLearningContextEnabled
+      ),
+      externalWorkspaceContextEnabled: parseBoolean(
+        env.CB_WORKSPACE_EXTERNAL_CONTEXT_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.externalWorkspaceContextEnabled
+      ),
+      kpiReviewWritesEnabled: parseBoolean(
+        env.CB_WORKSPACE_KPI_REVIEW_WRITES_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.kpiReviewWritesEnabled
+      ),
+      learningRetrievalEnabled: parseBoolean(
+        env.CB_WORKSPACE_LEARNING_RETRIEVAL_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.learningRetrievalEnabled
+      ),
+      maximumContextCharacters: parseInteger(
+        env.CB_WORKSPACE_CONTEXT_MAX_CHARACTERS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumContextCharacters,
+        1000,
+        60000
+      ),
+      maximumLearningCharacters: parseInteger(
+        env.CB_WORKSPACE_LEARNING_MAX_CHARACTERS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumLearningCharacters,
+        1000,
+        12000
+      ),
+      maximumLearningItems: parseInteger(
+        env.CB_WORKSPACE_LEARNING_MAX_ITEMS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumLearningItems,
+        1,
+        30
+      ),
+      maximumModelTokensPerRequest: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_MODEL_TOKENS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumModelTokensPerRequest,
+        4000,
+        100000
+      ),
+      maximumParallelWorkers: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_PARALLEL_WORKERS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumParallelWorkers,
+        1,
+        2
+      ),
+      maximumPlannerCalls: 1,
+      maximumPlannerOutputTokens: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_PLANNER_OUTPUT_TOKENS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumPlannerOutputTokens,
+        256,
+        8000
+      ),
+      maximumRequestTimeMs: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_REQUEST_TIME_MS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumRequestTimeMs,
+        5000,
+        120000
+      ),
+      maximumSummaryLookbackDays: parseInteger(
+        env.CB_WORKSPACE_SUMMARY_MAX_LOOKBACK_DAYS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumSummaryLookbackDays,
+        1,
+        180
+      ),
+      maximumSynthesisCalls: 1,
+      maximumSynthesisOutputTokens: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_SYNTHESIS_OUTPUT_TOKENS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumSynthesisOutputTokens,
+        256,
+        8000
+      ),
+      maximumToolCallsPerWorker: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_TOOL_CALLS_PER_WORKER,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumToolCallsPerWorker,
+        1,
+        4
+      ),
+      maximumTotalToolCalls: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_TOTAL_TOOL_CALLS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumTotalToolCalls,
+        1,
+        6
+      ),
+      maximumWorkersPerRequest: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_WORKERS_PER_REQUEST,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumWorkersPerRequest,
+        1,
+        3
+      ),
+      maximumWorkerOutputTokens: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_WORKER_OUTPUT_TOKENS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumWorkerOutputTokens,
+        256,
+        8000
+      ),
+      metricMonitorWritesEnabled: parseBoolean(
+        env.CB_WORKSPACE_METRIC_MONITOR_WRITES_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.metricMonitorWritesEnabled
+      ),
+      metricRecommendationsEnabled: parseBoolean(
+        env.CB_WORKSPACE_METRIC_RECOMMENDATIONS_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.metricRecommendationsEnabled
+      ),
+      plannerModel: env.CB_OPENAI_ORCHESTRATOR_PLANNER_MODEL
+        || compatibilityModel
+        || DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.plannerModel,
+      plannerReasoningEffort: parseReasoningEffort(
+        env.CB_OPENAI_ORCHESTRATOR_PLANNER_REASONING_EFFORT,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.plannerReasoningEffort
+      ),
+      plannerWorkerFallbackEnabled: parseBoolean(
+        env.CB_WORKSPACE_PLANNER_WORKER_FALLBACK_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.plannerWorkerFallbackEnabled
+      ),
+      previewTtlSeconds: parseInteger(
+        env.CB_WORKSPACE_CONTEXT_PREVIEW_TTL_SECONDS,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.previewTtlSeconds,
+        60,
+        600
+      ),
+      synthesisModel: env.CB_OPENAI_ORCHESTRATOR_SYNTHESIS_MODEL
+        || compatibilityModel
+        || DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.synthesisModel,
+      synthesisReasoningEffort: parseReasoningEffort(
+        env.CB_OPENAI_ORCHESTRATOR_SYNTHESIS_REASONING_EFFORT,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.synthesisReasoningEffort
+      ),
+      weakAttentionSignalsEnabled: parseBoolean(
+        env.CB_WORKSPACE_WEAK_ATTENTION_SIGNALS_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.weakAttentionSignalsEnabled
+      ),
+      workerModel: env.CB_OPENAI_ORCHESTRATOR_WORKER_MODEL
+        || compatibilityModel
+        || DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.workerModel,
+      workerReasoningEffort: parseReasoningEffort(
+        env.CB_OPENAI_ORCHESTRATOR_WORKER_REASONING_EFFORT,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.workerReasoningEffort
+      ),
+      workspaceSummariesEnabled: parseBoolean(
+        env.CB_WORKSPACE_SUMMARIES_ENABLED,
+        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.workspaceSummariesEnabled
+      ),
+    },
   };
 }
 
 module.exports = {
   DEFAULT_DATASET_INTELLIGENCE_POLICY,
   DEFAULT_OBSERVATION_POLICY,
+  DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY,
   getEnvIntelligencePolicy,
   parseBoolean,
+  parseInteger,
   parseNumber,
   parsePositiveInteger,
+  parseReasoningEffort,
 };

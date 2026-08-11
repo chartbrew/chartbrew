@@ -85,6 +85,12 @@ export function sendObservationFeedback(teamId, observationId, feedback) {
   });
 }
 
+export function removeObservationFeedback(teamId, observationId) {
+  return observationRequest(`/team/${teamId}/observations/${observationId}/feedback`, {
+    method: "DELETE",
+  });
+}
+
 export function resolveObservation(teamId, observationId, resolved = true) {
   const action = resolved ? "resolve" : "reopen";
   return observationRequest(`/team/${teamId}/observations/${observationId}/${action}`, {

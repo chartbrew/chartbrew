@@ -35,6 +35,7 @@ async function getIntelligencePolicy({ teamId } = {}) {
   });
 
   return {
+    ...instancePolicy,
     datasetIntelligence: mergeDatasetIntelligencePolicy(
       instancePolicy.datasetIntelligence,
       teamPolicy?.datasetIntelligence
@@ -59,4 +60,3 @@ module.exports = {
   registerIntelligencePolicyProvider,
   resetIntelligencePolicyProvider,
 };
-

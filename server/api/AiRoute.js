@@ -12,6 +12,9 @@ const {
 } = require("../controllers/AiController");
 const verifyToken = require("../modules/verifyToken");
 const TeamController = require("../controllers/TeamController");
+const {
+  routeWorkspaceRequest,
+} = require("../modules/ai/orchestrator/runtime/deterministicRouter");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -19,6 +22,16 @@ const apiLimiter = (max = 10) => {
     max,
   });
 };
+
+function sendAiError(res, error) {
+  const statusCode = Number(error?.statusCode);
+  if (Number.isInteger(statusCode) && statusCode >= 400 && statusCode < 500) {
+    return res.status(statusCode).json({ error: error.message });
+  }
+  return res.status(500).json({
+    error: "Chartbrew could not complete this request. Try again.",
+  });
+}
 
 const checkAccess = async (req, res, next) => {
   try {
@@ -37,8 +50,10 @@ const checkAccess = async (req, res, next) => {
 
     req.aiTeamRole = teamRole;
     return next();
-  } catch (error) {
-    return res.status(500).json({ error: error.message || "Access check failed" });
+  } catch (_error) {
+    return res.status(500).json({
+      error: "Chartbrew could not check workspace access. Try again.",
+    });
   }
 };
 
@@ -60,6 +75,7 @@ const isOpenAiApiKeySet = () => {
 module.exports = (app) => {
   app.post("/ai/respond", apiLimiter(3), verifyToken, checkAccess, async (req, res) => {
     const {
+      action,
       aiConversationId,
       context,
       message,
@@ -71,12 +87,18 @@ module.exports = (app) => {
     if (!teamId || !req.user.id) {
       return res.status(400).json({ error: "teamId and user ID are required" });
     }
-    if (!isOpenAiApiKeySet()) {
+    const localRoute = routeWorkspaceRequest({ action, message });
+    const canUseLocalWorkspaceRoute = ["executor", "fast_path"].includes(localRoute?.mode)
+      || localRoute?.intent === "workspace_follow_up";
+    if (!action
+      && !canUseLocalWorkspaceRoute
+      && !isOpenAiApiKeySet()) {
       return res.status(400).json({ error: "Ask your data is not configured for this workspace" });
     }
 
     try {
       const orchestration = await respond({
+        action,
         aiConversationId,
         context,
         message,
@@ -87,7 +109,7 @@ module.exports = (app) => {
       });
       return res.json({ orchestration });
     } catch (error) {
-      return res.status(error.statusCode || 500).json({ error: error.message });
+      return sendAiError(res, error);
     }
   });
 
@@ -105,10 +127,7 @@ module.exports = (app) => {
         });
         return res.json(result);
       } catch (error) {
-        const statusCode = error.message === "This chat has expired"
-          ? 404
-          : error.statusCode || 500;
-        return res.status(statusCode).json({ error: error.message });
+        return sendAiError(res, error);
       }
     },
   );
@@ -127,7 +146,10 @@ module.exports = (app) => {
       return res.status(400).json({ error: "teamId and user ID are required" });
     }
 
-    if (!isOpenAiApiKeySet()) {
+    const localRoute = routeWorkspaceRequest({ message: question });
+    const canUseLocalWorkspaceRoute = localRoute?.mode === "fast_path"
+      || localRoute?.intent === "workspace_follow_up";
+    if (!canUseLocalWorkspaceRoute && !isOpenAiApiKeySet()) {
       return res.status(400).json({ error: "Ask your data is not configured for this workspace" });
     }
 
@@ -137,7 +159,7 @@ module.exports = (app) => {
       );
       return res.json({ orchestration });
     } catch (error) {
-      return res.status(error.statusCode || 500).json({ error: error.message });
+      return sendAiError(res, error);
     }
   });
 
@@ -147,7 +169,7 @@ module.exports = (app) => {
       const tools = await getAvailableTools();
       res.json({ tools });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      sendAiError(res, error);
     }
   });
 
@@ -167,7 +189,7 @@ module.exports = (app) => {
       );
       return res.json({ conversations });
     } catch (error) {
-      return res.status(500).json({ error: error.message });
+      return sendAiError(res, error);
     }
   });
 
@@ -184,7 +206,7 @@ module.exports = (app) => {
       const conversation = await getConversation(conversationId, teamId, req.user.id);
       return res.json({ conversation });
     } catch (error) {
-      return res.status(error.statusCode || 500).json({ error: error.message });
+      return sendAiError(res, error);
     }
   });
 
@@ -201,7 +223,7 @@ module.exports = (app) => {
       const result = await deleteConversation(conversationId, teamId, req.user.id);
       return res.json(result);
     } catch (error) {
-      return res.status(error.statusCode || 500).json({ error: error.message });
+      return sendAiError(res, error);
     }
   });
 
@@ -218,7 +240,7 @@ module.exports = (app) => {
       const usage = await getAiUsage(teamId, startDate, endDate);
       return res.json(usage);
     } catch (error) {
-      return res.status(500).json({ error: error.message });
+      return sendAiError(res, error);
     }
   });
 
