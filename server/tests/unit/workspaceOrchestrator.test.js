@@ -45,7 +45,14 @@ const {
 const {
   rankActivityItemsWithLearning,
   rankRecommendationsWithLearning,
+  runDeterministicWorkspaceRequest,
 } = require("../../modules/ai/orchestrator/runtime/deterministicExecutor");
+const {
+  AI_ACCESS_MODES,
+  VIEWER_REPORTING_AI_TOOLS,
+  getAiRoleScope,
+  getRoleBoundaryMessage,
+} = require("../../modules/ai/orchestrator/rolePolicy");
 const {
   isKpiReviewAccessible,
   projectFeedback,
@@ -582,7 +589,100 @@ describe("workspace orchestrator safety", () => {
 
     expect(viewerEnvelope.visibleProjectIds).toEqual([4]);
     expect(viewerEnvelope.editableProjectIds).toEqual([]);
+    expect(viewerEnvelope).toEqual(expect.objectContaining({
+      canCreatePersonalKpiReview: false,
+      kpiReviewWritesEnabled: false,
+      metricMonitorWritesEnabled: false,
+      workspaceWritesEnabled: false,
+    }));
     expect(editorEnvelope.editableProjectIds).toEqual([4]);
+  });
+
+  it("gives a project viewer only stored reporting tools", () => {
+    const scope = getAiRoleScope({
+      ...access,
+      allProjects: false,
+      canConfigureTeam: false,
+      projectIds: [4],
+      role: "projectViewer",
+    }, {
+      editableProjectIds: [],
+    });
+
+    expect(scope).toEqual({
+      accessMode: AI_ACCESS_MODES.REPORTING_ONLY,
+      allowedToolNames: [...VIEWER_REPORTING_AI_TOOLS],
+    });
+    expect(scope.allowedToolNames).not.toEqual(expect.arrayContaining([
+      "get_dataset_intelligence",
+      "preview_kpi_review",
+      "preview_metric_monitor",
+      "recommend_metric_monitors",
+      "run_existing_dataset",
+      "search_datasets",
+      "summarize",
+    ]));
+
+    const editorScope = getAiRoleScope({
+      ...access,
+      allProjects: false,
+      canConfigureTeam: false,
+      projectIds: [4],
+      role: "projectEditor",
+    }, {
+      editableProjectIds: [4],
+    });
+    expect(editorScope).toEqual(expect.objectContaining({
+      accessMode: AI_ACCESS_MODES.PROJECT_EDITOR,
+      allowedToolNames: expect.arrayContaining([
+        "preview_metric_monitor",
+        "recommend_metric_monitors",
+        "run_existing_dataset",
+      ]),
+    }));
+    expect(editorScope.allowedToolNames).not.toEqual(expect.arrayContaining([
+      "create_chart",
+      "create_dataset",
+    ]));
+
+    expect(getAiRoleScope(access, { editableProjectIds: [4] })).toEqual({
+      accessMode: AI_ACCESS_MODES.FULL,
+      allowedToolNames: undefined,
+    });
+  });
+
+  it("answers viewer capability and write requests without a model call", async () => {
+    const viewerAccess = {
+      ...access,
+      allProjects: false,
+      canConfigureTeam: false,
+      projectIds: [4],
+      role: "projectViewer",
+    };
+
+    expect(getRoleBoundaryMessage("projectViewer", "What can you do?"))
+      .toContain("I cannot query data sources");
+    expect(getRoleBoundaryMessage("projectViewer", "Create a chart from the sales dataset"))
+      .toContain("Ask a workspace editor or administrator");
+    expect(getRoleBoundaryMessage("projectViewer", "Query my data for active users"))
+      .toContain("I cannot query data sources");
+    expect(getRoleBoundaryMessage("projectViewer", "Which metrics are worth watching?"))
+      .toContain("I can report from the dashboards");
+    expect(getRoleBoundaryMessage("projectViewer", "Summarize recent changes")).toBeNull();
+
+    const result = await runDeterministicWorkspaceRequest({
+      access: viewerAccess,
+      history: [],
+      question: "Run the sales dataset and create a chart",
+      roleBoundaryOnly: true,
+    });
+
+    expect(result.message).toContain("I cannot query data sources");
+    expect(result.usage.total_tokens).toBe(0);
+    expect(result.usageRecords[0]).toEqual(expect.objectContaining({
+      model: "deterministic",
+      purpose: "role_boundary",
+    }));
   });
 
   it("does not expose workspace intelligence tools without a signed-in user", () => {

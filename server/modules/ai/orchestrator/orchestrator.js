@@ -22,6 +22,11 @@ const { getWorkspaceOrchestratorPolicy } = require("../../workspaceContext/polic
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
+const {
+  AI_ACCESS_MODES,
+  PROJECT_EDITOR_CAPABILITY_MESSAGE,
+  VIEWER_CAPABILITY_MESSAGE,
+} = require("./rolePolicy");
 const { runSplitWorkspaceRequest } = require("./runtime/splitRuntime");
 const {
   formatSupportedSourceBullets,
@@ -2093,6 +2098,7 @@ async function orchestrate(
 ) {
   // Extract optional tool progress callback
   const {
+    aiAccessMode = AI_ACCESS_MODES.FULL,
     aiSessionId,
     allowedProjectIds,
     allowedToolNames,
@@ -2121,7 +2127,12 @@ async function orchestrate(
   // Check if this is a capability question
   if (isCapabilityQuestion(question)) {
     // Generate capability response without AI calls
-    const capabilityResponse = generateCapabilityResponse(semanticLayer);
+    let capabilityResponse = generateCapabilityResponse(semanticLayer);
+    if (aiAccessMode === AI_ACCESS_MODES.REPORTING_ONLY) {
+      capabilityResponse = VIEWER_CAPABILITY_MESSAGE;
+    } else if (aiAccessMode === AI_ACCESS_MODES.PROJECT_EDITOR) {
+      capabilityResponse = PROJECT_EDITOR_CAPABILITY_MESSAGE;
+    }
 
     // Prepare messages for database recording
     const messages = [
@@ -2156,7 +2167,15 @@ async function orchestrate(
     };
   }
 
-  const baseSystemPrompt = buildSystemPrompt(semanticLayer, conversation);
+  const baseSystemPrompt = aiAccessMode === AI_ACCESS_MODES.REPORTING_ONLY
+    ? [
+      "You are the Chartbrew reporting assistant.",
+      "Report only from stored, permission-scoped Chartbrew facts returned by the available tools.",
+      "Do not query a data source or create, preview, recommend, or change product resources.",
+      `If the user asks for an unavailable action, answer exactly: ${VIEWER_CAPABILITY_MESSAGE}`,
+      "Never invent a metric value. State when the available evidence cannot answer the question.",
+    ].join(" ")
+    : buildSystemPrompt(semanticLayer, conversation);
   const systemPrompt = Array.isArray(allowedToolNames)
     ? `${baseSystemPrompt}\n\n## Authorized capability scope\nOnly use these tools for this user: ${allowedToolNames.join(", ")}. Do not describe or propose unavailable connection, schema, query-generation, or creation actions.`
     : baseSystemPrompt;

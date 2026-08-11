@@ -80,8 +80,8 @@ orchestrator a complete workspace view.
 | Alerts | `HomeController.getAlerts()` returns active state, rules, the latest event, chart, and dashboard. | Alerts are not included in orchestrator workspace discovery. |
 | Data health | `HomeController.getDataHealth()` projects recent update failures, recovery, and monitor readiness. | The first orchestrator tool returns only active issue titles. It does not show coverage, recovery, affected scope, or the difference between stale business evidence and an active failure. |
 | Dashboards | The orchestrator system prompt contains accessible dashboard names and chart counts. | It does not contain freshness, watch coverage, alert coverage, or bounded evidence. The model can be tempted to inspect dashboards before Activity. |
-| Datasets | Search, profile, and bounded execution tools enforce team and project scope. | Workspace discovery has no compact dataset catalogue. A viewer-safe profile call can start profiling, which is more work than a summary question needs. |
-| Permissions | Team admins get all AI tools. Other roles get a fixed read-only list. | Project admins and project editors can change watches in the normal product, but the orchestrator gives them no project-scoped write tools. Tool access must be capability-based, not only team-admin versus read-only. |
+| Datasets | Search, profile, and bounded execution tools enforce team and project scope. | Workspace discovery has no compact dataset catalogue. A project viewer must not start profiling or dataset execution from chat. |
+| Permissions | Team admins get all AI tools. Other roles get a fixed read-only list. | The read-only list includes dataset execution and profiling. Project viewers need an exact reporting-only list. Project admins and project editors need separate project-scoped capabilities. |
 | Conversations | The server owns history and validates explicit context bindings. | Persistent tool results can keep old workspace facts in conversation history. A later permission change must not make old tool data authoritative or visible to the model. |
 | Feedback | Observation feedback is explicit, user-scoped, editable, and bounded. | There is no authorized projection that joins it with monitor corrections, recommendation decisions, or approved weak context. |
 | AI usage | `AiUsage` records model, purpose, tokens, time, and cost fields. | It does not record a safe manifest of context categories sent to an external provider. |
@@ -110,8 +110,9 @@ Key implementation anchors:
 
 - Can read a limited set of dashboards.
 - Wants a short answer about changes, stable KPIs, and data problems.
-- Can give feedback and schedule a personal KPI review.
-- Cannot create or change a watched metric.
+- Can give feedback.
+- Cannot query a source or create, preview, or change a dataset, chart, dashboard, watch, alert, or
+  KPI review schedule through the orchestrator.
 - Must not learn that an inaccessible dashboard, dataset, connection, or metric exists.
 
 ### Ren: project editor
@@ -698,7 +699,7 @@ operation and follows its current limits.
 | `list_kpi_reviews` | Return only the current user's schedules. | Current user only. |
 | `preview_kpi_review` | Validate a create or update proposal and render structured preview facts. | Current user and view access to the selected scope. |
 | `get_metric_learning_context` | Return applicable normalized learning signals. | Same project and task scope as the metric. Never return another user's raw feedback row. |
-| Existing dataset tools | Search, inspect, or run one accessible dataset for deeper evidence. | Current team and project rules, safe viewer field projection, and existing row limits. |
+| Existing dataset tools | Search, inspect, or run one accessible dataset for deeper evidence. | Project editor/admin or team admin/owner only, with current project rules and row limits. Never available to a project viewer. |
 
 `get_workspace_context` accepts explicit section names. It must not return all sections by default.
 The orchestrator prompt tells the model which section to request for each task.
@@ -757,15 +758,20 @@ pending previews.
 | Read scoped watches | Yes | Yes | Yes |
 | Read personal KPI reviews | Yes | Yes | Yes |
 | Read dashboard and safe dataset summaries | Yes | Yes | Yes |
-| Run one existing dataset | Yes, safe projected fields | Yes, current project rules | Yes |
+| Search, profile, or run one existing dataset | No | Yes, current project rules | Yes |
 | Receive watch recommendations | No actionable candidates | Editable projects | All non-ghost projects |
 | Preview or write a watch | No | Editable projects | All non-ghost projects |
-| Preview or write a personal KPI review | Yes | Yes | Yes |
+| Preview or write a personal KPI review | No | Yes | Yes |
+| Create or change a dataset, chart, dashboard, connection, or source query | No | No in version 1 | Yes, when the tool is enabled |
 | Read raw connection or update-run diagnostics | No | No | Owner/admin only |
 | Read owner egress and action audit | No | No | Owner/admin only |
 
 Viewers can ask, `What could be watched?` Chartbrew can explain that an editor can add a watch, but
 it must not expose hidden candidate details from inaccessible charts or offer a confirmation action.
+The viewer tool catalogue contains only `get_workspace_activity`, `get_workspace_context`,
+`list_metric_monitors`, and `list_kpi_reviews`. The server returns a role-aware capability answer
+before a model call when a viewer asks for a source query, recommendation, preview, or product
+change. A prompt instruction cannot add a tool to this catalogue.
 
 ### Background and delivery checks
 
@@ -1896,8 +1902,10 @@ are valid.
   review and even though it has no observation.
 - A general workspace summary executes no dashboard refresh, dataset run, source query, schema read,
   or connection discovery tool.
-- A deeper question can run one selected accessible dataset with current viewer-safe fields and row
-  limits.
+- A deeper question from a project editor or team admin can run one selected accessible dataset with
+  current row limits.
+- A viewer request to query a source or create a dataset, chart, dashboard, watch, alert, or KPI
+  review returns the reporting-only capability answer without a model or data-source call.
 - A project editor can preview and create a watch in an editable project but not another assigned
   read-only or inaccessible project.
 - A project viewer cannot create a pending watch action.
@@ -2228,7 +2236,9 @@ disables orchestrator writes without disabling deterministic Activity, watches, 
 
 - Each read, preview, and write applies current team and project scope on the server.
 - Project editors can use watch write tools only in editable projects.
-- Project viewers cannot create or redeem a pending watch action.
+- Project viewers receive only the four reporting tools. They cannot search, profile, or run a
+  dataset. They cannot receive recommendation, preview, source, chart, dataset, or write tools.
+- Project viewers cannot create or redeem a pending watch or KPI review action.
 - Public and embedded sessions receive no workspace intelligence tools.
 - No public or general team API route can redeem a pending action.
 - The authenticated browser can receive a public action ID. External models do not receive it. The

@@ -7,6 +7,9 @@ const { buildDeterministicWorkspaceSummary, escapeMarkdown } = require("../../..
 const { getWorkspaceOrchestratorPolicy } = require("../../../workspaceContext/policy");
 const { readWorkspaceActivity } = require("../../../workspaceContext/workspaceActivityProjection");
 const {
+  getRoleBoundaryMessage,
+} = require("../rolePolicy");
+const {
   getWorkspaceLearningProjection,
 } = require("../../../workspaceContext/workspaceLearningProjection");
 const { routeWorkspaceRequest } = require("./deterministicRouter");
@@ -182,7 +185,19 @@ async function runDeterministicWorkspaceRequest({
   allowPlannerFallback = false,
   history = [],
   question,
+  roleBoundaryOnly = false,
 }) {
+  const boundaryMessage = getRoleBoundaryMessage(access.role, question);
+  if (boundaryMessage) {
+    return buildResult({
+      context: {},
+      history,
+      message: boundaryMessage,
+      purpose: "role_boundary",
+      question,
+    });
+  }
+  if (roleBoundaryOnly) return null;
   const policy = getWorkspaceOrchestratorPolicy();
   if (!policy.enabled) return null;
   const route = routeWorkspaceRequest({ message: question });

@@ -130,6 +130,23 @@ function assertWriteEnabled(actionType) {
   }
 }
 
+function assertRoleWriteEnabled(envelope, actionType) {
+  if (actionType.startsWith("metric_monitor.") && !envelope.metricMonitorWritesEnabled) {
+    throw createActionError(
+      "You do not have permission to change watched metrics",
+      403,
+      "MONITOR_WRITE_FORBIDDEN"
+    );
+  }
+  if (actionType.startsWith("kpi_review.") && !envelope.kpiReviewWritesEnabled) {
+    throw createActionError(
+      "You do not have permission to change KPI review schedules",
+      403,
+      "KPI_REVIEW_WRITE_FORBIDDEN"
+    );
+  }
+}
+
 async function applyMonitorAction(access, pendingAction, transaction, authorityType) {
   const controller = new MonitorController();
   const { actionType, proposal, resourceVersion, scope } = pendingAction;
@@ -298,6 +315,7 @@ async function executePendingAction({
       const recentResult = await findRecentDirectResult(access, pendingAction, sessionId);
       if (recentResult) return recentResult;
     }
+    assertRoleWriteEnabled(envelope, pendingAction.actionType);
     assertWriteEnabled(pendingAction.actionType);
     const result = await db.sequelize.transaction(async (transaction) => {
       if (pendingAction.actionType.startsWith("metric_monitor.")) {
@@ -318,6 +336,7 @@ async function executePendingAction({
 
 module.exports = {
   assertCurrentVersion,
+  assertRoleWriteEnabled,
   executePendingAction,
   findAppliedResult,
   findRecentDirectResult,

@@ -12,6 +12,7 @@ const {
 const {
   isTypedConfirmation,
 } = require("../modules/ai/orchestrator/runtime/deterministicRouter");
+const { getAiRoleScope } = require("../modules/ai/orchestrator/rolePolicy");
 const db = require("../models/models");
 const runtimeCache = require("../modules/runtimeCache");
 const socketManager = require("../modules/socketManager");
@@ -27,22 +28,6 @@ const {
   listPendingActions,
 } = require("../modules/workspaceContext/previewStore");
 
-const READ_ONLY_AI_TOOLS = [
-  "get_dataset_intelligence",
-  "get_workspace_activity",
-  "get_workspace_context",
-  "list_kpi_reviews",
-  "list_metric_monitors",
-  "preview_kpi_review",
-  "run_existing_dataset",
-  "search_datasets",
-  "summarize",
-];
-const PROJECT_EDITOR_AI_TOOLS = [
-  ...READ_ONLY_AI_TOOLS,
-  "recommend_metric_monitors",
-  "preview_metric_monitor",
-];
 const NON_PERSISTENT_WORKSPACE_TOOLS = new Set([
   "get_workspace_activity",
   "get_workspace_context",
@@ -294,14 +279,20 @@ async function getOrchestration(
   }
 
   try {
-    const orchestration = validatedContext.length === 0
+    const roleBoundary = await runDeterministicWorkspaceRequest({
+      access,
+      history: fullHistory,
+      question,
+      roleBoundaryOnly: true,
+    });
+    const orchestration = roleBoundary || (validatedContext.length === 0
       ? await runDeterministicWorkspaceRequest({
         access,
         allowPlannerFallback: !orchestrationOptions.canUseExternalWorkspaceContext,
         history: fullHistory,
         question,
       })
-      : null;
+      : null);
     let resolvedOrchestration = orchestration;
     if (!resolvedOrchestration && validatedContext.length === 0) {
       resolvedOrchestration = await runExternalWorkspaceOrchestration({
@@ -461,16 +452,12 @@ async function getOrchestration(
 
 async function getOrchestrationOptions(access, userId, aiSessionId) {
   const envelope = await getWorkspaceAccessEnvelope(access);
-  let allowedToolNames;
-  if (!access.canConfigureTeam) {
-    allowedToolNames = envelope.editableProjectIds.length > 0
-      ? PROJECT_EDITOR_AI_TOOLS
-      : READ_ONLY_AI_TOOLS;
-  }
+  const roleScope = getAiRoleScope(access, envelope);
   return {
+    aiAccessMode: roleScope.accessMode,
     allowedProjectIds: access.allProjects ? undefined : access.projectIds,
     allowedEditableProjectIds: envelope.editableProjectIds,
-    allowedToolNames,
+    allowedToolNames: roleScope.allowedToolNames,
     canConfigureTeam: access.canConfigureTeam,
     canUseExternalWorkspaceContext: envelope.canUseExternalWorkspaceContext,
     aiSessionId,
@@ -770,14 +757,20 @@ async function respond({
     userId,
     getAiSessionBinding("session", resolvedSessionId)
   );
-  const deterministicResult = validatedContext.length === 0
+  const roleBoundary = await runDeterministicWorkspaceRequest({
+    access,
+    history: existingSession?.history || [],
+    question: `${message}`.trim(),
+    roleBoundaryOnly: true,
+  });
+  const deterministicResult = roleBoundary || (validatedContext.length === 0
     ? await runDeterministicWorkspaceRequest({
       access,
       allowPlannerFallback: !orchestrationOptions.canUseExternalWorkspaceContext,
       history: existingSession?.history || [],
       question: `${message}`.trim(),
     })
-    : null;
+    : null);
   let orchestration = deterministicResult;
   if (!orchestration && validatedContext.length === 0) {
     orchestration = await runExternalWorkspaceOrchestration({

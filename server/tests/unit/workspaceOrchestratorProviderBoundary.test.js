@@ -14,9 +14,15 @@ const {
 } = require("../../modules/ai/orchestrator/runtime/factNormalizer");
 const {
   buildScopedToolPayload,
+  getAllowedSplitToolNames,
+  getCapabilities,
   getWorkerToolDefinition,
   runSplitWorkspaceRequest,
 } = require("../../modules/ai/orchestrator/runtime/splitRuntime");
+const {
+  AI_ACCESS_MODES,
+  VIEWER_REPORTING_AI_TOOLS,
+} = require("../../modules/ai/orchestrator/rolePolicy");
 const {
   createProviderBudget,
 } = require("../../modules/ai/orchestrator/runtime/providerClient");
@@ -174,6 +180,25 @@ function parseRequestEnvelope(request) {
 }
 
 describe("workspace orchestrator provider boundary", () => {
+  it("keeps viewer tools and planner capabilities reporting-only", () => {
+    const options = { aiAccessMode: AI_ACCESS_MODES.REPORTING_ONLY };
+    const envelope = buildEnvelope({ editableProjectIds: [] });
+    const allowed = getAllowedSplitToolNames({
+      envelope,
+      options,
+      policy: getPolicy(),
+    });
+
+    expect([...allowed]).toEqual(VIEWER_REPORTING_AI_TOOLS);
+    expect(getCapabilities(envelope, options)).toEqual({
+      canPreviewKpiReview: false,
+      canPreviewMetricMonitor: false,
+      canWriteKpiReview: false,
+      canWriteMetricMonitor: false,
+      reportingOnly: true,
+    });
+  });
+
   it("gives the planner value-free Activity coverage and redacts sensitive request text", () => {
     const payload = buildPlannerEnvelope({
       activity: buildActivity(),

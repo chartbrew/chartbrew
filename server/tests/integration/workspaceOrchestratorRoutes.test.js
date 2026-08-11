@@ -410,6 +410,48 @@ describe("workspace orchestrator routes", () => {
       .toContain("This answer includes only dashboards you can access.");
   });
 
+  it("refuses viewer source queries and chart creation before data execution", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const owner = await createUserAccess(models);
+    const viewer = await models.User.create(userFactory.build());
+    await models.TeamRole.create({
+      projects: [owner.project.id],
+      role: "projectViewer",
+      team_id: owner.team.id,
+      user_id: viewer.id,
+    });
+    const viewerToken = generateTestToken({
+      email: viewer.email,
+      id: viewer.id,
+      name: viewer.name,
+    });
+    const datasetRun = vi.spyOn(DatasetController.prototype, "runRequest");
+    const chartCountBefore = await models.Chart.count({
+      where: { project_id: owner.project.id },
+    });
+
+    const response = await request(app)
+      .post("/ai/respond")
+      .set("Authorization", `Bearer ${viewerToken}`)
+      .send({
+        message: "Run the sales dataset and create a chart from the result",
+        persistence: "ephemeral",
+        sessionId: crypto.randomUUID(),
+        teamId: owner.team.id,
+      })
+      .expect(200);
+
+    expect(response.body.orchestration.message).toContain("I cannot query data sources");
+    expect(response.body.orchestration.message)
+      .toContain("Ask a workspace editor or administrator");
+    expect(response.body.orchestration.usage.total_tokens).toBe(0);
+    expect(datasetRun).not.toHaveBeenCalled();
+    await expect(models.Chart.count({
+      where: { project_id: owner.project.id },
+    })).resolves.toBe(chartCountBefore);
+  });
+
   it("limits complete workspace context to visible projects and personal KPI reviews", async () => {
     const owner = await createUserAccess(models);
     const hiddenProject = await models.Project.create(projectFactory.build({
@@ -490,7 +532,7 @@ describe("workspace orchestrator routes", () => {
     expect(context.account).toEqual(expect.objectContaining({
       canConfigureConnections: false,
       canEditWatchedMetrics: false,
-      canSchedulePersonalReview: true,
+      canSchedulePersonalReview: false,
     }));
     expect(context.dashboards.map((dashboard) => dashboard.id)).toEqual([owner.project.id]);
     expect(context.datasets).toEqual([
@@ -991,6 +1033,51 @@ describe("workspace orchestrator routes", () => {
       failure_code: "PENDING_ACTION_ACCESS_CHANGED",
       status: "conflicted",
     }));
+  });
+
+  it("rejects a viewer KPI review action even if a pending action exists", async () => {
+    const seeded = await createUserAccess(models, "projectViewer", []);
+    const viewerAccess = {
+      allProjects: false,
+      canConfigureTeam: false,
+      projectIds: [seeded.project.id],
+      role: "projectViewer",
+      teamId: seeded.team.id,
+      userId: seeded.user.id,
+    };
+    await models.TeamRole.update({ projects: [seeded.project.id] }, {
+      where: { team_id: seeded.team.id, user_id: seeded.user.id },
+    });
+    const envelope = await getWorkspaceAccessEnvelope(viewerAccess);
+    const sessionId = `session:${crypto.randomUUID()}`;
+    const data = {
+      cadence: "weekly",
+      contentMode: "kpi_review",
+      dayOfWeek: 1,
+      enabled: true,
+      evaluationWaitMinutes: 120,
+      localDeliveryTime: "09:00",
+      timezone: "UTC",
+    };
+    const pending = await createPendingAction({
+      access: viewerAccess,
+      accessVersion: envelope.accessVersion,
+      actionType: "kpi_review.create",
+      proposal: { changedValues: data, data, mode: "create" },
+      sessionId,
+    });
+
+    await expect(executePendingAction({
+      access: viewerAccess,
+      actionId: pending.actionId,
+      sessionId,
+    })).rejects.toMatchObject({
+      code: "KPI_REVIEW_WRITE_FORBIDDEN",
+      statusCode: 403,
+    });
+    await expect(models.ObservationDigestSubscription.count({
+      where: { team_id: seeded.team.id, user_id: seeded.user.id },
+    })).resolves.toBe(0);
   });
 
   it("keeps action and egress audit routes behind workspace administration access", async () => {

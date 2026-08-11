@@ -37,6 +37,7 @@ async function getWorkspaceAccessEnvelope(access) {
   const user = await db.User.findByPk(access.userId, {
     attributes: ["email"],
   });
+  const reportingOnly = access.role === "projectViewer";
   const orchestratorPolicy = getWorkspaceOrchestratorPolicy();
   const policy = {
     externalAiEnabled: Boolean(getOpenAiKey()),
@@ -58,22 +59,23 @@ async function getWorkspaceAccessEnvelope(access) {
   return {
     accessVersion,
     canConfigureConnections: access.canConfigureTeam,
-    canCreatePersonalKpiReview: Boolean(user?.email),
+    canCreatePersonalKpiReview: !reportingOnly && Boolean(user?.email),
     canUseExternalAi: policy.externalAiEnabled,
     canUseExternalWorkspaceContext: policy.externalAiEnabled
       && policy.externalWorkspaceContextEnabled,
     canViewOwnerAudit: access.canConfigureTeam,
     editableProjectIds,
     hasDeliveryEmail: Boolean(user?.email),
-    kpiReviewWritesEnabled: policy.kpiReviewWritesEnabled,
+    kpiReviewWritesEnabled: !reportingOnly && policy.kpiReviewWritesEnabled,
     learningRetrievalEnabled: policy.learningRetrievalEnabled,
-    metricMonitorWritesEnabled: policy.metricMonitorWritesEnabled,
+    metricMonitorWritesEnabled: !reportingOnly && policy.metricMonitorWritesEnabled,
     role: access.role,
     teamId: access.teamId,
     userId: access.userId,
     visibleProjectIds,
     workspaceOrchestratorEnabled: policy.workspaceOrchestratorEnabled,
-    workspaceWritesEnabled: policy.metricMonitorWritesEnabled || policy.kpiReviewWritesEnabled,
+    workspaceWritesEnabled: !reportingOnly
+      && (policy.metricMonitorWritesEnabled || policy.kpiReviewWritesEnabled),
   };
 }
 

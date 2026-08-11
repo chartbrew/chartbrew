@@ -37,6 +37,10 @@ const {
   WORKER_SCHEMA,
 } = require("./responseSchemas");
 const { validateWorkerOutput } = require("./workerContract");
+const {
+  AI_ACCESS_MODES,
+  VIEWER_REPORTING_AI_TOOLS,
+} = require("../rolePolicy");
 
 const SPLIT_RUNTIME_TOOLS = new Set([
   ...READ_TOOLS,
@@ -75,9 +79,13 @@ const TOOL_REFERENCE_FIELDS = Object.freeze({
 });
 
 function getAllowedSplitToolNames({ envelope, options, policy }) {
-  const configuredTools = Array.isArray(options.allowedToolNames)
-    ? new Set(options.allowedToolNames)
-    : SPLIT_RUNTIME_TOOLS;
+  const reportingOnly = options.aiAccessMode === AI_ACCESS_MODES.REPORTING_ONLY;
+  let configuredTools = SPLIT_RUNTIME_TOOLS;
+  if (reportingOnly) {
+    configuredTools = new Set(VIEWER_REPORTING_AI_TOOLS);
+  } else if (Array.isArray(options.allowedToolNames)) {
+    configuredTools = new Set(options.allowedToolNames);
+  }
   const allowed = new Set([...SPLIT_RUNTIME_TOOLS].filter((tool) => configuredTools.has(tool)));
   if (!options.aiSessionId) {
     allowed.delete("preview_kpi_review");
@@ -138,13 +146,15 @@ function getTaskCatalog(allowedToolNames) {
   }].filter((entry) => entry.allowedTools.length > 0);
 }
 
-function getCapabilities(envelope) {
+function getCapabilities(envelope, options = {}) {
+  const reportingOnly = options.aiAccessMode === AI_ACCESS_MODES.REPORTING_ONLY;
   return {
-    canPreviewKpiReview: envelope.canCreatePersonalKpiReview,
-    canPreviewMetricMonitor: envelope.editableProjectIds.length > 0,
-    canWriteKpiReview: envelope.kpiReviewWritesEnabled,
-    canWriteMetricMonitor: envelope.metricMonitorWritesEnabled
+    canPreviewKpiReview: !reportingOnly && envelope.canCreatePersonalKpiReview,
+    canPreviewMetricMonitor: !reportingOnly && envelope.editableProjectIds.length > 0,
+    canWriteKpiReview: !reportingOnly && envelope.kpiReviewWritesEnabled,
+    canWriteMetricMonitor: !reportingOnly && envelope.metricMonitorWritesEnabled
       && envelope.editableProjectIds.length > 0,
+    reportingOnly,
   };
 }
 
@@ -443,7 +453,7 @@ async function runSplitWorkspaceRequest({
   try {
     const plannerEnvelope = buildPlannerEnvelope({
       activity,
-      capabilities: getCapabilities(envelope),
+      capabilities: getCapabilities(envelope, options),
       policy,
       question,
       taskCatalog: getTaskCatalog(allowedToolNames),

@@ -66,12 +66,17 @@ function AiModal({ isOpen, onClose }) {
   const projects = useSelector(selectProjects);
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
+  const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
   const isTeamAdmin = canAccess("teamAdmin", user.id, team?.TeamRoles);
+  const isReportingOnly = teamRole === "projectViewer";
+  const questionPlaceholder = isReportingOnly
+    ? "Ask about existing reports and metrics"
+    : "Ask a question about your data";
   const contextEntities = useMemo(() => [
     ...projects.map((p) => ({ ...p, entity_type: "project" })),
     ...(isTeamAdmin ? connections.map((c) => ({ ...c, entity_type: "connection" })) : []),
-    ...datasets.map((d) => ({ ...d, entity_type: "dataset" })),
-  ], [projects, connections, datasets, isTeamAdmin]);
+    ...(!isReportingOnly ? datasets.map((d) => ({ ...d, entity_type: "dataset" })) : []),
+  ], [projects, connections, datasets, isReportingOnly, isTeamAdmin]);
 
   // Filter context entities based on search
   const filteredContextEntities = useMemo(() => contextEntities.filter((entity) => {
@@ -711,7 +716,7 @@ function AiModal({ isOpen, onClose }) {
                 <AiComposer
                   id="ai-form"
                   name="aiQuestion"
-                  placeholder="Ask a question about your data"
+                  placeholder={questionPlaceholder}
                   isLoading={isLoading}
                   rows={2}
                   selectedContext={selectedContext}
@@ -1030,7 +1035,7 @@ function AiModal({ isOpen, onClose }) {
                           id="ai-conversation-form"
                           name="aiConversationQuestion"
                           inputRef={inputRef}
-                          placeholder="Ask me anything about your data..."
+                          placeholder={questionPlaceholder}
                           isLoading={isLoading}
                           layout="inline"
                           selectedContext={selectedContext}
