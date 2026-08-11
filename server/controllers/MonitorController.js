@@ -67,7 +67,11 @@ async function serializeMonitor(monitor) {
     aggregate: monitor.metric_spec?.aggregate || "none",
     chartId: monitor.chart_id,
     chartName: monitor.Chart?.name || null,
-    createdBy: monitor.creator ? { id: monitor.creator.id, name: monitor.creator.name } : null,
+    createdBy: monitor.creator ? {
+      icon: monitor.creator.icon || null,
+      id: monitor.creator.id,
+      name: monitor.creator.name,
+    } : null,
     comparison: baselinePolicy ? {
       checkpointToleranceMinutes: baselinePolicy.checkpointToleranceMinutes,
       mode: baselinePolicy.periodMode,
@@ -119,9 +123,9 @@ class MonitorController {
         attributes: ["id", "name"],
         required: false,
       }, {
-        model: db.User,
-        as: "creator",
-        attributes: ["id", "name"],
+      model: db.User,
+      as: "creator",
+      attributes: ["id", "name", "icon"],
         required: false,
       }],
       order: [["createdAt", "DESC"]],
@@ -307,9 +311,9 @@ class MonitorController {
         attributes: ["id", "name"],
         required: false,
       }, {
-        model: db.User,
-        as: "creator",
-        attributes: ["id", "name"],
+      model: db.User,
+      as: "creator",
+      attributes: ["id", "name", "icon"],
         required: false,
       }],
       where: {

@@ -104,21 +104,6 @@ function getSchedulePayload(schedule) {
   };
 }
 
-function getRecommendedCadence(options, schedule) {
-  const scopedMonitors = (options?.monitors || []).filter((monitor) => {
-    if (schedule.scopeType === "monitor") return monitor.id === schedule.monitorId;
-    if (schedule.scopeType === "project") {
-      return Number(monitor.projectId) === Number(schedule.projectId);
-    }
-    return true;
-  });
-  const periods = scopedMonitors.map((monitor) => monitor.comparisonPeriod).filter(Boolean);
-  if (periods.includes("day")) return "daily";
-  if (periods.includes("week")) return "weekly";
-  if (periods.length > 0 && periods.every((period) => period === "month")) return "monthly";
-  return options?.recommendedCadence || "weekly";
-}
-
 function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }) {
   const [schedule, setSchedule] = useState(() => getInitialSchedule(subscription));
   const [options, setOptions] = useState(null);
@@ -157,10 +142,6 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
     }
     return options.monitors;
   }, [options?.monitors, schedule.projectId, schedule.scopeType]);
-
-  const recommendedCadence = useMemo(() => (
-    getRecommendedCadence(options, schedule)
-  ), [options, schedule]);
 
   const canSave = Boolean(
     schedule.cadence
@@ -246,7 +227,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                   <Radio value="kpi_review">
                     <Radio.Content>
                       <Radio.Control><Radio.Indicator /></Radio.Control>
-                      <LuChartNoAxesColumnIncreasing className="text-primary" aria-hidden />
+                      <LuChartNoAxesColumnIncreasing aria-hidden />
                       KPI review
                     </Radio.Content>
                     <Description>
@@ -285,15 +266,15 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                     <Select.Popover>
                       <ListBox>
                         <ListBox.Item id="daily" textValue="Daily">
-                          Daily{recommendedCadence === "daily" ? " · Recommended" : ""}
+                          Daily
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
                         <ListBox.Item id="weekly" textValue="Weekly">
-                          Weekly{recommendedCadence === "weekly" ? " · Recommended" : ""}
+                          Weekly
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
                         <ListBox.Item id="monthly" textValue="Monthly">
-                          Monthly{recommendedCadence === "monthly" ? " · Recommended" : ""}
+                          Monthly
                           <ListBox.ItemIndicator />
                         </ListBox.Item>
                       </ListBox>
@@ -502,7 +483,7 @@ function SummaryScheduleModal({ isOpen, onClose, onSaved, subscription, teamId }
                   <div className="flex flex-col gap-2">
                     <p className="text-sm font-medium">Email preview</p>
                     <iframe
-                      className="h-[32rem] w-full rounded-lg border border-divider bg-white"
+                      className="h-128 w-full rounded-lg border border-divider bg-white"
                       sandbox=""
                       srcDoc={previewData.html}
                       title="KPI review email preview"

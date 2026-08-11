@@ -3,7 +3,8 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Accordion, Button, Chip, Dropdown, InputGroup, Modal, Spinner, Table, Tabs, Tooltip,
+  Accordion, Autocomplete, Avatar, Button, Chip, Dropdown, InputGroup, ListBox,
+  Modal, SearchField, Spinner, Table, Tabs, Tooltip, useFilter,
 } from "@heroui/react";
 import {
   LuBell,
@@ -14,6 +15,7 @@ import {
   LuDatabase,
   LuEllipsis,
   LuEyeOff,
+  LuLayoutDashboard,
   LuMail,
   LuPause,
   LuPencil,
@@ -24,6 +26,7 @@ import {
   LuSearch,
   LuSparkles,
   LuTrash2,
+  LuUser,
 } from "react-icons/lu";
 import { useNavigate, useSearchParams } from "react-router";
 import { useSelector } from "react-redux";
@@ -270,6 +273,135 @@ ItemRow.propTypes = {
   title: PropTypes.node.isRequired,
 };
 
+function getInitials(name) {
+  return `${name || ""}`
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+function MonitorAutocompleteFilter({
+  emptyLabel,
+  icon: Icon,
+  label,
+  name,
+  onChange,
+  options,
+  placeholder,
+  showAvatars = false,
+  value,
+}) {
+  const { contains } = useFilter({ sensitivity: "base" });
+
+  return (
+    <Autocomplete
+      allowsEmptyCollection
+      aria-label={`Filter watched metrics by ${label.toLowerCase()}`}
+      className="w-full"
+      fullWidth
+      name={name}
+      onChange={(keys) => onChange(Array.isArray(keys) ? keys.map((key) => `${key}`) : [])}
+      placeholder={placeholder}
+      selectionMode="multiple"
+      value={value}
+    >
+      <Autocomplete.Trigger>
+        <Autocomplete.Value className="min-w-0">
+          {({ defaultChildren, isPlaceholder, state }) => {
+            if (isPlaceholder || state.selectedItems.length === 0) {
+              return (
+                <span className="flex min-w-0 items-center gap-2">
+                  <Icon className="size-4 shrink-0 text-muted" aria-hidden />
+                  <span className="truncate">{defaultChildren}</span>
+                </span>
+              );
+            }
+
+            const selectedItems = state.selectedItems;
+            const firstOption = options.find(
+              (option) => option.id === `${selectedItems[0].key}`
+            );
+            const selectedLabel = selectedItems.length === 1
+              ? firstOption?.name || selectedItems[0].textValue
+              : `${selectedItems.length} ${label.toLowerCase()}s`;
+
+            return (
+              <span className="flex min-w-0 items-center gap-2">
+                {showAvatars ? (
+                  <Avatar className="size-4 shrink-0" color="accent" variant="soft">
+                    {firstOption?.avatar ? (
+                      <Avatar.Image alt="" src={firstOption.avatar} />
+                    ) : null}
+                    <Avatar.Fallback>
+                      <span className="text-[8px] leading-none">
+                        {getInitials(firstOption?.name) || <LuUser size={12} aria-hidden />}
+                      </span>
+                    </Avatar.Fallback>
+                  </Avatar>
+                ) : (
+                  <Icon className="size-4 shrink-0 text-muted" aria-hidden />
+                )}
+                <span className="truncate">{selectedLabel}</span>
+              </span>
+            );
+          }}
+        </Autocomplete.Value>
+        <Autocomplete.ClearButton />
+        <Autocomplete.Indicator />
+      </Autocomplete.Trigger>
+      <Autocomplete.Popover>
+        <Autocomplete.Filter filter={contains}>
+          <SearchField autoFocus name={`${name}-search`} variant="secondary">
+            <SearchField.Group>
+              <SearchField.SearchIcon />
+              <SearchField.Input placeholder={`Search ${label.toLowerCase()}s`} />
+              <SearchField.ClearButton />
+            </SearchField.Group>
+          </SearchField>
+          <ListBox renderEmptyState={() => (
+            <div className="px-3 py-6 text-center text-sm text-muted">{emptyLabel}</div>
+          )}>
+            {options.map((option) => (
+              <ListBox.Item id={option.id} key={option.id} textValue={option.name}>
+                <div className="flex min-w-0 items-center gap-2">
+                  {showAvatars ? (
+                    <Avatar className="size-7 shrink-0" color="accent" variant="soft">
+                      {option.avatar ? <Avatar.Image alt="" src={option.avatar} /> : null}
+                      <Avatar.Fallback>
+                        {getInitials(option.name) || <LuUser size={14} aria-hidden />}
+                      </Avatar.Fallback>
+                    </Avatar>
+                  ) : null}
+                  <span className="truncate">{option.name}</span>
+                </div>
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Autocomplete.Filter>
+      </Autocomplete.Popover>
+    </Autocomplete>
+  );
+}
+
+MonitorAutocompleteFilter.propTypes = {
+  emptyLabel: PropTypes.string.isRequired,
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(PropTypes.shape({
+    avatar: PropTypes.string,
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+  })).isRequired,
+  placeholder: PropTypes.string.isRequired,
+  showAvatars: PropTypes.bool,
+  value: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 function Activity() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -297,6 +429,9 @@ function Activity() {
   const [pastPage, setPastPage] = useState(1);
   const [pastTotal, setPastTotal] = useState(0);
   const [query, setQuery] = useState("");
+  const [monitorNameQuery, setMonitorNameQuery] = useState("");
+  const [monitorDashboardIds, setMonitorDashboardIds] = useState([]);
+  const [monitorOwnerIds, setMonitorOwnerIds] = useState([]);
   const pastRequestId = useRef(0);
   const selectedTab = searchParams.get("tab") || "changes";
   const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
@@ -336,6 +471,9 @@ function Activity() {
   };
 
   useEffect(() => {
+    setMonitorNameQuery("");
+    setMonitorDashboardIds([]);
+    setMonitorOwnerIds([]);
     load();
   }, [team?.id]);
 
@@ -384,6 +522,40 @@ function Activity() {
   const pastTotalPages = Math.max(1, Math.ceil(pastTotal / PAST_CHANGES_PER_PAGE));
   const pastPageStart = pastTotal === 0 ? 0 : ((pastPage - 1) * PAST_CHANGES_PER_PAGE) + 1;
   const pastPageEnd = Math.min(pastPage * PAST_CHANGES_PER_PAGE, pastTotal);
+  const monitorDashboardOptions = useMemo(() => Array.from(
+    new Map(monitors.filter((monitor) => monitor.projectId && monitor.projectName)
+      .map((monitor) => [`${monitor.projectId}`, {
+        id: `${monitor.projectId}`,
+        name: monitor.projectName,
+      }])).values()
+  ).sort((a, b) => a.name.localeCompare(b.name)), [monitors]);
+  const monitorOwnerOptions = useMemo(() => Array.from(
+    new Map(monitors.filter((monitor) => monitor.createdBy?.id && monitor.createdBy?.name)
+      .map((monitor) => [`${monitor.createdBy.id}`, {
+        avatar: monitor.createdBy.icon || null,
+        id: `${monitor.createdBy.id}`,
+        name: monitor.createdBy.name,
+      }])).values()
+  ).sort((a, b) => a.name.localeCompare(b.name)), [monitors]);
+  const filteredMonitors = useMemo(() => {
+    const normalizedName = monitorNameQuery.trim().toLowerCase();
+    return monitors.filter((monitor) => {
+      if (normalizedName && !monitor.name.toLowerCase().includes(normalizedName)) return false;
+      if (monitorDashboardIds.length > 0
+        && !monitorDashboardIds.includes(`${monitor.projectId}`)) return false;
+      if (monitorOwnerIds.length > 0
+        && !monitorOwnerIds.includes(`${monitor.createdBy?.id}`)) return false;
+      return true;
+    });
+  }, [monitorDashboardIds, monitorNameQuery, monitorOwnerIds, monitors]);
+  const hasMonitorFilters = Boolean(
+    monitorNameQuery.trim() || monitorDashboardIds.length || monitorOwnerIds.length
+  );
+  const clearMonitorFilters = () => {
+    setMonitorNameQuery("");
+    setMonitorDashboardIds([]);
+    setMonitorOwnerIds([]);
+  };
 
   const removeMonitor = async (monitorId) => {
     setMonitorPending(true);
@@ -969,87 +1141,154 @@ function Activity() {
                 </h2>
               ) : null}
               {monitors.length > 0 ? (
-                <ItemList>
-                  {monitors.map((monitor) => (
-                    <ItemRow
-                  actions={canEdit ? (
-                    <>
-                      <Button
-                        isDisabled={monitorPending}
-                        onPress={() => toggleMonitor(monitor)}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        {monitor.active ? <LuPause size={16} aria-hidden /> : <LuPlay size={16} aria-hidden />}
-                        {monitor.active ? "Pause" : "Resume"}
-                      </Button>
-                      <Button
-                        isDisabled={!monitor.active || monitorPending}
-                        onPress={() => runMonitor(monitor.id)}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        <LuRefreshCw size={16} aria-hidden />
-                        Refresh
-                      </Button>
-                      <Tooltip>
-                        <Tooltip.Trigger
-                          aria-label={`Edit ${monitor.name}`}
-                          className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary"
-                          onClick={() => setSelectedMonitor(monitor)}
-                        >
-                          <LuPencil size={16} aria-hidden />
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Edit metric</Tooltip.Content>
-                      </Tooltip>
-                      <Tooltip>
-                        <Tooltip.Trigger
-                          aria-label={`Stop watching ${monitor.name}`}
-                          className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary"
-                          onClick={() => setMonitorToRemove(monitor)}
-                        >
-                          <LuTrash2 size={16} aria-hidden />
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Stop watching</Tooltip.Content>
-                      </Tooltip>
-                    </>
-                  ) : null}
-                  key={monitor.id}
-                  meta={(
-                    <>
-                      <span className="text-muted">{[
-                        monitor.projectName,
-                        monitor.chartName || monitor.datasetName,
-                        monitor.createdBy?.name ? `Added by ${monitor.createdBy.name}` : null,
-                      ].filter(Boolean).join(" · ")}</span>
-                      <span className="block text-muted text-xs mt-2">{getMonitorMeta(monitor)}</span>
-                    </>
-                  )}
-                  title={(
-                    <>
-                      <span className="font-medium">{monitor.name}</span>
-                      <Chip color={getMonitorStatusColor(monitor)} size="sm" variant="soft">
-                        <Chip.Label>
-                          {monitor.active
-                            ? MONITOR_STATUS_LABELS[monitor.status] || "Unavailable"
-                            : "Paused"}
-                        </Chip.Label>
-                      </Chip>
-                      <Chip size="sm" variant="soft">
-                        <Chip.Label>
-                          {DIRECTION_LABELS[monitor.desiredDirection] || DIRECTION_LABELS.neutral}
-                        </Chip.Label>
-                      </Chip>
-                      {getComparisonLabel(monitor) ? (
-                        <Chip size="sm" variant="soft">
-                          <Chip.Label>{getComparisonLabel(monitor)}</Chip.Label>
-                        </Chip>
-                      ) : null}
-                    </>
-                  )}
+                <>
+                  <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+                    <SearchField
+                      className="w-full"
+                      name="watched-metric-name-filter"
+                      onChange={setMonitorNameQuery}
+                      value={monitorNameQuery}
+                    >
+                      <SearchField.Group>
+                        <SearchField.SearchIcon />
+                        <SearchField.Input placeholder="Search metrics" />
+                        <SearchField.ClearButton />
+                      </SearchField.Group>
+                    </SearchField>
+                    <MonitorAutocompleteFilter
+                      emptyLabel="No dashboards found"
+                      icon={LuLayoutDashboard}
+                      label="Dashboard"
+                      name="watched-metric-dashboard-filter"
+                      onChange={setMonitorDashboardIds}
+                      options={monitorDashboardOptions}
+                      placeholder="All dashboards"
+                      value={monitorDashboardIds}
                     />
-                  ))}
-                </ItemList>
+                    <MonitorAutocompleteFilter
+                      emptyLabel="No owners found"
+                      icon={LuUser}
+                      label="Owner"
+                      name="watched-metric-owner-filter"
+                      onChange={setMonitorOwnerIds}
+                      options={monitorOwnerOptions}
+                      placeholder="All owners"
+                      showAvatars
+                      value={monitorOwnerIds}
+                    />
+                    {hasMonitorFilters ? (
+                      <Button onPress={clearMonitorFilters} size="sm" variant="tertiary">
+                        Clear filters
+                      </Button>
+                    ) : null}
+                  </div>
+                  {filteredMonitors.length > 0 ? (
+                    <ItemList>
+                      {filteredMonitors.map((monitor) => (
+                        <ItemRow
+                          actions={canEdit ? (
+                            <>
+                              <Button
+                                isDisabled={monitorPending}
+                                onPress={() => toggleMonitor(monitor)}
+                                size="sm"
+                                variant="secondary"
+                              >
+                                {monitor.active
+                                  ? <LuPause size={16} aria-hidden />
+                                  : <LuPlay size={16} aria-hidden />}
+                                {monitor.active ? "Pause" : "Resume"}
+                              </Button>
+                              <Button
+                                isDisabled={!monitor.active || monitorPending}
+                                onPress={() => runMonitor(monitor.id)}
+                                size="sm"
+                                variant="secondary"
+                              >
+                                <LuRefreshCw size={16} aria-hidden />
+                                Refresh
+                              </Button>
+                              <Tooltip>
+                                <Tooltip.Trigger
+                                  aria-label={`Edit ${monitor.name}`}
+                                  className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary"
+                                  onClick={() => setSelectedMonitor(monitor)}
+                                >
+                                  <LuPencil size={16} aria-hidden />
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Edit metric</Tooltip.Content>
+                              </Tooltip>
+                              <Tooltip>
+                                <Tooltip.Trigger
+                                  aria-label={`Stop watching ${monitor.name}`}
+                                  className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary"
+                                  onClick={() => setMonitorToRemove(monitor)}
+                                >
+                                  <LuTrash2 size={16} aria-hidden />
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Stop watching</Tooltip.Content>
+                              </Tooltip>
+                            </>
+                          ) : null}
+                          key={monitor.id}
+                          meta={(
+                            <>
+                              <span className="text-muted">{[
+                                monitor.projectName,
+                                monitor.chartName || monitor.datasetName,
+                                monitor.createdBy?.name
+                                  ? `Added by ${monitor.createdBy.name}`
+                                  : null,
+                              ].filter(Boolean).join(" · ")}</span>
+                              <span className="mt-2 block text-xs text-muted">
+                                {getMonitorMeta(monitor)}
+                              </span>
+                            </>
+                          )}
+                          title={(
+                            <>
+                              <span className="font-medium">{monitor.name}</span>
+                              <Chip
+                                color={getMonitorStatusColor(monitor)}
+                                size="sm"
+                                variant="soft"
+                              >
+                                <Chip.Label>
+                                  {monitor.active
+                                    ? MONITOR_STATUS_LABELS[monitor.status] || "Unavailable"
+                                    : "Paused"}
+                                </Chip.Label>
+                              </Chip>
+                              <Chip size="sm" variant="soft">
+                                <Chip.Label>
+                                  {DIRECTION_LABELS[monitor.desiredDirection]
+                                    || DIRECTION_LABELS.neutral}
+                                </Chip.Label>
+                              </Chip>
+                              {getComparisonLabel(monitor) ? (
+                                <Chip size="sm" variant="soft">
+                                  <Chip.Label>{getComparisonLabel(monitor)}</Chip.Label>
+                                </Chip>
+                              ) : null}
+                            </>
+                          )}
+                        />
+                      ))}
+                    </ItemList>
+                  ) : (
+                    <div className="rounded-3xl border border-divider bg-content1 px-4 py-5">
+                      <p className="font-medium">No watched metrics match these filters</p>
+                      <Button
+                        className="mt-3"
+                        onPress={clearMonitorFilters}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        Clear filters
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <EmptyState
                   description={recommendations.length > 0

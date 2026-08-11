@@ -679,6 +679,7 @@ describe("completed period evaluator", () => {
     const periodScenario = scenario("closed-month-additive-flow");
     const monitor = createMonitor(periodScenario, {
       Chart: { name: "Revenue" },
+      creator: { icon: "https://example.com/avatar.png", id: 12, name: "Ada Lovelace" },
       is_active: true,
       last_evaluated_period_end: new Date("2026-08-01T00:00:00.000Z"),
       name: "Monthly revenue",
@@ -696,6 +697,11 @@ describe("completed period evaluator", () => {
         period: "month",
         timezone: "UTC",
       }),
+      createdBy: {
+        icon: "https://example.com/avatar.png",
+        id: 12,
+        name: "Ada Lovelace",
+      },
       lastEvaluatedPeriodEnd: new Date("2026-08-01T00:00:00.000Z"),
       metricBehavior: "flow",
       nextEvaluationAt: new Date("2026-09-01T06:00:00.000Z"),
