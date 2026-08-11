@@ -31,6 +31,22 @@ async function observationRequest(path, options = {}) {
   return response.json();
 }
 
+function normalizeObservationDigest(subscription) {
+  if (!subscription || Array.isArray(subscription.deliveryDays)) return subscription;
+  if (typeof subscription.deliveryDays !== "string") {
+    return { ...subscription, deliveryDays: null };
+  }
+  try {
+    const deliveryDays = JSON.parse(subscription.deliveryDays);
+    return {
+      ...subscription,
+      deliveryDays: Array.isArray(deliveryDays) ? deliveryDays : null,
+    };
+  } catch (error) {
+    return { ...subscription, deliveryDays: null };
+  }
+}
+
 export function getHome(teamId) {
   return observationRequest(`/team/${teamId}/home`);
 }
@@ -143,8 +159,9 @@ export function refreshMonitor(teamId, monitorId) {
   });
 }
 
-export function getObservationDigests(teamId) {
-  return observationRequest(`/team/${teamId}/observation-digests`);
+export async function getObservationDigests(teamId) {
+  const subscriptions = await observationRequest(`/team/${teamId}/observation-digests`);
+  return subscriptions.map(normalizeObservationDigest);
 }
 
 export function getObservationDigestOptions(teamId) {
@@ -158,18 +175,20 @@ export function previewObservationDigest(teamId, subscription) {
   });
 }
 
-export function createObservationDigest(teamId, subscription) {
-  return observationRequest(`/team/${teamId}/observation-digests`, {
+export async function createObservationDigest(teamId, subscription) {
+  const saved = await observationRequest(`/team/${teamId}/observation-digests`, {
     body: JSON.stringify(subscription),
     method: "POST",
   });
+  return normalizeObservationDigest(saved);
 }
 
-export function updateObservationDigest(teamId, subscriptionId, subscription) {
-  return observationRequest(`/team/${teamId}/observation-digests/${subscriptionId}`, {
+export async function updateObservationDigest(teamId, subscriptionId, subscription) {
+  const saved = await observationRequest(`/team/${teamId}/observation-digests/${subscriptionId}`, {
     body: JSON.stringify(subscription),
     method: "PUT",
   });
+  return normalizeObservationDigest(saved);
 }
 
 export function deleteObservationDigest(teamId, subscriptionId) {

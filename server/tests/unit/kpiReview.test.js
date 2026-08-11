@@ -13,6 +13,7 @@ const {
 const DigestController = require("../../controllers/DigestController");
 const {
   getRecommendedCadence,
+  serializeSubscription,
   shouldHoldKpiReview,
   validateSubscription,
 } = require("../../controllers/DigestController");
@@ -67,6 +68,24 @@ afterEach(() => {
 });
 
 describe("KPI reviews", () => {
+  it("serializes delivery days stored as JSON text", () => {
+    const subscription = {
+      cadence: "daily",
+      channel: "email",
+      content_mode: "kpi_review",
+      day_of_month: 1,
+      day_of_week: 1,
+      delivery_days: JSON.stringify(["monday", "friday"]),
+      enabled: false,
+      evaluation_wait_minutes: 120,
+      id: "subscription-1",
+      local_delivery_time: "09:00",
+      timezone: "UTC",
+    };
+
+    expect(serializeSubscription(subscription).deliveryDays).toEqual(["monday", "friday"]);
+  });
+
   it("selects an undelivered correction and reports incomplete metrics honestly", async () => {
     const monitor = createMonitor();
     const waitingMonitor = createMonitor({

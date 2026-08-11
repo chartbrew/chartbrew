@@ -28,6 +28,17 @@ const DELIVERY_DAYS = new Set([
 ]);
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
+function parseStoredDeliveryDays(deliveryDays) {
+  if (Array.isArray(deliveryDays)) return deliveryDays;
+  if (typeof deliveryDays !== "string") return null;
+  try {
+    const parsed = JSON.parse(deliveryDays);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (error) {
+    return null;
+  }
+}
+
 function normalizeDeliveryDays(deliveryDays) {
   if (deliveryDays === null || deliveryDays === undefined) return null;
   if (!Array.isArray(deliveryDays) || deliveryDays.length === 0) {
@@ -80,7 +91,7 @@ function serializeSubscription(subscription) {
     contentMode: subscription.content_mode || "kpi_review",
     dayOfMonth: subscription.day_of_month || 1,
     dayOfWeek: subscription.day_of_week || 1,
-    deliveryDays: subscription.delivery_days,
+    deliveryDays: parseStoredDeliveryDays(subscription.delivery_days),
     enabled: subscription.enabled,
     evaluationWaitMinutes: subscription.evaluation_wait_minutes || 120,
     id: subscription.id,
@@ -324,7 +335,7 @@ class DigestController {
       dayOfWeek: data.dayOfWeek ?? subscription.day_of_week,
       deliveryDays: data.deliveryDays !== undefined
         ? data.deliveryDays
-        : subscription.delivery_days,
+        : parseStoredDeliveryDays(subscription.delivery_days),
       enabled: data.enabled ?? subscription.enabled,
       evaluationWaitMinutes: data.evaluationWaitMinutes
         ?? subscription.evaluation_wait_minutes,
