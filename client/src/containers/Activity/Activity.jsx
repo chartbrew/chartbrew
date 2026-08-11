@@ -51,7 +51,10 @@ import HeroPaginationNav from "../../components/HeroPaginationNav";
 import ObservationCard from "./ObservationCard";
 import SummaryScheduleModal from "./SummaryScheduleModal";
 import WatchMetricModal from "../Chart/components/WatchMetricModal";
-import { formatTimeAgo } from "../../modules/observationFormat";
+import {
+  formatCompactComparison,
+  formatTimeAgo,
+} from "../../modules/observationFormat";
 
 const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamAdmin", "teamOwner"]);
 const MONITOR_STATUS_LABELS = {
@@ -116,16 +119,6 @@ function getAlertTriggeredValueLabel(alert) {
   return values
     .map((item) => (item.label ? `${item.label} ${item.value}` : `${item.value}`))
     .join(", ");
-}
-
-function formatPeriod(period) {
-  if (!period?.start || !period?.end) return "—";
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  return `${formatter.format(new Date(period.start))} – ${formatter.format(new Date(period.end))}`;
 }
 
 function getHealthIcon(type, resolved = false) {
@@ -693,7 +686,7 @@ function Activity() {
                               </div>
                             </Table.Cell>
                             <Table.Cell className="whitespace-nowrap text-sm text-muted">
-                              {observation.comparisonLabel || formatPeriod(observation.currentPeriod)}
+                              {formatCompactComparison(observation) || "—"}
                             </Table.Cell>
                             <Table.Cell>
                               <Chip className="whitespace-nowrap" size="sm" variant="soft">

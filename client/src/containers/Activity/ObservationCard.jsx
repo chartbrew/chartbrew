@@ -7,97 +7,9 @@ import {
 import { useNavigate } from "react-router";
 
 import {
-  formatAbsoluteDelta,
-  getObservationValueFormat,
+  formatCompactComparison,
+  formatObservationChangeMagnitude,
 } from "../../modules/observationFormat";
-
-function getDateParts(value, timezone) {
-  const parts = new Intl.DateTimeFormat(undefined, {
-    day: "numeric",
-    month: "short",
-    timeZone: timezone || "UTC",
-    year: "numeric",
-  }).formatToParts(new Date(value));
-  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
-}
-
-function formatWeek(period, timezone, includeYear) {
-  const start = getDateParts(period.start, timezone);
-  const end = getDateParts(new Date(period.end).getTime() - 1, timezone);
-  if (start.year !== end.year) {
-    return `${start.month} ${start.day}, ${start.year}–${end.month} ${end.day}, ${end.year}`;
-  }
-  const year = includeYear ? `, ${start.year}` : "";
-  if (start.month !== end.month) {
-    return `${start.month} ${start.day}–${end.month} ${end.day}${year}`;
-  }
-  return `${start.month} ${start.day}–${end.day}${year}`;
-}
-
-function formatCompactComparison(observation) {
-  const current = observation.currentPeriod;
-  const previous = observation.comparisonPeriod;
-  const period = observation.monitor?.comparisonPeriod;
-  if (!current?.start || !current?.end || !previous?.start || !previous?.end || !period) {
-    return observation.comparisonLabel?.replace(" compared with ", " vs ") || null;
-  }
-
-  const timezone = observation.monitor?.comparisonTimezone || "UTC";
-  const currentStart = getDateParts(current.start, timezone);
-  const previousStart = getDateParts(previous.start, timezone);
-  const currentYear = getDateParts(new Date(), timezone).year;
-  const crossesYear = currentStart.year !== previousStart.year;
-  const isHistorical = currentStart.year !== currentYear;
-
-  if (period === "month") {
-    if (crossesYear) {
-      return `${currentStart.month} ${currentStart.year} vs ${
-        previousStart.month
-      } ${previousStart.year}`;
-    }
-    return `${currentStart.month} vs ${previousStart.month}${
-      isHistorical ? ` ${currentStart.year}` : ""
-    }`;
-  }
-  if (period === "week") {
-    const comparison = `${formatWeek(current, timezone, crossesYear)} vs ${
-      formatWeek(previous, timezone, crossesYear)
-    }`;
-    return `${comparison}${isHistorical && !crossesYear ? `, ${currentStart.year}` : ""}`;
-  }
-
-  if (crossesYear) {
-    return `${currentStart.month} ${currentStart.day}, ${currentStart.year} vs ${
-      previousStart.month
-    } ${previousStart.day}, ${previousStart.year}`;
-  }
-  return `${currentStart.month} ${currentStart.day} vs ${previousStart.month} ${
-    previousStart.day
-  }${isHistorical ? `, ${currentStart.year}` : ""}`;
-}
-
-function formatChangeMagnitude(observation) {
-  const valueFormat = getObservationValueFormat(
-    observation.unit,
-    observation.monitor?.valueFormat
-  );
-  if (valueFormat.meaning === "percentage") {
-    const points = Math.abs(Number(observation.absoluteDelta) * valueFormat.display.scale);
-    const formatted = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(points);
-    return `${formatted} ${points === 1 ? "point" : "points"}`;
-  }
-  if (observation.relativeDelta !== null
-    && observation.relativeDelta !== undefined
-    && Number.isFinite(Number(observation.relativeDelta))) {
-    const percent = Math.abs(Number(observation.relativeDelta) * 100);
-    return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(percent)}%`;
-  }
-  return formatAbsoluteDelta(
-    observation.absoluteDelta,
-    observation.unit,
-    observation.monitor?.valueFormat
-  );
-}
 
 function ObservationCard({ observation }) {
   const navigate = useNavigate();
@@ -111,7 +23,7 @@ function ObservationCard({ observation }) {
       ? "text-success"
       : "text-foreground-500";
   const metricName = observation.chart?.name || observation.monitor?.name || "Watched metric";
-  const changeMagnitude = formatChangeMagnitude(observation);
+  const changeMagnitude = formatObservationChangeMagnitude(observation);
   const changeSign = isIncrease ? "+" : "−";
   const comparison = formatCompactComparison(observation);
   const isSnoozed = observation.preference?.snoozedUntil
@@ -151,7 +63,9 @@ function ObservationCard({ observation }) {
             <LuTrendingDown className="shrink-0" size={20} aria-hidden />
           )}
           <p
-            aria-label={`${isIncrease ? "Increased" : "Decreased"} by ${changeMagnitude}`}
+            aria-label={`${isIncrease ? "Increased" : "Decreased"} by ${
+              changeMagnitude.replace(" pp", " percentage points")
+            }`}
             className="text-2xl font-semibold tracking-tight"
           >
             {changeSign}{changeMagnitude}

@@ -3,6 +3,7 @@ import {
   Button, Chip, Dropdown, Spinner,
 } from "@heroui/react";
 import {
+  LuArrowRight,
   LuBookmark,
   LuBookmarkCheck,
   LuChartNoAxesColumnIncreasing,
@@ -29,7 +30,8 @@ import {
   updateObservationPreference,
 } from "../../api/observations";
 import {
-  formatAbsoluteDelta,
+  formatObservationChangeMagnitude,
+  getCompactPeriodLabels,
   formatMetricValue,
   formatRelativeChange,
   formatTimeAgo,
@@ -47,36 +49,11 @@ const NOT_USEFUL_REASONS = [
   { code: "not_actionable", label: "Not actionable" },
 ];
 
-function formatPeriod(period) {
-  if (!period?.start || !period?.end) return "Period unavailable";
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  return `${formatter.format(new Date(period.start))} – ${formatter.format(new Date(period.end))}`;
-}
-
-function getComparisonDescription(observation) {
-  if (observation.comparisonLabel) return observation.comparisonLabel;
-  return `Earlier result · ${formatPeriod(observation.comparisonPeriod)}`;
-}
-
-function getComparisonBasis(observation) {
-  return observation.comparisonLabel || "Earlier result";
-}
-
 function getCoverageLabel(value) {
   if (!Number.isFinite(value)) return "Not available";
   if (value >= 0.99) return "Complete";
   if (value >= 0.9) return "Mostly complete";
   return "Some data missing";
-}
-
-function getEvidenceWidth(value, currentValue, baselineValue) {
-  const maximum = Math.max(Math.abs(Number(currentValue)), Math.abs(Number(baselineValue)));
-  if (!Number.isFinite(maximum) || maximum === 0) return 0;
-  return Math.min(100, (Math.abs(Number(value)) / maximum) * 100);
 }
 
 function ObservationDetail() {
@@ -215,22 +192,11 @@ function ObservationDetail() {
     : observation.impact === "negative"
       ? "bg-danger/20"
       : "bg-accent/20";
-  const impactBarClass = observation.impact === "positive"
-    ? "bg-success"
-    : observation.impact === "negative"
-      ? "bg-danger"
-      : "bg-accent";
-  const currentWidth = getEvidenceWidth(
-    observation.currentValue,
-    observation.currentValue,
-    observation.baselineValue
-  );
-  const baselineWidth = getEvidenceWidth(
-    observation.baselineValue,
-    observation.currentValue,
-    observation.baselineValue
-  );
-  const metricName = observation.monitor?.name || "This metric";
+  const metricName = observation.chart?.name || observation.monitor?.name || "Watched metric";
+  const changeMagnitude = formatObservationChangeMagnitude(observation);
+  const periodLabels = getCompactPeriodLabels(observation);
+  const comparisonLabel = observation.comparisonLabel
+    || `${periodLabels.current} compared with ${periodLabels.previous}`;
   const completeness = Number(observation.evidence?.completeness);
   const valuesUsed = Number(observation.evidence?.sourceBucketCount || 0)
     + Number(observation.evidence?.sourceCheckpointCount || 0);
@@ -252,7 +218,7 @@ function ObservationDetail() {
                 : <LuTrendingDown size={19} aria-hidden />}
             </div>
             <h1 className="min-w-0 font-tw text-2xl font-semibold leading-tight md:text-3xl">
-              {observation.title}
+              {metricName}
             </h1>
           </div>
           <div className="mt-4 flex flex-row flex-wrap items-center gap-2">
@@ -374,110 +340,69 @@ function ObservationDetail() {
           aria-labelledby="change-evidence-heading"
           className="rounded-3xl border border-divider bg-content1 p-5 md:p-6 lg:col-start-1 lg:row-start-1"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row items-center sm:justify-between sm:gap-6">
             <h2 className="text-sm font-medium text-muted" id="change-evidence-heading">
               Change
             </h2>
-            <span className="text-sm text-muted">
-              {observation.comparisonLabel || formatPeriod(observation.currentPeriod)}
-            </span>
-          </div>
-          <div className="mt-3 flex flex-wrap items-end gap-3">
-            <p className={`font-tw text-4xl font-semibold leading-none md:text-5xl ${impactTextClass}`}>
-              {changeSign}{formatRelativeChange(observation.relativeDelta)}
+            <p className="max-w-md text-sm leading-6 text-muted sm:pb-0.5 sm:text-right hidden lg:block">
+              {comparisonLabel}
             </p>
-            <Chip
-              color={observation.impact === "positive"
-                ? "success"
-                : observation.impact === "negative"
-                  ? "danger"
-                  : "default"}
-              size="sm"
-              variant="soft"
+          </div>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+            <p
+              aria-label={`${isIncrease ? "Increased" : "Decreased"} by ${
+                changeMagnitude.replace(" pp", " percentage points")
+              }`}
+              className={`shrink-0 font-tw text-4xl font-semibold leading-none md:text-5xl ${
+                impactTextClass
+              }`}
             >
-              <Chip.Label>
-                {changeSign}{formatAbsoluteDelta(
-                  observation.absoluteDelta,
+              {changeSign}{changeMagnitude}
+            </p>
+          </div>
+
+          <div className="mt-7 grid grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] items-center border-t border-divider pt-5">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Previous
+              </p>
+              <p className="mt-1 text-sm text-muted">{periodLabels.previous}</p>
+              <p className="mt-2 break-words font-tw text-2xl font-semibold text-foreground md:text-3xl">
+                {formatMetricValue(
+                  observation.baselineValue,
                   observation.unit,
                   observation.monitor?.valueFormat
-                )} absolute
-              </Chip.Label>
-            </Chip>
-          </div>
-          <p className="mt-4 text-sm leading-6 text-foreground-600">
-            {metricName} moved from{" "}
-            <span className="font-medium text-foreground">
-              {formatMetricValue(
-                observation.baselineValue,
-                observation.unit,
-                observation.monitor?.valueFormat
-              )}
-            </span>{" "}
-            to{" "}
-            <span className="font-medium text-foreground">
-              {formatMetricValue(
-                observation.currentValue,
-                observation.unit,
-                observation.monitor?.valueFormat
-              )}
-            </span>.
-          </p>
-
-          <div className="mt-6 space-y-4">
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-                <span className="text-muted">Current</span>
-                <span className="font-medium">
-                  {formatMetricValue(
-                    observation.currentValue,
-                    observation.unit,
-                    observation.monitor?.valueFormat
-                  )}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-content3">
-                <div
-                  className={`h-full rounded-full ${impactBarClass}`}
-                  style={{ width: `${currentWidth}%` }}
-                />
-              </div>
+                )}
+              </p>
             </div>
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-                <span className="text-muted">Comparison</span>
-                <span className="font-medium">
-                  {formatMetricValue(
-                    observation.baselineValue,
-                    observation.unit,
-                    observation.monitor?.valueFormat
-                  )}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-content3">
-                <div
-                  className="h-full rounded-full bg-default-300"
-                  style={{ width: `${baselineWidth}%` }}
-                />
-              </div>
+            <div className="flex items-center justify-center text-foreground-400" aria-hidden>
+              <LuArrowRight size={22} />
+            </div>
+            <div className="min-w-0 text-right">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Current
+              </p>
+              <p className="mt-1 text-sm text-muted">{periodLabels.current}</p>
+              <p className={`mt-2 break-words font-tw text-2xl font-semibold md:text-3xl ${
+                impactTextClass
+              }`}>
+                {formatMetricValue(
+                  observation.currentValue,
+                  observation.unit,
+                  observation.monitor?.valueFormat
+                )}
+              </p>
             </div>
           </div>
-
-          <p className="mt-5 border-t border-divider pt-4 text-xs text-muted">
-            {getComparisonDescription(observation)}
-          </p>
         </section>
 
         <aside className="overflow-hidden rounded-3xl border border-divider bg-content1 lg:sticky lg:top-20 lg:col-start-2 lg:row-span-3 lg:row-start-1">
-          <section className="p-5" aria-labelledby="comparison-details-heading">
-            <h2 className="font-tw text-base font-semibold" id="comparison-details-heading">
-              Comparison details
+          <section className="p-5" aria-labelledby="data-details-heading">
+            <h2 className="font-tw text-base font-semibold" id="data-details-heading">
+              Data details
             </h2>
             <dl className="mt-4 divide-y divide-divider text-sm">
               <div className="flex items-center justify-between gap-4 py-3 first:pt-0">
-                <dt className="text-muted">Compared with</dt>
-                <dd className="text-right font-medium">{getComparisonBasis(observation)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-4 py-3">
                 <dt className="text-muted">Values used</dt>
                 <dd className="font-medium">
                   {valuesUsed || "—"}
@@ -585,9 +510,8 @@ function ObservationDetail() {
         </aside>
 
         <section className="rounded-3xl border border-divider bg-content1 p-5 md:p-6 lg:col-start-1 lg:row-start-2">
-          <h2 className="font-tw text-lg font-semibold">What changed?</h2>
-          <p className="mt-3 text-sm leading-6 text-foreground-600">{observation.summary}</p>
-          <div className="mt-4 flex flex-row">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-tw text-lg font-semibold">Drivers</h2>
             <Button
               isPending={driverLoading}
               onPress={exploreDrivers}
