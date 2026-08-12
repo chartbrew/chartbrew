@@ -134,6 +134,17 @@ export function dismissMonitorRecommendation(teamId, recommendationId, type) {
   );
 }
 
+export function getMonitorRecommendationDismissals(teamId) {
+  return observationRequest(`/team/${teamId}/monitor-recommendation-dismissals`);
+}
+
+export function restoreMonitorRecommendation(teamId, dismissalId) {
+  return observationRequest(
+    `/team/${teamId}/monitor-recommendation-dismissals/${dismissalId}`,
+    { method: "DELETE" }
+  );
+}
+
 export function getMonitorOptions(teamId, chartId) {
   return observationRequest(`/team/${teamId}/charts/${chartId}/monitor-options`);
 }

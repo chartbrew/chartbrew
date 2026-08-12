@@ -7,6 +7,20 @@ function isTypedConfirmation(message) {
     .test(normalizeMessage(message));
 }
 
+function isVisualizationAction(message) {
+  const normalized = normalizeMessage(message);
+  if (!normalized || /\bkpi (review|reviews|summary|summaries|status)\b/.test(normalized)) {
+    return false;
+  }
+  const hasAction = /\b(add|build|change|convert|create|display|generate|make|move|place|save|show|update|visuali[sz]e)\b/
+    .test(normalized);
+  if (!hasAction) return false;
+  return /\b(chart|charts|dashboard|dashboards|graph|graphs|table|tables|visuali[sz]ation|visuali[sz]ations|kpi card|kpi cards)\b/
+    .test(normalized)
+    || /\b(as|into|like) (a )?kpi\b/.test(normalized)
+    || /\b(create|build|make|add|generate) (a |an )?kpi\b/.test(normalized);
+}
+
 function routeWorkspaceRequest({ action, message }) {
   if (action?.type === "confirm_pending_action" && action.actionId) {
     return { intent: "confirm_pending_action", mode: "executor" };
@@ -16,6 +30,7 @@ function routeWorkspaceRequest({ action, message }) {
   if (isTypedConfirmation(normalized)) {
     return { intent: "confirm_pending_action", mode: "executor" };
   }
+  if (isVisualizationAction(normalized)) return null;
   if (/\b(data freshness|freshness (issues|status)|check (data )?freshness)\b/.test(normalized)) {
     return { intent: "data_freshness", mode: "fast_path" };
   }
@@ -46,6 +61,7 @@ function routeWorkspaceRequest({ action, message }) {
 }
 
 module.exports = {
+  isVisualizationAction,
   isTypedConfirmation,
   normalizeMessage,
   routeWorkspaceRequest,

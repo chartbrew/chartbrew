@@ -2,12 +2,12 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Button, Chip, ProgressCircle } from "@heroui/react";
 import {
-  LuChartNoAxesColumnIncreasing, LuExternalLink, LuPencil,
+  LuChartNoAxesColumnIncreasing, LuExternalLink, LuPencil, LuRefreshCw,
 } from "react-icons/lu";
 
 import Chart from "../Chart/Chart";
 
-function AiChartPreview({ parsed, chartData }) {
+function AiChartPreview({ parsed, chartData, loadError, onRetry }) {
   const isTemporary = parsed.type === "chart_temporary" || parsed.visibility === "temporary";
   const isCreated = parsed.type === "chart_created";
   const title = parsed.chartName || chartData?.name || "Generated chart";
@@ -31,6 +31,16 @@ function AiChartPreview({ parsed, chartData }) {
         {chartData ? (
           <div className="h-80 overflow-hidden">
             <Chart chart={chartData} isPublic={false} showExport={false} />
+          </div>
+        ) : loadError ? (
+          <div className="flex h-80 flex-col items-center justify-center gap-3 text-center">
+            <p className="text-sm text-muted">The visualization could not load.</p>
+            {onRetry ? (
+              <Button onPress={onRetry} size="sm" variant="secondary">
+                <LuRefreshCw size={15} aria-hidden />
+                Try again
+              </Button>
+            ) : null}
           </div>
         ) : (
           <div className="flex h-80 flex-col items-center justify-center gap-2 text-muted">
@@ -84,6 +94,8 @@ AiChartPreview.propTypes = {
     projectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   }).isRequired,
   chartData: PropTypes.object,
+  loadError: PropTypes.bool,
+  onRetry: PropTypes.func,
 };
 
 export default AiChartPreview;

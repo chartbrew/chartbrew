@@ -1121,6 +1121,92 @@ describe("Source AI harness", () => {
     });
   });
 
+  it("reuses an existing dataset for a temporary KPI preview", async () => {
+    const dataset = {
+      id: 99,
+      main_dr_id: 1001,
+      name: "Trial conversions",
+      project_ids: [12],
+      team_id: 7,
+    };
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue(dataset);
+    vi.spyOn(db.DataRequest, "findByPk").mockResolvedValue({
+      configuration: {},
+      id: 1001,
+    });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({
+      ghost: true,
+      id: 77,
+      team_id: 7,
+    });
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({
+      ghost: true,
+      id: 77,
+      team_id: 7,
+    });
+    const createDatasetSpy = vi.spyOn(
+      DatasetController.prototype,
+      "createWithDataRequests"
+    );
+    const createChartSpy = vi.spyOn(
+      ChartController.prototype,
+      "createWithChartDatasetConfigs"
+    ).mockResolvedValue({
+      id: 55,
+      name: "Trial conversion",
+      project_id: 77,
+      type: "kpi",
+    });
+    vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
+
+    const result = await createTemporaryChart({
+      allowed_project_ids: [12],
+      dataset_id: 99,
+      name: "Trial conversion",
+      team_id: 7,
+      type: "kpi",
+      yAxis: "root[].conversion_rate",
+      yAxisOperation: "none",
+    });
+
+    expect(createDatasetSpy).not.toHaveBeenCalled();
+    expect(createChartSpy).toHaveBeenCalledWith(expect.objectContaining({
+      project_id: 77,
+      type: "kpi",
+      chartDatasetConfigs: [expect.objectContaining({
+        dataset_id: 99,
+        yAxis: "root[].conversion_rate",
+      })],
+    }), null);
+    expect(result).toMatchObject({
+      chart_created: true,
+      chart_id: 55,
+      data_request_id: 1001,
+      dataset_id: 99,
+      ghost_project_id: 77,
+      is_temporary: true,
+      visibility: "temporary",
+    });
+  });
+
+  it("does not preview an existing dataset outside the allowed projects", async () => {
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({
+      id: 99,
+      name: "Hidden metric",
+      project_ids: [88],
+      team_id: 7,
+    });
+
+    await expect(createTemporaryChart({
+      allowed_project_ids: [12],
+      dataset_id: 99,
+      name: "Hidden metric",
+      team_id: 7,
+      type: "kpi",
+      yAxis: "root[].value",
+    })).rejects.toThrow("Dataset is not available in your projects");
+  });
+
   it("repairs Jira completed story point temporary KPI payloads to sum values", async () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
       id: 42,

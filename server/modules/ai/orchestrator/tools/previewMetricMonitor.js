@@ -4,6 +4,14 @@ const { getObservationAccess } = require("../../../observations/access");
 const { getWorkspaceAccessEnvelope } = require("../../../workspaceContext/accessEnvelope");
 const { assertPreviewInstruction } = require("../../../workspaceContext/instructionGate");
 const { createPendingAction } = require("../../../workspaceContext/previewStore");
+const {
+  getMetricPreviewLearningDefaults,
+} = require("../../../workspaceContext/learningRanking");
+const {
+  getWorkspaceLearningProjection,
+} = require("../../../workspaceContext/workspaceLearningProjection");
+
+const COMPARISON_PERIODS = ["day", "week", "month", "quarter", "year"];
 
 function getComparisonLabel(period) {
   const labels = {
@@ -51,14 +59,52 @@ function getThresholdLabel(threshold = {}) {
 function normalizeMonitorInput(payload, overrides = {}) {
   return {
     chartId: overrides.chartId || payload.chart_id,
-    comparison: payload.comparison,
-    desiredDirection: payload.desired_direction,
-    importance: payload.importance,
+    comparison: payload.comparison || overrides.comparison,
+    desiredDirection: payload.desired_direction || overrides.desiredDirection,
+    importance: payload.importance || overrides.importance,
     layerId: overrides.layerId || payload.layer_id,
-    metricBehavior: payload.metric_behavior,
+    metricBehavior: payload.metric_behavior || overrides.metricBehavior,
     name: payload.name,
-    threshold: payload.threshold,
+    threshold: payload.threshold || overrides.threshold,
     valueFormat: payload.value_format || overrides.valueFormat,
+  };
+}
+
+function getAvailablePeriod(recommendation, preferredPeriod) {
+  const available = (period) => COMPARISON_PERIODS.includes(period)
+    && recommendation.periodAvailability?.[period]?.available !== false;
+  if (available(preferredPeriod)) return preferredPeriod;
+  if (available(recommendation.timeUnit)) return recommendation.timeUnit;
+  return ["month", "week", "day", "quarter", "year"].find(available) || "month";
+}
+
+async function getRecommendationDefaults(access, recommendation) {
+  const learning = await getWorkspaceLearningProjection(access, {
+    maximumAgeDays: 365,
+    metricKey: recommendation._definition.bindingKey,
+    projectId: recommendation.project.id,
+    task: "monitor_preview",
+  });
+  const learned = getMetricPreviewLearningDefaults(
+    learning.items,
+    recommendation._definition.bindingKey
+  );
+  const period = getAvailablePeriod(recommendation, learned.defaults.comparisonPeriod);
+  return {
+    comparison: {
+      mode: "completed",
+      period,
+      rule: "previous_period",
+      timezone: recommendation.calendarTimezone || "UTC",
+      weekStartsOn: 1,
+    },
+    defaultReason: learned.reason,
+    desiredDirection: learned.defaults.desiredDirection || "neutral",
+    importance: learned.defaults.importance || recommendation.defaultImportance || 1,
+    metricBehavior: learned.defaults.metricBehavior
+      || recommendation.recommendedMetricBehavior
+      || (["count", "sum"].includes(recommendation.aggregate) ? "flow" : "state"),
+    threshold: learned.defaults.threshold || { type: "relative", value: 0.1 },
   };
 }
 
@@ -88,6 +134,7 @@ async function previewMetricMonitor(payload) {
   let resourceId = null;
   let resourceVersion = null;
   let source;
+  let defaultReason = null;
 
   if (mode === "create") {
     let recommendation = null;
@@ -97,7 +144,12 @@ async function previewMetricMonitor(payload) {
         payload.recommendation_id
       );
     }
+    const recommendationDefaults = recommendation
+      ? await getRecommendationDefaults(access, recommendation)
+      : {};
+    defaultReason = recommendationDefaults.defaultReason || null;
     data = normalizeMonitorInput(payload, recommendation ? {
+      ...recommendationDefaults,
       chartId: recommendation.chart.id,
       layerId: recommendation.layerId,
       valueFormat: recommendation.valueFormat,
@@ -172,6 +224,7 @@ async function previewMetricMonitor(payload) {
         comparisonPeriod
       ),
       comparisonLabel: getComparisonLabel(comparisonPeriod),
+      defaultReason,
       firstResultState: mode === "create" ? "Collecting comparison data" : "Uses new settings",
       healthyDirectionLabel: getDirectionLabel(changedValues.desiredDirection),
       name: changedValues.name,
@@ -188,4 +241,6 @@ module.exports.getBehaviorLabel = getBehaviorLabel;
 module.exports.getComparisonLabel = getComparisonLabel;
 module.exports.getDirectionLabel = getDirectionLabel;
 module.exports.getThresholdLabel = getThresholdLabel;
+module.exports.getAvailablePeriod = getAvailablePeriod;
+module.exports.getRecommendationDefaults = getRecommendationDefaults;
 module.exports.normalizeMonitorInput = normalizeMonitorInput;

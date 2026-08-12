@@ -3,11 +3,16 @@ const DatasetController = require("../../../../controllers/DatasetController");
 const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
+const createChart = require("./createChart");
 const {
   removeCompiledMetricAccumulation,
   repairSourceDatasetIntentAsync,
 } = require("./sourceIntentRepair");
-const { normalizeTeamId, requireConnectionForTeam } = require("./teamScope");
+const {
+  normalizeTeamId,
+  requireConnectionForTeam,
+  requireDatasetForTeam,
+} = require("./teamScope");
 const { buildAiVisualization } = require("../../../../visualization/aiVisualization");
 
 const datasetController = new DatasetController();
@@ -28,9 +33,59 @@ function resolveXAxis({
   return xAxis ?? spec.xAxis;
 }
 
+function assertDatasetAccess(dataset, allowedProjectIds) {
+  if (!Array.isArray(allowedProjectIds)) return;
+  const allowed = new Set(allowedProjectIds.map(Number));
+  const datasetProjectIds = Array.isArray(dataset.project_ids) ? dataset.project_ids : [];
+  if (!datasetProjectIds.some((projectId) => allowed.has(Number(projectId)))) {
+    throw new Error("Dataset is not available in your projects");
+  }
+}
+
+async function getDatasetDataRequestId(dataset) {
+  if (Array.isArray(dataset.DataRequests) && dataset.DataRequests.length > 0) {
+    return dataset.DataRequests[0].id;
+  }
+  if (dataset.main_dr_id) return dataset.main_dr_id;
+  const dataRequest = await db.DataRequest.findOne({
+    attributes: ["id"],
+    where: { dataset_id: dataset.id },
+  });
+  return dataRequest?.id || null;
+}
+
+async function createTemporaryChartFromDataset(payload, normalizedTeamId) {
+  const dataset = await requireDatasetForTeam(payload.dataset_id, normalizedTeamId);
+  assertDatasetAccess(dataset, payload.allowed_project_ids);
+  const ghostProject = await db.Project.findOne({
+    where: {
+      ghost: true,
+      team_id: normalizedTeamId,
+    },
+  });
+  if (!ghostProject) {
+    throw new Error("Temporary preview project not found for this team");
+  }
+  const result = await createChart({
+    ...payload,
+    project_id: ghostProject.id,
+    team_id: normalizedTeamId,
+  });
+  const chartResult = { ...result };
+  delete chartResult.dashboard_url;
+  return {
+    ...chartResult,
+    data_request_id: await getDatasetDataRequestId(dataset),
+    ghost_project_id: ghostProject.id,
+    is_temporary: true,
+    project_id: ghostProject.id,
+    visibility: "temporary",
+  };
+}
+
 async function createTemporaryChart(payload) {
   let {
-    connection_id, name, legend, type, subType, displayLegend, pointRadius,
+    connection_id, dataset_id, name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal, xLabelTicks,
     showGrowth, invertGrowth, mode, maxValue, minValue, ranges,
     xAxis, xAxisOperation, yAxis, yAxisOperation, dateField, dateFormat,
@@ -43,16 +98,22 @@ async function createTemporaryChart(payload) {
     throw new Error("team_id is required to create a temporary chart");
   }
 
-  if (!connection_id) {
-    throw new Error("connection_id is required to create a temporary chart");
-  }
-
   if (!name) {
     throw new Error("name is required to create a temporary chart");
   }
 
   try {
     const normalizedTeamId = normalizeTeamId(team_id);
+    if (dataset_id) {
+      return await createTemporaryChartFromDataset({
+        ...payload,
+        dataset_id,
+        name,
+      }, normalizedTeamId);
+    }
+    if (!connection_id) {
+      throw new Error("connection_id or dataset_id is required to create a temporary chart");
+    }
     const connection = await requireConnectionForTeam(connection_id, normalizedTeamId);
     const source = requireSupportedSourceForConnection(connection);
 
@@ -266,3 +327,6 @@ async function createTemporaryChart(payload) {
 }
 
 module.exports = createTemporaryChart;
+module.exports.assertDatasetAccess = assertDatasetAccess;
+module.exports.createTemporaryChartFromDataset = createTemporaryChartFromDataset;
+module.exports.getDatasetDataRequestId = getDatasetDataRequestId;

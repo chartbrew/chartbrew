@@ -8,8 +8,11 @@ const {
   buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
   appendDashboardLinksToAssistantMessage,
+  appendTemporaryChartNextStep,
   attachContextManifest,
   collectRecentSourceContext,
+  getChartPreviewsFromToolResults,
+  getVisualizationToolChoice,
   sanitizeToolError,
   buildUsageRecordFromResponse,
   buildSystemPrompt,
@@ -127,6 +130,92 @@ describe("orchestrator Responses API adapters", () => {
     });
 
     expect(message).toBe("I created Total sessions.");
+  });
+
+  it("adds a dashboard next step after a temporary KPI preview", () => {
+    const message = appendTemporaryChartNextStep("The trial conversion KPI is ready.", [{
+      name: "create_temporary_chart",
+      content: JSON.stringify({
+        chart_created: true,
+        chart_id: 44,
+        type: "kpi",
+        visibility: "temporary",
+      }),
+    }]);
+
+    expect(message).toContain("Would you like to add this KPI to a dashboard?");
+    expect(message).toContain("```cb-actions");
+    expect(message).toContain("Add it to a dashboard");
+    expect(message).toContain("Keep it as a preview");
+  });
+
+  it("does not offer dashboard placement after the preview was moved", () => {
+    const message = appendTemporaryChartNextStep("I added the KPI to Watched Metrics Lab.", [{
+      name: "create_temporary_chart",
+      content: JSON.stringify({ chart_created: true, chart_id: 44, type: "kpi" }),
+    }, {
+      name: "move_chart_to_dashboard",
+      content: JSON.stringify({ chart_id: 44, new_project_id: 12 }),
+    }]);
+
+    expect(message).toBe("I added the KPI to Watched Metrics Lab.");
+  });
+
+  it("replaces unrelated quick replies after a temporary preview", () => {
+    const message = appendTemporaryChartNextStep([
+      "The KPI is ready.",
+      "```cb-actions",
+      JSON.stringify({
+        version: 1,
+        suggestions: [{ action: "reply", id: "recent", label: "Show recent changes" }],
+      }),
+      "```",
+    ].join("\n"), [{
+      name: "create_temporary_chart",
+      content: JSON.stringify({ chart_created: true, chart_id: 44, type: "kpi" }),
+    }]);
+
+    expect(message).not.toContain("Show recent changes");
+    expect(message).toContain("Add it to a dashboard");
+    expect(message).toContain("Keep it as a preview");
+  });
+
+  it("requires a tool until an explicit visualization action finishes", () => {
+    expect(getVisualizationToolChoice({
+      blocked: false,
+      complete: false,
+      required: true,
+    })).toBe("required");
+    expect(getVisualizationToolChoice({
+      blocked: false,
+      complete: true,
+      required: true,
+    })).toBe("auto");
+  });
+
+  it("returns bounded chart references for authenticated preview loading", () => {
+    const previews = getChartPreviewsFromToolResults([{
+      name: "create_temporary_chart",
+      content: JSON.stringify({
+        chart_created: true,
+        chart_id: 44,
+        dataset_id: 99,
+        ghost_project_id: 77,
+        name: "Trial conversion",
+        type: "kpi",
+        visibility: "temporary",
+      }),
+    }]);
+
+    expect(previews).toEqual([{
+      chartId: 44,
+      chartName: "Trial conversion",
+      chartType: "kpi",
+      projectId: 77,
+      toolName: "create_temporary_chart",
+      visibility: "temporary",
+    }]);
+    expect(JSON.stringify(previews)).not.toContain("dataset_id");
   });
 
   it("builds a fallback dashboard creation message with a dashboard link", () => {

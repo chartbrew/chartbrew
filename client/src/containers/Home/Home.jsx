@@ -190,6 +190,7 @@ function MetricRecommendation({ isPending, onDismiss, onReview, recommendation }
           </p>
           <p className="mt-0.5 font-medium text-foreground">{recommendation.name}</p>
           <p className="mt-1 text-sm text-muted">
+            {recommendation.learningReason ? `${recommendation.learningReason} ` : ""}
             {recommendation.reasons[0]}
             {" · "}{recommendation.project.name} · {recommendation.chart.name}
           </p>
@@ -238,6 +239,7 @@ MetricRecommendation.propTypes = {
     name: PropTypes.string.isRequired,
     project: PropTypes.shape({ name: PropTypes.string.isRequired }).isRequired,
     reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
+    learningReason: PropTypes.string,
   }).isRequired,
 };
 

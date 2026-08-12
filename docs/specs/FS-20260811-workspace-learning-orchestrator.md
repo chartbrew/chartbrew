@@ -1,6 +1,7 @@
 # Workspace Learning And Proactive Orchestrator
 
-Status: draft
+Status: implemented. The external planner and worker split stays off until an instance records a
+passing model evaluation.
 
 Depends on: `FS-20260729-workspace-observations.md`, with its completed-period engine release gates
 complete before orchestrator writes are enabled.
@@ -63,10 +64,10 @@ This specification owns these areas:
 Do not add this content to the observation specification. The two specifications must remain
 separate and reference each other.
 
-## Current System Audit
+## Baseline System Audit
 
-The current implementation has the required deterministic foundation, but it does not yet give the
-orchestrator a complete workspace view.
+This audit records the system state before this specification was implemented. It explains the
+gaps that this work had to close.
 
 | Area | Current state | Gap for this work |
 | --- | --- | --- |
@@ -103,6 +104,34 @@ Key implementation anchors:
 - `server/modules/observations/kpiReview.js` selects final evaluations for delivery.
 - `server/modules/datasetIntelligence/searchDatasetProfiles.js` and the current dataset tools own
   scoped dataset discovery and bounded execution.
+
+## Implementation Record
+
+The implementation now includes:
+
+- Activity-first workspace reports with final metric evaluations, health, alerts, coverage, and
+  deterministic fallback text.
+- Permission-scoped context sections for watches, KPI reviews, dashboards, datasets, account
+  state, and learning.
+- Viewer reporting tools that cannot query sources, build charts, create datasets, or prepare or
+  apply product changes.
+- A validated planner, bounded workers, output validation, partial-result handling, and a local
+  fast path for simple requests.
+- Metric watch recommendations, automatic watch previews, visible temporary chart previews, and
+  exact confirmation before a write.
+- KPI review previews and exact confirmation before a schedule is created or changed.
+- Local learning projection over existing feedback, choices, approved settings, corrections,
+  pins, and refresh schedules. Page opens are not collected.
+- Live learning-informed order and preview defaults when learning is on. Learning records are not
+  read when learning is off. There is no shadow mode.
+- A hidden-suggestion list with restore actions for the user who hid each suggestion.
+- Owner and team-admin AI data export, AI change history, and external AI sharing history.
+- One Team settings page for team controls, members, access, and AI data controls.
+- Instance-admin AI controls and limits in Platform settings.
+- A recorded-run evaluation gate for the external planner and worker split.
+
+The external context switch is off by default. The local deterministic reports, scoped tools, and
+permission checks do not need an external provider.
 
 ## Personas
 
@@ -265,9 +294,9 @@ Key implementation anchors:
 - Existing source records stay authoritative. A derived learning projection can disappear when its
   source record expires or is deleted.
 
-## Open Product Decisions
+## Resolved First-Release Decisions
 
-Each decision has a recommended first-release choice.
+These choices define the implemented first release.
 
 | Decision | Recommended choice |
 | --- | --- |
@@ -698,7 +727,6 @@ operation and follows its current limits.
 | `preview_metric_monitor` | Validate a complete create or update proposal and prepare a server-held preview. The authenticated browser response can receive a public action ID after validation. | Edit access to the project and view access to all referenced records. |
 | `list_kpi_reviews` | Return only the current user's schedules. | Current user only. |
 | `preview_kpi_review` | Validate a create or update proposal and render structured preview facts. | Current user and view access to the selected scope. |
-| `get_metric_learning_context` | Return applicable normalized learning signals. | Same project and task scope as the metric. Never return another user's raw feedback row. |
 | Existing dataset tools | Search, inspect, or run one accessible dataset for deeper evidence. | Project editor/admin or team admin/owner only, with current project rules and row limits. Never available to a project viewer. |
 
 `get_workspace_context` accepts explicit section names. It must not return all sections by default.
@@ -1266,7 +1294,7 @@ fact useful, set a healthy direction, or authorize a write.
 
 ### Learning retrieval
 
-`get_metric_learning_context` accepts:
+The `learning` section of `get_workspace_context` accepts:
 
 - Team and current user from server context.
 - Allowed project IDs from current access.
@@ -1282,12 +1310,16 @@ not a user's free-form comment.
 
 - Keep the existing editable useful/not-useful control.
 - Show `Why this recommendation?` with deterministic source reasons.
-- Let a user undo a recommendation dismissal through the existing management surface.
-- Let owners export workspace learning source records and action audit records.
+- Show hidden metric suggestions under Activity > Watched metrics. Let the user who hid a
+  suggestion restore it there.
+- Put team controls, members, member access, and AI data controls on one Team settings page.
+- Let owners and team admins export workspace learning source records and open bounded AI change
+  and external sharing history from Team settings.
 - Let users delete their own feedback through an API and UI action before learning-informed
   recommendations leave limited release.
 - If explicit saved business context is added later, show a list with edit and remove actions.
-- An owner can disable learning retrieval without deleting current monitors or feedback.
+- An instance admin can turn learning retrieval on or off in Platform settings without deleting
+  current monitors or feedback.
 
 ## Prompt Input Contract
 
@@ -1611,7 +1643,7 @@ Add an owner-run local export for:
 - Bounded orchestrator action audits.
 - AI context manifests.
 
-Use JSON Lines or CSV with stable field names. Do not export encrypted blobs, credentials, full
+Use JSON, JSON Lines, or CSV with stable field names. Do not export encrypted blobs, credentials, full
 queries, raw source rows, hidden prompts, or provider responses. A user-level export includes only
 that user's personal feedback, preferences, and KPI reviews.
 
@@ -1712,7 +1744,6 @@ server/modules/ai/orchestrator/tools/
   previewKpiReview.js
   createKpiReview.js
   updateKpiReview.js
-  getMetricLearningContext.js
 ```
 
 Keep tool files as thin adapters. Controllers and domain services retain validation and write
@@ -1727,6 +1758,10 @@ surface needs them:
 - `GET /team/:team_id/workspace-learning/export` for authorized local export.
 - `GET /team/:team_id/orchestrator-audit` for owner/admin bounded action history.
 - `GET /team/:team_id/orchestrator-egress-audit` for owner/admin context manifests.
+- `GET /team/:team_id/monitor-recommendation-dismissals` for the current user's hidden metric
+  suggestions.
+- `DELETE /team/:team_id/monitor-recommendation-dismissals/:dismissal_id` to restore one hidden
+  suggestion owned by the current user.
 
 Do not add a public pending-action redemption route. The authenticated browser receives only a
 public action ID. External models do not receive it.
@@ -2119,21 +2154,24 @@ and it gives a measured latency or total-cost benefit on the workspace corpus.
 Exit gate: the orchestrator can describe coverage and available next actions without exposing an
 inaccessible entity or replaying stale permission data.
 
-### Phase 4: add local learning projection in shadow mode
+### Phase 4: add local learning projection with an on/off control
 
 - Add normalized projection over feedback, preferences, recommendation dismissals, current
   configurations, pins, and refresh cadence.
 - Add `OrchestratorActionAudit` for normalized future corrections.
 - Add precedence, minimum cohort, deletion, export, and retention logic.
-- Record which learning signals would affect ranking, but do not change live order or defaults.
+- Add one instance setting that turns learning retrieval on or off.
+- When the setting is off, do not retrieve or apply learning signals.
+- When the setting is on, apply allowed signals to live order and preview defaults and show a short
+  reason when the result changes.
 
 Exit gate: an operator report can explain each projected signal, strength, source, scope, and
-expiry without raw tenant values or cross-team data.
+expiry without raw tenant values or cross-team data. Turning learning off stops all learning reads.
 
 ### Phase 5: enable learning-informed summaries and recommendations
 
 - Use explicit feedback for summary selection and repetition control.
-- Add `recommend_metric_monitors` and `get_metric_learning_context`.
+- Add `recommend_metric_monitors` and the `learning` section of `get_workspace_context`.
 - Use strong signals to re-rank eligible candidates.
 - Keep weak signals as tie-breakers.
 - Add owner egress manifests and deterministic fallback.
@@ -2183,6 +2221,34 @@ delivery rechecks access.
 
 Exit gate: the feature passes all acceptance gates below and has an owner-tested rollback that
 disables orchestrator writes without disabling deterministic Activity, watches, or KPI reviews.
+
+### Release evaluation command
+
+Use the checked-in persona corpus and recorded results from both runtime strategies:
+
+```bash
+cd server
+npm run workspace-orchestrator:evaluate -- --input=/absolute/path/to/recorded-runs.json
+```
+
+The result fails unless the split runtime matches or improves task success, has a 100% safety
+result, and improves measured latency, token use, or cost. Do not enable external context only to
+run this check on a production workspace. Use an authorized test workspace with non-sensitive
+data.
+
+### Verification record: 2026-08-12
+
+- 233 focused server unit and MySQL integration tests passed.
+- The affected 82 server tests passed again after the final security and learning on/off changes.
+- The 31 workspace route integration tests also passed on PostgreSQL.
+- The bounded cleanup path passed its SQLite unit test.
+- Eight focused client tests passed for saved previews, preview retry, chat scrolling, and audit
+  copy.
+- Client and server lint passed. Existing unrelated server test warnings remain warnings.
+- The production client build passed.
+- The 10-case planner and worker evaluation corpus is valid and ready for recorded runs.
+- A live external-model comparison was not run because this repository has no authorized test
+  provider context. The external split runtime must stay off until the recorded-run command passes.
 
 ## Acceptance Gates
 

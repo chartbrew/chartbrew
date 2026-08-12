@@ -65,6 +65,9 @@ function MetricPreview({ preview }) {
       <PreviewRow label="Better result" value={preview.healthyDirectionLabel} />
       <PreviewRow label="Show changes" value={preview.thresholdLabel} />
       <PreviewRow label="First result" value={preview.firstResultState} />
+      {preview.defaultReason ? (
+        <PreviewRow label="Why this setup" value={preview.defaultReason} />
+      ) : null}
     </dl>
   );
 }

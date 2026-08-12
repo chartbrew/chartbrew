@@ -1314,6 +1314,19 @@ describe("workspace orchestrator routes", () => {
       team_id: owner.team.id,
     });
 
+    const actionHistory = await request(app)
+      .get(`/team/${owner.team.id}/orchestrator-audit`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .expect(200);
+    expect(actionHistory.body.items[0]).toEqual(expect.objectContaining({
+      actionType: "metric_monitor.update",
+      actor: expect.objectContaining({ name: owner.user.name }),
+      projectName: owner.project.name,
+      status: "applied",
+    }));
+    expect(actionHistory.body.items[0]).not.toHaveProperty("actionId");
+    expect(actionHistory.body.items[0]).not.toHaveProperty("proposalHash");
+
     const personal = await request(app)
       .get(`/team/${owner.team.id}/workspace-learning/export`)
       .set("Authorization", `Bearer ${viewerToken}`)
@@ -1333,7 +1346,7 @@ describe("workspace orchestrator routes", () => {
     expect(personal.body.observationFeedback.every((item) => item.userId === viewer.id)).toBe(true);
     expect(personal.body.kpiReviews.every((item) => item.userId === viewer.id)).toBe(true);
     expect(workspace.body).toEqual(expect.objectContaining({
-      actionAudits: [expect.objectContaining({ actionId: actionAudit.action_id })],
+      actionAudits: [expect.objectContaining({ actionType: actionAudit.action_type })],
       aiContextManifests: [expect.objectContaining({ id: usage.id })],
       observationFeedback: expect.arrayContaining([
         expect.objectContaining({ userId: owner.user.id }),
@@ -1341,6 +1354,58 @@ describe("workspace orchestrator routes", () => {
       ]),
       scope: "workspace",
     }));
+    expect(workspace.body.actionAudits[0]).not.toHaveProperty("actionId");
+    expect(workspace.body.actionAudits[0]).not.toHaveProperty("proposalHash");
+  });
+
+  it("lets an editor restore only their hidden metric suggestion", async () => {
+    const app = await createTestApp();
+    require("../../api/ObservationRoute.js")(app);
+    const owner = await createUserAccess(models);
+    const editor = await models.User.create(userFactory.build());
+    const otherEditor = await models.User.create(userFactory.build());
+    await models.TeamRole.bulkCreate([editor, otherEditor].map((member) => ({
+      projects: [owner.project.id],
+      role: "projectEditor",
+      team_id: owner.team.id,
+      user_id: member.id,
+    })));
+    const chart = await models.Chart.create({
+      name: "Revenue",
+      project_id: owner.project.id,
+      type: "line",
+    });
+    const dismissal = await models.MetricRecommendationDismissal.create({
+      binding_key: "revenue",
+      chart_id: chart.id,
+      definition_fingerprint: crypto.randomUUID(),
+      dismissal_type: "definition",
+      dismissed_by: editor.id,
+      project_id: owner.project.id,
+      team_id: owner.team.id,
+    });
+    const editorToken = generateTestToken({
+      email: editor.email,
+      id: editor.id,
+      name: editor.name,
+    });
+    const otherEditorToken = generateTestToken({
+      email: otherEditor.email,
+      id: otherEditor.id,
+      name: otherEditor.name,
+    });
+
+    await request(app)
+      .delete(`/team/${owner.team.id}/monitor-recommendation-dismissals/${dismissal.id}`)
+      .set("Authorization", `Bearer ${otherEditorToken}`)
+      .expect(404);
+    await request(app)
+      .delete(`/team/${owner.team.id}/monitor-recommendation-dismissals/${dismissal.id}`)
+      .set("Authorization", `Bearer ${editorToken}`)
+      .expect(200, { restored: true });
+
+    await expect(models.MetricRecommendationDismissal.findByPk(dismissal.id))
+      .resolves.toBeNull();
   });
 
   it("deletes only the current user's feedback", async () => {

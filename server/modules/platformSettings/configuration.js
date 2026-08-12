@@ -43,9 +43,9 @@ const PLATFORM_SETTING_DEFINITIONS = Object.freeze([
   {
     key: "workspaceOrchestrator.weakAttentionSignalsEnabled",
     group: "aiControls",
-    label: "Use recent workspace activity",
-    description: "Use recent views and refreshes to make answers more relevant.",
-    help: "A view or refresh is only a relevance hint. Chartbrew does not treat it as proof that a metric is important or correct.",
+    label: "Use workspace choices",
+    description: "Use pins, saved choices, and refresh schedules to make answers more relevant.",
+    help: "These choices are only relevance hints. Chartbrew does not treat them as proof that a metric is important or correct.",
     type: "boolean",
   },
   {

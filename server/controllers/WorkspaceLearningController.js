@@ -24,7 +24,6 @@ function assertOwnerAuditAccess(access) {
 
 function serializeActionAudit(audit) {
   return {
-    actionId: audit.action_id,
     actionType: audit.action_type,
     actorUserId: audit.actor_user_id,
     after: audit.after_values || {},
@@ -34,11 +33,30 @@ function serializeActionAudit(audit) {
     completedAt: audit.completed_at,
     createdAt: audit.createdAt,
     failureCode: audit.failure_code,
+    actor: audit.actor ? {
+      email: audit.actor.email,
+      name: audit.actor.name,
+    } : null,
+    projectName: audit.Project?.name || null,
     projectId: audit.project_id,
-    proposalHash: audit.proposal_hash,
     resourceId: audit.resource_id,
     resourceType: audit.resource_type,
     source: audit.source,
+    status: audit.status,
+  };
+}
+
+function serializeActionAuditForView(audit) {
+  return {
+    actionType: audit.action_type,
+    actor: audit.actor ? {
+      email: audit.actor.email,
+      name: audit.actor.name,
+    } : null,
+    changedFields: audit.changed_fields || [],
+    completedAt: audit.completed_at,
+    createdAt: audit.createdAt,
+    projectName: audit.Project?.name || null,
     status: audit.status,
   };
 }
@@ -51,12 +69,22 @@ class WorkspaceLearningController {
     const where = { team_id: access.teamId };
     if (since) where.createdAt = { [Op.gte]: since };
     const rows = await db.OrchestratorActionAudit.findAll({
+      include: [{
+        as: "actor",
+        attributes: ["email", "name"],
+        model: db.User,
+        required: false,
+      }, {
+        attributes: ["name"],
+        model: db.Project,
+        required: false,
+      }],
       limit: limit + 1,
       order: [["createdAt", "DESC"]],
       where,
     });
     return {
-      items: rows.slice(0, limit).map(serializeActionAudit),
+      items: rows.slice(0, limit).map(serializeActionAuditForView),
       truncated: rows.length > limit,
     };
   }
@@ -81,7 +109,6 @@ class WorkspaceLearningController {
       items: rows.slice(0, limit).map((row) => ({
         contextManifest: row.context_manifest,
         createdAt: row.createdAt,
-        id: row.id,
         purpose: row.purpose,
       })),
       truncated: rows.length > limit,

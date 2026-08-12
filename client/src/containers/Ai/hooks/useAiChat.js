@@ -34,6 +34,7 @@ function useAiChat({
       setMessages((current) => [
         ...current,
         {
+          chartPreviews: orchestration.chartPreviews || [],
           content: orchestration.message,
           pendingAction: orchestration.pendingAction,
           role: "assistant",

@@ -260,6 +260,35 @@ module.exports = (app) => {
     }
   );
 
+  app.get(
+    "/team/:team_id/monitor-recommendation-dismissals",
+    ...routeAccess,
+    async (req, res) => {
+      try {
+        return res.send(await metricRecommendationController.listDismissals(
+          req.observationAccess
+        ));
+      } catch (error) {
+        return sendError(res, error);
+      }
+    }
+  );
+
+  app.delete(
+    "/team/:team_id/monitor-recommendation-dismissals/:dismissal_id",
+    ...routeAccess,
+    async (req, res) => {
+      try {
+        return res.send(await metricRecommendationController.restore(
+          req.observationAccess,
+          req.params.dismissal_id
+        ));
+      } catch (error) {
+        return sendError(res, error);
+      }
+    }
+  );
+
   app.post(
     "/team/:team_id/monitor-recommendations/:recommendation_id/dismiss",
     ...routeAccess,

@@ -18,6 +18,7 @@ import {
   LuClock,
   LuEllipsis,
   LuEyeOff,
+  LuEye,
   LuLayoutDashboard,
   LuPause,
   LuPencil,
@@ -35,8 +36,10 @@ import {
   deleteMonitor,
   dismissMonitorRecommendation,
   getMonitors,
+  getMonitorRecommendationDismissals,
   getMonitorRecommendations,
   refreshMonitor,
+  restoreMonitorRecommendation,
   updateMonitor,
 } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
@@ -261,6 +264,7 @@ function WatchedMetricsPage() {
   const [monitors, setMonitors] = useState([]);
   const [monitorPending, setMonitorPending] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
+  const [recommendationDismissals, setRecommendationDismissals] = useState([]);
   const [recommendationPendingId, setRecommendationPendingId] = useState(null);
   const [selectedRecommendation, setSelectedRecommendation] = useState(null);
   const [selectedMonitor, setSelectedMonitor] = useState(null);
@@ -280,10 +284,12 @@ function WatchedMetricsPage() {
     Promise.all([
       getMonitors(team.id),
       getMonitorRecommendations(team.id).catch(() => []),
+      getMonitorRecommendationDismissals(team.id).catch(() => []),
     ])
-      .then(([watchedMetrics, metricRecommendations]) => {
+      .then(([watchedMetrics, metricRecommendations, hiddenRecommendations]) => {
         setMonitors(watchedMetrics);
         setRecommendations(metricRecommendations);
+        setRecommendationDismissals(hiddenRecommendations);
       })
       .catch((error) => toast.error(error.message))
       .finally(() => setLoading(false));
@@ -404,9 +410,28 @@ function WatchedMetricsPage() {
     try {
       await dismissMonitorRecommendation(team.id, recommendation.id, type);
       setRecommendations((current) => current.filter((item) => item.id !== recommendation.id));
+      setRecommendationDismissals(await getMonitorRecommendationDismissals(team.id));
       toast.success(type === "later"
         ? "Suggestion hidden for 30 days"
         : "This metric will not be suggested again unless the chart changes");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setRecommendationPendingId(null);
+    }
+  };
+
+  const restoreRecommendation = async (dismissal) => {
+    setRecommendationPendingId(dismissal.id);
+    try {
+      await restoreMonitorRecommendation(team.id, dismissal.id);
+      const [metricRecommendations, hiddenRecommendations] = await Promise.all([
+        getMonitorRecommendations(team.id),
+        getMonitorRecommendationDismissals(team.id),
+      ]);
+      setRecommendations(metricRecommendations);
+      setRecommendationDismissals(hiddenRecommendations);
+      toast.success("Metric suggestion restored");
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -501,6 +526,9 @@ function WatchedMetricsPage() {
                         key={recommendation.id}
                         meta={(
                           <>
+                            {recommendation.learningReason ? (
+                              <span className="block text-muted">{recommendation.learningReason}</span>
+                            ) : null}
                             <span className="text-muted">{recommendation.reasons.join(" ")}</span>
                             <span className="mt-2 block text-xs text-muted">
                               {recommendation.project.name} · {recommendation.chart.name}
@@ -516,6 +544,37 @@ function WatchedMetricsPage() {
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion>
+        ) : null}
+
+        {canEdit && recommendationDismissals.length > 0 ? (
+          <section className="rounded-3xl border border-divider bg-surface p-4" aria-labelledby="hidden-suggestions-heading">
+            <h2 className="text-lg font-semibold" id="hidden-suggestions-heading">
+              Hidden suggestions
+            </h2>
+            <div className="mt-3">
+              <ActivityList>
+                {recommendationDismissals.map((dismissal) => (
+                  <ActivityListRow
+                    actions={(
+                      <Button
+                        isDisabled={Boolean(recommendationPendingId)}
+                        isPending={recommendationPendingId === dismissal.id}
+                        onPress={() => restoreRecommendation(dismissal)}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        <LuEye size={16} aria-hidden />
+                        Restore
+                      </Button>
+                    )}
+                    key={dismissal.id}
+                    meta={`${dismissal.dashboardName} · ${dismissal.chartName}`}
+                    title={<span className="font-medium text-foreground">{dismissal.name}</span>}
+                  />
+                ))}
+              </ActivityList>
+            </div>
+          </section>
         ) : null}
 
         <section aria-labelledby="watched-metrics-heading" className="flex flex-col gap-3">

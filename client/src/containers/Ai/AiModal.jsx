@@ -23,6 +23,7 @@ import AiContextPicker from "./AiContextPicker";
 import AiMessageGroup from "./AiMessageGroup";
 import AiProgress from "./AiProgress";
 import { AiLoadingActivity, AiUserPrompt } from "./AiTranscript";
+import useChatAutoScroll from "./hooks/useChatAutoScroll";
 import {
   getChartToolMessageInfo,
   getCompletedActionIds,
@@ -59,7 +60,6 @@ function AiModal({ isOpen, onClose }) {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const pendingConversationId = useSelector(selectAiModalConversationId);
-  const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
@@ -97,6 +97,19 @@ function AiModal({ isOpen, onClose }) {
   const completedActionIds = useMemo(() => (
     getCompletedActionIds(conversation?.full_history || [])
   ), [conversation?.full_history]);
+  const scrollVersion = [
+    conversation?.id || "new",
+    conversation?.full_history?.length || 0,
+    localMessages.length,
+    progressEvents.length,
+    pendingActions.length,
+    createdCharts.length,
+    isLoading,
+  ].join(":");
+  const {
+    containerRef: chatScrollContainerRef,
+    contentRef: chatScrollContentRef,
+  } = useChatAutoScroll(scrollVersion, `${conversation?.id || "new"}:${isOpen}`);
 
   const rememberPendingAction = (pendingAction) => {
     if (!pendingAction?.actionId) return;
@@ -150,11 +163,6 @@ function AiModal({ isOpen, onClose }) {
     }
     return null;
   };
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [localMessages, progressEvents]);
 
   // Fetch chart data for newly created charts
   useEffect(() => {
@@ -962,61 +970,64 @@ function AiModal({ isOpen, onClose }) {
                         </div>
                       </div>
                     </header>
-                    <div className="min-h-0 flex-1 overflow-y-auto py-5 pb-8">
-                      {conversation?.full_history?.length > 0 ? (
-                        <>
-                          {conversationGroups.map((group, index) => (
-                            <AiMessageGroup
-                              key={`group-${index}`}
-                              group={group}
-                              groupIndex={index}
-                              createdCharts={createdCharts}
-                              completedActionIds={completedActionIds}
-                              toolDisplayNames={toolDisplayNames}
-                              onChangeAction={_onChangePendingAction}
-                              onConfirmAction={_onConfirmPendingAction}
-                              onSuggestionClick={_onSuggestionClick}
-                              isLoading={isLoading}
-                            />
-                          ))}
-                          {pendingActions.map((pendingAction) => (
-                            <div className="mx-auto mb-6 w-full max-w-3xl px-4" key={pendingAction.actionId}>
-                              <AiActionPreviewCard
-                                action={pendingAction}
+                    <div
+                      className="min-h-0 flex-1 overflow-y-auto py-5 pb-8"
+                      ref={chatScrollContainerRef}
+                    >
+                      <div className="min-h-full" ref={chatScrollContentRef}>
+                        {conversation?.full_history?.length > 0 ? (
+                          <>
+                            {conversationGroups.map((group, index) => (
+                              <AiMessageGroup
+                                key={`group-${index}`}
+                                group={group}
+                                groupIndex={index}
+                                createdCharts={createdCharts}
+                                completedActionIds={completedActionIds}
+                                toolDisplayNames={toolDisplayNames}
+                                onChangeAction={_onChangePendingAction}
+                                onConfirmAction={_onConfirmPendingAction}
+                                onSuggestionClick={_onSuggestionClick}
                                 isLoading={isLoading}
-                                onChange={_onChangePendingAction}
-                                onConfirm={_onConfirmPendingAction}
                               />
+                            ))}
+                            {pendingActions.map((pendingAction) => (
+                              <div className="mx-auto mb-6 w-full max-w-3xl px-4" key={pendingAction.actionId}>
+                                <AiActionPreviewCard
+                                  action={pendingAction}
+                                  isLoading={isLoading}
+                                  onChange={_onChangePendingAction}
+                                  onConfirm={_onConfirmPendingAction}
+                                />
+                              </div>
+                            ))}
+                            <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
+                            {isLoading && progressEvents.length === 0 && (
+                              <div className="mb-5 px-4"><AiLoadingActivity /></div>
+                            )}
+                          </>
+                        ) : progressEvents.length > 0 ? (
+                          <>
+                            {localMessages.length > 0 && (
+                              <div className="mx-auto mb-5 w-full max-w-3xl px-4">
+                                <AiUserPrompt>{localMessages[0].content}</AiUserPrompt>
+                              </div>
+                            )}
+                            <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
+                          </>
+                        ) : isLoading ? (
+                          <div className="flex justify-center items-center h-full">
+                            <div className="flex items-center gap-2 text-muted">
+                              <LuLoader className="animate-spin text-accent" size={18} aria-hidden />
+                              <span className="text-sm">Loading conversation…</span>
                             </div>
-                          ))}
-                          <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
-                          {isLoading && progressEvents.length === 0 && (
-                            <div className="mb-5 px-4"><AiLoadingActivity /></div>
-                          )}
-                          <div ref={messagesEndRef} />
-                        </>
-                      ) : progressEvents.length > 0 ? (
-                        <>
-                          {localMessages.length > 0 && (
-                            <div className="mx-auto mb-5 w-full max-w-3xl px-4">
-                              <AiUserPrompt>{localMessages[0].content}</AiUserPrompt>
-                            </div>
-                          )}
-                          <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
-                          <div ref={messagesEndRef} />
-                        </>
-                      ) : isLoading ? (
-                        <div className="flex justify-center items-center h-full">
-                          <div className="flex items-center gap-2 text-muted">
-                            <LuLoader className="animate-spin text-accent" size={18} aria-hidden />
-                            <span className="text-sm">Loading conversation…</span>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-sm text-muted">Ask a question to begin.</div>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="text-sm text-muted">Ask a question to begin.</div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="shrink-0 border-t border-divider bg-content1 px-4 py-3">
                       <div className="w-full">
