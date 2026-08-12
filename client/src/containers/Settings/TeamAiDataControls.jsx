@@ -42,7 +42,7 @@ function downloadJson(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-function AuditModal({ data, isLoading, mode, onOpenChange, open }) {
+function AuditModal({ data, error, isLoading, mode, onOpenChange, onRetry, open }) {
   const isActions = mode === "actions";
   const items = data?.items || [];
   return (
@@ -61,6 +61,13 @@ function AuditModal({ data, isLoading, mode, onOpenChange, open }) {
                 <div className="flex min-h-52 items-center justify-center">
                   <ProgressCircle aria-label="Loading history" />
                 </div>
+              ) : error ? (
+                <EmptyState className="flex min-h-52 flex-col items-center justify-center gap-3 text-center">
+                  <span className="text-sm text-muted">{error}</span>
+                  <Button onPress={onRetry} size="sm" variant="secondary">
+                    Try again
+                  </Button>
+                </EmptyState>
               ) : (
                 <Table className="min-h-52 shadow-none">
                   <Table.ScrollContainer>
@@ -127,9 +134,11 @@ function AuditModal({ data, isLoading, mode, onOpenChange, open }) {
 
 AuditModal.propTypes = {
   data: PropTypes.shape({ items: PropTypes.arrayOf(PropTypes.object) }),
+  error: PropTypes.string,
   isLoading: PropTypes.bool.isRequired,
   mode: PropTypes.oneOf(["actions", "egress"]).isRequired,
   onOpenChange: PropTypes.func.isRequired,
+  onRetry: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
 };
 
@@ -137,6 +146,7 @@ function TeamAiDataControls() {
   const team = useSelector(selectTeam);
   const [exporting, setExporting] = useState(false);
   const [history, setHistory] = useState(null);
+  const [historyError, setHistoryError] = useState(null);
   const [historyMode, setHistoryMode] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
 
@@ -157,14 +167,14 @@ function TeamAiDataControls() {
   const openHistory = async (mode) => {
     setHistoryMode(mode);
     setHistory(null);
+    setHistoryError(null);
     setHistoryLoading(true);
     try {
       setHistory(mode === "actions"
         ? await getOrchestratorActionAudit(team.id)
         : await getOrchestratorEgressAudit(team.id));
     } catch (error) {
-      toast.error(error.message);
-      setHistoryMode(null);
+      setHistoryError(error.message);
     } finally {
       setHistoryLoading(false);
     }
@@ -190,9 +200,16 @@ function TeamAiDataControls() {
 
       <AuditModal
         data={history}
+        error={historyError}
         isLoading={historyLoading}
         mode={historyMode || "actions"}
-        onOpenChange={(open) => !open && setHistoryMode(null)}
+        onOpenChange={(open) => {
+          if (open) return;
+          setHistory(null);
+          setHistoryError(null);
+          setHistoryMode(null);
+        }}
+        onRetry={() => openHistory(historyMode || "actions")}
         open={Boolean(historyMode)}
       />
     </section>
