@@ -37,6 +37,7 @@ describe("User Auth API", () => {
       expect(response.body).toHaveProperty("id");
       expect(response.body).toHaveProperty("email", payload.email);
       expect(response.body).toHaveProperty("name", payload.name);
+      expect(response.body).toHaveProperty("admin", true);
       expect(response.body).toHaveProperty("token");
       expect(response.body.token).toEqual(expect.any(String));
 
@@ -53,6 +54,23 @@ describe("User Auth API", () => {
       const teamRole = await models.TeamRole.findOne({ where: { user_id: createdUser.id } });
       expect(teamRole).toBeTruthy();
       expect(teamRole.role).toBe("teamOwner");
+    });
+
+    it("should keep later users out of platform administration", async () => {
+      const firstResponse = await request(app)
+        .post("/user")
+        .send({ name: "First User", email: "first@example.com", password: "password123" })
+        .expect(200);
+
+      const secondResponse = await request(app)
+        .post("/user")
+        .send({ name: "Second User", email: "second@example.com", password: "password123" })
+        .expect(200);
+
+      expect(firstResponse.body.admin).toBe(true);
+      expect(secondResponse.body.admin).toBe(false);
+      const platformAdmins = await models.User.findAll({ where: { admin: true } });
+      expect(platformAdmins.map((user) => user.id)).toEqual([firstResponse.body.id]);
     });
 
     it("should return 409 when email is already used", async () => {

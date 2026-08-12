@@ -1,4 +1,4 @@
-const { getEnvIntelligencePolicy } = require("./envPolicyProvider");
+const { getPlatformIntelligencePolicy } = require("../platformSettings/runtime");
 
 let registeredProvider = null;
 
@@ -26,7 +26,7 @@ function mergeDatasetIntelligencePolicy(instancePolicy, teamPolicy = {}) {
 }
 
 async function getIntelligencePolicy({ teamId } = {}) {
-  const instancePolicy = getEnvIntelligencePolicy();
+  const instancePolicy = getPlatformIntelligencePolicy();
   if (!registeredProvider) return instancePolicy;
 
   const teamPolicy = await registeredProvider({

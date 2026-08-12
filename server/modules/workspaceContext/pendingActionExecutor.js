@@ -14,7 +14,10 @@ const {
   consumePendingAction,
   hashSessionBinding,
 } = require("./previewStore");
-const { getWorkspaceOrchestratorPolicy } = require("./policy");
+const {
+  CHARTBREW_AI_DISABLED_MESSAGE,
+  getWorkspaceOrchestratorPolicy,
+} = require("./policy");
 
 function createActionError(message, statusCode, code) {
   const error = new Error(message);
@@ -290,6 +293,13 @@ async function executePendingAction({
 }) {
   if (!["clear_instruction", "confirmed_preview"].includes(authorityType)) {
     throw createActionError("This action authority is not valid", 400, "ACTION_AUTHORITY_INVALID");
+  }
+  if (!getWorkspaceOrchestratorPolicy().enabled) {
+    throw createActionError(
+      CHARTBREW_AI_DISABLED_MESSAGE,
+      403,
+      "ACTION_POLICY_DISABLED"
+    );
   }
   const appliedResult = await findAppliedResult(access, actionId, sessionId);
   if (appliedResult) return appliedResult;

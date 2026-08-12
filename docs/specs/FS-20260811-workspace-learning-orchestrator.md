@@ -664,7 +664,7 @@ These are defaults and hard ceilings for one orchestrator request.
 
 | Item | Default | Hard ceiling |
 | --- | --- | --- |
-| Requested lookback | 7 complete days | 180 days |
+| Requested lookback | 7 complete days | 3,650 days |
 | Published observations | 20 | 50 |
 | Final metric evaluations | 30 | 100 |
 | Active or recovered health items | 10 | 25 |
@@ -673,11 +673,11 @@ These are defaults and hard ceilings for one orchestrator request.
 | KPI reviews | 10 | 10 |
 | Dashboard summaries | 10 | 25 |
 | Dataset summaries | 5 | 20 |
-| Learning signals | 12 | 30 |
-| Learning characters | 6,000 | 12,000 |
-| Total serialized context | 30,000 characters | 60,000 characters |
+| Learning signals | 20 | 50 |
+| Learning characters | 12,000 | 24,000 |
+| Total serialized context | 120,000 characters | 240,000 characters |
 | Existing dataset rows | 100 | 200 |
-| Tool iterations for a workspace summary | 4 | 6 |
+| Tool iterations for a workspace summary | 12 | 18 |
 
 Sort final evaluations by current period end, materiality, impact, and monitor importance. Keep only
 the newest revision for one evaluation window. Mark the result as truncated when a ceiling removes
@@ -1581,9 +1581,9 @@ Add:
 ```text
 CB_ORCHESTRATOR_ACTION_AUDIT_RETENTION_DAYS=365
 CB_WORKSPACE_CONTEXT_PREVIEW_TTL_SECONDS=600
-CB_WORKSPACE_CONTEXT_MAX_CHARACTERS=60000
-CB_WORKSPACE_LEARNING_MAX_ITEMS=30
-CB_WORKSPACE_LEARNING_MAX_CHARACTERS=12000
+CB_WORKSPACE_CONTEXT_MAX_CHARACTERS=240000
+CB_WORKSPACE_LEARNING_MAX_ITEMS=50
+CB_WORKSPACE_LEARNING_MAX_CHARACTERS=24000
 ```
 
 An explicit retention value of `0` disables cleanup for that category and logs an owner warning.
@@ -1779,18 +1779,19 @@ Extend the local intelligence policy:
     enabled: true,
     workspaceSummariesEnabled: true,
     metricRecommendationsEnabled: true,
-    metricMonitorWritesEnabled: false,
-    kpiReviewWritesEnabled: false,
+    metricMonitorWritesEnabled: true,
+    kpiReviewWritesEnabled: true,
     learningRetrievalEnabled: true,
     weakAttentionSignalsEnabled: true,
     externalWorkspaceContextEnabled: false,
     externalLearningContextEnabled: false,
-    maximumContextCharacters: 60000,
-    maximumModelTokensPerRequest: 30000,
-    maximumRequestTimeMs: 45000,
-    maximumLearningItems: 30,
-    maximumLearningCharacters: 12000,
-    maximumSummaryLookbackDays: 180,
+    maximumContextCharacters: 240000,
+    maximumModelTokensPerRequest: 80000,
+    maximumRequestTimeMs: 90000,
+    maximumLearningItems: 50,
+    maximumLearningCharacters: 24000,
+    maximumSummaryLookbackDays: 365,
+    analysisDepth: "thorough",
     plannerModel: "gpt-5.4-mini",
     plannerReasoningEffort: "high",
     workerModel: "gpt-5.6-luna",
@@ -1799,13 +1800,13 @@ Extend the local intelligence policy:
     synthesisReasoningEffort: "high",
     maximumWorkersPerRequest: 3,
     maximumParallelWorkers: 2,
-    maximumToolCallsPerWorker: 4,
+    maximumToolCallsPerWorker: 6,
     maximumPlannerCalls: 1,
-    maximumPlannerOutputTokens: 2500,
+    maximumPlannerOutputTokens: 4000,
     maximumSynthesisCalls: 1,
-    maximumSynthesisOutputTokens: 3000,
-    maximumTotalToolCalls: 6,
-    maximumWorkerOutputTokens: 2000,
+    maximumSynthesisOutputTokens: 5000,
+    maximumTotalToolCalls: 12,
+    maximumWorkerOutputTokens: 4000,
     plannerWorkerFallbackEnabled: false,
     previewTtlSeconds: 600,
     actionAuditRetentionDays: 365
@@ -1814,8 +1815,9 @@ Extend the local intelligence policy:
 ```
 
 Instance settings are ceilings. Chartbrew Cloud must not inject telemetry or hosted rollout logic
-through this provider. Write capabilities start off and are enabled only after their acceptance
-gates pass. Model values are owner-controlled deployment settings. Do not expose them in normal
+through this provider. Confirmed write capabilities are on after their acceptance gates pass.
+Permissions, exact previews, and explicit confirmation still apply. Model values are
+owner-controlled deployment settings. Do not expose them in normal
 product UI. Preserve the exact configured model name. Do not resolve it to a different alias at
 runtime.
 
@@ -1830,8 +1832,9 @@ CB_OPENAI_ORCHESTRATOR_SYNTHESIS_MODEL=gpt-5.4-mini
 CB_OPENAI_ORCHESTRATOR_SYNTHESIS_REASONING_EFFORT=high
 CB_WORKSPACE_EXTERNAL_CONTEXT_ENABLED=false
 CB_WORKSPACE_EXTERNAL_LEARNING_CONTEXT_ENABLED=false
-CB_WORKSPACE_MAXIMUM_MODEL_TOKENS=30000
-CB_WORKSPACE_MAXIMUM_REQUEST_TIME_MS=45000
+CB_WORKSPACE_MAXIMUM_MODEL_TOKENS=80000
+CB_WORKSPACE_MAXIMUM_REQUEST_TIME_MS=90000
+CB_WORKSPACE_ANALYSIS_DEPTH=thorough
 ```
 
 `CB_WORKSPACE_EXTERNAL_CONTEXT_ENABLED` is a separate owner consent. An API key alone does not

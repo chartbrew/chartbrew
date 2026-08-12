@@ -96,10 +96,5 @@ module.exports = (sequelize, DataTypes) => {
     models.User.hasMany(models.PinnedDashboard, { foreignKey: "user_id" });
   };
 
-  User.beforeValidate((user) => {
-    user.admin = false; // eslint-disable-line
-    return new Promise((resolve) => resolve(user));
-  });
-
   return User;
 };

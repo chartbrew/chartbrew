@@ -2,6 +2,11 @@ const {
   DEFAULT_SCORING_VERSION,
   SCORING_POLICIES,
 } = require("../observations/scoringPolicies");
+const {
+  DEFAULT_ANALYSIS_DEPTH,
+  getAnalysisDepth,
+  getAnalysisDepthPreset,
+} = require("./orchestratorPresets");
 
 const DEFAULT_DATASET_INTELLIGENCE_POLICY = Object.freeze({
   enabled: true,
@@ -32,27 +37,29 @@ const DEFAULT_OBSERVATION_POLICY = Object.freeze({
 
 const DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY = Object.freeze({
   actionAuditRetentionDays: 365,
+  analysisDepth: DEFAULT_ANALYSIS_DEPTH,
   enabled: true,
   externalLearningContextEnabled: false,
   externalWorkspaceContextEnabled: false,
-  kpiReviewWritesEnabled: false,
+  kpiReviewWritesEnabled: true,
   learningRetrievalEnabled: true,
-  maximumContextCharacters: 60000,
-  maximumLearningCharacters: 12000,
-  maximumLearningItems: 30,
-  maximumModelTokensPerRequest: 30000,
+  maximumContextCharacters: 240000,
+  maximumLearningCharacters: 24000,
+  maximumLearningItems: 50,
+  maximumModelTokensPerRequest: 80000,
   maximumParallelWorkers: 2,
   maximumPlannerCalls: 1,
-  maximumPlannerOutputTokens: 2500,
-  maximumRequestTimeMs: 45000,
-  maximumSynthesisOutputTokens: 3000,
-  maximumSummaryLookbackDays: 180,
+  maximumPlannerOutputTokens: 4000,
+  maximumRequestTimeMs: 90000,
+  maximumRequestTimeSeconds: 90,
+  maximumSynthesisOutputTokens: 5000,
+  maximumSummaryLookbackDays: 365,
   maximumSynthesisCalls: 1,
-  maximumToolCallsPerWorker: 4,
-  maximumTotalToolCalls: 6,
+  maximumToolCallsPerWorker: 6,
+  maximumTotalToolCalls: 12,
   maximumWorkersPerRequest: 3,
-  maximumWorkerOutputTokens: 2000,
-  metricMonitorWritesEnabled: false,
+  maximumWorkerOutputTokens: 4000,
+  metricMonitorWritesEnabled: true,
   metricRecommendationsEnabled: true,
   plannerModel: "gpt-5.4-mini",
   plannerReasoningEffort: "high",
@@ -98,6 +105,14 @@ function getEnvIntelligencePolicy(env = process.env) {
   const compatibilityModel = env.NODE_ENV === "production"
     ? env.CB_OPENAI_MODEL
     : env.CB_OPENAI_MODEL_DEV || env.CB_OPENAI_MODEL;
+  const analysisDepth = getAnalysisDepth(env.CB_WORKSPACE_ANALYSIS_DEPTH);
+  const analysisDepthPreset = getAnalysisDepthPreset(analysisDepth);
+  const maximumRequestTimeMs = parseInteger(
+    env.CB_WORKSPACE_MAXIMUM_REQUEST_TIME_MS,
+    DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumRequestTimeMs,
+    15000,
+    300000
+  );
   return {
     datasetIntelligence: {
       enabled: parseBoolean(
@@ -202,6 +217,7 @@ function getEnvIntelligencePolicy(env = process.env) {
         0,
         3650
       ),
+      analysisDepth,
       enabled: parseBoolean(
         env.CB_WORKSPACE_ORCHESTRATOR_ENABLED,
         DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.enabled
@@ -226,29 +242,29 @@ function getEnvIntelligencePolicy(env = process.env) {
         env.CB_WORKSPACE_CONTEXT_MAX_CHARACTERS,
         DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumContextCharacters,
         1000,
-        60000
+        240000
       ),
       maximumLearningCharacters: parseInteger(
         env.CB_WORKSPACE_LEARNING_MAX_CHARACTERS,
         DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumLearningCharacters,
         1000,
-        12000
+        24000
       ),
       maximumLearningItems: parseInteger(
         env.CB_WORKSPACE_LEARNING_MAX_ITEMS,
         DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumLearningItems,
         1,
-        30
+        50
       ),
       maximumModelTokensPerRequest: parseInteger(
         env.CB_WORKSPACE_MAXIMUM_MODEL_TOKENS,
         DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumModelTokensPerRequest,
-        4000,
-        100000
+        10000,
+        250000
       ),
       maximumParallelWorkers: parseInteger(
         env.CB_WORKSPACE_MAXIMUM_PARALLEL_WORKERS,
-        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumParallelWorkers,
+        analysisDepthPreset.maximumParallelWorkers,
         1,
         2
       ),
@@ -259,17 +275,13 @@ function getEnvIntelligencePolicy(env = process.env) {
         256,
         8000
       ),
-      maximumRequestTimeMs: parseInteger(
-        env.CB_WORKSPACE_MAXIMUM_REQUEST_TIME_MS,
-        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumRequestTimeMs,
-        5000,
-        120000
-      ),
+      maximumRequestTimeMs,
+      maximumRequestTimeSeconds: Math.ceil(maximumRequestTimeMs / 1000),
       maximumSummaryLookbackDays: parseInteger(
         env.CB_WORKSPACE_SUMMARY_MAX_LOOKBACK_DAYS,
         DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumSummaryLookbackDays,
-        1,
-        180
+        30,
+        3650
       ),
       maximumSynthesisCalls: 1,
       maximumSynthesisOutputTokens: parseInteger(
@@ -280,21 +292,21 @@ function getEnvIntelligencePolicy(env = process.env) {
       ),
       maximumToolCallsPerWorker: parseInteger(
         env.CB_WORKSPACE_MAXIMUM_TOOL_CALLS_PER_WORKER,
-        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumToolCallsPerWorker,
-        1,
-        4
-      ),
-      maximumTotalToolCalls: parseInteger(
-        env.CB_WORKSPACE_MAXIMUM_TOTAL_TOOL_CALLS,
-        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumTotalToolCalls,
+        analysisDepthPreset.maximumToolCallsPerWorker,
         1,
         6
       ),
+      maximumTotalToolCalls: parseInteger(
+        env.CB_WORKSPACE_MAXIMUM_TOTAL_TOOL_CALLS,
+        analysisDepthPreset.maximumTotalToolCalls,
+        1,
+        18
+      ),
       maximumWorkersPerRequest: parseInteger(
         env.CB_WORKSPACE_MAXIMUM_WORKERS_PER_REQUEST,
-        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.maximumWorkersPerRequest,
+        analysisDepthPreset.maximumWorkersPerRequest,
         1,
-        3
+        4
       ),
       maximumWorkerOutputTokens: parseInteger(
         env.CB_WORKSPACE_MAXIMUM_WORKER_OUTPUT_TOKENS,

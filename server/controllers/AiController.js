@@ -11,6 +11,7 @@ const {
 } = require("../modules/ai/orchestrator/runtime/deterministicExecutor");
 const {
   isTypedConfirmation,
+  routeWorkspaceRequest,
 } = require("../modules/ai/orchestrator/runtime/deterministicRouter");
 const { getAiRoleScope } = require("../modules/ai/orchestrator/rolePolicy");
 const db = require("../models/models");
@@ -19,6 +20,10 @@ const socketManager = require("../modules/socketManager");
 const { validateAiContext } = require("../modules/ai/contextAuthorization");
 const { getObservationAccess } = require("../modules/observations/access");
 const { getWorkspaceAccessEnvelope } = require("../modules/workspaceContext/accessEnvelope");
+const {
+  CHARTBREW_AI_DISABLED_MESSAGE,
+  getWorkspaceOrchestratorPolicy,
+} = require("../modules/workspaceContext/policy");
 const { executePendingAction } = require("../modules/workspaceContext/pendingActionExecutor");
 const {
   isDirectMetricWriteInstruction,
@@ -27,6 +32,9 @@ const {
   clearPendingActions,
   listPendingActions,
 } = require("../modules/workspaceContext/previewStore");
+const {
+  ACTIVITY_INTENTS,
+} = require("../modules/workspaceContext/workspaceActivityFocus");
 
 const NON_PERSISTENT_WORKSPACE_TOOLS = new Set([
   "get_workspace_activity",
@@ -56,6 +64,18 @@ function createAiError(message, statusCode) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+function buildAiDisabledOrchestration({ persistence, sessionId } = {}) {
+  return {
+    iterations: 0,
+    message: CHARTBREW_AI_DISABLED_MESSAGE,
+    pendingAction: null,
+    persistence,
+    ...(sessionId ? { sessionId } : {}),
+    usage: { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0 },
+    usageRecords: [],
+  };
 }
 
 function getAiSessionBinding(type, id) {
@@ -163,6 +183,12 @@ async function runExternalWorkspaceOrchestration({
       question,
     });
   }
+}
+
+function shouldPreferExternalActivitySynthesis(question, options = {}) {
+  if (!options.canUseExternalWorkspaceContext) return false;
+  const route = routeWorkspaceRequest({ message: question });
+  return route?.mode === "fast_path" && ACTIVITY_INTENTS.has(route.intent);
 }
 
 function getPersistedAiMessageContent(message) {
@@ -285,7 +311,10 @@ async function getOrchestration(
       question,
       roleBoundaryOnly: true,
     });
+    const preferExternalActivitySynthesis = validatedContext.length === 0
+      && shouldPreferExternalActivitySynthesis(question, orchestrationOptions);
     const orchestration = roleBoundary || (validatedContext.length === 0
+      && !preferExternalActivitySynthesis
       ? await runDeterministicWorkspaceRequest({
         access,
         allowPlannerFallback: !orchestrationOptions.canUseExternalWorkspaceContext,
@@ -673,6 +702,10 @@ async function respond({
   teamId,
   userId,
 }) {
+  if (!getWorkspaceOrchestratorPolicy().enabled
+    && (action || isTypedConfirmation(message))) {
+    return buildAiDisabledOrchestration({ persistence, sessionId });
+  }
   if (action) {
     const confirmation = validateConfirmationAction(action);
     if (persistence === "persistent") {
@@ -763,7 +796,10 @@ async function respond({
     question: `${message}`.trim(),
     roleBoundaryOnly: true,
   });
+  const preferExternalActivitySynthesis = validatedContext.length === 0
+    && shouldPreferExternalActivitySynthesis(`${message}`.trim(), orchestrationOptions);
   const deterministicResult = roleBoundary || (validatedContext.length === 0
+    && !preferExternalActivitySynthesis
     ? await runDeterministicWorkspaceRequest({
       access,
       allowPlannerFallback: !orchestrationOptions.canUseExternalWorkspaceContext,
@@ -891,6 +927,7 @@ async function promoteSession({ sessionId, teamId, userId }) {
 }
 
 async function getAvailableTools() {
+  if (!getWorkspaceOrchestratorPolicy().enabled) return [];
   const tools = await availableTools();
   return tools;
 }
@@ -1129,4 +1166,5 @@ module.exports = {
   getPersistedAiMessageContent,
   getReplaySafeAiMessage,
   getSinglePendingActionId,
+  shouldPreferExternalActivitySynthesis,
 };

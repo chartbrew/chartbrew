@@ -18,7 +18,10 @@ const db = require("../../../models/models");
 const socketManager = require("../../socketManager");
 const { sanitizeSnippet } = require("../../updateAudit");
 const { buildContextManifest } = require("../../workspaceContext/contextManifest");
-const { getWorkspaceOrchestratorPolicy } = require("../../workspaceContext/policy");
+const {
+  CHARTBREW_AI_DISABLED_MESSAGE,
+  getWorkspaceOrchestratorPolicy,
+} = require("../../workspaceContext/policy");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
 const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
@@ -1180,6 +1183,9 @@ async function availableTools() {
 
 async function callTool(name, payload) {
   try {
+    if (!getWorkspaceOrchestratorPolicy().enabled) {
+      throw new Error(CHARTBREW_AI_DISABLED_MESSAGE);
+    }
     switch (name) {
       case "list_connections":
         return listConnections(payload);
@@ -1284,6 +1290,7 @@ function buildSystemPrompt(semanticLayer, conversation = null) {
   const projects = workspaceProjects.map((project) => ({
     Charts: project.Charts,
     id: project.id,
+    name: getUntrustedLabel(project.name, "Unnamed dashboard"),
   }));
   const supportedConnections = connections
     .map((connection) => ({
@@ -1326,7 +1333,7 @@ ${formatSupportedSourceBullets()}
 API connections and other sources will be available when their source plugins declare AI support.
 
 ## Available Projects
-${projects.map((p) => `- Dashboard [ID: ${p.id}] - ${p.Charts?.length || 0} charts`).join("\n")}
+${projects.map((p) => `- ${p.name} [ID: ${p.id}] - ${p.Charts?.length || 0} charts`).join("\n")}
 
 ## Chart Types Available
 ${chartCatalog.map((catalog) => Object.entries(catalog).map(([type, info]) => `- ${type}: ${info.description}`).join("\n")).join("\n")}
@@ -1463,6 +1470,7 @@ ${ENTITY_CREATION_RULES}
 
 3. Best practices:
    - For requests to summarize recent changes, identify metrics needing attention, describe notable improvements, or check data freshness, call get_workspace_activity first and answer directly from its result. Do not ask the user to choose between a connection, database, or dashboard for these workspace-level questions.
+   - For workspace-level summaries, use all dashboards the user can access. Group the answer by dashboard name when the facts cover more than one dashboard.
    - **CRITICAL: Default to temporary charts.** Only place in dashboards when explicitly requested.
    - **CRITICAL: Respect user instructions exactly.** If the user specifies a dashboard, use that exact dashboard. Never create charts in other dashboards for any reason.
    - **CRITICAL: No validation or test runs.** Create charts once, as temporary previews by default.
@@ -1483,6 +1491,7 @@ Format all responses using markdown to improve readability:
 - Highlight key metrics and results prominently
 - Use tables sparingly and only when necessary for clarity - avoid dumping raw query results
 - Be terse and to the point - avoid verbose metadata dumps (IDs, URLs, connection details, database names, table names, query execution times)
+- Never put dashboard IDs, connection IDs, or other internal IDs in user-facing text or quick replies. Use names.
 - Focus on business insights and actionable information rather than technical implementation details
 - Keep responses conversational and user-friendly, avoiding technical explanations unless specifically asked
 
@@ -2096,6 +2105,11 @@ async function buildSemanticLayer(teamId, options = {}) {
 async function orchestrate(
   teamId, question, conversationHistory = [], conversation = null, context = null, options = {}
 ) {
+  if (!getWorkspaceOrchestratorPolicy().enabled) {
+    const error = new Error(CHARTBREW_AI_DISABLED_MESSAGE);
+    error.statusCode = 403;
+    throw error;
+  }
   // Extract optional tool progress callback
   const {
     aiAccessMode = AI_ACCESS_MODES.FULL,

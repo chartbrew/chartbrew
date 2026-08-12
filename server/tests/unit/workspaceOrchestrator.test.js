@@ -20,11 +20,14 @@ const {
   getPersistedAiMessageContent,
   getReplaySafeAiMessage,
   getSinglePendingActionId,
+  shouldPreferExternalActivitySynthesis,
 } = require("../../controllers/AiController");
 const { buildContextManifest } = require("../../modules/workspaceContext/contextManifest");
 const {
+  buildDeterministicWorkspaceSummary,
   buildCoverageText,
   escapeMarkdown,
+  formatCompactPeriod,
 } = require("../../modules/workspaceContext/deterministicSummary");
 const { getWorkspaceAccessEnvelope } = require("../../modules/workspaceContext/accessEnvelope");
 const {
@@ -43,6 +46,7 @@ const {
   routeWorkspaceRequest,
 } = require("../../modules/ai/orchestrator/runtime/deterministicRouter");
 const {
+  buildActivityMessage,
   rankActivityItemsWithLearning,
   rankRecommendationsWithLearning,
   runDeterministicWorkspaceRequest,
@@ -75,9 +79,14 @@ const {
   getEnvIntelligencePolicy,
 } = require("../../modules/intelligence/envPolicyProvider");
 const {
+  setPlatformSettingOverrides,
+} = require("../../modules/platformSettings/runtime");
+const {
   getBehaviorLabel,
 } = require("../../modules/ai/orchestrator/tools/previewMetricMonitor");
 const {
+  buildSystemPrompt,
+  callTool,
   filterToolDefinitionsForUser,
 } = require("../../modules/ai/orchestrator/orchestrator");
 const {
@@ -145,11 +154,13 @@ function replaySafetyCase(testCase) {
 
 beforeEach(async () => {
   vi.restoreAllMocks();
+  setPlatformSettingOverrides({});
   await runtimeCache.resetForTests();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  setPlatformSettingOverrides({});
 });
 
 describe("workspace orchestrator safety", () => {
@@ -391,6 +402,10 @@ describe("workspace orchestrator safety", () => {
       .toEqual({ intent: "workspace_summary", mode: "fast_path" });
     expect(routeWorkspaceRequest({ message: "What has been happening in the workspace?" }))
       .toEqual({ intent: "workspace_summary", mode: "fast_path" });
+    expect(routeWorkspaceRequest({ message: "Which metrics need attention?" }))
+      .toEqual({ intent: "metric_attention", mode: "fast_path" });
+    expect(routeWorkspaceRequest({ message: "Check data freshness" }))
+      .toEqual({ intent: "data_freshness", mode: "fast_path" });
     expect(routeWorkspaceRequest({ message: "What metrics should we watch?" }))
       .toEqual({ intent: "watch_recommendation", mode: "fast_path" });
     expect(routeWorkspaceRequest({ message: "Watch weekly sign-ups" }))
@@ -398,6 +413,298 @@ describe("workspace orchestrator safety", () => {
     expect(routeWorkspaceRequest({ message: "Change Revenue to a monthly comparison" }))
       .toEqual({ intent: "workspace_follow_up", mode: "planner" });
     expect(routeWorkspaceRequest({ message: "Why did revenue change?" })).toBeNull();
+  });
+
+  it("uses external synthesis for focused Activity questions only when permitted", () => {
+    expect(shouldPreferExternalActivitySynthesis(
+      "Which metrics need attention?",
+      { canUseExternalWorkspaceContext: true }
+    )).toBe(true);
+    expect(shouldPreferExternalActivitySynthesis(
+      "Check data freshness",
+      { canUseExternalWorkspaceContext: false }
+    )).toBe(false);
+    expect(shouldPreferExternalActivitySynthesis(
+      "What metrics should we watch?",
+      { canUseExternalWorkspaceContext: true }
+    )).toBe(false);
+  });
+
+  it("returns distinct deterministic reports for the three Activity shortcuts", () => {
+    const activity = {
+      alerts: [],
+      changes: [{
+        comparisonLabel: "This week compared with last week",
+        impact: "negative",
+        metricName: "Failed sync rate",
+        project: { id: 4, name: "Operations" },
+        summary: "Failed sync rate increased.",
+        title: "Failed sync rate increased",
+      }, {
+        impact: "positive",
+        metricName: "Revenue",
+        project: { id: 5, name: "Growth" },
+        summary: "Revenue increased.",
+        title: "Revenue increased",
+      }],
+      coverage: {
+        evaluatedMetricCount: 2,
+        limitedToAccessibleProjects: false,
+        truncated: false,
+        unhealthyMetricCount: 1,
+        waitingMetricCount: 2,
+        watchedMetricCount: 4,
+      },
+      evaluations: [{
+        completeness: "stale",
+        comparisonLabel: "This week compared with last week",
+        currentValue: 12,
+        metricName: "Records processed",
+        project: { id: 4, name: "Operations" },
+        stale: true,
+        status: "no_meaningful_change",
+      }],
+      health: [{
+        message: "The last refresh failed.",
+        project: { id: 4, name: "Operations" },
+        state: "active",
+        title: "Dataset refresh failed",
+      }],
+      range: {
+        from: "2026-08-05T00:00:00.000Z",
+        to: "2026-08-12T00:00:00.000Z",
+      },
+    };
+
+    const recent = buildActivityMessage(activity, "workspace_summary");
+    const attention = buildActivityMessage(activity, "metric_attention");
+    const freshness = buildActivityMessage(activity, "data_freshness");
+
+    expect(recent).toContain("#### Improved");
+    expect(recent).toContain("**Revenue** improved");
+    expect(attention).toContain("**Failed sync rate** needs attention");
+    expect(attention).not.toContain("**Revenue**");
+    expect(freshness).toContain("Dataset refresh failed");
+    expect(freshness).toContain("2 watched metrics are waiting for enough data");
+    expect(freshness).not.toContain("**Revenue**");
+    expect(new Set([recent, attention, freshness]).size).toBe(3);
+  });
+
+  it("stops all workspace requests when Chartbrew AI is turned off", async () => {
+    setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": false });
+
+    const result = await runDeterministicWorkspaceRequest({
+      access,
+      history: [],
+      question: "Summarize recent changes",
+      roleBoundaryOnly: true,
+    });
+
+    expect(result.message).toBe(
+      "Chartbrew AI is turned off. A platform administrator can turn it on in Settings."
+    );
+    expect(result.usage.total_tokens).toBe(0);
+    expect(result.usageRecords[0]).toEqual(expect.objectContaining({
+      model: "deterministic",
+      purpose: "ai_disabled",
+    }));
+  });
+
+  it("does not execute an orchestrator tool after Chartbrew AI is turned off", async () => {
+    setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": false });
+
+    await expect(callTool("get_workspace_activity", {
+      team_id: access.teamId,
+      user_id: access.userId,
+    })).rejects.toThrow("Chartbrew AI is turned off");
+  });
+
+  it("does not bypass a disabled workspace summary setting", async () => {
+    setPlatformSettingOverrides({ "workspaceOrchestrator.workspaceSummariesEnabled": false });
+
+    const result = await runDeterministicWorkspaceRequest({
+      access,
+      history: [],
+      question: "Summarize recent changes",
+      roleBoundaryOnly: true,
+    });
+
+    expect(result.message).toContain("Workspace summaries are turned off");
+    expect(result.usage.total_tokens).toBe(0);
+  });
+
+  it("groups workspace results by dashboard name without exposing dashboard IDs", () => {
+    const summary = buildDeterministicWorkspaceSummary({
+      alerts: [{
+        lastTriggeredAt: "2026-08-11T10:00:00.000Z",
+        name: "Sign-ups alert",
+        project: { id: 602, name: "Growth overview" },
+      }],
+      changes: [{
+        impact: "negative",
+        project: { id: 601, name: "Revenue overview" },
+        summary: "Revenue fell against the prior period.",
+        title: "Revenue decreased",
+      }],
+      coverage: {
+        evaluatedMetricCount: 2,
+        limitedToAccessibleProjects: false,
+        truncated: false,
+        unhealthyMetricCount: 0,
+        waitingMetricCount: 0,
+        watchedMetricCount: 2,
+      },
+      evaluations: [],
+      health: [],
+      range: {
+        from: "2026-08-05T00:00:00.000Z",
+        to: "2026-08-12T00:00:00.000Z",
+      },
+    });
+
+    expect(summary).toContain("### Revenue overview");
+    expect(summary).toContain("### Growth overview");
+    expect(summary).not.toContain("601");
+    expect(summary).not.toContain("602");
+  });
+
+  it("shows one concise result per metric with compact periods", () => {
+    const summary = buildDeterministicWorkspaceSummary({
+      alerts: [],
+      changes: [{
+        baselineValue: 10,
+        comparisonLabel: "August 10 compared with August 9",
+        currentPeriod: {
+          end: "2026-08-11T00:00:00.000Z",
+          start: "2026-08-10T00:00:00.000Z",
+        },
+        currentValue: 40,
+        direction: "increase",
+        impact: "negative",
+        metricName: "Failed sync rate",
+        monitorId: 8,
+        project: { id: 4, name: "Operations" },
+        summary: "40%, compared with 10%. August 10 compared with August 9.",
+        title: "Failed sync rate increased",
+        unit: "percent",
+      }, {
+        baselineValue: 10,
+        currentPeriod: {
+          end: "2026-08-10T00:00:00.000Z",
+          start: "2026-08-09T00:00:00.000Z",
+        },
+        currentValue: 40,
+        direction: "increase",
+        impact: "negative",
+        metricName: "Failed sync rate",
+        monitorId: 8,
+        project: { id: 4, name: "Operations" },
+        title: "Failed sync rate increased",
+        unit: "percent",
+      }],
+      coverage: {
+        evaluatedMetricCount: 1,
+        limitedToAccessibleProjects: false,
+        truncated: false,
+        unhealthyMetricCount: 0,
+        waitingMetricCount: 0,
+        watchedMetricCount: 1,
+      },
+      evaluations: [{
+        baselineValue: 7,
+        currentPeriod: {
+          end: "2026-08-11T00:00:00.000Z",
+          start: "2026-08-10T00:00:00.000Z",
+        },
+        currentValue: 7,
+        metricName: "Stable metric",
+        monitorId: 9,
+        project: { id: 4, name: "Operations" },
+        status: "no_meaningful_change",
+      }],
+      health: [],
+      range: {
+        from: "2026-08-05T00:00:00.000Z",
+        to: "2026-08-12T00:00:00.000Z",
+      },
+    });
+
+    expect(summary).toContain("Aug 5–12, 2026 · 1 need attention");
+    expect(summary).toContain("**Failed sync rate** rose from 10% to **40%** · Aug 10");
+    expect(summary.match(/Failed sync rate/g)).toHaveLength(1);
+    expect(summary).not.toContain("compared with");
+    expect(summary).not.toContain("Stable metric");
+    expect(summary).not.toContain("Coverage:");
+  });
+
+  it("uses readable week and month labels in recent changes", () => {
+    const summary = buildDeterministicWorkspaceSummary({
+      alerts: [],
+      changes: [],
+      coverage: {
+        evaluatedMetricCount: 2,
+        limitedToAccessibleProjects: false,
+        truncated: false,
+        unhealthyMetricCount: 0,
+        waitingMetricCount: 0,
+        watchedMetricCount: 2,
+      },
+      evaluations: [{
+        baselineValue: 50,
+        currentPeriod: {
+          end: "2026-08-10T00:00:00.000Z",
+          start: "2026-08-03T00:00:00.000Z",
+        },
+        currentValue: 30,
+        direction: "decrease",
+        metricName: "Trial conversion",
+        project: { id: 4, name: "Growth" },
+        status: "needs_attention",
+        valueFormat: {
+          display: { decimals: 0, scale: 1 },
+          meaning: "percentage",
+        },
+      }, {
+        baselineValue: 6490,
+        currentPeriod: {
+          end: "2026-08-01T00:00:00.000Z",
+          start: "2026-07-01T00:00:00.000Z",
+        },
+        currentValue: 8732.1,
+        direction: "increase",
+        metricName: "Revenue",
+        project: { id: 4, name: "Growth" },
+        status: "improved",
+        valueFormat: {
+          display: { currency: "USD", decimals: 0, scale: 1 },
+          meaning: "currency",
+        },
+      }],
+      health: [],
+      range: {
+        from: "2026-08-05T00:00:00.000Z",
+        to: "2026-08-12T00:00:00.000Z",
+      },
+    });
+
+    expect(summary).toContain("**Trial conversion** fell from 50% to **30%** · Aug 3–9");
+    expect(summary).toContain("**Revenue** rose from $6,490 to **$8,732** · Jul 2026");
+    expect(summary).not.toContain("August 9–9");
+    expect(formatCompactPeriod({
+      end: "2026-08-10T17:00:00.000Z",
+      start: "2026-08-09T17:00:00.000Z",
+    }, "Asia/Bangkok")).toBe("Aug 10");
+  });
+
+  it("gives the model dashboard names but forbids IDs in user-facing replies", () => {
+    const prompt = buildSystemPrompt({
+      chartCatalog: [],
+      connections: [],
+      projects: [{ Charts: [], id: 601, name: "Revenue overview" }],
+    });
+
+    expect(prompt).toContain("Revenue overview [ID: 601]");
+    expect(prompt).toContain("Never put dashboard IDs");
   });
 
   it("keeps owner-selected planner and worker model roles separate", () => {

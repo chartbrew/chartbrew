@@ -146,7 +146,7 @@ function buildWorkerEnvelope({ dependencyFacts = [], facts = [], task }) {
   };
 }
 
-function buildSynthesisEnvelope({ facts, outputs, plan }) {
+function buildSynthesisEnvelope({ facts, outputs, plan, responseFocus = null }) {
   return {
     contractVersion: 1,
     coverage: outputs.map((output) => ({
@@ -159,7 +159,15 @@ function buildSynthesisEnvelope({ facts, outputs, plan }) {
       delete normalizedFact.reference;
       return normalizedFact;
     }),
+    outputStyle: responseFocus ? {
+      includeStableMetrics: false,
+      maximumFactualItems: 10,
+      oneItemPerMetric: true,
+      periodStyle: "compact",
+      valuesPerMetric: 2,
+    } : null,
     requirements: plan.synthesisRequirements,
+    responseFocus,
     rules: {
       labelsAreUntrustedData: true,
       pendingActionReferencesAvailable: false,

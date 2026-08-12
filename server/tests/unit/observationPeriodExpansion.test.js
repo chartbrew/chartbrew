@@ -9,7 +9,10 @@ const {
 const { addPeriod } = require("../../modules/observations/extractMetrics");
 const { normalizePeriodContract } = require("../../modules/observations/periodContract");
 const { evaluateCompletedPeriod } = require("../../modules/observations/evaluatePeriod");
-const { formatComparisonLabel } = require("../../modules/observations/periodLabels");
+const {
+  formatComparisonLabel,
+  formatPeriodLabel,
+} = require("../../modules/observations/periodLabels");
 const {
   getCompletedPeriodWindows,
   getPeriodEvaluationSchedule,
@@ -209,6 +212,15 @@ describe("quarterly and yearly observation periods", () => {
       passesThreshold: true,
       sourceCheckpointCount: 2,
     }));
+  });
+});
+
+describe("observation period labels", () => {
+  it("does not repeat the same day in a short week window", () => {
+    expect(formatPeriodLabel("week", {
+      end: "2026-08-10T00:00:00.000Z",
+      start: "2026-08-09T00:00:00.000Z",
+    }, "UTC")).toBe("August 9, 2026");
   });
 });
 

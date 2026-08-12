@@ -61,6 +61,7 @@ function serializeActivityChange(observation) {
   return {
     absoluteDelta: observation.absoluteDelta,
     baselineValue: observation.baselineValue,
+    calendarTimezone: observation.monitor?.comparisonTimezone || "UTC",
     chart: observation.chart,
     comparisonLabel: observation.comparisonLabel,
     comparisonPeriod: observation.comparisonPeriod,

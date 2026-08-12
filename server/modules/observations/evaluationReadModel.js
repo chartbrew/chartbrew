@@ -73,6 +73,7 @@ function serializeFinalEvaluation(evaluation) {
   return {
     absoluteDelta: toNumber(evaluation.absolute_delta),
     baselineValue: toNumber(evaluation.baseline_value),
+    calendarTimezone: evaluation.calendar_timezone || "UTC",
     chart: monitor.Chart ? {
       id: monitor.Chart.id,
       name: monitor.Chart.name,

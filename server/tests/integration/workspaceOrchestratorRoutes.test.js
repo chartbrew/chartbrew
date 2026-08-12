@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import {
-  beforeAll, beforeEach, describe, expect, it, vi,
+  afterEach, beforeAll, beforeEach, describe, expect, it, vi,
 } from "vitest";
 import request from "supertest";
 import { createRequire } from "node:module";
@@ -38,6 +38,9 @@ const {
   createPendingAction,
   hashSessionBinding,
 } = require("../../modules/workspaceContext/previewStore");
+const {
+  setPlatformSettingOverrides,
+} = require("../../modules/platformSettings/runtime");
 
 async function createUserAccess(models, role = "teamOwner", projects = null) {
   const user = await models.User.create(userFactory.build());
@@ -85,7 +88,7 @@ async function createObservation(models, { project, team }) {
 }
 
 async function createFinalEvaluation(models, {
-  metricName = "Stable revenue", project, team, user,
+  metricName = "Stable revenue", passesThreshold = false, project, team, user,
 }) {
   const now = new Date();
   const currentPeriodEnd = new Date(now.getTime() - (60 * 60 * 1000));
@@ -144,7 +147,7 @@ async function createFinalEvaluation(models, {
     finalized_at: now,
     metric_behavior: "flow",
     monitor_id: monitor.id,
-    passes_threshold: false,
+    passes_threshold: passesThreshold,
     policy_version: "route-test-v1",
     readiness: "eligible",
     relative_delta: 2 / 118,
@@ -166,7 +169,12 @@ describe("workspace orchestrator routes", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    setPlatformSettingOverrides({});
     delete process.env.CB_OPENAI_API_KEY_DEV;
+  });
+
+  afterEach(() => {
+    setPlatformSettingOverrides({});
   });
 
   it("requires authentication for structured confirmation", async () => {
@@ -245,8 +253,122 @@ describe("workspace orchestrator routes", () => {
       })
       .expect(200);
 
-    expect(response.body.orchestration.message).toContain("Workspace activity");
+    expect(response.body.orchestration.message).toContain("Recent changes");
     expect(response.body.orchestration.usage.total_tokens).toBe(0);
+  });
+
+  it("returns a distinct local fallback for each Activity shortcut", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+    const ask = async (message) => request(app)
+      .post("/ai/respond")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        message,
+        persistence: "ephemeral",
+        sessionId: crypto.randomUUID(),
+        teamId: seeded.team.id,
+      })
+      .expect(200);
+
+    const [recent, attention, freshness] = await Promise.all([
+      ask("Summarize recent changes"),
+      ask("Which metrics need attention?"),
+      ask("Check data freshness"),
+    ]);
+    const messages = [recent, attention, freshness]
+      .map((response) => response.body.orchestration.message);
+
+    expect(messages[0]).toContain("Recent changes");
+    expect(messages[1]).toContain("Metrics that need attention");
+    expect(messages[2]).toContain("Data freshness");
+    expect(new Set(messages).size).toBe(3);
+  });
+
+  it("reports that Chartbrew AI is turned off without using a fallback", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+    setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": false });
+
+    const response = await request(app)
+      .post("/ai/respond")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        message: "Summarize recent changes",
+        persistence: "ephemeral",
+        sessionId: crypto.randomUUID(),
+        teamId: seeded.team.id,
+      })
+      .expect(200);
+
+    expect(response.body.orchestration.message).toBe(
+      "Chartbrew AI is turned off. A platform administrator can turn it on in Settings."
+    );
+    expect(response.body.orchestration.usage.total_tokens).toBe(0);
+  });
+
+  it("does not run a prepared action when Chartbrew AI is turned off", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+    setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": false });
+
+    const response = await request(app)
+      .post("/ai/respond")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        action: {
+          actionId: crypto.randomUUID(),
+          type: "confirm_pending_action",
+        },
+        persistence: "ephemeral",
+        sessionId: crypto.randomUUID(),
+        teamId: seeded.team.id,
+      })
+      .expect(200);
+
+    expect(response.body.orchestration.message).toContain("Chartbrew AI is turned off");
+    expect(response.body.orchestration.pendingAction).toBeNull();
+  });
+
+  it("summarizes every owner dashboard by name without asking for scope", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+    await seeded.project.update({ name: "Revenue overview" });
+    const secondProject = await models.Project.create(projectFactory.build({
+      name: "Customer health",
+      team_id: seeded.team.id,
+    }));
+    await Promise.all([
+      createObservation(models, {
+        project: seeded.project,
+        team: seeded.team,
+      }),
+      createObservation(models, {
+        project: secondProject,
+        team: seeded.team,
+      }),
+    ]);
+
+    const response = await request(app)
+      .post("/ai/respond")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        message: "Summarize recent changes",
+        persistence: "ephemeral",
+        sessionId: crypto.randomUUID(),
+        teamId: seeded.team.id,
+      })
+      .expect(200);
+
+    expect(response.body.orchestration.message).toContain("### Revenue overview");
+    expect(response.body.orchestration.message).toContain("### Customer health");
+    expect(response.body.orchestration.message).not.toContain("need the scope");
+    expect(response.body.orchestration.message).not.toContain(`Dashboard ${seeded.project.id}`);
+    expect(response.body.orchestration.message).not.toContain(`Dashboard ${secondProject.id}`);
   });
 
   it("uses a stored-data fallback for a workspace follow-up without an external model key", async () => {
@@ -265,7 +387,7 @@ describe("workspace orchestrator routes", () => {
       })
       .expect(200);
 
-    expect(response.body.orchestration.message).toContain("Workspace activity");
+    expect(response.body.orchestration.message).toContain("Recent changes");
     expect(response.body.orchestration.usage.total_tokens).toBe(0);
   });
 
@@ -321,7 +443,7 @@ describe("workspace orchestrator routes", () => {
     })).rejects.toMatchObject({ code: "PENDING_ACTION_EXPIRED" });
   });
 
-  it("includes a stable final evaluation without an observation or data execution", async () => {
+  it("omits a stable final evaluation without running data", async () => {
     const app = await createTestApp();
     require("../../api/AiRoute.js")(app);
     const seeded = await createUserAccess(models);
@@ -350,10 +472,12 @@ describe("workspace orchestrator routes", () => {
       })
       .expect(200);
 
-    expect(response.body.orchestration.message).toContain("Stable revenue");
-    expect(response.body.orchestration.message).toContain("$125");
+    expect(response.body.orchestration.message).not.toContain("Stable revenue");
+    expect(response.body.orchestration.message).not.toContain("$125");
     expect(response.body.orchestration.message).not.toContain("$120");
-    expect(response.body.orchestration.message).toContain("had no meaningful change");
+    expect(response.body.orchestration.message).toContain(
+      "There are no important metric changes"
+    );
     expect(chartRefresh).not.toHaveBeenCalled();
     expect(datasetRun).not.toHaveBeenCalled();
     await expect(models.Observation.count({
@@ -382,12 +506,14 @@ describe("workspace orchestrator routes", () => {
     });
     await createFinalEvaluation(models, {
       metricName: "Visible pipeline",
+      passesThreshold: true,
       project: owner.project,
       team: owner.team,
       user: viewer,
     });
     await createFinalEvaluation(models, {
       metricName: "Hidden margin",
+      passesThreshold: true,
       project: hiddenProject,
       team: owner.team,
       user: owner.user,
@@ -407,7 +533,7 @@ describe("workspace orchestrator routes", () => {
     expect(response.body.orchestration.message).toContain("Visible pipeline");
     expect(response.body.orchestration.message).not.toContain("Hidden margin");
     expect(response.body.orchestration.message)
-      .toContain("This answer includes only dashboards you can access.");
+      .toContain("Only dashboards you can access are included.");
   });
 
   it("refuses viewer source queries and chart creation before data execution", async () => {

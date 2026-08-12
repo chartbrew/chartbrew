@@ -325,6 +325,119 @@ describe("workspace orchestrator provider boundary", () => {
     requests.forEach((request) => expect(request.store).toBe(false));
   });
 
+  it("uses one focused synthesis call for a stored Activity shortcut", async () => {
+    const requests = [];
+    const activity = buildActivity({
+      evaluations: [{
+        absoluteDelta: -2,
+        baselineValue: 10,
+        comparisonLabel: "This week compared with last week",
+        completeness: "complete",
+        currentValue: 8,
+        finality: "final",
+        impact: "negative",
+        material: true,
+        metricName: "Revenue",
+        project: { id: 4, name: "Growth" },
+        relativeDelta: -0.2,
+        stale: false,
+        status: "needs_attention",
+      }, {
+        absoluteDelta: 2,
+        baselineValue: 10,
+        comparisonLabel: "This week compared with last week",
+        completeness: "complete",
+        currentValue: 12,
+        finality: "final",
+        impact: "positive",
+        material: true,
+        metricName: "Sign-ups",
+        project: { id: 4, name: "Growth" },
+        relativeDelta: 0.2,
+        stale: false,
+        status: "improved",
+      }],
+    });
+    const client = {
+      responses: {
+        create: vi.fn(async (request) => {
+          requests.push(request);
+          return providerResponse({
+            json: {
+              answer: {
+                coverageNote: "Coverage is complete.",
+                headline: "Revenue needs attention",
+                sections: [{
+                  items: [{
+                    factRefs: ["fact_1"],
+                    text: "Revenue needs attention at 8.",
+                  }, {
+                    factRefs: ["fact_1"],
+                    text: "Revenue is down at 8.",
+                  }],
+                  type: "needs_attention",
+                }],
+              },
+              contractVersion: 2,
+              recommendations: [],
+            },
+          });
+        }),
+      },
+    };
+    const availableTools = vi.fn();
+    const toolRunner = vi.fn();
+
+    const result = await runSplitWorkspaceRequest({
+      access,
+      accessEnvelopeReader: async () => buildEnvelope(),
+      activityReader: async () => activity,
+      availableTools,
+      client,
+      fallbackRunner: vi.fn(),
+      options: {
+        aiSessionId: "session:attention",
+        allowedToolNames: ["get_workspace_activity"],
+      },
+      pendingActionClearer: vi.fn(),
+      policy: getPolicy(),
+      question: "Which metrics need attention?",
+      toolRunner,
+    });
+
+    expect(result.message).toContain("## Metrics that need attention");
+    expect(result.message).toContain("Revenue needs attention at 8");
+    expect(result.message).not.toContain("Revenue is down at 8");
+    expect(result.message).not.toContain("Sign-ups");
+    expect(requests).toHaveLength(1);
+    expect(requests[0].model).toBe("gpt-5.4-mini");
+    expect(parseRequestEnvelope(requests[0])).toEqual(expect.objectContaining({
+      responseFocus: "needs_attention",
+      outputStyle: {
+        includeStableMetrics: false,
+        maximumFactualItems: 10,
+        oneItemPerMetric: true,
+        periodStyle: "compact",
+        valuesPerMetric: 2,
+      },
+      facts: expect.arrayContaining([expect.objectContaining({
+        projectLabel: { trust: "untrusted_data", value: "Growth" },
+        values: expect.objectContaining({
+          baselineDisplay: "10",
+          currentDisplay: "8",
+        }),
+      })]),
+    }));
+    expect(requests[0].instructions).toContain("use one item per metric");
+    expect(availableTools).not.toHaveBeenCalled();
+    expect(toolRunner).not.toHaveBeenCalled();
+    expect(result.contextManifest.modelRoleCalls).toEqual({
+      planner: 0,
+      synthesis: 1,
+      worker: 0,
+    });
+  });
+
   it("keeps a preview action ID out of every provider request", async () => {
     const actionId = "7d9fc3d0-52b0-4ead-bd3b-808f76f4b7fe";
     const requests = [];

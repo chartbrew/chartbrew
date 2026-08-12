@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import { Accordion, Button, Chip, Dropdown, Modal, Separator } from "@heroui/react"
-import { LuClock, LuMessageSquare, LuPlus, LuLoader, LuTrash2, LuEllipsis, LuSlack, LuSparkles, LuX } from "react-icons/lu"
+import { LuClock, LuMessageSquare, LuPlus, LuLoader, LuTrash2, LuEllipsis, LuSlack, LuX } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
@@ -699,12 +699,8 @@ function AiModal({ isOpen, onClose }) {
           <Modal.Dialog className={conversation ? "h-[min(880px,92vh)] sm:max-w-[1180px]" : "sm:max-w-2xl"}>
             <Modal.CloseTrigger />
             {!conversation && (
-              <Modal.Body className="pt-8 pb-6">
-                <div className="mx-auto flex w-full max-w-xl flex-col gap-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
-                    <LuSparkles className="text-accent" size={15} aria-hidden />
-                    Ask your data
-                  </div>
+              <Modal.Body className="flex flex-col gap-5 pb-6 pt-8">
+                <div className="flex w-full flex-col gap-1.5">
                   <h2 className="font-tw text-2xl font-semibold text-foreground">
                     What do you want to understand?
                   </h2>
@@ -712,7 +708,6 @@ function AiModal({ isOpen, onClose }) {
                     Ask about a metric, compare a period, investigate a change, or create a visualization.
                   </p>
                 </div>
-                <div className="h-6" />
                 <AiComposer
                   id="ai-form"
                   name="aiQuestion"
@@ -748,57 +743,51 @@ function AiModal({ isOpen, onClose }) {
                   ]}
                 />
 
-                <div className="h-2" />
-
-                <div className="flex flex-row items-center gap-1 flex-wrap">
-                  {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
-                    <>
-                      {selectedContext.multiSelect.map((entity) => (
-                        <Chip
-                          key={`${entity.entity_type}-${entity.id}`}
-                          variant="primary"
-                          size="sm"
+                {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
+                  <div className="flex flex-row flex-wrap items-center gap-1">
+                    {selectedContext.multiSelect.map((entity) => (
+                      <Chip
+                        key={`${entity.entity_type}-${entity.id}`}
+                        variant="primary"
+                        size="sm"
+                      >
+                        <Chip.Label>{entity.label}</Chip.Label>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${entity.label}`}
+                          className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          onClick={() => {
+                            setSelectedContext(prev => ({
+                              ...prev,
+                              multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                            }));
+                          }}
                         >
-                          <Chip.Label>{entity.label}</Chip.Label>
-                          <button
-                            type="button"
-                            aria-label={`Remove ${entity.label}`}
-                            className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                            onClick={() => {
-                              setSelectedContext(prev => ({
-                                ...prev,
-                                multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                              }));
-                            }}
-                          >
-                            <LuX size={14} aria-hidden />
-                          </button>
-                        </Chip>
-                      ))}
-                      {selectedContext.singleSelect && (
-                        <Chip variant="secondary" size="sm">
-                          <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
-                          <button
-                            type="button"
-                            aria-label={`Remove ${selectedContext.singleSelect.label}`}
-                            className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                            onClick={() => {
-                              setSelectedContext(prev => ({
-                                ...prev,
-                                singleSelect: null
-                              }));
-                            }}
-                          >
-                            <LuX size={14} aria-hidden />
-                          </button>
-                        </Chip>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="h-8" />
+                          <LuX size={14} aria-hidden />
+                        </button>
+                      </Chip>
+                    ))}
+                    {selectedContext.singleSelect && (
+                      <Chip variant="secondary" size="sm">
+                        <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${selectedContext.singleSelect.label}`}
+                          className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          onClick={() => {
+                            setSelectedContext(prev => ({
+                              ...prev,
+                              singleSelect: null
+                            }));
+                          }}
+                        >
+                          <LuX size={14} aria-hidden />
+                        </button>
+                      </Chip>
+                    )}
+                  </div>
+                )}
                 <Separator />
-                <div className="h-2" />
                 <Accordion>
                   <Accordion.Item
                     id="previous_conversations"

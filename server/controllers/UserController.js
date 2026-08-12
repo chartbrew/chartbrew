@@ -82,7 +82,31 @@ class UserController {
         };
         return db.TeamRole.create(teamRole);
       })
-      .then(() => {
+      .then(async () => {
+        if (settings.teamRestricted === "1") return gNewUser;
+
+        const firstUser = await db.User.findOne({
+          attributes: ["id", "admin"],
+          order: [["id", "ASC"]],
+        });
+        if (firstUser?.id !== gNewUser.id) return gNewUser;
+
+        const ownerRole = await db.TeamRole.findOne({
+          attributes: ["id"],
+          where: {
+            user_id: firstUser.id,
+            role: "teamOwner",
+          },
+        });
+        if (!ownerRole) return gNewUser;
+
+        if (!firstUser.admin) {
+          await db.User.update(
+            { admin: true },
+            { where: { id: firstUser.id } }
+          );
+        }
+        await gNewUser.reload();
         return gNewUser;
       })
       .catch((error) => {
@@ -412,7 +436,9 @@ class UserController {
   }
 
   update(id, data) {
-    return db.User.update(data, { where: { "id": id } })
+    const userUpdate = { ...data };
+    delete userUpdate.admin;
+    return db.User.update(userUpdate, { where: { "id": id } })
       .then(() => {
         return this.findById(id);
       })

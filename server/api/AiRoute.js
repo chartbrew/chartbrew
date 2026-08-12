@@ -16,6 +16,7 @@ const {
   routeWorkspaceRequest,
 } = require("../modules/ai/orchestrator/runtime/deterministicRouter");
 const { getRoleBoundaryMessage } = require("../modules/ai/orchestrator/rolePolicy");
+const { getWorkspaceOrchestratorPolicy } = require("../modules/workspaceContext/policy");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -92,7 +93,8 @@ module.exports = (app) => {
     const canUseLocalWorkspaceRoute = ["executor", "fast_path"].includes(localRoute?.mode)
       || localRoute?.intent === "workspace_follow_up"
       || Boolean(getRoleBoundaryMessage(req.aiTeamRole.role, message));
-    if (!action
+    if (getWorkspaceOrchestratorPolicy().enabled
+      && !action
       && !canUseLocalWorkspaceRoute
       && !isOpenAiApiKeySet()) {
       return res.status(400).json({ error: "Ask your data is not configured for this workspace" });
@@ -152,7 +154,9 @@ module.exports = (app) => {
     const canUseLocalWorkspaceRoute = localRoute?.mode === "fast_path"
       || localRoute?.intent === "workspace_follow_up"
       || Boolean(getRoleBoundaryMessage(req.aiTeamRole.role, question));
-    if (!canUseLocalWorkspaceRoute && !isOpenAiApiKeySet()) {
+    if (getWorkspaceOrchestratorPolicy().enabled
+      && !canUseLocalWorkspaceRoute
+      && !isOpenAiApiKeySet()) {
       return res.status(400).json({ error: "Ask your data is not configured for this workspace" });
     }
 

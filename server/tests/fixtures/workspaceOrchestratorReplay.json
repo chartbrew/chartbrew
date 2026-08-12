@@ -14,6 +14,18 @@
       "expected": "planner:workspace_follow_up"
     },
     {
+      "id": "metric_attention_has_a_focused_route",
+      "kind": "route",
+      "message": "Which metrics need attention?",
+      "expected": "fast_path:metric_attention"
+    },
+    {
+      "id": "data_freshness_has_a_focused_route",
+      "kind": "route",
+      "message": "Check data freshness",
+      "expected": "fast_path:data_freshness"
+    },
+    {
       "id": "recommendation_is_read_only",
       "kind": "route",
       "message": "What metrics should we watch?",

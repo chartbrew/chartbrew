@@ -7,6 +7,9 @@ function localDate(value, timezone) {
 function formatWeekLabel(start, end, timezone) {
   const first = localDate(start, timezone);
   const last = localDate(end, timezone).minus({ milliseconds: 1 });
+  if (first.hasSame(last, "day")) {
+    return first.toFormat("LLLL d, yyyy");
+  }
   if (first.year !== last.year) {
     return `${first.toFormat("LLLL d, yyyy")}–${last.toFormat("LLLL d, yyyy")}`;
   }

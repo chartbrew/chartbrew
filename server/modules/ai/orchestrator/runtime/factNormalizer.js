@@ -1,4 +1,8 @@
 const { sanitizeText, sanitizeUntrustedText } = require("./egressBoundary");
+const {
+  formatMetricValue,
+  fromLegacyUnit,
+} = require("../../../observations/valueFormat");
 
 const NUMERIC_TOKEN_PATTERN = /[-+]?\d[\d,]*(?:\.\d+)?%?/g;
 
@@ -126,6 +130,9 @@ function createFactStore(options = {}) {
     const projectRef = projectId !== null && visibleProjectIds.has(projectId)
       ? `project:${projectId}`
       : null;
+    const projectLabel = input.project?.name
+      ? sanitizeUntrustedText(input.project.name, 160)
+      : null;
     const label = input.label
       ? sanitizeUntrustedText(input.label, 160)
       : null;
@@ -140,6 +147,7 @@ function createFactStore(options = {}) {
       factType: input.factType,
       label,
       period: input.period || null,
+      projectLabel,
       projectRef,
       reference: buildExternalReference(input.serverReferences),
       stale: Boolean(input.stale),
@@ -185,6 +193,7 @@ function normalizeActivity(result, store) {
   (result.changes || []).forEach((item) => {
     facts.push(store.addFact({
       attributes: {
+        calendarTimezone: cleanValue(item.calendarTimezone),
         direction: cleanValue(item.direction),
         finality: cleanValue(item.finality),
         impact: cleanValue(item.impact),
@@ -204,7 +213,15 @@ function normalizeActivity(result, store) {
       values: {
         absoluteDelta: cleanNumber(item.absoluteDelta),
         baseline: cleanNumber(item.baselineValue),
+        baselineDisplay: cleanValue(formatMetricValue(
+          item.baselineValue,
+          fromLegacyUnit(item.unit)
+        )),
         current: cleanNumber(item.currentValue),
+        currentDisplay: cleanValue(formatMetricValue(
+          item.currentValue,
+          fromLegacyUnit(item.unit)
+        )),
         relativeDelta: cleanNumber(item.relativeDelta),
         unit: cleanValue(item.unit),
       },
@@ -213,6 +230,7 @@ function normalizeActivity(result, store) {
   (result.evaluations || []).forEach((item) => {
     facts.push(store.addFact({
       attributes: {
+        calendarTimezone: cleanValue(item.calendarTimezone),
         completeness: cleanValue(item.completeness),
         direction: cleanValue(item.direction),
         evaluatedAt: cleanDate(item.evaluatedAt),
@@ -234,9 +252,16 @@ function normalizeActivity(result, store) {
       values: {
         absoluteDelta: cleanNumber(item.absoluteDelta),
         baseline: cleanNumber(item.baselineValue),
+        baselineDisplay: cleanValue(formatMetricValue(
+          item.baselineValue,
+          item.valueFormat
+        )),
         current: cleanNumber(item.currentValue),
+        currentDisplay: cleanValue(formatMetricValue(
+          item.currentValue,
+          item.valueFormat
+        )),
         relativeDelta: cleanNumber(item.relativeDelta),
-        valueFormat: cleanRecord(item.valueFormat, ["currency", "decimals", "style", "suffix"]),
       },
     }));
   });

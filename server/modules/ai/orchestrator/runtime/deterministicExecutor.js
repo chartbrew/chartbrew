@@ -3,8 +3,16 @@ const MetricRecommendationController = require("../../../../controllers/MetricRe
 const MonitorController = require("../../../../controllers/MonitorController");
 const { serializeRecommendation } = require("../../../observations/metricRecommendations");
 const { buildContextManifest } = require("../../../workspaceContext/contextManifest");
-const { buildDeterministicWorkspaceSummary, escapeMarkdown } = require("../../../workspaceContext/deterministicSummary");
-const { getWorkspaceOrchestratorPolicy } = require("../../../workspaceContext/policy");
+const {
+  buildDeterministicAttentionSummary,
+  buildDeterministicFreshnessSummary,
+  buildDeterministicWorkspaceSummary,
+  escapeMarkdown,
+} = require("../../../workspaceContext/deterministicSummary");
+const {
+  CHARTBREW_AI_DISABLED_MESSAGE,
+  getWorkspaceOrchestratorPolicy,
+} = require("../../../workspaceContext/policy");
 const { readWorkspaceActivity } = require("../../../workspaceContext/workspaceActivityProjection");
 const {
   getRoleBoundaryMessage,
@@ -12,6 +20,9 @@ const {
 const {
   getWorkspaceLearningProjection,
 } = require("../../../workspaceContext/workspaceLearningProjection");
+const {
+  ACTIVITY_INTENTS,
+} = require("../../../workspaceContext/workspaceActivityFocus");
 const { routeWorkspaceRequest } = require("./deterministicRouter");
 
 function getRecommendationLearningScore(recommendation, signals = []) {
@@ -180,6 +191,16 @@ function buildResult({ context, history, message, purpose, question }) {
   };
 }
 
+function buildActivityMessage(activity, intent) {
+  if (intent === "metric_attention") {
+    return buildDeterministicAttentionSummary(activity);
+  }
+  if (intent === "data_freshness") {
+    return buildDeterministicFreshnessSummary(activity);
+  }
+  return buildDeterministicWorkspaceSummary(activity);
+}
+
 async function runDeterministicWorkspaceRequest({
   access,
   allowPlannerFallback = false,
@@ -187,6 +208,16 @@ async function runDeterministicWorkspaceRequest({
   question,
   roleBoundaryOnly = false,
 }) {
+  const policy = getWorkspaceOrchestratorPolicy();
+  if (!policy.enabled) {
+    return buildResult({
+      context: {},
+      history,
+      message: CHARTBREW_AI_DISABLED_MESSAGE,
+      purpose: "ai_disabled",
+      question,
+    });
+  }
   const boundaryMessage = getRoleBoundaryMessage(access.role, question);
   if (boundaryMessage) {
     return buildResult({
@@ -197,11 +228,27 @@ async function runDeterministicWorkspaceRequest({
       question,
     });
   }
-  if (roleBoundaryOnly) return null;
-  const policy = getWorkspaceOrchestratorPolicy();
-  if (!policy.enabled) return null;
   const route = routeWorkspaceRequest({ message: question });
   if (!route) return null;
+  if (ACTIVITY_INTENTS.has(route.intent) && !policy.workspaceSummariesEnabled) {
+    return buildResult({
+      context: {},
+      history,
+      message: "Workspace summaries are turned off. A platform administrator can turn them on in Settings.",
+      purpose: "workspace_summary_disabled",
+      question,
+    });
+  }
+  if (route.intent === "watch_recommendation" && !policy.metricRecommendationsEnabled) {
+    return buildResult({
+      context: {},
+      history,
+      message: "Metric watch recommendations are turned off. A platform administrator can turn them on in Settings.",
+      purpose: "metric_recommendations_disabled",
+      question,
+    });
+  }
+  if (roleBoundaryOnly) return null;
 
   if (route.mode === "planner" && allowPlannerFallback) {
     const normalized = `${question || ""}`.toLowerCase();
@@ -236,8 +283,7 @@ async function runDeterministicWorkspaceRequest({
   }
   if (route.mode !== "fast_path") return null;
 
-  if (route.intent === "workspace_summary") {
-    if (!policy.workspaceSummariesEnabled) return null;
+  if (ACTIVITY_INTENTS.has(route.intent)) {
     const storedActivity = await readWorkspaceActivity(access);
     const learning = await getWorkspaceLearningProjection(access, {
       maximumAgeDays: 365,
@@ -247,8 +293,8 @@ async function runDeterministicWorkspaceRequest({
     return buildResult({
       context: { activity },
       history,
-      message: buildDeterministicWorkspaceSummary(activity),
-      purpose: "workspace_summary",
+      message: buildActivityMessage(activity, route.intent),
+      purpose: route.intent,
       question,
     });
   }
@@ -273,7 +319,6 @@ async function runDeterministicWorkspaceRequest({
     });
   }
   if (route.intent === "watch_recommendation") {
-    if (!policy.metricRecommendationsEnabled) return null;
     const [candidateRecommendations, learning] = await Promise.all([
       new MetricRecommendationController().generate(access, {
         includeDismissed: false,
@@ -300,6 +345,7 @@ async function runDeterministicWorkspaceRequest({
 }
 
 module.exports = {
+  buildActivityMessage,
   formatKpiReviews,
   formatRecommendations,
   formatWatchReview,

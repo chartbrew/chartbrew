@@ -16,7 +16,13 @@ function routeWorkspaceRequest({ action, message }) {
   if (isTypedConfirmation(normalized)) {
     return { intent: "confirm_pending_action", mode: "executor" };
   }
-  if (/\b(what happened|what has happened|what has been happening|what's been happening|workspace summary|workspace update|summari[sz]e (recent|workspace)|recent changes|metrics? need attention|kpi status|data freshness)\b/.test(normalized)) {
+  if (/\b(data freshness|freshness (issues|status)|check (data )?freshness)\b/.test(normalized)) {
+    return { intent: "data_freshness", mode: "fast_path" };
+  }
+  if (/\b(metrics?|kpis?)\b.*\b(need|needs|requiring|require) attention\b|\bneeds attention\b.*\b(metrics?|kpis?)\b/.test(normalized)) {
+    return { intent: "metric_attention", mode: "fast_path" };
+  }
+  if (/\b(what happened|what has happened|what has been happening|what's been happening|workspace summary|workspace update|summari[sz]e (recent|workspace)|recent changes|kpi status)\b/.test(normalized)) {
     return { intent: "workspace_summary", mode: "fast_path" };
   }
   if (/\b(recommend|suggest|which|what)\b.*\b(metrics?|kpis?)\b.*\b(watch|monitor)\b|\b(metrics?|kpis?)\b.*\bworth watching\b/.test(normalized)) {

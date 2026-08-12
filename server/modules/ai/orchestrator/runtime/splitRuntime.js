@@ -2,6 +2,10 @@ const { buildContextManifest } = require("../../../workspaceContext/contextManif
 const { escapeMarkdown } = require("../../../workspaceContext/deterministicSummary");
 const { getWorkspaceAccessEnvelope } = require("../../../workspaceContext/accessEnvelope");
 const { getWorkspaceOrchestratorPolicy } = require("../../../workspaceContext/policy");
+const {
+  filterWorkspaceActivity,
+  getActivityResponseFocus,
+} = require("../../../workspaceContext/workspaceActivityFocus");
 const { clearPendingActions } = require("../../../workspaceContext/previewStore");
 const { readWorkspaceActivity } = require("../../../workspaceContext/workspaceActivityProjection");
 const { dispatchPlan } = require("./dispatcher");
@@ -300,7 +304,7 @@ function getAccessibleFacts(outputs, bootstrapFacts, plan, store) {
   return store.getExternalFacts([...ids]);
 }
 
-function renderSynthesis(output, pendingAction, plan, outputs = []) {
+function renderSynthesis(output, pendingAction, plan, outputs = [], responseFocus = null) {
   const titles = {
     kpi_review_preview: "KPI review preview",
     watch_preview: "Watched metric preview",
@@ -308,18 +312,34 @@ function renderSynthesis(output, pendingAction, plan, outputs = []) {
     workspace_question: "Workspace answer",
     workspace_summary: "Workspace update",
   };
-  const lines = [`## ${titles[plan.taskType] || "Workspace answer"}`];
+  const focusTitles = {
+    data_freshness: "Data freshness",
+    needs_attention: "Metrics that need attention",
+    recent_changes: "Recent changes",
+  };
+  const lines = [`## ${focusTitles[responseFocus] || titles[plan.taskType] || "Workspace answer"}`];
+  const renderedFocusedFacts = new Set();
+  let remainingFocusedItems = responseFocus ? 10 : Number.POSITIVE_INFINITY;
   output.answer.sections.forEach((section) => {
     if (section.items.length === 0) return;
+    const items = section.items.filter((item) => {
+      if (!responseFocus) return true;
+      const factRef = item.factRefs[0];
+      if (remainingFocusedItems <= 0 || renderedFocusedFacts.has(factRef)) return false;
+      renderedFocusedFacts.add(factRef);
+      remainingFocusedItems -= 1;
+      return true;
+    });
+    if (items.length === 0) return;
     const sectionName = `${section.type || "Details"}`
       .replace(/_/g, " ")
       .replace(/^./, (value) => value.toUpperCase());
     lines.push("", `### ${escapeMarkdown(sectionName, 80)}`, "");
-    section.items.forEach((item) => {
+    items.forEach((item) => {
       lines.push(`- ${escapeMarkdown(item.text, 500)}`);
     });
   });
-  if (output.recommendations.length > 0) {
+  if (!responseFocus && output.recommendations.length > 0) {
     lines.push("", "### Metrics to consider", "");
     output.recommendations.forEach((item) => {
       lines.push(`- ${escapeMarkdown(item.text, 400)}`);
@@ -328,9 +348,13 @@ function renderSynthesis(output, pendingAction, plan, outputs = []) {
   const complete = outputs.every((item) => item.status === "complete"
     && item.coverage.complete
     && !item.coverage.truncated);
-  lines.push("", complete
-    ? "Coverage includes all evidence requested by this task."
-    : "Some requested evidence was unavailable or limited.");
+  if (!complete) {
+    lines.push("", responseFocus
+      ? "More details are available in Activity."
+      : "Some requested evidence was unavailable or limited.");
+  } else if (!responseFocus) {
+    lines.push("", "Coverage includes all evidence requested by this task.");
+  }
   if (pendingAction) {
     lines.push("", "Review the prepared change below. It will not be applied until you confirm it.");
   }
@@ -378,13 +402,22 @@ async function runSplitWorkspaceRequest({
   toolRunner,
 }) {
   const route = routeWorkspaceRequest({ message: question });
-  if (route?.mode !== "planner" || !policy.externalWorkspaceContextEnabled || !client) return null;
+  const responseFocus = getActivityResponseFocus(route?.intent);
+  const directActivitySynthesis = route?.mode === "fast_path" && Boolean(responseFocus);
+  if (!policy.enabled
+    || (!directActivitySynthesis && route?.mode !== "planner")
+    || !policy.externalWorkspaceContextEnabled
+    || !client) return null;
+  if (directActivitySynthesis && !policy.workspaceSummariesEnabled) return null;
 
-  const [activity, envelope, toolDefinitions] = await Promise.all([
+  const [sourceActivity, envelope] = await Promise.all([
     activityReader(access),
     accessEnvelopeReader(access),
-    availableTools(),
   ]);
+  const activity = responseFocus
+    ? filterWorkspaceActivity(sourceActivity, responseFocus)
+    : sourceActivity;
+  const toolDefinitions = directActivitySynthesis ? [] : await availableTools();
   const allowedToolNames = getAllowedSplitToolNames({ envelope, options, policy });
   const definitionsByName = new Map(toolDefinitions
     .filter((definition) => allowedToolNames.has(definition.name))
@@ -451,6 +484,76 @@ async function runSplitWorkspaceRequest({
   };
 
   try {
+    if (directActivitySynthesis) {
+      const plan = {
+        answerCanUseBootstrapOnly: true,
+        planVersion: 1,
+        synthesisRequirements: {
+          includeCoverage: true,
+          includeNextAction: false,
+          rejectUnsupportedValues: true,
+        },
+        tasks: [],
+        taskType: "workspace_summary",
+      };
+      const outputs = [{
+        coverage: bootstrapNormalized.coverage,
+        facts: bootstrapFacts,
+        previewPrepared: false,
+        status: bootstrapNormalized.toolStatus,
+        taskId: "activity",
+      }];
+      const synthesisEnvelope = buildSynthesisEnvelope({
+        facts: bootstrapFacts,
+        outputs,
+        plan,
+        responseFocus,
+      });
+      assertNoForbiddenExternalData(synthesisEnvelope);
+      externalProviderUsed = true;
+      roleCalls.synthesis += 1;
+      const synthesisCall = await callProviderRole({
+        budget,
+        client,
+        envelope: synthesisEnvelope,
+        maximumOutputTokens: policy.maximumSynthesisOutputTokens,
+        model: policy.synthesisModel,
+        reasoningEffort: policy.synthesisReasoningEffort,
+        role: "synthesis",
+        schema: SYNTHESIS_SCHEMA,
+        schemaName: "chartbrew_workspace_answer",
+      });
+      if (synthesisCall.usage) usageRecords.push(synthesisCall.usage);
+      const accessibleFactIds = bootstrapFacts.map((fact) => fact.factId);
+      const validated = validateSynthesisOutput(getResponseJson(synthesisCall.response), {
+        accessibleFactIds,
+        allowedSummaryTextValues: bootstrapFacts.flatMap((fact) => (
+          store.registry.get(fact.factId)?.allowedTextValues || []
+        )),
+        factRegistry: store.registry,
+      });
+      const message = renderSynthesis(validated, null, plan, outputs, responseFocus);
+      const manifest = buildManifest(bootstrapFacts, "validated");
+      const finalUsageRecords = usageRecords.map((usage) => ({
+        ...usage,
+        context_manifest: manifest,
+      }));
+      return {
+        contextManifest: manifest,
+        conversationHistory: [
+          ...history,
+          { content: question, role: "user" },
+          { content: message, role: "assistant" },
+        ],
+        iterations: 0,
+        message,
+        pendingAction: null,
+        snapshots: [],
+        usage: aggregateUsage(finalUsageRecords),
+        usageRecords: finalUsageRecords,
+      };
+    }
+
     const plannerEnvelope = buildPlannerEnvelope({
       activity,
       capabilities: getCapabilities(envelope, options),
@@ -634,6 +737,7 @@ async function runSplitWorkspaceRequest({
       facts: accessibleFacts,
       outputs,
       plan,
+      responseFocus,
     });
     const currentPendingIds = pendingActions.map((action) => action.actionId);
     assertNoForbiddenExternalData(synthesisEnvelope, { pendingActionIds: currentPendingIds });
@@ -659,7 +763,13 @@ async function runSplitWorkspaceRequest({
       )),
       factRegistry: store.registry,
     });
-    const message = renderSynthesis(validated, visiblePendingAction, plan, outputs);
+    const message = renderSynthesis(
+      validated,
+      visiblePendingAction,
+      plan,
+      outputs,
+      responseFocus
+    );
     const manifest = buildManifest(accessibleFacts, "validated");
     const finalUsageRecords = usageRecords.map((usage) => ({
       ...usage,
