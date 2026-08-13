@@ -11,16 +11,8 @@ const PLATFORM_SETTING_DEFINITIONS = Object.freeze([
     key: "workspaceOrchestrator.enabled",
     group: "aiControls",
     label: "Enable Chartbrew AI",
-    description: "Let permitted users ask Chartbrew about existing data and metrics.",
-    type: "boolean",
-  },
-  {
-    key: "workspaceOrchestrator.externalWorkspaceContextEnabled",
-    group: "aiControls",
-    label: "Allow workspace data with external AI",
-    description: "Use permitted workspace information to answer AI questions.",
-    help: "Chartbrew sends only the information needed for the question. User and project permissions still apply.",
-    requiresProvider: true,
+    description: "Let permitted users ask Chartbrew about existing workspace data and metrics.",
+    help: "When an external AI provider is configured, Chartbrew sends only the permitted information needed for each question. User and project permissions still apply.",
     type: "boolean",
   },
   {

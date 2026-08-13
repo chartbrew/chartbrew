@@ -40,7 +40,6 @@ const DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY = Object.freeze({
   analysisDepth: DEFAULT_ANALYSIS_DEPTH,
   enabled: true,
   externalLearningContextEnabled: false,
-  externalWorkspaceContextEnabled: false,
   kpiReviewWritesEnabled: true,
   learningRetrievalEnabled: true,
   maximumContextCharacters: 240000,
@@ -225,10 +224,6 @@ function getEnvIntelligencePolicy(env = process.env) {
       externalLearningContextEnabled: parseBoolean(
         env.CB_WORKSPACE_EXTERNAL_LEARNING_CONTEXT_ENABLED,
         DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.externalLearningContextEnabled
-      ),
-      externalWorkspaceContextEnabled: parseBoolean(
-        env.CB_WORKSPACE_EXTERNAL_CONTEXT_ENABLED,
-        DEFAULT_WORKSPACE_ORCHESTRATOR_POLICY.externalWorkspaceContextEnabled
       ),
       kpiReviewWritesEnabled: parseBoolean(
         env.CB_WORKSPACE_KPI_REVIEW_WRITES_ENABLED,

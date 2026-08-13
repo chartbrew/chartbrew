@@ -41,7 +41,6 @@ async function getWorkspaceAccessEnvelope(access) {
   const orchestratorPolicy = getWorkspaceOrchestratorPolicy();
   const policy = {
     externalAiEnabled: Boolean(getOpenAiKey()),
-    externalWorkspaceContextEnabled: orchestratorPolicy.externalWorkspaceContextEnabled,
     kpiReviewWritesEnabled: orchestratorPolicy.kpiReviewWritesEnabled,
     learningRetrievalEnabled: orchestratorPolicy.learningRetrievalEnabled,
     metricMonitorWritesEnabled: orchestratorPolicy.metricMonitorWritesEnabled,
@@ -62,7 +61,7 @@ async function getWorkspaceAccessEnvelope(access) {
     canCreatePersonalKpiReview: !reportingOnly && Boolean(user?.email),
     canUseExternalAi: policy.externalAiEnabled,
     canUseExternalWorkspaceContext: policy.externalAiEnabled
-      && policy.externalWorkspaceContextEnabled,
+      && policy.workspaceOrchestratorEnabled,
     canViewOwnerAudit: access.canConfigureTeam,
     editableProjectIds,
     hasDeliveryEmail: Boolean(user?.email),

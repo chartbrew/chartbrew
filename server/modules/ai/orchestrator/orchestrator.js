@@ -278,10 +278,10 @@ const WORKSPACE_INTELLIGENCE_TOOLS = new Set([
 function filterToolDefinitionsForUser(
   toolDefinitions,
   userId,
-  externalWorkspaceContextEnabled = false,
+  workspaceAiEnabled = false,
   splitRuntime = false
 ) {
-  if (userId && externalWorkspaceContextEnabled && splitRuntime) return toolDefinitions;
+  if (userId && workspaceAiEnabled && splitRuntime) return toolDefinitions;
   return toolDefinitions.filter((tool) => !WORKSPACE_INTELLIGENCE_TOOLS.has(tool.name));
 }
 
@@ -2345,7 +2345,7 @@ async function orchestrate(
   toolDefinitions = filterToolDefinitionsForUser(
     toolDefinitions,
     userId,
-    getWorkspaceOrchestratorPolicy().externalWorkspaceContextEnabled,
+    getWorkspaceOrchestratorPolicy().enabled,
     false
   );
   if (!aiSessionId) {

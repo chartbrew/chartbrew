@@ -19,7 +19,8 @@ describe("Platform settings configuration", () => {
 
   it("does not register secrets or internal model selection", () => {
     const keys = PLATFORM_SETTING_DEFINITIONS.map((definition) => definition.key);
-    expect(keys).toHaveLength(13);
+    expect(keys).toHaveLength(12);
+    expect(keys).not.toContain("workspaceOrchestrator.externalWorkspaceContextEnabled");
     expect(keys).not.toContain("workspaceOrchestrator.plannerModel");
     expect(keys).not.toContain("workspaceOrchestrator.workerModel");
     expect(keys).not.toContain("observations.llmAuditMode");

@@ -406,7 +406,6 @@ async function runSplitWorkspaceRequest({
   const directActivitySynthesis = route?.mode === "fast_path" && Boolean(responseFocus);
   if (!policy.enabled
     || (!directActivitySynthesis && route?.mode !== "planner")
-    || !policy.externalWorkspaceContextEnabled
     || !client) return null;
   if (directActivitySynthesis && !policy.workspaceSummariesEnabled) return null;
 
