@@ -1,0 +1,341 @@
+import {
+  afterEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const mcpAi = require("../../sources/plugins/mcp/ai/mcp.ai");
+const { normalizeToolResult, selectToolOutput } = require("../../sources/plugins/mcp/mcp.normalize");
+const {
+  assertToolApproved,
+  mergeApprovals,
+  normalizeCustomHeaders,
+  sanitizeMcpClientError,
+  sanitizeTool,
+} = require("../../sources/plugins/mcp/mcp.policy");
+const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
+const mcpOauth = require("../../sources/plugins/mcp/mcp.oauth");
+const {
+  applyVariables,
+  applyVariablesToValue,
+} = require("../../sources/plugins/mcp/mcp.variables");
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+function createTool(overrides = {}) {
+  return sanitizeTool({
+    name: "list_orders",
+    title: "List orders",
+    description: "Read order data",
+    inputSchema: {
+      type: "object",
+      properties: {
+        status: { type: "string" },
+      },
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        orders: { type: "array", items: { type: "object" } },
+      },
+    },
+    annotations: { readOnlyHint: true },
+    ...overrides,
+  });
+}
+
+function createConnection(tool, approval = {}) {
+  return {
+    schema: {
+      mcp: {
+        tools: [tool],
+        allowedTools: {
+          [tool.name]: {
+            datasets: true,
+            ask: true,
+            confirmedReadOnly: true,
+            contractFingerprint: tool.contractFingerprint,
+            riskFingerprint: tool.riskFingerprint,
+            ...approval,
+          },
+        },
+      },
+    },
+  };
+}
+
+describe("MCP source policy", () => {
+  it("creates stable tool fingerprints and retains matching approvals", () => {
+    const tool = createTool();
+    const sameTool = createTool();
+    expect(sameTool.contractFingerprint).toBe(tool.contractFingerprint);
+    expect(sameTool.riskFingerprint).toBe(tool.riskFingerprint);
+
+    const approvals = mergeApprovals([tool], {
+      [tool.name]: {
+        datasets: true,
+        ask: false,
+        confirmedReadOnly: true,
+        contractFingerprint: tool.contractFingerprint,
+        riskFingerprint: tool.riskFingerprint,
+      },
+    });
+    expect(approvals[tool.name]).toMatchObject({ datasets: true, ask: false });
+  });
+
+  it("removes approval after a contract or risk change", () => {
+    const original = createTool();
+    const changedContract = createTool({
+      inputSchema: {
+        type: "object",
+        properties: { limit: { type: "number" } },
+      },
+    });
+    const changedRisk = createTool({ description: "Read customer orders and related details" });
+    const approval = {
+      datasets: true,
+      ask: true,
+      confirmedReadOnly: true,
+      contractFingerprint: original.contractFingerprint,
+      riskFingerprint: original.riskFingerprint,
+    };
+
+    expect(mergeApprovals([changedContract], { [original.name]: approval })).toEqual({});
+    expect(mergeApprovals([changedRisk], { [original.name]: approval })).toEqual({});
+  });
+
+  it("never approves a tool marked as destructive", () => {
+    const tool = createTool({ annotations: { destructiveHint: true } });
+    const approval = {
+      datasets: true,
+      ask: true,
+      confirmedReadOnly: true,
+      contractFingerprint: tool.contractFingerprint,
+      riskFingerprint: tool.riskFingerprint,
+    };
+    expect(mergeApprovals([tool], { [tool.name]: approval })).toEqual({});
+  });
+
+  it("requires exact approval fingerprints at execution time", () => {
+    const tool = createTool();
+    const connection = createConnection(tool, { contractFingerprint: "old" });
+    expect(() => assertToolApproved(connection, tool, "datasets"))
+      .toThrow("changed after approval");
+  });
+
+  it("blocks transport-managed custom headers", () => {
+    expect(() => normalizeCustomHeaders({ Authorization: "secret" }))
+      .toThrow("managed by Chartbrew");
+    expect(normalizeCustomHeaders({ "X-Api-Key": "secret" }))
+      .toEqual({ "x-api-key": "secret" });
+  });
+
+  it("returns safe recovery errors for OAuth and transport failures", () => {
+    expect(sanitizeMcpClientError({ name: "InsufficientScopeError" })).toMatchObject({
+      code: "MCP_APPROVE_ACCESS",
+      statusCode: 403,
+    });
+    expect(sanitizeMcpClientError({ name: "UnauthorizedError" })).toMatchObject({
+      code: "MCP_RECONNECT_REQUIRED",
+      statusCode: 401,
+    });
+    expect(sanitizeMcpClientError(new Error("secret server details"))).toMatchObject({
+      code: "MCP_REQUEST_FAILED",
+      message: "The MCP server request failed. Check the connection and try again.",
+    });
+  });
+});
+
+describe("MCP result and variable handling", () => {
+  it("prefers structured tool content and selects a row array", () => {
+    const normalized = normalizeToolResult({
+      structuredContent: { orders: [{ id: 1 }, { id: 2 }] },
+      content: [{ type: "text", text: "ignored" }],
+    });
+    expect(selectToolOutput(normalized, { mode: "auto" })).toEqual([{ id: 1 }, { id: 2 }]);
+  });
+
+  it("parses JSON text and wraps plain text as rows", () => {
+    expect(normalizeToolResult({ content: [{ type: "text", text: "[{\"id\":1}]" }] }))
+      .toEqual([{ id: 1 }]);
+    expect(normalizeToolResult({ content: [{ type: "text", text: "No rows" }] }))
+      .toEqual([{ content: "No rows" }]);
+  });
+
+  it("rejects tool errors, interactive results, media, HTML, and resource links", () => {
+    expect(() => normalizeToolResult({ isError: true, content: [] })).toThrow("returned an error");
+    expect(() => normalizeToolResult({ resultType: "input_required" })).toThrow("interactive");
+    expect(() => normalizeToolResult({ content: [{ type: "image", data: "data" }] })).toThrow("Media");
+    expect(() => normalizeToolResult({ content: [{ type: "text", text: "<html></html>" }] })).toThrow("HTML");
+    expect(() => normalizeToolResult({ content: [{ type: "resource_link", uri: "https://example.com" }] }))
+      .toThrow("linked resources");
+  });
+
+  it("returns isolated server-side MCP dataset defaults", () => {
+    const first = mcpProtocol.getDefaultDataRequest();
+    first.configuration.arguments.changed = true;
+    expect(mcpProtocol.getDefaultDataRequest()).toMatchObject({
+      method: "POST",
+      template: "mcp",
+      configuration: {
+        source: "mcp",
+        arguments: {},
+        output: { mode: "auto", path: [] },
+      },
+    });
+  });
+
+  it("selects an explicit nested output path", () => {
+    const value = { payload: { records: [{ id: 1 }] } };
+    expect(selectToolOutput(value, { mode: "path", path: "payload.records" }))
+      .toEqual([{ id: 1 }]);
+  });
+
+  it("rejects dataset results above the central row limit", () => {
+    expect(() => selectToolOutput(Array.from({ length: 10001 }, () => ({}))))
+      .toThrow("too many rows");
+  });
+
+  it("preserves typed exact variables and interpolates embedded variables", () => {
+    const result = applyVariablesToValue({
+      limit: "{{limit}}",
+      active: "{{active}}",
+      label: "Team {{team}}",
+    }, {
+      limit: 25,
+      active: true,
+      team: "North",
+    });
+    expect(result).toEqual({ limit: 25, active: true, label: "Team North" });
+  });
+
+  it("applies runtime and typed default bindings through the source contract", () => {
+    const dataRequest = {
+      configuration: {
+        arguments: {
+          limit: "{{limit}}",
+          active: "{{active}}",
+          label: "Orders for {{account}}",
+        },
+      },
+      VariableBindings: [
+        { name: "limit", type: "number", default_value: "25" },
+        { name: "active", type: "boolean", default_value: "true" },
+        { name: "account", type: "string", required: true },
+      ],
+      Connection: { id: 8 },
+    };
+    const result = applyVariables({ dataRequest, variables: { account: "north" } });
+    expect(result.processedDataRequest.configuration.arguments).toEqual({
+      limit: 25,
+      active: true,
+      label: "Orders for north",
+    });
+    expect(result.processedDataRequest.Connection).toBe(dataRequest.Connection);
+  });
+});
+
+describe("MCP source integration contracts", () => {
+  it("redacts bearer and custom header secrets", () => {
+    const bearer = mcpProtocol.redactConnection({
+      connection: {
+        type: "mcp",
+        authentication: { type: "bearer", token: "secret" },
+        options: { mcp: {} },
+      },
+    });
+    expect(bearer.authentication).toEqual(expect.objectContaining({ type: "bearer", hasToken: true }));
+    expect(JSON.stringify(bearer)).not.toContain("secret");
+
+    const headers = mcpProtocol.redactConnection({
+      connection: {
+        type: "mcp",
+        authentication: { type: "headers" },
+        options: { mcp: { headers: { "x-api-key": "hidden" } } },
+      },
+    });
+    expect(headers.authentication.headerNames).toEqual(["x-api-key"]);
+    expect(JSON.stringify(headers)).not.toContain("hidden");
+  });
+
+  it("lists only tools approved for Ask", () => {
+    const allowed = createTool();
+    const blocked = createTool({ name: "list_customers", title: "List customers" });
+    const connection = createConnection(allowed);
+    connection.schema.mcp.tools.push(blocked);
+
+    const resources = mcpAi.listResources({ connection });
+    expect(resources.resources.map((resource) => resource.id)).toEqual([allowed.name]);
+  });
+
+  it("asks for required tool arguments before planning a dataset", async () => {
+    const tool = createTool({
+      inputSchema: {
+        type: "object",
+        properties: { accountId: { type: "string" } },
+        required: ["accountId"],
+      },
+    });
+    const plan = await mcpAi.planDataset({
+      connection: createConnection(tool),
+      question: "List orders",
+      overrides: { toolName: tool.name },
+    });
+    expect(plan).toMatchObject({
+      status: "needs_more_context",
+      requiredContext: ["accountId"],
+    });
+  });
+
+  it("requires an owner or admin to start OAuth", async () => {
+    await expect(mcpOauth.startOAuth({
+      connection: { authentication: { type: "oauth" } },
+      user: { isEditor: false },
+    })).rejects.toMatchObject({ code: "MCP_ADMIN_REQUIRED", statusCode: 403 });
+  });
+
+  it("uses a public HTTPS OAuth client metadata URL when available", () => {
+    vi.stubEnv("VITE_APP_API_HOST_DEV", "https://chartbrew.example");
+    expect(mcpOauth.getClientMetadataUrl({ id: 8, team_id: 4 })).toBe(
+      "https://chartbrew.example/mcp/oauth/client-metadata?team_id=4&connection_id=8"
+    );
+    expect(mcpOauth.getClientMetadata({ id: 8, team_id: 4 })).toMatchObject({
+      client_name: "Chartbrew",
+      redirect_uris: [
+        "https://chartbrew.example/team/4/connections/8/mcp/oauth/callback",
+      ],
+    });
+  });
+
+  it("rejects an OAuth callback with the wrong state before token exchange", async () => {
+    await expect(mcpOauth.completeOAuth({
+      connection: {
+        id: 1,
+        team_id: 1,
+        authentication: { type: "oauth", state: "saved-state" },
+        schema: { mcp: { setupExpiresAt: new Date(Date.now() + 60000).toISOString() } },
+      },
+      code: "authorization-code",
+      state: "wrong-state",
+    })).rejects.toMatchObject({ code: "MCP_OAUTH_STATE_INVALID" });
+  });
+
+  it("expires incomplete OAuth setup", async () => {
+    await expect(mcpOauth.completeOAuth({
+      connection: {
+        id: 1,
+        team_id: 1,
+        authentication: { type: "oauth", state: "saved-state" },
+        schema: { mcp: { setupExpiresAt: new Date(Date.now() - 60000).toISOString() } },
+      },
+      code: "authorization-code",
+      state: "saved-state",
+    })).rejects.toMatchObject({ code: "MCP_OAUTH_SETUP_EXPIRED" });
+  });
+});

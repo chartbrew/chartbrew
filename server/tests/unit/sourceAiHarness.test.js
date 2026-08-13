@@ -9,6 +9,8 @@ const googleAnalyticsConnection = require("../../sources/plugins/googleAnalytics
 const googleAnalyticsProtocol = require("../../sources/plugins/googleAnalytics/googleAnalytics.protocol");
 const jiraConnection = require("../../sources/plugins/jira/jira.connection");
 const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
+const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
+const { sanitizeTool } = require("../../sources/plugins/mcp/mcp.policy");
 const stripeOfficialProtocol = require("../../sources/plugins/stripeOfficial/stripeOfficial.protocol");
 const apiProtocol = require("../../sources/shared/protocols/api.protocol");
 const db = require("../../models/models");
@@ -48,6 +50,7 @@ const SOURCE_OWNED_IDS = [
   "firestore",
   "googleAnalytics",
   "jira",
+  "mcp",
   "realtimedb",
   "stripeOfficial",
 ];
@@ -99,7 +102,7 @@ function expectDataRequestContract(sourceId, plan) {
   expect(sourceId !== "firestore" || hasQuery).toBe(true);
   expect(!["api", "customerio", "realtimedb"].includes(sourceId) || hasRoute).toBe(true);
   expect(!["api", "customerio"].includes(sourceId) || hasMethod).toBe(true);
-  expect(!["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
+  expect(!["googleAnalytics", "jira", "mcp", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
 }
 
 function expectChartPlanContract(plan) {
@@ -142,6 +145,12 @@ async function planFixture(fixture) {
 async function validateFixturePlan({ source, sourceId, payload, plan }) {
   if (["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId)) {
     return source.backend.ai.validateConfiguration(plan.configuration);
+  }
+
+  if (sourceId === "mcp") {
+    return source.backend.ai.validateConfiguration(plan.configuration, {
+      connection: payload.connection,
+    });
   }
 
   const dataRequest = {
@@ -239,6 +248,50 @@ const plannerContractFixtures = [{
   payload: {
     question: "Show open Jira issues by status",
   },
+}, {
+  name: "MCP approved tool table",
+  sourceId: "mcp",
+  payload: (() => {
+    const tool = sanitizeTool({
+      name: "list_orders",
+      title: "List orders",
+      description: "Read order data",
+      inputSchema: {
+        type: "object",
+        properties: { status: { type: "string" } },
+        required: ["status"],
+      },
+      outputSchema: {
+        type: "array",
+        items: { type: "object", properties: { id: { type: "string" } } },
+      },
+      annotations: { readOnlyHint: true },
+    });
+    return {
+      connection: {
+        id: 108,
+        team_id: TOOL_TEAM_ID,
+        type: "mcp",
+        subType: "mcp",
+        schema: {
+          mcp: {
+            tools: [tool],
+            allowedTools: {
+              [tool.name]: {
+                datasets: true,
+                ask: true,
+                confirmedReadOnly: true,
+                contractFingerprint: tool.contractFingerprint,
+                riskFingerprint: tool.riskFingerprint,
+              },
+            },
+          },
+        },
+      },
+      question: "Show paid orders",
+      overrides: { toolName: tool.name, arguments: { status: "paid" } },
+    };
+  })(),
 }];
 
 const toolHarnessConnections = {
@@ -302,6 +355,7 @@ const toolHarnessConnections = {
       },
     },
   },
+  mcp: plannerContractFixtures.find((fixture) => fixture.sourceId === "mcp").payload.connection,
   realtimedb: {
     id: 105,
     team_id: TOOL_TEAM_ID,
@@ -443,6 +497,13 @@ function setupRealtimeDbToolRuntime() {
   });
 }
 
+function setupMcpToolRuntime() {
+  vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+    data: [{ id: "ord_1", status: "paid" }],
+    tool: { name: "list_orders" },
+  });
+}
+
 function setupStripeOfficialToolRuntime() {
   vi.spyOn(stripeOfficialProtocol, "previewDataRequest").mockResolvedValue({
     responseData: {
@@ -526,6 +587,23 @@ const compactToolFixtures = [{
     configuration: { limitToLast: 5, limitToFirst: 0 },
   },
   setup: setupRealtimeDbToolRuntime,
+}, {
+  sourceId: "mcp",
+  question: "Show paid orders",
+  resource: "list_orders",
+  overrides: { toolName: "list_orders", arguments: { status: "paid" } },
+  previewConfiguration: {
+    source: "mcp",
+    tool: {
+      name: "list_orders",
+      contractFingerprint: plannerContractFixtures
+        .find((fixture) => fixture.sourceId === "mcp")
+        .payload.connection.schema.mcp.tools[0].contractFingerprint,
+    },
+    arguments: { status: "paid" },
+    output: { mode: "auto", path: [] },
+  },
+  setup: setupMcpToolRuntime,
 }, {
   sourceId: "stripeOfficial",
   question: "Show latest balance transactions",
@@ -781,9 +859,9 @@ describe("Source AI harness", () => {
     const plan = await sourcePlanDataset({
       ...basePayload,
       question: fixture.question,
-      overrides: fixture.sourceId === "googleAnalytics"
+      overrides: fixture.overrides || (fixture.sourceId === "googleAnalytics"
         ? { propertyId: "properties/123" }
-        : {},
+        : {}),
     });
     const validation = await sourceValidateConfiguration({
       ...basePayload,

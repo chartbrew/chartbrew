@@ -148,7 +148,8 @@ function ConnectionWizard() {
           dispatch(addFilesToConnection({ team_id: team.id, connection_id: createdConnection.payload.id, files }));
         }
 
-        if (data.type === "googleAnalytics") {
+        const createdSource = getSourcePlugin(data.subType || data.type);
+        if (data.type === "googleAnalytics" || createdSource?.capabilities?.nextSteps?.connectionAfterCreate) {
           navigate(`/connections/${createdConnection.payload.id}`);
           return true;
         }
