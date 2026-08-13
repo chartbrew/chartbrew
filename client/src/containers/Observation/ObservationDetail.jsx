@@ -25,6 +25,7 @@ import toast from "react-hot-toast";
 import {
   exploreObservationDrivers,
   getObservation,
+  removeObservationFeedback,
   resolveObservation,
   sendObservationFeedback,
   updateObservationPreference,
@@ -114,6 +115,20 @@ function ObservationDetail() {
       setObservation((current) => ({ ...current, feedback: savedFeedback }));
       setShowFeedbackReasons(verdict === "not_relevant");
       toast.success("Feedback saved");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setFeedbackPending(null);
+    }
+  };
+
+  const clearFeedback = async () => {
+    setFeedbackPending("clear");
+    try {
+      await removeObservationFeedback(team.id, observationId);
+      setObservation((current) => ({ ...current, feedback: null }));
+      setShowFeedbackReasons(false);
+      toast.success("Feedback removed");
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -505,6 +520,18 @@ function ObservationDetail() {
                   ))}
                 </div>
               </div>
+            ) : null}
+            {observation.feedback ? (
+              <Button
+                className="mt-3 px-0 text-muted"
+                isDisabled={Boolean(feedbackPending)}
+                isPending={feedbackPending === "clear"}
+                onPress={clearFeedback}
+                size="sm"
+                variant="ghost"
+              >
+                Remove feedback
+              </Button>
             ) : null}
           </section>
         </aside>

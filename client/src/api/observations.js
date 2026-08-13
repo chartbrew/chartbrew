@@ -85,6 +85,12 @@ export function sendObservationFeedback(teamId, observationId, feedback) {
   });
 }
 
+export function removeObservationFeedback(teamId, observationId) {
+  return observationRequest(`/team/${teamId}/observations/${observationId}/feedback`, {
+    method: "DELETE",
+  });
+}
+
 export function resolveObservation(teamId, observationId, resolved = true) {
   const action = resolved ? "resolve" : "reopen";
   return observationRequest(`/team/${teamId}/observations/${observationId}/${action}`, {
@@ -125,6 +131,17 @@ export function dismissMonitorRecommendation(teamId, recommendationId, type) {
       body: JSON.stringify({ type }),
       method: "POST",
     }
+  );
+}
+
+export function getMonitorRecommendationDismissals(teamId) {
+  return observationRequest(`/team/${teamId}/monitor-recommendation-dismissals`);
+}
+
+export function restoreMonitorRecommendation(teamId, dismissalId) {
+  return observationRequest(
+    `/team/${teamId}/monitor-recommendation-dismissals/${dismissalId}`,
+    { method: "DELETE" }
   );
 }
 

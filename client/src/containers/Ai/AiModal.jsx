@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import { Accordion, Button, Chip, Dropdown, Modal, Separator } from "@heroui/react"
-import { LuClock, LuMessageSquare, LuPlus, LuLoader, LuTrash2, LuEllipsis, LuSlack, LuSparkles, LuX } from "react-icons/lu"
+import { LuClock, LuMessageSquare, LuPlus, LuLoader, LuTrash2, LuEllipsis, LuSlack, LuX } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
@@ -18,11 +18,17 @@ import socketClient from "../../modules/socketClient";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import canAccess from "../../config/canAccess";
 import AiComposer from "./AiComposer";
+import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiContextPicker from "./AiContextPicker";
 import AiMessageGroup from "./AiMessageGroup";
 import AiProgress from "./AiProgress";
 import { AiLoadingActivity, AiUserPrompt } from "./AiTranscript";
-import { getChartToolMessageInfo, groupAiMessages } from "./aiMessageUtils";
+import useChatAutoScroll from "./hooks/useChatAutoScroll";
+import {
+  getChartToolMessageInfo,
+  getCompletedActionIds,
+  groupAiMessages,
+} from "./aiMessageUtils";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -39,6 +45,7 @@ function AiModal({ isOpen, onClose }) {
   const [isSocketReady, setIsSocketReady] = useState(false);
   const [progressEvents, setProgressEvents] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
+  const [pendingActions, setPendingActions] = useState([]);
   const [toolDisplayNames, setToolDisplayNames] = useState({});
   const [createdCharts, setCreatedCharts] = useState([]);
   const [selectedContext, setSelectedContext] = useState({
@@ -53,19 +60,23 @@ function AiModal({ isOpen, onClose }) {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const pendingConversationId = useSelector(selectAiModalConversationId);
-  const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
   const projects = useSelector(selectProjects);
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
+  const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
   const isTeamAdmin = canAccess("teamAdmin", user.id, team?.TeamRoles);
+  const isReportingOnly = teamRole === "projectViewer";
+  const questionPlaceholder = isReportingOnly
+    ? "Ask about existing reports and metrics"
+    : "Ask a question about your data";
   const contextEntities = useMemo(() => [
     ...projects.map((p) => ({ ...p, entity_type: "project" })),
     ...(isTeamAdmin ? connections.map((c) => ({ ...c, entity_type: "connection" })) : []),
-    ...datasets.map((d) => ({ ...d, entity_type: "dataset" })),
-  ], [projects, connections, datasets, isTeamAdmin]);
+    ...(!isReportingOnly ? datasets.map((d) => ({ ...d, entity_type: "dataset" })) : []),
+  ], [projects, connections, datasets, isReportingOnly, isTeamAdmin]);
 
   // Filter context entities based on search
   const filteredContextEntities = useMemo(() => contextEntities.filter((entity) => {
@@ -83,6 +94,30 @@ function AiModal({ isOpen, onClose }) {
   const conversationGroups = useMemo(() => (
     groupAiMessages(conversation?.full_history || [])
   ), [conversation?.full_history]);
+  const completedActionIds = useMemo(() => (
+    getCompletedActionIds(conversation?.full_history || [])
+  ), [conversation?.full_history]);
+  const scrollVersion = [
+    conversation?.id || "new",
+    conversation?.full_history?.length || 0,
+    localMessages.length,
+    progressEvents.length,
+    pendingActions.length,
+    createdCharts.length,
+    isLoading,
+  ].join(":");
+  const {
+    containerRef: chatScrollContainerRef,
+    contentRef: chatScrollContentRef,
+  } = useChatAutoScroll(scrollVersion, `${conversation?.id || "new"}:${isOpen}`);
+
+  const rememberPendingAction = (pendingAction) => {
+    if (!pendingAction?.actionId) return;
+    setPendingActions((current) => [
+      ...current.filter((item) => item.actionId !== pendingAction.actionId),
+      pendingAction,
+    ]);
+  };
 
   // Helper to get display label for context entity
   const getContextLabel = (entity) => {
@@ -128,11 +163,6 @@ function AiModal({ isOpen, onClose }) {
     }
     return null;
   };
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [localMessages, progressEvents]);
 
   // Fetch chart data for newly created charts
   useEffect(() => {
@@ -338,6 +368,7 @@ function AiModal({ isOpen, onClose }) {
     try {
       // If no conversation exists, create it immediately and switch to conversation view
       if (!conversation || conversation.isTemporary) {
+        setPendingActions([]);
         // Add user message to local messages immediately
         setLocalMessages([userMessage]);
         
@@ -366,6 +397,7 @@ function AiModal({ isOpen, onClose }) {
         if (!response || !response.orchestration || !response.orchestration.message) {
           throw new Error("Invalid response from AI");
         }
+        rememberPendingAction(response.orchestration.pendingAction);
 
         // Add AI response to local messages
         const aiMessage = {
@@ -413,6 +445,7 @@ function AiModal({ isOpen, onClose }) {
         if (!response || !response.orchestration || !response.orchestration.message) {
           throw new Error("Invalid response from AI");
         }
+        rememberPendingAction(response.orchestration.pendingAction);
 
         // Refresh conversation with updated history from database
         const updatedConversation = await getAiConversation(conversation.id, team.id);
@@ -455,6 +488,7 @@ function AiModal({ isOpen, onClose }) {
     setLocalMessages([]);
     setProgressEvents([]);
     setCreatedCharts([]);
+    setPendingActions([]);
     fetchedChartsRef.current.clear();
     setSelectedContext({
       multiSelect: [],
@@ -496,6 +530,7 @@ function AiModal({ isOpen, onClose }) {
         setLocalMessages([]);
         setProgressEvents([]);
         setCreatedCharts([]);
+        setPendingActions([]);
         fetchedChartsRef.current.clear();
       }
 
@@ -504,6 +539,42 @@ function AiModal({ isOpen, onClose }) {
     } catch (error) {
       toast.error(error.message);
     }
+  };
+
+  const _onConfirmPendingAction = async (pendingAction) => {
+    if (isLoading || !conversation?.id || !pendingAction?.actionId) return;
+    setIsLoading(true);
+    setProgressEvents([]);
+    try {
+      await respondAi({
+        action: {
+          actionId: pendingAction.actionId,
+          type: "confirm_pending_action",
+        },
+        aiConversationId: conversation.id,
+        persistence: "persistent",
+        teamId: team.id,
+      });
+      const updatedConversation = await getAiConversation(conversation.id, team.id);
+      if (updatedConversation?.conversation) {
+        setConversation(updatedConversation.conversation);
+      }
+      setPendingActions((current) => current.filter((item) => {
+        return item.actionId !== pendingAction.actionId;
+      }));
+      await loadConversations();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const _onChangePendingAction = async (pendingAction) => {
+    setPendingActions((current) => current.filter((item) => {
+      return item.actionId !== pendingAction.actionId;
+    }));
+    await _onAskAi("I want to change the proposed settings.");
   };
 
   const _onSuggestionClick = async (suggestion) => {
@@ -569,6 +640,7 @@ function AiModal({ isOpen, onClose }) {
       if (!response || !response.orchestration || !response.orchestration.message) {
         throw new Error("Invalid response from AI");
       }
+      rememberPendingAction(response.orchestration.pendingAction);
 
       // Add AI response to local messages
       const aiMessage = {
@@ -635,12 +707,8 @@ function AiModal({ isOpen, onClose }) {
           <Modal.Dialog className={conversation ? "h-[min(880px,92vh)] sm:max-w-[1180px]" : "sm:max-w-2xl"}>
             <Modal.CloseTrigger />
             {!conversation && (
-              <Modal.Body className="pt-8 pb-6">
-                <div className="mx-auto flex w-full max-w-xl flex-col gap-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
-                    <LuSparkles className="text-accent" size={15} aria-hidden />
-                    Ask your data
-                  </div>
+              <Modal.Body className="flex flex-col gap-5 pb-6 pt-8">
+                <div className="flex w-full flex-col gap-1.5">
                   <h2 className="font-tw text-2xl font-semibold text-foreground">
                     What do you want to understand?
                   </h2>
@@ -648,11 +716,10 @@ function AiModal({ isOpen, onClose }) {
                     Ask about a metric, compare a period, investigate a change, or create a visualization.
                   </p>
                 </div>
-                <div className="h-6" />
                 <AiComposer
                   id="ai-form"
                   name="aiQuestion"
-                  placeholder="Ask a question about your data"
+                  placeholder={questionPlaceholder}
                   isLoading={isLoading}
                   rows={2}
                   selectedContext={selectedContext}
@@ -684,57 +751,51 @@ function AiModal({ isOpen, onClose }) {
                   ]}
                 />
 
-                <div className="h-2" />
-
-                <div className="flex flex-row items-center gap-1 flex-wrap">
-                  {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
-                    <>
-                      {selectedContext.multiSelect.map((entity) => (
-                        <Chip
-                          key={`${entity.entity_type}-${entity.id}`}
-                          variant="primary"
-                          size="sm"
+                {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
+                  <div className="flex flex-row flex-wrap items-center gap-1">
+                    {selectedContext.multiSelect.map((entity) => (
+                      <Chip
+                        key={`${entity.entity_type}-${entity.id}`}
+                        variant="primary"
+                        size="sm"
+                      >
+                        <Chip.Label>{entity.label}</Chip.Label>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${entity.label}`}
+                          className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          onClick={() => {
+                            setSelectedContext(prev => ({
+                              ...prev,
+                              multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+                            }));
+                          }}
                         >
-                          <Chip.Label>{entity.label}</Chip.Label>
-                          <button
-                            type="button"
-                            aria-label={`Remove ${entity.label}`}
-                            className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                            onClick={() => {
-                              setSelectedContext(prev => ({
-                                ...prev,
-                                multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                              }));
-                            }}
-                          >
-                            <LuX size={14} aria-hidden />
-                          </button>
-                        </Chip>
-                      ))}
-                      {selectedContext.singleSelect && (
-                        <Chip variant="secondary" size="sm">
-                          <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
-                          <button
-                            type="button"
-                            aria-label={`Remove ${selectedContext.singleSelect.label}`}
-                            className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                            onClick={() => {
-                              setSelectedContext(prev => ({
-                                ...prev,
-                                singleSelect: null
-                              }));
-                            }}
-                          >
-                            <LuX size={14} aria-hidden />
-                          </button>
-                        </Chip>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="h-8" />
+                          <LuX size={14} aria-hidden />
+                        </button>
+                      </Chip>
+                    ))}
+                    {selectedContext.singleSelect && (
+                      <Chip variant="secondary" size="sm">
+                        <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${selectedContext.singleSelect.label}`}
+                          className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          onClick={() => {
+                            setSelectedContext(prev => ({
+                              ...prev,
+                              singleSelect: null
+                            }));
+                          }}
+                        >
+                          <LuX size={14} aria-hidden />
+                        </button>
+                      </Chip>
+                    )}
+                  </div>
+                )}
                 <Separator />
-                <div className="h-2" />
                 <Accordion>
                   <Accordion.Item
                     id="previous_conversations"
@@ -810,6 +871,7 @@ function AiModal({ isOpen, onClose }) {
                             setLocalMessages([]);
                             setProgressEvents([]);
                             setCreatedCharts([]);
+                            setPendingActions([]);
                             fetchedChartsRef.current.clear();
                             setSelectedContext({
                               multiSelect: [],
@@ -908,48 +970,64 @@ function AiModal({ isOpen, onClose }) {
                         </div>
                       </div>
                     </header>
-                    <div className="min-h-0 flex-1 overflow-y-auto py-5 pb-8">
-                      {conversation?.full_history?.length > 0 ? (
-                        <>
-                          {conversationGroups.map((group, index) => (
-                            <AiMessageGroup
-                              key={`group-${index}`}
-                              group={group}
-                              groupIndex={index}
-                              createdCharts={createdCharts}
-                              toolDisplayNames={toolDisplayNames}
-                              onSuggestionClick={_onSuggestionClick}
-                              isLoading={isLoading}
-                            />
-                          ))}
-                          <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
-                          {isLoading && progressEvents.length === 0 && (
-                            <div className="mb-5 px-4"><AiLoadingActivity /></div>
-                          )}
-                          <div ref={messagesEndRef} />
-                        </>
-                      ) : progressEvents.length > 0 ? (
-                        <>
-                          {localMessages.length > 0 && (
-                            <div className="mx-auto mb-5 w-full max-w-3xl px-4">
-                              <AiUserPrompt>{localMessages[0].content}</AiUserPrompt>
+                    <div
+                      className="min-h-0 flex-1 overflow-y-auto py-5 pb-8"
+                      ref={chatScrollContainerRef}
+                    >
+                      <div className="min-h-full" ref={chatScrollContentRef}>
+                        {conversation?.full_history?.length > 0 ? (
+                          <>
+                            {conversationGroups.map((group, index) => (
+                              <AiMessageGroup
+                                key={`group-${index}`}
+                                group={group}
+                                groupIndex={index}
+                                createdCharts={createdCharts}
+                                completedActionIds={completedActionIds}
+                                toolDisplayNames={toolDisplayNames}
+                                onChangeAction={_onChangePendingAction}
+                                onConfirmAction={_onConfirmPendingAction}
+                                onSuggestionClick={_onSuggestionClick}
+                                isLoading={isLoading}
+                              />
+                            ))}
+                            {pendingActions.map((pendingAction) => (
+                              <div className="mx-auto mb-6 w-full max-w-3xl px-4" key={pendingAction.actionId}>
+                                <AiActionPreviewCard
+                                  action={pendingAction}
+                                  isLoading={isLoading}
+                                  onChange={_onChangePendingAction}
+                                  onConfirm={_onConfirmPendingAction}
+                                />
+                              </div>
+                            ))}
+                            <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
+                            {isLoading && progressEvents.length === 0 && (
+                              <div className="mb-5 px-4"><AiLoadingActivity /></div>
+                            )}
+                          </>
+                        ) : progressEvents.length > 0 ? (
+                          <>
+                            {localMessages.length > 0 && (
+                              <div className="mx-auto mb-5 w-full max-w-3xl px-4">
+                                <AiUserPrompt>{localMessages[0].content}</AiUserPrompt>
+                              </div>
+                            )}
+                            <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
+                          </>
+                        ) : isLoading ? (
+                          <div className="flex justify-center items-center h-full">
+                            <div className="flex items-center gap-2 text-muted">
+                              <LuLoader className="animate-spin text-accent" size={18} aria-hidden />
+                              <span className="text-sm">Loading conversation…</span>
                             </div>
-                          )}
-                          <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
-                          <div ref={messagesEndRef} />
-                        </>
-                      ) : isLoading ? (
-                        <div className="flex justify-center items-center h-full">
-                          <div className="flex items-center gap-2 text-muted">
-                            <LuLoader className="animate-spin text-accent" size={18} aria-hidden />
-                            <span className="text-sm">Loading conversation…</span>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-sm text-muted">Ask a question to begin.</div>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="text-sm text-muted">Ask a question to begin.</div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="shrink-0 border-t border-divider bg-content1 px-4 py-3">
                       <div className="w-full">
@@ -957,7 +1035,7 @@ function AiModal({ isOpen, onClose }) {
                           id="ai-conversation-form"
                           name="aiConversationQuestion"
                           inputRef={inputRef}
-                          placeholder="Ask me anything about your data..."
+                          placeholder={questionPlaceholder}
                           isLoading={isLoading}
                           layout="inline"
                           selectedContext={selectedContext}

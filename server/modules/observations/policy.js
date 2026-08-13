@@ -1,9 +1,7 @@
-const {
-  getEnvIntelligencePolicy,
-} = require("../intelligence/envPolicyProvider");
+const { getPlatformIntelligencePolicy } = require("../platformSettings/runtime");
 
 function getObservationPolicy() {
-  return getEnvIntelligencePolicy().observations;
+  return getPlatformIntelligencePolicy().observations;
 }
 
 module.exports = {

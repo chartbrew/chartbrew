@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const { DateTime } = require("luxon");
 
 const db = require("../models/models");
@@ -20,6 +21,14 @@ const {
   failKpiReviewDelivery,
   getDeliveryKey,
 } = require("../modules/observations/kpiReview");
+const { clearPendingActions } = require("../modules/workspaceContext/previewStore");
+const {
+  createActionAudit,
+  getChangedFields,
+} = require("../modules/workspaceContext/actionAudit");
+const {
+  getKpiReviewAuditValues,
+} = require("../modules/workspaceContext/auditValues");
 
 const CADENCES = new Set(["daily", "weekly", "monthly"]);
 const CONTENT_MODES = new Set(["changes_only", "kpi_review"]);
@@ -56,6 +65,7 @@ function getSubscriptionScope(subscription) {
     return {
       id: subscription.monitor_id,
       name: subscription.MetricMonitor?.name || "Watched metric",
+      projectId: subscription.MetricMonitor?.project_id || null,
       projectName: subscription.MetricMonitor?.Project?.name || null,
       type: "monitor",
     };
@@ -72,6 +82,12 @@ function getSubscriptionScope(subscription) {
     name: "All accessible dashboards",
     type: "workspace",
   };
+}
+
+function isSubscriptionAccessible(subscription, access) {
+  const projectId = subscription.project_id || subscription.MetricMonitor?.project_id;
+  if (!projectId || access.allProjects) return true;
+  return access.projectIds.includes(Number(projectId));
 }
 
 function getDefaultWindowDays(cadence) {
@@ -127,13 +143,13 @@ function getSubscriptionIncludes() {
     required: false,
   }, {
     model: db.MetricMonitor,
-    attributes: ["id", "name"],
+    attributes: ["id", "name", "project_id"],
     required: false,
     include: [{ model: db.Project, attributes: ["id", "name"], required: false }],
   }];
 }
 
-async function validateSubscription(access, data = {}) {
+async function validateSubscription(access, data = {}, options = {}) {
   const cadence = data.cadence || "weekly";
   const contentMode = data.contentMode || "kpi_review";
   const timezone = data.timezone || "UTC";
@@ -170,6 +186,7 @@ async function validateSubscription(access, data = {}) {
     assertCanViewProject(access, data.projectId);
     const project = await db.Project.findOne({
       attributes: ["id"],
+      transaction: options.transaction,
       where: {
         ghost: false,
         id: data.projectId,
@@ -181,6 +198,7 @@ async function validateSubscription(access, data = {}) {
   if (data.monitorId) {
     const monitor = await db.MetricMonitor.findOne({
       attributes: ["id", "project_id"],
+      transaction: options.transaction,
       where: {
         id: data.monitorId,
         team_id: access.teamId,
@@ -205,6 +223,41 @@ async function validateSubscription(access, data = {}) {
     monitor_id: data.monitorId || null,
     project_id: data.projectId || null,
     timezone,
+  };
+}
+
+function getSubscriptionInput(subscription, data = {}) {
+  return {
+    cadence: data.cadence ?? subscription.cadence,
+    contentMode: data.contentMode ?? subscription.content_mode,
+    dayOfMonth: data.dayOfMonth ?? subscription.day_of_month,
+    dayOfWeek: data.dayOfWeek ?? subscription.day_of_week,
+    deliveryDays: data.deliveryDays !== undefined
+      ? data.deliveryDays
+      : parseStoredDeliveryDays(subscription.delivery_days),
+    enabled: data.enabled ?? subscription.enabled,
+    evaluationWaitMinutes: data.evaluationWaitMinutes
+      ?? subscription.evaluation_wait_minutes,
+    localDeliveryTime: data.localDeliveryTime ?? subscription.local_delivery_time,
+    monitorId: data.monitorId !== undefined ? data.monitorId : subscription.monitor_id,
+    projectId: data.projectId !== undefined ? data.projectId : subscription.project_id,
+    timezone: data.timezone ?? subscription.timezone,
+  };
+}
+
+function getSubscriptionInputFromValues(values) {
+  return {
+    cadence: values.cadence,
+    contentMode: values.content_mode,
+    dayOfMonth: values.day_of_month,
+    dayOfWeek: values.day_of_week,
+    deliveryDays: values.delivery_days,
+    enabled: values.enabled,
+    evaluationWaitMinutes: values.evaluation_wait_minutes,
+    localDeliveryTime: values.local_delivery_time,
+    monitorId: values.monitor_id,
+    projectId: values.project_id,
+    timezone: values.timezone,
   };
 }
 
@@ -280,16 +333,22 @@ class DigestController {
         user_id: access.userId,
       },
     });
-    return subscriptions.map(serializeSubscription);
+    return subscriptions
+      .filter((subscription) => isSubscriptionAccessible(subscription, access))
+      .map(serializeSubscription);
   }
 
-  async create(access, data) {
-    const values = await validateSubscription(access, data);
-    const user = await db.User.findByPk(access.userId, { attributes: ["email"] });
+  async create(access, data, options = {}) {
+    const values = await validateSubscription(access, data, options);
+    const user = await db.User.findByPk(access.userId, {
+      attributes: ["email"],
+      transaction: options.transaction,
+    });
     if (!user?.email) {
       throw createHttpError("Add an email address before scheduling a KPI review", 400);
     }
     const existing = await db.ObservationDigestSubscription.findOne({
+      transaction: options.transaction,
       where: {
         channel: values.channel,
         monitor_id: values.monitor_id,
@@ -299,26 +358,58 @@ class DigestController {
       },
     });
     if (existing) {
-      await existing.update(values);
-      return this.find(access, existing.id).then(serializeSubscription);
+      if (options.createOnly) {
+        throw createHttpError(
+          "A KPI review already uses this scope. Review it before making changes.",
+          409
+        );
+      }
+      if (options.dryRun) {
+        return {
+          data: getSubscriptionInputFromValues(values),
+          existing,
+          user,
+          values,
+        };
+      }
+      await existing.update(values, { transaction: options.transaction });
+      return this.find(access, existing.id, options).then(serializeSubscription);
     }
     const subscriptionCount = await db.ObservationDigestSubscription.count({
+      transaction: options.transaction,
       where: { team_id: access.teamId, user_id: access.userId },
     });
     if (subscriptionCount >= 10) {
       throw createHttpError("You can schedule up to 10 KPI reviews", 400);
     }
+    if (options.dryRun) {
+      return {
+        data: getSubscriptionInputFromValues(values),
+        existing: null,
+        user,
+        values,
+      };
+    }
     const subscription = await db.ObservationDigestSubscription.create({
       ...values,
       team_id: access.teamId,
       user_id: access.userId,
-    });
-    return this.find(access, subscription.id).then(serializeSubscription);
+    }, { transaction: options.transaction });
+    return this.find(access, subscription.id, options).then(serializeSubscription);
   }
 
-  async find(access, subscriptionId) {
+  async createStrict(access, data, options = {}) {
+    return this.create(access, data, { ...options, createOnly: true });
+  }
+
+  async previewCreate(access, data) {
+    return this.create(access, data, { createOnly: true, dryRun: true });
+  }
+
+  async find(access, subscriptionId, options = {}) {
     const subscription = await db.ObservationDigestSubscription.findOne({
       include: getSubscriptionIncludes(),
+      transaction: options.transaction,
       where: {
         id: subscriptionId,
         team_id: access.teamId,
@@ -329,30 +420,54 @@ class DigestController {
     return subscription;
   }
 
-  async update(access, subscriptionId, data) {
-    const subscription = await this.find(access, subscriptionId);
-    const values = await validateSubscription(access, {
-      cadence: data.cadence ?? subscription.cadence,
-      contentMode: data.contentMode ?? subscription.content_mode,
-      dayOfMonth: data.dayOfMonth ?? subscription.day_of_month,
-      dayOfWeek: data.dayOfWeek ?? subscription.day_of_week,
-      deliveryDays: data.deliveryDays !== undefined
-        ? data.deliveryDays
-        : parseStoredDeliveryDays(subscription.delivery_days),
-      enabled: data.enabled ?? subscription.enabled,
-      evaluationWaitMinutes: data.evaluationWaitMinutes
-        ?? subscription.evaluation_wait_minutes,
-      localDeliveryTime: data.localDeliveryTime ?? subscription.local_delivery_time,
-      monitorId: data.monitorId !== undefined ? data.monitorId : subscription.monitor_id,
-      projectId: data.projectId !== undefined ? data.projectId : subscription.project_id,
-      timezone: data.timezone ?? subscription.timezone,
+  async update(access, subscriptionId, data, options = {}) {
+    const subscription = await this.find(access, subscriptionId, options);
+    const mergedData = getSubscriptionInput(subscription, data);
+    const values = await validateSubscription(access, mergedData, options);
+    if (options.dryRun) {
+      return {
+        data: getSubscriptionInputFromValues(values),
+        subscription,
+        values,
+      };
+    }
+    await subscription.update(values, { transaction: options.transaction });
+    return this.find(access, subscription.id, options).then(serializeSubscription);
+  }
+
+  async updateWithAudit(access, subscriptionId, data = {}) {
+    return db.sequelize.transaction(async (transaction) => {
+      const current = await this.find(access, subscriptionId, { transaction });
+      const beforeValues = getKpiReviewAuditValues(current);
+      const resource = await this.update(access, subscriptionId, data, { transaction });
+      const afterValues = getKpiReviewAuditValues(resource);
+      if (getChangedFields(beforeValues, afterValues).length > 0) {
+        await createActionAudit({
+          access,
+          actionId: crypto.randomUUID(),
+          actionType: "kpi_review.update",
+          afterValues,
+          authorityType: "direct_ui",
+          beforeValues,
+          projectId: resource.projectId || resource.scope?.projectId || null,
+          resourceId: resource.id,
+          resourceType: "kpi_review",
+          source: "ui",
+          status: "applied",
+          transaction,
+        });
+      }
+      return resource;
     });
-    await subscription.update(values);
-    return this.find(access, subscription.id).then(serializeSubscription);
+  }
+
+  async previewUpdate(access, subscriptionId, data = {}) {
+    return this.update(access, subscriptionId, data, { dryRun: true });
   }
 
   async remove(access, subscriptionId) {
     const subscription = await this.find(access, subscriptionId);
+    await clearPendingActions({ access, resourceId: subscription.id });
     await subscription.destroy();
     return { removed: true };
   }
@@ -423,14 +538,26 @@ class DigestController {
     };
   }
 
-  async preview(access, data) {
+  async getPreviewContent(access, data) {
     const values = await validateSubscription(access, data);
     const [project, monitor] = await Promise.all([
-      values.project_id ? db.Project.findByPk(values.project_id, { attributes: ["id", "name"] }) : null,
+      values.project_id ? db.Project.findOne({
+        attributes: ["id", "name"],
+        where: {
+          ghost: false,
+          id: values.project_id,
+          team_id: access.teamId,
+          ...getProjectScope(access, "id"),
+        },
+      }) : null,
       values.monitor_id ? db.MetricMonitor.findOne({
         attributes: ["id", "name", "project_id"],
         include: [{ model: db.Project, attributes: ["id", "name"], required: false }],
-        where: { id: values.monitor_id, team_id: access.teamId },
+        where: {
+          id: values.monitor_id,
+          team_id: access.teamId,
+          ...getProjectScope(access),
+        },
       }) : null,
     ]);
     const content = await this.buildContent(access, {
@@ -440,6 +567,34 @@ class DigestController {
       last_delivered_at: null,
       last_noop_at: null,
     });
+    return {
+      content,
+      monitor,
+      project,
+      values,
+    };
+  }
+
+  async previewFacts(access, data) {
+    const {
+      content,
+      monitor,
+      project,
+      values,
+    } = await this.getPreviewContent(access, data);
+    return {
+      activeHealthCount: content.health.count,
+      eligibleMetricCount: content.kpis.length,
+      nextDeliveryAt: getNextDigestDelivery(values),
+      projectId: monitor?.project_id || project?.id || null,
+      recipient: content.user?.email || null,
+      scopeLabel: monitor?.name || project?.name || "All accessible dashboards",
+      waitingMetricCount: content.waitingMetrics.length,
+    };
+  }
+
+  async preview(access, data) {
+    const { content } = await this.getPreviewContent(access, data);
     return {
       attentionCount: content.attentionItems.length,
       evaluationCount: content.kpis.length,
@@ -544,6 +699,7 @@ class DigestController {
 }
 
 module.exports = DigestController;
+module.exports.isSubscriptionAccessible = isSubscriptionAccessible;
 module.exports.getRecommendedCadence = getRecommendedCadence;
 module.exports.serializeSubscription = serializeSubscription;
 module.exports.shouldHoldKpiReview = shouldHoldKpiReview;

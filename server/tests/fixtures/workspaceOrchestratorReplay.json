@@ -1,0 +1,69 @@
+{
+  "replayVersion": 1,
+  "cases": [
+    {
+      "id": "workspace_summary_activity_first",
+      "kind": "route",
+      "message": "What happened in the workspace this week?",
+      "expected": "fast_path:workspace_summary"
+    },
+    {
+      "id": "workspace_follow_up_uses_local_fallback",
+      "kind": "route",
+      "message": "Tell me more about this workspace",
+      "expected": "planner:workspace_follow_up"
+    },
+    {
+      "id": "metric_attention_has_a_focused_route",
+      "kind": "route",
+      "message": "Which metrics need attention?",
+      "expected": "fast_path:metric_attention"
+    },
+    {
+      "id": "data_freshness_has_a_focused_route",
+      "kind": "route",
+      "message": "Check data freshness",
+      "expected": "fast_path:data_freshness"
+    },
+    {
+      "id": "recommendation_is_read_only",
+      "kind": "route",
+      "message": "What metrics should we watch?",
+      "expected": "fast_path:watch_recommendation"
+    },
+    {
+      "actionType": "metric_monitor.create",
+      "id": "question_does_not_prepare_watch",
+      "kind": "preview_gate",
+      "message": "Which metrics should I watch?",
+      "expected": "rejected"
+    },
+    {
+      "actionType": "metric_monitor.create",
+      "id": "uncertain_suggestion_does_not_prepare_watch",
+      "kind": "preview_gate",
+      "message": "Maybe watch weekly sign-ups",
+      "expected": "rejected"
+    },
+    {
+      "actionType": "metric_monitor.create",
+      "id": "clear_watch_instruction_prepares_preview",
+      "kind": "preview_gate",
+      "message": "Prepare a watch for weekly sign-ups",
+      "expected": "allowed"
+    },
+    {
+      "actionType": "kpi_review.create",
+      "id": "kpi_review_preview_is_allowed",
+      "kind": "preview_gate",
+      "message": "Preview a weekly KPI review",
+      "expected": "allowed"
+    },
+    {
+      "id": "typed_confirmation_uses_executor",
+      "kind": "route",
+      "message": "Yes",
+      "expected": "executor:confirm_pending_action"
+    }
+  ]
+}

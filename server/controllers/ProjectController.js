@@ -5,6 +5,7 @@ const db = require("../models/models");
 const TeamController = require("./TeamController");
 const templateModels = require("../templates");
 const { snapDashboard } = require("../modules/snapshots");
+const runtimeCache = require("../modules/runtimeCache");
 const { normalizeProjectScheduleTimezones } = require("../modules/projectSnapshotTimezone");
 const { hashProjectPassword, verifyProjectPassword } = require("../modules/projectPassword");
 const {
@@ -151,22 +152,19 @@ class ProjectController {
       });
   }
 
-  remove(id) {
-    // remove the project and any associated items alongs with that
-    return db.Variable.destroy({ where: { project_id: id } })
-      .then(() => {
-        return db.Project.destroy({ where: { id } });
-      })
-      .then(() => {
-        // make sure all charts from this project are deleted as well
-        return db.Chart.destroy({ where: { project_id: id } });
-      })
-      .then(() => {
-        return { removed: true };
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
+  async remove(id) {
+    const project = await db.Project.findByPk(id, { attributes: ["id", "team_id"] });
+    if (project) {
+      await runtimeCache.clearPendingAiActions({
+        projectId: project.id,
+        teamId: project.team_id,
       });
+    }
+    await db.Variable.destroy({ where: { project_id: id } });
+    await db.Project.destroy({ where: { id } });
+    // Make sure all charts from this project are deleted as well.
+    await db.Chart.destroy({ where: { project_id: id } });
+    return { removed: true };
   }
 
   updateProjectRole(projectId, userId, role, options = {}) {

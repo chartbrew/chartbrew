@@ -14,6 +14,7 @@ const integration = require("./IntegrationRoute");
 const ai = require("./AiRoute");
 const updateRun = require("./UpdateRunRoute");
 const observation = require("./ObservationRoute");
+const platform = require("./PlatformSettingsRoute");
 
 module.exports = {
   team,
@@ -32,4 +33,5 @@ module.exports = {
   integration,
   ai,
   observation,
+  platform,
 };

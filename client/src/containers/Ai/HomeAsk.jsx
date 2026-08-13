@@ -5,19 +5,27 @@ import {
   LuChevronUp,
   LuMessageSquare,
 } from "react-icons/lu";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { getAiConversations } from "../../api/ai";
 import { showAiModal } from "../../slices/ui";
+import { selectTeam } from "../../slices/team";
+import { selectUser } from "../../slices/user";
 import AiChat from "./AiChat";
 import useAiChat from "./hooks/useAiChat";
 
 function HomeAsk({ teamId }) {
   const dispatch = useDispatch();
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
   const [saved, setSaved] = useState(false);
   const [conversations, setConversations] = useState([]);
   const chat = useAiChat({ teamId });
   const conversationStarted = chat.messages.length > 0;
+  const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
+  const questionPlaceholder = teamRole === "projectViewer"
+    ? "Ask about existing reports and metrics"
+    : "Ask anything about your data";
 
   const loadRecentConversations = useCallback(() => {
     if (!teamId) return;
@@ -48,9 +56,11 @@ function HomeAsk({ teamId }) {
             id="home-ask"
             isLoading={chat.isLoading}
             messages={chat.messages}
+            onChangeAction={chat.changeAction}
+            onConfirmAction={chat.confirmAction}
             onSave={onSave}
             onSubmit={chat.sendMessage}
-            placeholder="Ask anything about your data"
+            placeholder={questionPlaceholder}
             showSave={Boolean(chat.sessionId)}
             suggestions={[
               "Summarize recent changes",

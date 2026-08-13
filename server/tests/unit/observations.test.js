@@ -159,7 +159,7 @@ describe("workspace observations", () => {
     expect(recommendations).toHaveLength(2);
     expect(recommendations[0].chart.id).toBe(5);
     expect(recommendations[0].reasons[0]).toContain("active alert");
-    expect(recommendations[1].reasons[0]).toContain("3 people have pinned");
+    expect(recommendations[1].reasons[0]).toContain("You pinned");
     expect(serializeRecommendation(recommendations[0])).not.toHaveProperty("rank");
     expect(serializeRecommendation(recommendations[0])).not.toHaveProperty("_definition");
   });

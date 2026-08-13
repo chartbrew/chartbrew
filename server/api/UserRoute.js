@@ -216,7 +216,11 @@ module.exports = (app) => {
   */
   app.put("/user/:id", verifyUser, (req, res) => {
     if (!req.body || !req.params.id) return res.status(400).send("Missing fields");
-    return userController.update(req.params.id, req.body)
+    const profileUpdate = {};
+    ["name", "icon", "tutorials"].forEach((field) => {
+      if (req.body[field] !== undefined) profileUpdate[field] = req.body[field];
+    });
+    return userController.update(req.params.id, profileUpdate)
       .then((user) => {
         return res.status(200).send(userResponse(user));
       })

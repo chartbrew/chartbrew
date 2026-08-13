@@ -1,7 +1,7 @@
 const { Op } = require("sequelize");
 
 const db = require("../../models/models");
-const { getEnvIntelligencePolicy } = require("../intelligence/envPolicyProvider");
+const { getPlatformIntelligencePolicy } = require("../platformSettings/runtime");
 const { profileDataset } = require("./profileDataset");
 
 async function backfillDatasetIntelligence(
@@ -13,7 +13,7 @@ async function backfillDatasetIntelligence(
   if (hasTeamId && (!Number.isInteger(normalizedTeamId) || normalizedTeamId <= 0)) {
     throw new Error("teamId must be a positive integer");
   }
-  const fallbackPolicy = getEnvIntelligencePolicy().datasetIntelligence;
+  const fallbackPolicy = getPlatformIntelligencePolicy().datasetIntelligence;
   const batchSize = Math.min(
     Math.max(Number.parseInt(limit, 10) || fallbackPolicy.backfillBatchSize, 1),
     fallbackPolicy.backfillBatchSize

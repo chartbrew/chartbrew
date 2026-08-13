@@ -33,6 +33,10 @@ const periodEvaluationScheduler = require("./modules/observations/periodEvaluati
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
 const { setUpQueues } = require("./setUpQueues");
 const socketManager = require("./modules/socketManager");
+const {
+  refreshPlatformSettings,
+  startPlatformSettingsRefresh,
+} = require("./modules/platformSettings/runtime");
 
 const uploadsDirectory = path.resolve(__dirname, "uploads");
 const legacyUploadsDirectory = path.resolve(process.cwd(), "uploads");
@@ -140,6 +144,9 @@ db.migrate()
     } catch (e) {
       // continue
     }
+
+    await refreshPlatformSettings();
+    startPlatformSettingsRefresh();
 
     const server = app.listen(port, app.settings.api, async () => {
       // Initialize Socket.IO

@@ -7,6 +7,8 @@ This document covers all authentication and user management flows in Chartbrew.
 - **Endpoint**: `POST /user` in [`server/api/UserRoute.js`](../api/UserRoute.js)
 - Uses `UserController.createUser()`
 - Returns a token created with `jwt.sign(..., app.settings.encryptionKey, ...)`
+- The first user becomes a platform admin only after Chartbrew creates a `teamOwner` role for that user.
+- The platform-settings migration applies the same check to an existing instance.
 
 ## Login Flow
 
@@ -71,9 +73,18 @@ This document covers all authentication and user management flows in Chartbrew.
   - Protected by [`server/modules/verifyUser.js`](../modules/verifyUser.js) (token user id must match `:id`)
 - **Update user**: `PUT /user/:id`
   - Protected by [`server/modules/verifyUser.js`](../modules/verifyUser.js)
-  - `admin` cannot be set through this API (model hook forces `admin=false`)
+  - Only `name`, `icon`, and `tutorials` are accepted from this route.
+  - `UserController.update()` also removes `admin` before all normal user updates.
 - **Delete user**: `DELETE /user/:id`
   - Protected by [`server/modules/verifyToken.js`](../modules/verifyToken.js) and additionally checks `req.user.id === :id`
 - **Admin listing**: `GET /user`
   - Protected by `verifyToken` and checks `req.user.admin`
-  - Note: admins are intended to be set **only in DB**, not via API
+  - No API route can grant the platform-admin role.
+
+## Platform Administration
+
+- `User.admin` is a global platform-admin flag. It is not a team role.
+- The authenticated user response includes this flag so the client can show the Platform tab.
+- Every platform-settings route reloads the user from the database and checks `req.user.admin === true`.
+- Hiding the Platform tab is not an authorization control.
+- See [`server/docs/agents/platform-settings.md`](./platform-settings.md) for the settings registry and API boundary.

@@ -1,0 +1,37 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { getChartToolMessageInfo } from "./aiMessageUtils.js";
+
+test("restores a temporary chart preview from saved tool history", () => {
+  const parsed = getChartToolMessageInfo({
+    content: JSON.stringify({
+      chart_id: 44,
+      ghost_project_id: 77,
+      name: "Trial conversion",
+      visibility: "temporary",
+    }),
+    name: "create_temporary_chart",
+    role: "tool",
+  });
+  assert.equal(parsed.chartId, 44);
+  assert.equal(parsed.chartName, "Trial conversion");
+  assert.equal(parsed.projectId, 77);
+  assert.equal(parsed.type, "chart_temporary");
+});
+
+test("restores a saved chart from persistent tool history", () => {
+  const parsed = getChartToolMessageInfo({
+    content: JSON.stringify({
+      chart_id: 45,
+      name: "Revenue",
+      project_id: 78,
+      visibility: "dashboard",
+    }),
+    name: "create_chart",
+    role: "tool",
+  });
+  assert.equal(parsed.type, "chart_created");
+  assert.equal(parsed.projectId, 78);
+  assert.equal(parsed.isTemporary, undefined);
+});

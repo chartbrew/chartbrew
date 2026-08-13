@@ -53,6 +53,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       comment: "Truncated tool result for UI preview (first 500 chars)"
     },
+    sensitive_workspace_context: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    workspace_access_version: DataTypes.STRING,
     sequence: {
       type: DataTypes.INTEGER,
       allowNull: false,

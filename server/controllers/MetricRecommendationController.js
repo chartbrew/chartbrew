@@ -8,7 +8,14 @@ const {
   getProjectScope,
 } = require("../modules/observations/access");
 const {
+  rankRecommendationsWithLearning,
+} = require("../modules/workspaceContext/learningRanking");
+const {
+  getWorkspaceLearningProjection,
+} = require("../modules/workspaceContext/workspaceLearningProjection");
+const {
   buildMetricRecommendations,
+  isCurrentDismissal,
   serializeRecommendation,
 } = require("../modules/observations/metricRecommendations");
 
@@ -66,7 +73,11 @@ class MetricRecommendationController {
       }),
       db.PinnedDashboard.findAll({
         attributes: ["project_id"],
-        where: { project_id: { [Op.in]: projectIds }, team_id: access.teamId },
+        where: {
+          project_id: { [Op.in]: projectIds },
+          team_id: access.teamId,
+          user_id: access.userId,
+        },
       }),
       includeDismissed ? [] : db.MetricRecommendationDismissal.findAll({
         attributes: [
@@ -93,8 +104,82 @@ class MetricRecommendationController {
   }
 
   async list(access) {
-    const recommendations = await this.generate(access);
-    return recommendations.map(serializeRecommendation);
+    const [recommendations, learning] = await Promise.all([
+      this.generate(access),
+      getWorkspaceLearningProjection(access, {
+        maximumAgeDays: 365,
+        task: "recommendation",
+      }),
+    ]);
+    return rankRecommendationsWithLearning(
+      recommendations,
+      learning.items
+    ).map(serializeRecommendation);
+  }
+
+  async listDismissals(access) {
+    const [dismissals, recommendations] = await Promise.all([
+      db.MetricRecommendationDismissal.findAll({
+        include: [{
+          attributes: ["id", "name"],
+          model: db.Chart,
+          required: true,
+        }, {
+          attributes: ["id", "name"],
+          model: db.Project,
+          required: true,
+        }],
+        order: [["updatedAt", "DESC"]],
+        where: {
+          dismissed_by: access.userId,
+          team_id: access.teamId,
+          ...getProjectScope(access),
+        },
+      }),
+      this.generate(access, { includeDismissed: true, limit: MAXIMUM_CANDIDATES }),
+    ]);
+    const recommendationsByDefinition = new Map(recommendations.map((recommendation) => [
+      [
+        recommendation.chart.id,
+        recommendation._definition.bindingKey,
+        recommendation._definition.definitionFingerprint,
+      ].join(":"),
+      recommendation,
+    ]));
+    return dismissals.flatMap((dismissal) => {
+      if (!isCurrentDismissal(dismissal)) return [];
+      const recommendation = recommendationsByDefinition.get([
+        dismissal.chart_id,
+        dismissal.binding_key,
+        dismissal.definition_fingerprint,
+      ].join(":"));
+      if (!recommendation) return [];
+      return [{
+        chartName: dismissal.Chart.name,
+        dashboardName: dismissal.Project.name,
+        dismissalType: dismissal.dismissal_type,
+        expiresAt: dismissal.expires_at,
+        id: dismissal.id,
+        name: recommendation.name,
+      }];
+    });
+  }
+
+  async restore(access, dismissalId) {
+    const dismissal = await db.MetricRecommendationDismissal.findOne({
+      where: {
+        dismissed_by: access.userId,
+        id: dismissalId,
+        team_id: access.teamId,
+        ...getProjectScope(access),
+      },
+    });
+    if (!dismissal) throw createHttpError("Hidden metric suggestion not found", 404);
+    if (!canEditProject(access, dismissal.project_id)) {
+      throw createHttpError("You do not have permission to restore this suggestion", 403);
+    }
+    await dismissal.destroy();
+    return { restored: true };
   }
 
   async findCurrent(access, recommendationId, includeDismissed = false) {

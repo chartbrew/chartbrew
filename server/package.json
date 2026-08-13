@@ -26,6 +26,8 @@
     "observations:replay:synthbrew": "node scripts/replaySynthbrewPeriods.js",
     "viz:migration-audit": "node scripts/auditVisualizationMigration.js",
     "viz:corpus-audit": "node scripts/auditVisualizationCorpus.js",
+    "workspace-learning:audit": "node scripts/workspaceLearningAudit.js",
+    "workspace-orchestrator:evaluate": "node scripts/evaluateWorkspaceOrchestrator.js",
     "precommit": "lint-staged",
     "install:playwright": "npx --yes playwright install chromium --with-deps",
     "postinstall": "node scripts/installPlaywright.js"

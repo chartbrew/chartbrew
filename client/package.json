@@ -8,6 +8,7 @@
     "dev": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && vite",
     "build": "npm run prepareSettings && vite build",
     "lint": "oxlint",
+    "test:ai": "node --test src/containers/Ai/aiMessageUtils.test.js src/containers/Ai/chartPreviewState.test.js src/containers/Ai/chatScroll.test.js src/modules/workspaceAuditFormat.test.js",
     "preview": "vite preview",
     "tailwind": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
     "prepareSettings": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js | true"

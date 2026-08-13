@@ -11,6 +11,7 @@ This is the index for agent-oriented documentation. Each topic is detailed in se
 
 ### Features and Flows
 - [User Authentication](docs/agents/user-authentication.md) - Signup, login, 2FA, password reset, email updates
+- [Platform Settings](docs/agents/platform-settings.md) - Platform-admin access, safe configuration registry, and runtime overrides
 
 ### Development
 - [Testing Guide](docs/agents/testing-guide.md) - Test framework, DB lifecycle, integration tests
@@ -31,6 +32,7 @@ These documents are optimized for LLM agents to:
 | Data Visualization Pipeline | ✓ Current | 2025-01-XX |
 | Filtering Guide | ✓ Current | 2026-04-14 |
 | User Authentication | ✓ Current | 2025-01-XX |
+| Platform Settings | ✓ Current | 2026-08-12 |
 | Testing Guide | ✓ Current | 2025-01-XX |
 
 ## Contributing to Agent Docs

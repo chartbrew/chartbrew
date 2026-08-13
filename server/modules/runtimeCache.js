@@ -127,6 +127,17 @@ class InMemoryRuntimeStore {
     this.values = new Map();
     this.sortedSets = new Map();
     this.hashes = new Map();
+    this.hashExpiries = new Map();
+  }
+
+  clearExpiredHash(key) {
+    const expiresAt = this.hashExpiries.get(key);
+    if (expiresAt && expiresAt <= Date.now()) {
+      this.hashes.delete(key);
+      this.hashExpiries.delete(key);
+      return true;
+    }
+    return false;
   }
 
   async get(key) {
@@ -153,10 +164,23 @@ class InMemoryRuntimeStore {
     this.values.delete(key);
     this.sortedSets.delete(key);
     this.hashes.delete(key);
+    this.hashExpiries.delete(key);
     return 1;
   }
 
+  async consume(key) {
+    const entry = this.values.get(key);
+    if (!entry) return null;
+    if (entry.expiresAt && entry.expiresAt <= Date.now()) {
+      this.values.delete(key);
+      return null;
+    }
+    this.values.delete(key);
+    return entry.value;
+  }
+
   async hset(key, field, value) {
+    this.clearExpiredHash(key);
     const hash = this.hashes.get(key) || new Map();
     if (value === undefined) {
       hash.delete(field);
@@ -174,6 +198,7 @@ class InMemoryRuntimeStore {
   }
 
   async hdel(key, ...fields) {
+    if (this.clearExpiredHash(key)) return 0;
     const hash = this.hashes.get(key);
     if (!hash) return 0;
 
@@ -186,17 +211,20 @@ class InMemoryRuntimeStore {
 
     if (hash.size === 0) {
       this.hashes.delete(key);
+      this.hashExpiries.delete(key);
     }
 
     return removedCount;
   }
 
   async hget(key, field) {
+    if (this.clearExpiredHash(key)) return null;
     const hash = this.hashes.get(key);
     return hash ? (hash.get(field) ?? null) : null;
   }
 
   async hgetall(key) {
+    if (this.clearExpiredHash(key)) return {};
     const hash = this.hashes.get(key);
     if (!hash) return {};
 
@@ -204,6 +232,12 @@ class InMemoryRuntimeStore {
       acc[field] = value;
       return acc;
     }, {});
+  }
+
+  async pexpire(key, ttlMs) {
+    if (!this.hashes.has(key)) return 0;
+    this.hashExpiries.set(key, Date.now() + Math.max(Number(ttlMs) || 0, 0));
+    return 1;
   }
 
   async zscore(key, member) {
@@ -267,7 +301,39 @@ class InMemoryRuntimeStore {
   }
 }
 
+function createMemoryStore(envPrefix = "CB_REDIS") {
+  const memoryStore = new InMemoryRuntimeStore();
+  return {
+    backend: "memory",
+    envPrefix,
+    clear: () => {
+      memoryStore.values.clear();
+      memoryStore.sortedSets.clear();
+      memoryStore.hashes.clear();
+      memoryStore.hashExpiries.clear();
+    },
+    get: (...args) => memoryStore.get(...args),
+    set: (...args) => memoryStore.set(...args),
+    del: (...args) => memoryStore.del(...args),
+    consume: (...args) => memoryStore.consume(...args),
+    hset: (...args) => memoryStore.hset(...args),
+    hget: (...args) => memoryStore.hget(...args),
+    hgetall: (...args) => memoryStore.hgetall(...args),
+    hdel: (...args) => memoryStore.hdel(...args),
+    pexpire: (...args) => memoryStore.pexpire(...args),
+    zscore: (...args) => memoryStore.zscore(...args),
+    zincrby: (...args) => memoryStore.zincrby(...args),
+    zrevrange: (...args) => memoryStore.zrevrange(...args),
+    zrem: (...args) => memoryStore.zrem(...args),
+    zcard: (...args) => memoryStore.zcard(...args),
+    zremrangebyrank: (...args) => memoryStore.zremrangebyrank(...args),
+  };
+}
+
 function createRedisStore() {
+  if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+    return createMemoryStore("TEST_MEMORY");
+  }
   try {
     const runtimeRedisOverridesEnabled = hasRuntimeRedisOverrides();
     const clusterConfig = getRuntimeRedisClusterOptions();
@@ -289,42 +355,22 @@ function createRedisStore() {
           return redisClient.set(key, value);
         },
         del: (...args) => redisClient.del(...args),
+        consume: (key) => redisClient.eval(
+          "local value = redis.call('GET', KEYS[1]); if value then redis.call('DEL', KEYS[1]); end; return value",
+          1,
+          key
+        ),
         hset: (...args) => redisClient.hset(...args),
         hget: (...args) => redisClient.hget(...args),
         hgetall: (...args) => redisClient.hgetall(...args),
         hdel: (...args) => redisClient.hdel(...args),
+        pexpire: (...args) => redisClient.pexpire(...args),
         zscore: (...args) => redisClient.zscore(...args),
         zincrby: (...args) => redisClient.zincrby(...args),
         zrevrange: (...args) => redisClient.zrevrange(...args),
         zrem: (...args) => redisClient.zrem(...args),
         zcard: (...args) => redisClient.zcard(...args),
         zremrangebyrank: (...args) => redisClient.zremrangebyrank(...args),
-      };
-    };
-
-    const createMemoryStore = () => {
-      const memoryStore = new InMemoryRuntimeStore();
-      return {
-        backend: "memory",
-        envPrefix: resolvedEnvPrefix,
-        clear: () => {
-          memoryStore.values.clear();
-          memoryStore.sortedSets.clear();
-          memoryStore.hashes.clear();
-        },
-        get: (...args) => memoryStore.get(...args),
-        set: (...args) => memoryStore.set(...args),
-        del: (...args) => memoryStore.del(...args),
-        hset: (...args) => memoryStore.hset(...args),
-        hget: (...args) => memoryStore.hget(...args),
-        hgetall: (...args) => memoryStore.hgetall(...args),
-        hdel: (...args) => memoryStore.hdel(...args),
-        zscore: (...args) => memoryStore.zscore(...args),
-        zincrby: (...args) => memoryStore.zincrby(...args),
-        zrevrange: (...args) => memoryStore.zrevrange(...args),
-        zrem: (...args) => memoryStore.zrem(...args),
-        zcard: (...args) => memoryStore.zcard(...args),
-        zremrangebyrank: (...args) => memoryStore.zremrangebyrank(...args),
       };
     };
 
@@ -336,7 +382,7 @@ function createRedisStore() {
       const redisOptions = getRuntimeRedisOptions();
       if (!redisOptions?.host) {
         console.warn("[runtime-cache] Redis host missing, using in-memory runtime cache store"); // oxlint-disable-line no-console
-        return createMemoryStore();
+        return createMemoryStore(resolvedEnvPrefix);
       }
 
       redisClient = new Redis(redisOptions);
@@ -345,29 +391,7 @@ function createRedisStore() {
     return attachClient();
   } catch (error) {
     console.error("[runtime-cache] Failed to initialize Redis store, falling back to in-memory cache", error); // oxlint-disable-line no-console
-    const memoryStore = new InMemoryRuntimeStore();
-    return {
-      backend: "memory",
-      envPrefix: "CB_REDIS",
-      clear: () => {
-        memoryStore.values.clear();
-        memoryStore.sortedSets.clear();
-        memoryStore.hashes.clear();
-      },
-      get: (...args) => memoryStore.get(...args),
-      set: (...args) => memoryStore.set(...args),
-      del: (...args) => memoryStore.del(...args),
-      hset: (...args) => memoryStore.hset(...args),
-      hget: (...args) => memoryStore.hget(...args),
-      hgetall: (...args) => memoryStore.hgetall(...args),
-      hdel: (...args) => memoryStore.hdel(...args),
-      zscore: (...args) => memoryStore.zscore(...args),
-      zincrby: (...args) => memoryStore.zincrby(...args),
-      zrevrange: (...args) => memoryStore.zrevrange(...args),
-      zrem: (...args) => memoryStore.zrem(...args),
-      zcard: (...args) => memoryStore.zcard(...args),
-      zremrangebyrank: (...args) => memoryStore.zremrangebyrank(...args),
-    };
+    return createMemoryStore();
   }
 }
 
@@ -426,6 +450,22 @@ class RuntimeCacheService {
     return `ai-session:v1:${teamId}:${userId}:${sessionId}`;
   }
 
+  pendingAiActionKey({ actionId, sessionId, teamId, userId }) {
+    return `ai-pending-action:v1:${teamId}:${userId}:${this.hash(sessionId)}:${actionId}`;
+  }
+
+  pendingAiActionResultKey({ actionId, sessionId, teamId, userId }) {
+    return `ai-pending-action-result:v1:${teamId}:${userId}:${this.hash(sessionId)}:${actionId}`;
+  }
+
+  pendingAiActionRegistryKey({ teamId }) {
+    return `ai-pending-action-registry:v1:${teamId}`;
+  }
+
+  pendingAiActionRegistryField({ actionId, sessionId, userId }) {
+    return `${userId}:${this.hash(sessionId)}:${actionId}`;
+  }
+
   async getAiSession(params = {}) {
     const rawValue = await this.store.get(this.aiSessionKey(params));
     if (!rawValue) return null;
@@ -452,6 +492,163 @@ class RuntimeCacheService {
 
   async deleteAiSession(params = {}) {
     return this.store.del(this.aiSessionKey(params));
+  }
+
+  async getPendingAiAction(params = {}) {
+    const rawValue = await this.store.get(this.pendingAiActionKey(params));
+    if (!rawValue) return null;
+    try {
+      return typeof rawValue === "string" ? JSON.parse(rawValue) : rawValue;
+    } catch (error) {
+      await this.store.del(this.pendingAiActionKey(params));
+      return null;
+    }
+  }
+
+  async setPendingAiAction(params = {}) {
+    const ttlSeconds = Math.min(
+      Math.max(parsePositiveInt(process.env.CB_WORKSPACE_CONTEXT_PREVIEW_TTL_SECONDS, 600), 60),
+      600
+    );
+    const actionKey = this.pendingAiActionKey(params);
+    const registryKey = this.pendingAiActionRegistryKey(params);
+    const registryField = this.pendingAiActionRegistryField(params);
+    await this.store.set(
+      actionKey,
+      JSON.stringify(params.payload),
+      ttlSeconds * 1000
+    );
+    try {
+      await this.store.hset(registryKey, registryField, JSON.stringify({
+        actionId: params.actionId,
+        actionType: params.payload?.actionType || null,
+        expiresAt: params.payload?.expiresAt || null,
+        projectId: params.payload?.scope?.projectId || null,
+        resourceId: params.payload?.scope?.resourceId || null,
+        sessionId: params.sessionId,
+        userId: params.userId,
+      }));
+      await this.store.pexpire(registryKey, 24 * 60 * 60 * 1000);
+    } catch (error) {
+      await this.store.del(actionKey);
+      throw error;
+    }
+    return "OK";
+  }
+
+  async consumePendingAiAction(params = {}) {
+    const rawValue = await this.store.consume(this.pendingAiActionKey(params));
+    if (!rawValue) return null;
+    try {
+      return typeof rawValue === "string" ? JSON.parse(rawValue) : rawValue;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async getPendingAiActionResult(params = {}) {
+    const rawValue = await this.store.get(this.pendingAiActionResultKey(params));
+    if (!rawValue) return null;
+    try {
+      return typeof rawValue === "string" ? JSON.parse(rawValue) : rawValue;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async setPendingAiActionResult(params = {}) {
+    const result = await this.store.set(
+      this.pendingAiActionResultKey(params),
+      JSON.stringify(params.payload),
+      24 * 60 * 60 * 1000
+    );
+    await this.store.pexpire(
+      this.pendingAiActionRegistryKey(params),
+      24 * 60 * 60 * 1000
+    );
+    return result;
+  }
+
+  async listPendingAiActions(params = {}) {
+    const registryKey = this.pendingAiActionRegistryKey(params);
+    const entries = await this.store.hgetall(registryKey);
+    const references = Object.entries(entries).map(([field, value]) => {
+      try {
+        return { field, reference: JSON.parse(value) };
+      } catch (_error) {
+        return { field, reference: null };
+      }
+    });
+    const candidates = references.filter(({ reference }) => {
+      if (!reference) return false;
+      if (params.userId && Number(reference.userId) !== Number(params.userId)) return false;
+      if (params.sessionId && reference.sessionId !== params.sessionId) return false;
+      if (params.projectId
+        && Number(reference.projectId) !== Number(params.projectId)) return false;
+      if (params.resourceId && `${reference.resourceId}` !== `${params.resourceId}`) return false;
+      return true;
+    });
+    const resolved = await Promise.all(candidates.map(async ({ field, reference }) => {
+      const referenceParams = {
+        actionId: reference.actionId,
+        sessionId: reference.sessionId,
+        teamId: params.teamId,
+        userId: reference.userId,
+      };
+      const pendingAction = await this.getPendingAiAction(referenceParams);
+      const priorResult = pendingAction
+        ? null
+        : await this.getPendingAiActionResult(referenceParams);
+      return { field, pendingAction, priorResult };
+    }));
+    const pendingActions = resolved.map(({ pendingAction }) => pendingAction).filter(Boolean);
+    const staleFields = [
+      ...references.filter(({ reference }) => !reference).map(({ field }) => field),
+      ...resolved.filter(({ pendingAction, priorResult }) => !pendingAction && !priorResult)
+        .map(({ field }) => field),
+    ];
+    if (staleFields.length > 0) {
+      await this.store.hdel(registryKey, ...staleFields);
+    }
+    return pendingActions;
+  }
+
+  async clearPendingAiActions(params = {}) {
+    if (!params.teamId) return 0;
+    const registryKey = this.pendingAiActionRegistryKey(params);
+    const entries = await this.store.hgetall(registryKey);
+    const matches = Object.entries(entries).reduce((result, [field, value]) => {
+      try {
+        const reference = JSON.parse(value);
+        if (params.userId && Number(reference.userId) !== Number(params.userId)) return result;
+        if (params.sessionId && reference.sessionId !== params.sessionId) return result;
+        if (params.projectId
+          && Number(reference.projectId) !== Number(params.projectId)) return result;
+        if (params.resourceId
+          && `${reference.resourceId}` !== `${params.resourceId}`) return result;
+        result.push({ field, reference });
+      } catch (error) {
+        result.push({ field, reference: null });
+      }
+      return result;
+    }, []);
+    await Promise.all(matches.flatMap(({ reference }) => {
+      if (!reference) return [];
+      const referenceParams = {
+        actionId: reference.actionId,
+        sessionId: reference.sessionId,
+        teamId: params.teamId,
+        userId: reference.userId,
+      };
+      return [
+        this.store.del(this.pendingAiActionKey(referenceParams)),
+        this.store.del(this.pendingAiActionResultKey(referenceParams)),
+      ];
+    }));
+    if (matches.length > 0) {
+      await this.store.hdel(registryKey, ...matches.map(({ field }) => field));
+    }
+    return matches.length;
   }
 
   async getChartCache(params = {}) {

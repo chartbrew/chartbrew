@@ -353,6 +353,17 @@ class ObservationController {
     return serializeFeedback(feedback);
   }
 
+  async deleteFeedback(access, observationId) {
+    await this.findById(access, observationId);
+    const removed = await db.ObservationFeedback.destroy({
+      where: {
+        observation_id: observationId,
+        user_id: access.userId,
+      },
+    });
+    return { removed: removed > 0 };
+  }
+
   async setResolved(access, observationId, resolved) {
     const observation = await this.findById(access, observationId);
     assertCanEditProject(access, observation.project_id);

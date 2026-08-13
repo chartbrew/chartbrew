@@ -16,6 +16,8 @@ function ObservationInvestigation({ observationId, teamId }) {
       id={`observation-${observationId}-ask`}
       isLoading={chat.isLoading}
       messages={chat.messages}
+      onChangeAction={chat.changeAction}
+      onConfirmAction={chat.confirmAction}
       onSave={chat.save}
       onSubmit={chat.sendMessage}
       placeholder="Ask a follow-up about this change"

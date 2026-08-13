@@ -60,3 +60,13 @@ export async function createTestAppWithUserRoutes() {
 
   return app;
 }
+
+export async function createTestAppWithPlatformSettingsRoutes() {
+  const app = await createTestApp();
+
+  // eslint-disable-next-line global-require
+  const platformSettingsRoute = require("../../api/PlatformSettingsRoute.js");
+  platformSettingsRoute(app);
+
+  return app;
+}

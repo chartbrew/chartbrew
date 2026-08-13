@@ -33,7 +33,12 @@ function useAiChat({
       setSessionId(orchestration.sessionId || sessionId);
       setMessages((current) => [
         ...current,
-        { content: orchestration.message, role: "assistant" },
+        {
+          chartPreviews: orchestration.chartPreviews || [],
+          content: orchestration.message,
+          pendingAction: orchestration.pendingAction,
+          role: "assistant",
+        },
       ]);
       return orchestration;
     } catch (requestError) {
@@ -66,6 +71,52 @@ function useAiChat({
     setSessionId(null);
   }, []);
 
+  const confirmAction = useCallback(async (pendingAction) => {
+    if (!pendingAction?.actionId || isLoading || !teamId) return null;
+    setError(null);
+    setIsLoading(true);
+    setMessages((current) => [...current, { content: "Confirm this change", role: "user" }]);
+    try {
+      const response = await respondAi({
+        action: {
+          actionId: pendingAction.actionId,
+          type: "confirm_pending_action",
+        },
+        aiConversationId,
+        persistence,
+        sessionId,
+        teamId,
+      });
+      const orchestration = response.orchestration;
+      setMessages((current) => [
+        ...current,
+        {
+          actionResult: orchestration.actionResult,
+          content: orchestration.message,
+          role: "assistant",
+        },
+      ]);
+      return orchestration;
+    } catch (requestError) {
+      setError(requestError.message);
+      setMessages((current) => [
+        ...current,
+        { content: requestError.message, isError: true, role: "assistant" },
+      ]);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [aiConversationId, isLoading, persistence, sessionId, teamId]);
+
+  const changeAction = useCallback((pendingAction) => {
+    setMessages((current) => current.map((message) => {
+      if (message.pendingAction?.actionId !== pendingAction?.actionId) return message;
+      return { ...message, pendingAction: null };
+    }));
+    return sendMessage("I want to change the proposed settings.");
+  }, [sendMessage]);
+
   const save = useCallback(async () => {
     if (!sessionId || !teamId) return null;
     try {
@@ -89,7 +140,9 @@ function useAiChat({
 
   return {
     aiConversationId,
+    changeAction,
     clear,
+    confirmAction,
     error,
     isLoading,
     messages,

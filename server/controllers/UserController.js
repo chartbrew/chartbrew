@@ -9,6 +9,7 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
+const runtimeCache = require("../modules/runtimeCache");
 const { decrypt, encrypt } = require("../modules/cbCrypto");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -81,7 +82,31 @@ class UserController {
         };
         return db.TeamRole.create(teamRole);
       })
-      .then(() => {
+      .then(async () => {
+        if (settings.teamRestricted === "1") return gNewUser;
+
+        const firstUser = await db.User.findOne({
+          attributes: ["id", "admin"],
+          order: [["id", "ASC"]],
+        });
+        if (firstUser?.id !== gNewUser.id) return gNewUser;
+
+        const ownerRole = await db.TeamRole.findOne({
+          attributes: ["id"],
+          where: {
+            user_id: firstUser.id,
+            role: "teamOwner",
+          },
+        });
+        if (!ownerRole) return gNewUser;
+
+        if (!firstUser.admin) {
+          await db.User.update(
+            { admin: true },
+            { where: { id: firstUser.id } }
+          );
+        }
+        await gNewUser.reload();
         return gNewUser;
       })
       .catch((error) => {
@@ -158,6 +183,7 @@ class UserController {
         where: { "user_id": id },
         transaction
       });
+      const allTeamIds = [...new Set(teamRoles.map((teamRole) => teamRole.team_id))];
       const ownedTeamIds = [...new Set(
         teamRoles
           .filter((teamRole) => teamRole.role === "teamOwner")
@@ -264,6 +290,11 @@ class UserController {
         where: { id },
         transaction
       });
+
+      await Promise.all(allTeamIds.map((teamId) => runtimeCache.clearPendingAiActions({
+        teamId,
+        userId: id,
+      })));
 
       // Commit the transaction
       await transaction.commit();
@@ -405,7 +436,9 @@ class UserController {
   }
 
   update(id, data) {
-    return db.User.update(data, { where: { "id": id } })
+    const userUpdate = { ...data };
+    delete userUpdate.admin;
+    return db.User.update(userUpdate, { where: { "id": id } })
       .then(() => {
         return this.findById(id);
       })
