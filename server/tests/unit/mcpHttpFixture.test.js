@@ -17,8 +17,15 @@ const {
 const { toNodeHandler } = require("@modelcontextprotocol/node");
 const { discoverMcpConnection, loadServerIcon } = require("../../sources/plugins/mcp/mcp.discovery");
 const { createMcpSafeFetch } = require("../../sources/plugins/mcp/mcp.safeFetch");
+const mcpOauth = require("../../sources/plugins/mcp/mcp.oauth");
 const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
 
+const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64"
+);
+const SAFE_SVG = Buffer.from("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"></svg>");
+const UNSAFE_SVG = Buffer.from("<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(1)</script></svg>");
 const INPUT_SCHEMA = {
   type: "object",
   properties: {
@@ -325,6 +332,161 @@ describe("MCP HTTP fixture", () => {
       expect(icon).toBe("");
     } finally {
       await rawServer.close();
+    }
+  });
+
+  it("loads advertised PNG icons from another origin", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const iconServer = await startRawServer((request, response) => {
+      response.writeHead(200, { "content-type": "image/png" });
+      response.end(PNG_1X1);
+    });
+    const mcpServer = await startRawServer((request, response) => {
+      response.writeHead(404);
+      response.end();
+    });
+    try {
+      const icon = await loadServerIcon(
+        { icons: [{ src: `${iconServer.origin}/logo.png`, mimeType: "image/png" }] },
+        `${mcpServer.origin}/mcp`
+      );
+      expect(icon).toMatch(/^data:image\/png;base64,/);
+    } finally {
+      await iconServer.close();
+      await mcpServer.close();
+    }
+  });
+
+  it("loads advertised data URI icons and rejects unsafe SVG", async () => {
+    const endpoint = "http://127.0.0.1/mcp";
+    const pngIcon = await loadServerIcon({
+      icons: [{ src: `data:image/png;base64,${PNG_1X1.toString("base64")}` }],
+    }, endpoint);
+    expect(pngIcon).toMatch(/^data:image\/png;base64,/);
+
+    const svgIcon = await loadServerIcon({
+      icons: [{ src: `data:image/svg+xml;base64,${SAFE_SVG.toString("base64")}` }],
+    }, endpoint);
+    expect(svgIcon).toMatch(/^data:image\/svg\+xml;base64,/);
+
+    const unsafeIcon = await loadServerIcon({
+      icons: [{ src: `data:image/svg+xml;base64,${UNSAFE_SVG.toString("base64")}` }],
+    }, endpoint);
+    expect(unsafeIcon).toBe("");
+  });
+
+  it("falls back to the website favicon.svg when the server omits icons", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const site = await startRawServer((request, response) => {
+      if (request.url === "/favicon.svg") {
+        response.writeHead(200, { "content-type": "image/svg+xml" });
+        response.end(SAFE_SVG);
+        return;
+      }
+      response.writeHead(404);
+      response.end();
+    });
+    try {
+      const icon = await loadServerIcon(
+        { websiteUrl: site.origin },
+        "http://127.0.0.1/mcp"
+      );
+      expect(icon).toMatch(/^data:image\/svg\+xml;base64,/);
+    } finally {
+      await site.close();
+    }
+  });
+
+  it("discovers a website icon from HTML when well-known paths are missing", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const site = await startRawServer((request, response) => {
+      if (request.url === "/" || request.url === "") {
+        response.writeHead(200, { "content-type": "text/html" });
+        response.end("<html><head><link rel=\"icon\" href=\"/images/logo.png\" type=\"image/png\"></head></html>");
+        return;
+      }
+      if (request.url === "/images/logo.png") {
+        response.writeHead(200, { "content-type": "image/png" });
+        response.end(PNG_1X1);
+        return;
+      }
+      response.writeHead(404);
+      response.end();
+    });
+    try {
+      const icon = await loadServerIcon(
+        { websiteUrl: site.origin },
+        "http://127.0.0.1/mcp"
+      );
+      expect(icon).toMatch(/^data:image\/png;base64,/);
+    } finally {
+      await site.close();
+    }
+  });
+
+  it("keeps HTTP error details when the MCP server rejects the connection", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const rawServer = await startRawServer((request, response) => {
+      response.writeHead(400, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        error: "invalid_request",
+        details: "x".repeat(2000),
+      }));
+    });
+    try {
+      await expect(discoverMcpConnection({
+        type: "mcp",
+        subType: "mcp",
+        host: `${rawServer.origin}/mcp`,
+        authentication: { type: "none" },
+        options: { mcp: {} },
+      }, { loadIcon: false })).rejects.toMatchObject({
+        code: "MCP_REQUEST_FAILED",
+        details: expect.stringContaining("invalid_request"),
+      });
+    } finally {
+      await rawServer.close();
+    }
+  });
+
+  it("stops OAuth when the authorization server does not respond", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    vi.stubEnv("VITE_APP_API_HOST_DEV", "http://localhost:3210");
+    const rawServer = await startRawServer(() => {});
+    try {
+      await expect(mcpOauth._private.runOauth({
+        id: 8,
+        team_id: 4,
+        host: `${rawServer.origin}/oauth`,
+        authentication: { type: "oauth" },
+      }, {
+        authFn: async (provider, { fetchFn }) => fetchFn(`${rawServer.origin}/wait`),
+        timeoutMs: 50,
+      })).rejects.toMatchObject({
+        code: "MCP_TIMEOUT",
+        statusCode: 504,
+      });
+    } finally {
+      await rawServer.close();
+    }
+  });
+
+  it("keeps HTTP 401 details when bearer authentication is rejected", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const fixture = await startFixture({ auth: { bearer: "fixture-token" } });
+    try {
+      await expect(discoverMcpConnection({
+        type: "mcp",
+        subType: "mcp",
+        host: fixture.endpoint,
+        authentication: { type: "bearer", token: "wrong-token" },
+        options: { mcp: {} },
+      }, { loadIcon: false })).rejects.toMatchObject({
+        code: "MCP_RECONNECT_REQUIRED",
+        details: expect.stringMatching(/HTTP 401/),
+      });
+    } finally {
+      await fixture.close();
     }
   });
 });

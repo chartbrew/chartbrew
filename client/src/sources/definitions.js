@@ -19,6 +19,8 @@ import customerioSource from "./customerio/customerio.source";
 import { applySourceAvailability } from "./sourceAvailability";
 
 const SOURCE_DEFINITIONS = [{
+  ...mcpSource,
+}, {
   ...apiSource,
 }, {
   ...mongodbSource,
@@ -34,8 +36,6 @@ const SOURCE_DEFINITIONS = [{
   ...googleAnalyticsSource,
 }, {
   ...jiraSource,
-}, {
-  ...mcpSource,
 }, {
   ...strapiSource,
 }, {

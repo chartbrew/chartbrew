@@ -2,15 +2,17 @@ const crypto = require("crypto");
 const { auth } = require("@modelcontextprotocol/client");
 
 const db = require("../../../models/models");
+const { MCP_LIMITS } = require("./mcp.constants");
 const { createMcpSafeFetch } = require("./mcp.safeFetch");
 const { createMcpError, sanitizeMcpClientError } = require("./mcp.policy");
 
 const refreshes = new Map();
 
 function getApiBaseUrl() {
-  const value = process.env.NODE_ENV === "production"
-    ? process.env.VITE_APP_API_HOST
-    : process.env.VITE_APP_API_HOST_DEV;
+  // const value = process.env.NODE_ENV === "production"
+  //   ? process.env.VITE_APP_API_HOST
+  //   : process.env.VITE_APP_API_HOST_DEV;
+  const value = "https://samson-nonperfected-encephalographically.ngrok-free.dev";
   if (!value) {
     throw createMcpError(
       "MCP_OAUTH_CALLBACK_MISSING",
@@ -122,14 +124,24 @@ async function runOauth(connection, options = {}) {
     teamId: connection.team_id,
     connectionId: connection.id,
   });
+  const timeoutController = new AbortController();
+  const timeoutMs = Number.isFinite(options.timeoutMs)
+    ? options.timeoutMs
+    : MCP_LIMITS.oauthTimeoutMs;
+  const timeout = setTimeout(() => timeoutController.abort(), timeoutMs);
+  timeout.unref?.();
+  const authFn = options.authFn || auth;
   try {
-    const result = await auth(oauth.provider, {
+    const result = await authFn(oauth.provider, {
       serverUrl: connection.host,
       authorizationCode: options.authorizationCode,
       iss: options.iss,
       scope: connection.authentication?.scope || undefined,
       forceReauthorization: options.forceReauthorization === true,
-      fetchFn: safeFetch.fetch,
+      fetchFn: (input, init = {}) => safeFetch.fetch(input, {
+        ...init,
+        signal: timeoutController.signal,
+      }),
     });
     return {
       result,
@@ -137,8 +149,9 @@ async function runOauth(connection, options = {}) {
       authentication: oauth.stored,
     };
   } catch (error) {
-    throw sanitizeMcpClientError(error);
+    throw sanitizeMcpClientError(error, { httpError: safeFetch.getLastHttpError() });
   } finally {
+    clearTimeout(timeout);
     await safeFetch.close();
   }
 }
@@ -231,6 +244,7 @@ async function refreshOAuth(connection) {
 }
 
 module.exports = {
+  _private: { runOauth },
   completeOAuth,
   getCallbackUrl,
   getClientMetadata,

@@ -53,6 +53,16 @@ module.exports = (app) => {
     return res.status(400).send(serializeOutboundPolicyError(error));
   };
 
+  const sendMcpError = (res, error) => {
+    if (!String(error?.code || "").startsWith("MCP_")) return false;
+    const payload = {
+      code: error.code,
+      error: error.message || "The MCP request failed.",
+    };
+    if (error.details) payload.details = String(error.details);
+    return res.status(error.statusCode || 400).send(payload);
+  };
+
   const sendSourceDisabledError = (res, error) => {
     if (!isSourceDisabledError(error)) return false;
     return res.status(error.statusCode || 400).send(serializeSourceDisabledError(error));
@@ -265,12 +275,8 @@ module.exports = (app) => {
       if (sourceDisabledResponse) return sourceDisabledResponse;
       const policyResponse = sendPolicyError(res, error);
       if (policyResponse) return policyResponse;
-      if (String(error.code || "").startsWith("MCP_")) {
-        return res.status(error.statusCode || 400).send({
-          code: error.code,
-          error: error.message || error,
-        });
-      }
+      const mcpResponse = sendMcpError(res, error);
+      if (mcpResponse) return mcpResponse;
       return res.status(400).send(error);
     }
   });
@@ -396,12 +402,8 @@ module.exports = (app) => {
       if (sourceDisabledResponse) return sourceDisabledResponse;
       const policyResponse = sendPolicyError(res, error);
       if (policyResponse) return policyResponse;
-      if (String(error.code || "").startsWith("MCP_")) {
-        return res.status(error.statusCode || 400).send({
-          code: error.code,
-          error: error.message || error,
-        });
-      }
+      const mcpResponse = sendMcpError(res, error);
+      if (mcpResponse) return mcpResponse;
       return res.status(400).send(error);
     }
   });
@@ -534,6 +536,8 @@ module.exports = (app) => {
         if (sourceDisabledResponse) return sourceDisabledResponse;
         const policyResponse = sendPolicyError(res, error);
         if (policyResponse) return policyResponse;
+        const mcpResponse = sendMcpError(res, error);
+        if (mcpResponse) return mcpResponse;
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
@@ -624,6 +628,8 @@ module.exports = (app) => {
         if (sourceDisabledResponse) return sourceDisabledResponse;
         const policyResponse = sendPolicyError(res, err);
         if (policyResponse) return policyResponse;
+        const mcpResponse = sendMcpError(res, err);
+        if (mcpResponse) return mcpResponse;
         return res.status(400).send(err.message || err);
       });
   });
@@ -694,6 +700,8 @@ module.exports = (app) => {
         } catch (err) {
           // do nothing
         }
+        const mcpResponse = sendMcpError(res, err);
+        if (mcpResponse) return mcpResponse;
         return res.status(400).send(err.message || err);
       });
   });
@@ -726,12 +734,8 @@ module.exports = (app) => {
       if (sourceDisabledResponse) return sourceDisabledResponse;
       const policyResponse = sendPolicyError(res, err);
       if (policyResponse) return policyResponse;
-      if (String(err.code || "").startsWith("MCP_")) {
-        return res.status(err.statusCode || 400).send({
-          code: err.code,
-          error: err.message || err,
-        });
-      }
+      const mcpResponse = sendMcpError(res, err);
+      if (mcpResponse) return mcpResponse;
       return res.status(400).send(err);
     }
   });

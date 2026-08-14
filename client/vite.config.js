@@ -22,6 +22,9 @@ export default ({ mode }) => {
     ],
     server: {
       port,
+      allowedHosts: [
+        "6d3b-58-97-86-85.ngrok-free.app"
+      ]
     },
     preview: {
       port,

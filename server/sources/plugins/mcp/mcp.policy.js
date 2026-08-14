@@ -10,34 +10,120 @@ function createMcpError(code, message, statusCode = 400, details = {}) {
   return error;
 }
 
-function sanitizeMcpClientError(error) {
+const NETWORK_ERROR_DETAILS = {
+  CERT_HAS_EXPIRED: "The TLS certificate has expired.",
+  EAI_AGAIN: "The hostname could not be resolved.",
+  ECONNREFUSED: "The connection was refused.",
+  ECONNRESET: "The connection was reset.",
+  ENETUNREACH: "The network is unreachable.",
+  ENOTFOUND: "The hostname could not be resolved.",
+  ERR_TLS_CERT_ALTNAME_INVALID: "The TLS certificate does not match the hostname.",
+  ETIMEDOUT: "The connection timed out.",
+  UNABLE_TO_VERIFY_LEAF_SIGNATURE: "The TLS certificate could not be verified.",
+};
+
+function redactErrorSecrets(value, options = {}) {
+  let text = String(value || "");
+  if (!options.keepBearerScheme) {
+    text = text.replace(/Bearer\s+[A-Za-z0-9._\-+/=]{12,}/g, "Bearer [redacted]");
+  }
+  return text
+    .replace(
+      /"(authorization|access_token|refresh_token|client_secret|password|secret|token|api[_-]?key)"\s*:\s*"[^"]*"/gi,
+      "\"$1\":\"[redacted]\""
+    )
+    .replace(
+      /([?&](?:access_token|refresh_token|token|key|secret|password|api[_-]?key)=)[^&]*/gi,
+      "$1[redacted]"
+    );
+}
+
+function getSafeConnectionErrorDetails(error, options = {}) {
+  const httpError = options.httpError || {};
+  const parts = [];
+  const httpStatus = Number(error?.status || httpError.status);
+  const statusText = String(error?.statusText || httpError.statusText || "").trim().slice(0, 80);
+  if (Number.isInteger(httpStatus) && httpStatus >= 400 && httpStatus <= 599) {
+    parts.push(statusText ? `HTTP ${httpStatus} ${statusText}` : `HTTP ${httpStatus}`);
+  } else {
+    const match = String(error?.message || "").match(/\bHTTP\s+(\d{3})\b/i);
+    if (match) parts.push(`HTTP ${match[1]}`);
+    else if (String(error?.name || "").toLowerCase().includes("unauthorized")) {
+      parts.push("HTTP 401 Unauthorized");
+    }
+  }
+
+  let responseText = typeof error?.text === "string" ? error.text : "";
+  if (!responseText && typeof httpError.text === "string") responseText = httpError.text;
+  if (!responseText) {
+    const posted = String(error?.message || "").match(
+      /Error POSTing to endpoint(?: \(HTTP \d+\))?:\s*([\s\S]*)/i
+    );
+    if (posted) responseText = posted[1];
+  }
+  responseText = redactErrorSecrets(responseText).trim().slice(0, MCP_LIMITS.errorDetailsCharacters);
+  if (responseText && !parts.includes(responseText)) parts.push(responseText);
+
+  const wwwAuthenticate = redactErrorSecrets(
+    error?.wwwAuthenticate || httpError.wwwAuthenticate || "",
+    { keepBearerScheme: true }
+  ).trim();
+  if (wwwAuthenticate) parts.push(`WWW-Authenticate: ${wwwAuthenticate}`);
+
+  if (parts.length === 0) {
+    const causeCode = error?.cause?.code || error?.code;
+    const mapped = NETWORK_ERROR_DETAILS[String(causeCode || "")];
+    if (mapped) parts.push(mapped);
+  }
+
+  return parts.join("\n").slice(0, MCP_LIMITS.errorDetailsCharacters + 64) || undefined;
+}
+
+function withErrorDetails(error, options = {}, extra = {}) {
+  const details = getSafeConnectionErrorDetails(error, options);
+  return details ? { ...extra, details } : extra;
+}
+
+function sanitizeMcpClientError(error, options = {}) {
   if (String(error?.code || "").startsWith("MCP_") || error?.code === "SSRF_BLOCKED") {
+    if (!error.details) {
+      const details = getSafeConnectionErrorDetails(error, options);
+      if (details) error.details = details;
+    }
     return error;
   }
   const name = String(error?.name || "").toLowerCase();
   const code = String(error?.code || "").toLowerCase();
-  const statusCode = Number(error?.statusCode || error?.status);
+  const statusCode = Number(error?.statusCode || error?.status || options.httpError?.status);
   if (name.includes("insufficientscope") || code.includes("insufficient_scope")) {
     return createMcpError(
       "MCP_APPROVE_ACCESS",
       "Approve access for this MCP connection, then try again.",
-      403
+      403,
+      withErrorDetails(error, options)
     );
   }
   if (name.includes("unauthorized") || statusCode === 401) {
     return createMcpError(
       "MCP_RECONNECT_REQUIRED",
-      "Reconnect this MCP server, then try again.",
-      401
+      "The MCP server rejected authentication. Check the credentials and try again.",
+      401,
+      withErrorDetails(error, options)
     );
   }
   if (name.includes("timeout") || name.includes("abort") || code.includes("timeout")) {
-    return createMcpError("MCP_TIMEOUT", "The MCP server did not respond in time.", 504);
+    return createMcpError(
+      "MCP_TIMEOUT",
+      "The MCP server did not respond in time.",
+      504,
+      withErrorDetails(error, options)
+    );
   }
   return createMcpError(
     "MCP_REQUEST_FAILED",
     "The MCP server request failed. Check the connection and try again.",
-    502
+    502,
+    withErrorDetails(error, options)
   );
 }
 
@@ -203,13 +289,16 @@ function sanitizeTool(tool) {
 }
 
 function isToolReadOnly(tool, approval = {}) {
-  return tool?.annotations?.destructiveHint !== true && approval.confirmedReadOnly === true;
+  if (tool?.annotations?.destructiveHint === true) return false;
+  return approval.confirmedReadOnly === true;
 }
 
 function mergeApprovals(tools, requested = {}) {
   return tools.reduce((result, tool) => {
+    if (tool.annotations?.destructiveHint === true) return result;
+
     const approval = requested?.[tool.name];
-    if (!approval || tool.annotations?.destructiveHint === true) return result;
+    if (!approval) return result;
     if (approval.contractFingerprint !== tool.contractFingerprint) {
       return result;
     }
@@ -275,6 +364,7 @@ module.exports = {
   createMcpError,
   fingerprint,
   getApprovalReview,
+  isToolReadOnly,
   mergeApprovals,
   normalizeAuthentication,
   normalizeCustomHeaders,

@@ -1003,7 +1003,7 @@ function AiModal({ isOpen, onClose }) {
                             ))}
                             <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
                             {isLoading && progressEvents.length === 0 && (
-                              <div className="mb-5 px-4"><AiLoadingActivity /></div>
+                              <div className="mx-auto mb-5 w-full max-w-3xl px-4"><AiLoadingActivity /></div>
                             )}
                           </>
                         ) : progressEvents.length > 0 ? (

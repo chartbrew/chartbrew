@@ -82,7 +82,7 @@ function AiChat({
     <div className="flex flex-col gap-3">
       {messages.length > 0 ? (
         <div aria-live="polite" className="max-h-[34rem] overflow-y-auto pr-1" ref={containerRef}>
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-5" ref={contentRef}>
+          <div className="flex w-full flex-col gap-5" ref={contentRef}>
             {messages.map((message, index) => {
               if (message.role === "user") {
                 return (

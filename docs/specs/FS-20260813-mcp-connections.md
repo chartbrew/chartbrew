@@ -75,7 +75,8 @@ Chartbrew does not add a second pagination layer.
 2. The user selects no auth, static token or headers, or **Connect with OAuth**.
 3. Chartbrew connects from the server, negotiates the protocol, and lists all tool pages.
 4. The connection page shows the safe server identity and a **Tools** tab.
-5. The user searches tools and approves each tool for **Datasets**, **Ask**, or both.
+5. Chartbrew allows tools the server marks as read-only. The user can turn Datasets or Ask off.
+   Tools without that mark stay off and show a warning until the user allows them.
 6. Chartbrew saves safe discovery metadata and approval fingerprints.
 
 The Tools tab shows the server logo, display name, short description, sanitized website link, last
@@ -83,10 +84,10 @@ successful refresh, and tool count. Each tool row shows its title, description, 
 known output shape, and approval state. An expanded row shows its input and output schema. The UI
 does not show protocol versions, cache data, fingerprints, or raw discovery records.
 
-Tool annotations are untrusted hints. Chartbrew can show **Server says read-only**, but it does not
-enable the tool automatically. An owner or admin must approve it. A tool that the server marks as
-destructive cannot be approved in version 1. If a server omits annotations, an owner or admin can
-confirm that the tool only reads data.
+Tool annotations are untrusted hints. Chartbrew can show **Read-only** and allow those tools by
+default. An owner or admin can still turn Datasets or Ask off. A tool that the server marks as
+destructive cannot be approved in version 1. If a server omits annotations, Chartbrew shows a
+warning and leaves the tool off until an owner or admin allows it.
 
 The source picker uses a Chartbrew MCP logo. A saved connection can use the discovered server logo.
 If no safe logo exists, it uses the MCP logo and server initials.
@@ -206,7 +207,10 @@ Security rules:
 - Validate every MCP, redirect, OAuth, and icon URL. Keep metadata and private targets blocked by
   default.
 - Block user overrides of transport, auth, host, origin, and MCP routing headers.
-- Fetch icons without credentials from the MCP origin. Allow only bounded PNG, JPEG, and WebP data.
+- Fetch icons without credentials. Allow public HTTP(S) icon URLs that pass outbound
+  policy, plus bounded PNG, JPEG, WebP, and sanitized SVG. Same-origin is not required.
+  If the server omits icons, try the website origin (including `/favicon.svg`) and icon
+  links in the website HTML.
 - Treat identity, descriptions, schemas, annotations, results, and errors as untrusted.
 - Keep tool count, schema depth and size, call time, response bytes, rows, and audit data bounded in
   one MCP policy module.
@@ -248,7 +252,7 @@ policy. Extend the cross-source AI harness to prove that MCP uses only generic `
 Recommended decisions for the first release:
 
 - Remote Streamable HTTP only. Add deprecated HTTP+SSE only if real demand appears.
-- Explicit per-tool approval. Do not trust `readOnlyHint` by itself.
+- Allow tools marked `readOnlyHint` by default. Warn, do not block, when the server omits that mark.
 - Allow plain text as a one-row dataset, but mark it as poor chart input.
 - Ship manual datasets before Ask, but include OAuth before public release.
 - Keep write tools in a separate future design with exact preview and confirmation.

@@ -44,6 +44,10 @@ import SOURCE_DEFINITIONS, {
 import { canCreateSourceConnections } from "./sourceAvailability";
 
 const FRONTEND_BY_SOURCE_ID = {
+  mcp: {
+    ConnectionForm: McpConnectionForm,
+    DataRequestBuilder: McpBuilder,
+  },
   api: {
     ConnectionForm: ApiConnectionForm,
     DataRequestBuilder: ApiBuilder,
@@ -76,10 +80,6 @@ const FRONTEND_BY_SOURCE_ID = {
     ConnectionForm: JiraConnectionForm,
     DataRequestBuilder: JiraBuilder,
     ChartTemplateSetup: JiraTemplateSetup,
-  },
-  mcp: {
-    ConnectionForm: McpConnectionForm,
-    DataRequestBuilder: McpBuilder,
   },
   strapi: {
     ConnectionForm: StrapiConnectionForm,

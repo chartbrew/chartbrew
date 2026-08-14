@@ -122,6 +122,61 @@ describe("MCP source policy", () => {
     expect(mergeApprovals([tool], { [tool.name]: approval })).toEqual({});
   });
 
+  it("requires explicit approval for tools marked as read-only", () => {
+    const tool = createTool();
+    const defaults = mergeApprovals([tool], {});
+    expect(defaults).toEqual({});
+
+    const unconfirmed = mergeApprovals([tool], {
+      [tool.name]: {
+        datasets: true,
+        ask: true,
+        confirmedReadOnly: false,
+        contractFingerprint: tool.contractFingerprint,
+        riskFingerprint: tool.riskFingerprint,
+      },
+    });
+    expect(unconfirmed).toEqual({});
+
+    const keptOff = mergeApprovals([tool], {
+      [tool.name]: {
+        datasets: false,
+        ask: false,
+        confirmedReadOnly: true,
+        contractFingerprint: tool.contractFingerprint,
+        riskFingerprint: tool.riskFingerprint,
+      },
+    });
+    expect(keptOff[tool.name]).toMatchObject({ datasets: false, ask: false });
+  });
+
+  it("does not allow unmarked tools until they are approved", () => {
+    const tool = createTool({ annotations: {} });
+    expect(mergeApprovals([tool], {})).toEqual({});
+
+    const unconfirmed = mergeApprovals([tool], {
+      [tool.name]: {
+        datasets: true,
+        ask: true,
+        confirmedReadOnly: false,
+        contractFingerprint: tool.contractFingerprint,
+        riskFingerprint: tool.riskFingerprint,
+      },
+    });
+    expect(unconfirmed).toEqual({});
+
+    const approved = mergeApprovals([tool], {
+      [tool.name]: {
+        datasets: true,
+        ask: true,
+        confirmedReadOnly: true,
+        contractFingerprint: tool.contractFingerprint,
+        riskFingerprint: tool.riskFingerprint,
+      },
+    });
+    expect(approved[tool.name]).toMatchObject({ datasets: true, ask: true });
+  });
+
   it("requires exact approval fingerprints at execution time", () => {
     const tool = createTool();
     const connection = createConnection(tool, { contractFingerprint: "old" });
@@ -144,11 +199,72 @@ describe("MCP source policy", () => {
     expect(sanitizeMcpClientError({ name: "UnauthorizedError" })).toMatchObject({
       code: "MCP_RECONNECT_REQUIRED",
       statusCode: 401,
+      message: "The MCP server rejected authentication. Check the credentials and try again.",
+      details: "HTTP 401 Unauthorized",
     });
     expect(sanitizeMcpClientError(new Error("secret server details"))).toMatchObject({
       code: "MCP_REQUEST_FAILED",
       message: "The MCP server request failed. Check the connection and try again.",
     });
+    expect(sanitizeMcpClientError(new Error("secret server details")).details).toBeUndefined();
+  });
+
+  it("keeps bounded HTTP details for connection failures", () => {
+    const error = sanitizeMcpClientError(
+      new Error("Error POSTing to endpoint (HTTP 400): {\"error\":\"invalid_request\"}")
+    );
+    expect(error).toMatchObject({
+      code: "MCP_REQUEST_FAILED",
+      message: "The MCP server request failed. Check the connection and try again.",
+    });
+    expect(error.details).toContain("HTTP 400");
+    expect(error.details).toContain("invalid_request");
+  });
+
+  it("redacts credentials from connection error details", () => {
+    const error = sanitizeMcpClientError({
+      message: "Error POSTing to endpoint (HTTP 400): Bearer super-secret-token is invalid",
+      status: 400,
+      statusText: "Bad Request",
+      text: "Bearer super-secret-token is invalid",
+    });
+    expect(error.details).toContain("HTTP 400");
+    expect(error.details).toContain("[redacted]");
+    expect(error.details).not.toContain("super-secret-token");
+  });
+
+  it("keeps captured HTTP details for unauthorized bearer responses", () => {
+    const error = sanitizeMcpClientError(
+      { name: "UnauthorizedError", message: "Unauthorized" },
+      {
+        httpError: {
+          status: 401,
+          statusText: "Unauthorized",
+          text: "{\"error\":\"invalid_token\",\"error_description\":\"Token is not valid\"}",
+          wwwAuthenticate: "Bearer error=\"invalid_token\", error_description=\"Token is not valid\"",
+        },
+      }
+    );
+    expect(error.details).toContain("HTTP 401 Unauthorized");
+    expect(error.details).toContain("invalid_token");
+    expect(error.details).toContain("Token is not valid");
+    expect(error.details).toContain("WWW-Authenticate:");
+  });
+
+  it("maps network failures into connection error details", () => {
+    const error = sanitizeMcpClientError(Object.assign(new Error("fetch failed"), {
+      cause: { code: "ENOTFOUND" },
+    }));
+    expect(error.details).toBe("The hostname could not be resolved.");
+  });
+
+  it("truncates oversized connection error details", () => {
+    const error = sanitizeMcpClientError({
+      status: 400,
+      text: `{"error":"${"x".repeat(2000)}"}`,
+    });
+    expect(error.details.length).toBeLessThanOrEqual(540);
+    expect(error.details).toContain("HTTP 400");
   });
 });
 
@@ -272,6 +388,60 @@ describe("MCP source integration contracts", () => {
 
     const resources = mcpAi.listResources({ connection });
     expect(resources.resources.map((resource) => resource.id)).toEqual([allowed.name]);
+  });
+
+  it("includes approved MCP tool names in the capability response", () => {
+    const tool = createTool({
+      name: "execute-sql",
+      title: "Execute SQL",
+      inputSchema: {
+        type: "object",
+        properties: { query: { type: "string" } },
+        required: ["query"],
+      },
+    });
+
+    expect(mcpAi.getCapabilities({ connection: createConnection(tool) })).toMatchObject({
+      approvedToolCount: 1,
+      approvedTools: [{
+        id: "execute-sql",
+        name: "Execute SQL",
+        requiredArguments: ["query"],
+      }],
+    });
+  });
+
+  it("does not select an MCP tool from a weak description match", async () => {
+    const feedback = createTool({
+      name: "agent-feedback",
+      title: "Agent feedback",
+      description: "Send feedback about analytics results and product events",
+    });
+    const sql = createTool({
+      name: "execute-sql",
+      title: "Execute SQL",
+      description: "Run a read-only SQL query",
+    });
+    const connection = createConnection(feedback);
+    connection.schema.mcp.tools.push(sql);
+    connection.schema.mcp.allowedTools[sql.name] = {
+      datasets: true,
+      ask: true,
+      confirmedReadOnly: true,
+      contractFingerprint: sql.contractFingerprint,
+      riskFingerprint: sql.riskFingerprint,
+    };
+
+    const plan = await mcpAi.planDataset({
+      connection,
+      question: "How many visitors used the free tools in the last 30 days?",
+    });
+
+    expect(plan.status).toBe("needs_disambiguation");
+    expect(plan.options.map((option) => option.value)).toEqual([
+      "agent-feedback",
+      "execute-sql",
+    ]);
   });
 
   it("asks for required tool arguments before planning a dataset", async () => {

@@ -242,24 +242,11 @@ function ConnectionWizard() {
                         <Card.Content className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
                           <img
                             alt={conn.name}
-                            className="h-[80px] rounded-lg object-contain"
+                            className="h-[100px] rounded-lg object-contain"
                             src={getSourceLogo(conn, isDark)}
                           />
                         </Card.Content>
                         <Card.Content className="flex flex-row items-center justify-center flex-wrap gap-1">
-                          {isSourceAiPowered(conn) && (
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Chip variant="secondary">
-                                  <LuBrainCircuit size={14} />
-                                  {"AI-powered"}
-                                </Chip>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>
-                                You can use AI to ask questions about your data
-                              </Tooltip.Content>
-                            </Tooltip>
-                          )}
                           {conn.showNewBadge && (
                             <Chip variant="soft" color="accent">
                               <Chip.Label>{"New!"}</Chip.Label>

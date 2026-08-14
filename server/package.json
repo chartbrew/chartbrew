@@ -18,7 +18,7 @@
     "start": "NODE_ENV=production node index",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "db:migrate": "cd models && npx sequelize-cli db:migrate",
+    "db:migrate": "node scripts/migrate.js",
     "intelligence:backfill": "node scripts/backfillDatasetIntelligence.js",
     "retention:run": "node scripts/runRetention.js",
     "observations:audit-report": "node scripts/observationAuditReport.js",

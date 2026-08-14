@@ -13,7 +13,7 @@ function AiChartPreview({ parsed, chartData, loadError, onRetry }) {
   const title = parsed.chartName || chartData?.name || "Generated chart";
 
   return (
-    <figure className="mx-auto mb-6 w-full max-w-3xl overflow-hidden rounded-2xl border border-divider bg-content1">
+    <figure className="w-full overflow-hidden rounded-2xl border border-divider bg-content1">
       <figcaption className="flex flex-col gap-2 border-b border-divider px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2.5">
           <LuChartNoAxesColumnIncreasing className="shrink-0 text-accent" size={18} aria-hidden />

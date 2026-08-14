@@ -68,14 +68,16 @@ async function createMcpClient(connection, context = {}) {
       maxTotalTimeout: MCP_LIMITS.connectTimeoutMs,
     });
   } catch (error) {
+    const httpError = safeFetch.getLastHttpError();
     await Promise.allSettled([client.close(), safeFetch.close()]);
-    throw sanitizeMcpClientError(error);
+    throw sanitizeMcpClientError(error, { httpError });
   }
 
   return {
     client,
     endpoint,
     transport,
+    safeFetch,
     close: async () => {
       await Promise.allSettled([client.close(), safeFetch.close()]);
     },
@@ -87,7 +89,7 @@ async function withMcpClient(connection, callback, context = {}) {
   try {
     return await callback(session.client, session);
   } catch (error) {
-    throw sanitizeMcpClientError(error);
+    throw sanitizeMcpClientError(error, { httpError: session.safeFetch?.getLastHttpError() });
   } finally {
     await session.close();
   }

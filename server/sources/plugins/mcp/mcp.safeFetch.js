@@ -43,6 +43,49 @@ function getPinnedAgent(validation, agents) {
   return agent;
 }
 
+async function readBoundedResponseText(response, limit) {
+  try {
+    const clone = response.clone();
+    if (!clone.body) {
+      return String(await clone.text().catch(() => "")).slice(0, limit);
+    }
+    const reader = clone.body.getReader();
+    const chunks = [];
+    let bytes = 0;
+    let finished = false;
+    while (bytes < limit) {
+      const result = await reader.read(); // oxlint-disable-line no-await-in-loop
+      if (result.done || !result.value) {
+        finished = true;
+        break;
+      }
+      chunks.push(result.value);
+      bytes += result.value.byteLength;
+    }
+    if (!finished) {
+      // A cloned stream can wait for the original stream when it is cancelled.
+      // The caller must receive the original response before that can happen.
+      reader.cancel().catch(() => {});
+    }
+    if (!chunks.length) return "";
+    return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))
+      .subarray(0, limit)
+      .toString("utf8");
+  } catch (error) {
+    return "";
+  }
+}
+
+async function captureHttpError(response) {
+  return {
+    status: response.status,
+    statusText: String(response.statusText || ""),
+    text: await readBoundedResponseText(response, MCP_LIMITS.errorDetailsCharacters),
+    wwwAuthenticate: String(response.headers.get("www-authenticate") || "")
+      .slice(0, MCP_LIMITS.errorDetailsCharacters),
+  };
+}
+
 function wrapLimitedResponse(response, limit) {
   if (!response.body) return response;
 
@@ -80,8 +123,10 @@ function getRedirectMethod(method, status) {
 
 function createMcpSafeFetch(context = {}) {
   const agents = new Map();
+  let lastHttpError = null;
 
   const safeFetch = async (input, init = {}) => {
+    lastHttpError = null;
     let targetUrl = getRequestUrl(input);
     let requestInit = { ...init };
     const originalOrigin = new URL(targetUrl).origin;
@@ -96,7 +141,7 @@ function createMcpSafeFetch(context = {}) {
         allowPrivateHost: context.allowPrivateHost,
       });
       const currentUrl = new URL(validation.url);
-      if (currentUrl.origin !== originalOrigin) {
+      if (!context.allowCrossOriginRedirect && currentUrl.origin !== originalOrigin) {
         throw createMcpError(
           "MCP_CROSS_ORIGIN_REDIRECT",
           "The MCP server redirected to a different site."
@@ -109,6 +154,9 @@ function createMcpSafeFetch(context = {}) {
         redirect: "manual",
       });
       if (![301, 302, 303, 307, 308].includes(response.status)) {
+        if (!response.ok) {
+          lastHttpError = await captureHttpError(response); // oxlint-disable-line no-await-in-loop
+        }
         return wrapLimitedResponse(response, context.maxResponseBytes || MCP_LIMITS.maxResponseBytes);
       }
 
@@ -139,7 +187,11 @@ function createMcpSafeFetch(context = {}) {
     agents.clear();
   };
 
-  return { close, fetch: safeFetch };
+  return {
+    close,
+    fetch: safeFetch,
+    getLastHttpError: () => lastHttpError,
+  };
 }
 
 module.exports = {

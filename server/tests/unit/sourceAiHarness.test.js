@@ -249,21 +249,24 @@ const plannerContractFixtures = [{
     question: "Show open Jira issues by status",
   },
 }, {
-  name: "MCP approved tool table",
+  name: "PostHog MCP approved SQL tool",
   sourceId: "mcp",
   payload: (() => {
     const tool = sanitizeTool({
-      name: "list_orders",
-      title: "List orders",
-      description: "Read order data",
+      name: "execute-sql",
+      title: "Execute SQL",
+      description: "Run a read-only SQL query in PostHog",
       inputSchema: {
         type: "object",
-        properties: { status: { type: "string" } },
-        required: ["status"],
+        properties: {
+          query: { type: "string" },
+          context: { type: "string" },
+        },
+        required: ["query"],
       },
       outputSchema: {
         type: "array",
-        items: { type: "object", properties: { id: { type: "string" } } },
+        items: { type: "object", properties: { content: { type: "string" } } },
       },
       annotations: { readOnlyHint: true },
     });
@@ -288,8 +291,14 @@ const plannerContractFixtures = [{
           },
         },
       },
-      question: "Show paid orders",
-      overrides: { toolName: tool.name, arguments: { status: "paid" } },
+      question: "How many visitors used the free tools in the last 30 days?",
+      overrides: {
+        toolName: tool.name,
+        arguments: {
+          query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+          context: "Count visitors to free tools in the last 30 days",
+        },
+      },
     };
   })(),
 }];
@@ -499,8 +508,8 @@ function setupRealtimeDbToolRuntime() {
 
 function setupMcpToolRuntime() {
   vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
-    data: [{ id: "ord_1", status: "paid" }],
-    tool: { name: "list_orders" },
+    data: [{ content: "visitors\n42" }],
+    tool: { name: "execute-sql" },
   });
 }
 
@@ -589,18 +598,27 @@ const compactToolFixtures = [{
   setup: setupRealtimeDbToolRuntime,
 }, {
   sourceId: "mcp",
-  question: "Show paid orders",
-  resource: "list_orders",
-  overrides: { toolName: "list_orders", arguments: { status: "paid" } },
+  question: "How many visitors used the free tools in the last 30 days?",
+  resource: "execute-sql",
+  overrides: {
+    toolName: "execute-sql",
+    arguments: {
+      query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+      context: "Count visitors to free tools in the last 30 days",
+    },
+  },
   previewConfiguration: {
     source: "mcp",
     tool: {
-      name: "list_orders",
+      name: "execute-sql",
       contractFingerprint: plannerContractFixtures
         .find((fixture) => fixture.sourceId === "mcp")
         .payload.connection.schema.mcp.tools[0].contractFingerprint,
     },
-    arguments: { status: "paid" },
+    arguments: {
+      query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+      context: "Count visitors to free tools in the last 30 days",
+    },
     output: { mode: "auto", path: [] },
   },
   setup: setupMcpToolRuntime,
@@ -630,6 +648,12 @@ const toolRoutingReplays = [{
   steps: ["source_get_capabilities", "source_plan_dataset"],
   finalStatus: "needs_more_context",
   forbidden: ["create_temporary_chart", "create_chart"],
+}, {
+  name: "answer-first PostHog MCP query",
+  sourceId: "mcp",
+  steps: ["source_get_capabilities", "source_plan_dataset", "source_preview_configuration"],
+  finalStatus: "ok",
+  forbidden: ["run_query", "source_run_action"],
 }, {
   name: "query-generation database chart",
   sourceId: "postgres",

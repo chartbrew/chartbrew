@@ -1,4 +1,5 @@
-import mcpLogo from "./assets/mcp.svg";
+import mcpLogoLight from "./assets/mcp-light.svg";
+import mcpLogoDark from "./assets/mcp-dark.svg";
 
 const mcpSource = {
   id: "mcp",
@@ -19,8 +20,8 @@ const mcpSource = {
     },
   },
   assets: {
-    lightLogo: mcpLogo,
-    darkLogo: mcpLogo,
+    lightLogo: mcpLogoLight,
+    darkLogo: mcpLogoDark,
   },
   defaults: {
     dataRequest: {

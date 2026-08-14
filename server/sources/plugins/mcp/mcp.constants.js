@@ -5,6 +5,7 @@ const MCP_LIMITS = Object.freeze({
   catalogLegacyTtlMs: 60 * 1000,
   connectTimeoutMs: 15000,
   descriptionCharacters: 2000,
+  errorDetailsCharacters: 500,
   iconBytes: 128 * 1024,
   maxCatalogBytes: 1024 * 1024,
   maxRedirects: 5,
@@ -14,6 +15,7 @@ const MCP_LIMITS = Object.freeze({
   maxSchemaDepth: 20,
   maxToolPages: 32,
   maxTools: 250,
+  oauthTimeoutMs: 20000,
 });
 
 const MCP_AUTH_TYPES = Object.freeze([
