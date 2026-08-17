@@ -10,7 +10,8 @@ import { getChart } from "../../slices/chart";
 import AiComposer from "./AiComposer";
 import AiChartPreview from "./AiChartPreview";
 import AiActionPreviewCard from "./AiActionPreviewCard";
-import { AiAnswer, AiLoadingActivity, AiUserPrompt } from "./AiTranscript";
+import AiProgress from "./AiProgress";
+import { AiAnswer, AiUserPrompt } from "./AiTranscript";
 import { getCompletedActionIds, parseAiMessage } from "./aiMessageUtils";
 import useChatAutoScroll from "./hooks/useChatAutoScroll";
 import {
@@ -35,8 +36,10 @@ function AiChat({
   onConfirmAction,
   onSubmit,
   placeholder = "Ask a question about your data",
+  progressEvents = [],
   showSave = false,
   suggestions = [],
+  toolDisplayNames = {},
 }) {
   const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
@@ -48,7 +51,7 @@ function AiChat({
   const chartPreviewKey = chartPreviews
     .map(getChartPreviewKey)
     .join("|");
-  const scrollVersion = `${messages.length}:${isLoading}:${chartPreviewKey}`;
+  const scrollVersion = `${messages.length}:${isLoading}:${progressEvents.length}:${chartPreviewKey}`;
   const scrollResetKey = `${id}:${messages.length === 0 ? "empty" : "active"}`;
   const { containerRef, contentRef } = useChatAutoScroll(scrollVersion, scrollResetKey);
 
@@ -79,10 +82,14 @@ function AiChat({
   }, [messages.length]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3">
       {messages.length > 0 ? (
-        <div aria-live="polite" className="max-h-[34rem] overflow-y-auto pr-1" ref={containerRef}>
-          <div className="flex w-full flex-col gap-5" ref={contentRef}>
+        <div
+          aria-live="polite"
+          className="min-w-0 max-h-[34rem] overflow-y-auto pr-3 [scrollbar-gutter:stable]"
+          ref={containerRef}
+        >
+          <div className="flex min-w-0 w-full flex-col gap-5" ref={contentRef}>
             {messages.map((message, index) => {
               if (message.role === "user") {
                 return (
@@ -161,8 +168,13 @@ function AiChat({
                 </React.Fragment>
               );
             })}
-            {isLoading ? (
-              <AiLoadingActivity />
+            {isLoading || progressEvents.length > 0 ? (
+              <AiProgress
+                className="pl-4"
+                isLoading={isLoading}
+                progressEvents={progressEvents}
+                toolDisplayNames={toolDisplayNames}
+              />
             ) : null}
           </div>
         </div>
@@ -196,8 +208,10 @@ AiChat.propTypes = {
   onConfirmAction: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
+  progressEvents: PropTypes.arrayOf(PropTypes.object),
   showSave: PropTypes.bool,
   suggestions: PropTypes.arrayOf(PropTypes.string),
+  toolDisplayNames: PropTypes.object,
 };
 
 export default AiChat;

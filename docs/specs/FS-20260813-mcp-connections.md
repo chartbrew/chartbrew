@@ -104,14 +104,27 @@ If no safe logo exists, it uses the MCP logo and server initials.
    DataRequest.
 
 Structured JSON can become normal rows and fields. Valid JSON in a text block is also accepted.
-Plain text becomes one row with a `content` field. Image, audio, HTML, and resource-link-only results
-cannot be saved as datasets.
+Pipe, tab, CSV, and single-column newline tables in text blocks become object rows. Other plain text
+becomes one row with a `content` field. Image, audio, HTML, and resource-link-only results cannot be
+saved as datasets.
 
 ### Use the connection through Ask
 
-Ask uses the current generic source-owned tools. `source_list_resources` returns a compact list of
-tools approved for Ask. `source_plan_dataset` selects one tool and creates the same configuration as
-the manual builder. Validation and preview use the shared executor.
+Ask uses the current generic source-owned tools. `source_list_resources` returns a compact
+approved-tool index, a ranked search when `query` is set, or full schemas when `names` lists up to
+three tools. Ask must search and describe before calling a tool. It must not load the whole catalog
+into context. `source_plan_dataset` selects one tool and creates the same configuration as the
+manual builder. Validation and preview use the shared executor.
+
+If a question names pages, events, properties, or product features, Ask should first run a
+list/search/schema tool and read the real values. It must not invent path or event strings from the
+question wording. Empty rows or a zero metric usually mean the filter missed.
+
+SQL-style MCP results such as `{ columns, results }` tuples are normalized into object rows before
+charting. Ask must bind bar and timeseries charts to those preview column names. A single total
+cannot draw a timeline; the query needs one row per category or day. Preview returns
+`suggestedBindings` when columns can be inferred. Chart creation remaps guessed field names such as
+`page` onto the real columns when they differ.
 
 Ask can preview a tool to answer a one-time question. It can also save the validated DataRequest for
 a chart or dashboard. The model cannot invent a tool name, bypass approval, or pass arguments that

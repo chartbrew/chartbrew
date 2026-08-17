@@ -546,11 +546,24 @@ async function availableTools() {
     {
       name: "source_list_resources",
       displayName: "List source resources",
-      description: "List source-owned resources, metrics, dimensions, filters, and compiled metrics for a connection. For MCP connections, this returns the approved remote tools and their input schemas.",
+      description: "List source-owned resources for a connection. For MCP, omit extra fields for a compact approved-tool index, pass query to search, or pass names to load full schemas for up to 3 tools.",
       parameters: {
         type: "object",
         properties: {
-          connection_id: { type: "string" }
+          connection_id: { type: "string" },
+          query: {
+            type: "string",
+            description: "Search approved MCP tools by name or description. Omit to get a compact index.",
+          },
+          names: {
+            type: "array",
+            items: { type: "string" },
+            description: "Load full input schemas for up to 3 approved MCP tool names.",
+          },
+          question: {
+            type: "string",
+            description: "Optional search text when query is not set. Used as a catalog search for MCP.",
+          },
         },
         required: ["connection_id"]
       }
@@ -1441,7 +1454,7 @@ ${ENTITY_CREATION_RULES}
      * **DEFAULT: Always create a temporary preview chart to show the results visually**
    - For source-owned configuration connections:
      * Call source_get_capabilities or source_list_resources only when you truly need source context that is not already known. Do not call them as a default prerequisite for dashboard creation.
-     * For MCP answer-first requests, inspect approvedTools from source_get_capabilities or call source_list_resources. Then call source_plan_dataset with explicit overrides.toolName and overrides.arguments. Call source_preview_configuration with the returned configuration to run the approved remote tool and answer from its rows. Never use run_query or source_run_action for a remote MCP tool.
+     * For MCP answer-first requests, search with source_list_resources query, then pass names to load at most 3 full schemas. Call source_plan_dataset with explicit overrides.toolName and overrides.arguments, then source_preview_configuration. Never use run_query or source_run_action for a remote MCP tool. If the question names pages, events, properties, or features, first run a list/search/schema tool and read the real values. Do not invent path or event strings from the question wording. Empty rows or a zero metric usually mean the filter missed; verify the dimension before concluding there is no traffic. A bar or timeseries needs one row per category or day and xAxis/yAxis bound to those exact preview columns as root[].column. A single total cannot draw a timeline. Use suggestedBindings from preview when present.
      * Use source_resolve_context when a Jira follow-up needs to inspect or correct project, board, sprint, version, or user context.
      * Use source_run_action for bounded Jira metadata lookups such as users, projects, boards, sprints, versions, or JQL validation.
      * Use source_search_records for answer-first Jira issue lists before creating datasets. This is preferred for prompts like "what is Raz working on", "show open issues assigned to X", "show blockers", or "what is in the active sprint".

@@ -395,13 +395,28 @@ async function runDataRequest({
   if (getCache && savedConnection.id && dataRequest?.id) {
     const cached = await checkAndGetCache(savedConnection.id, dataRequest);
     if (cached) {
+      let response = cached;
+      try {
+        const data = cached.responseData?.data;
+        if (data !== undefined) {
+          response = {
+            ...cached,
+            responseData: {
+              ...cached.responseData,
+              data: selectToolOutput(data, getConfiguration(processedDataRequest || dataRequest).output),
+            },
+          };
+        }
+      } catch (_error) {
+        response = cached;
+      }
       await completeConnectorAudit(auditContext, {
         cacheHit: true,
         connectionType: "mcp",
         durationMs: Date.now() - startedAt,
-        ...serializeResponsePreview(cached.responseData),
+        ...serializeResponsePreview(response.responseData),
       });
-      return cached;
+      return response;
     }
   }
 

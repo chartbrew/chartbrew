@@ -49,9 +49,10 @@ function HomeAsk({ teamId }) {
   };
 
   return (
-    <Card className="gap-0 rounded-3xl border border-divider shadow-none">
-      <Card.Content className="flex flex-col gap-3">
-        <div className="flex flex-col gap-2">
+    <Card className="min-w-0 gap-0 overflow-hidden rounded-3xl border border-divider shadow-none">
+      <Card.Content className="min-w-0 p-0">
+        <div className="flex min-w-0 flex-col gap-3 px-5 py-4">
+        <div className="flex min-w-0 flex-col gap-2">
           <AiChat
             id="home-ask"
             isLoading={chat.isLoading}
@@ -61,12 +62,14 @@ function HomeAsk({ teamId }) {
             onSave={onSave}
             onSubmit={chat.sendMessage}
             placeholder={questionPlaceholder}
+            progressEvents={chat.progressEvents}
             showSave={Boolean(chat.sessionId)}
             suggestions={[
               "Summarize recent changes",
               "Which metrics need attention?",
               "Check data freshness",
             ]}
+            toolDisplayNames={chat.toolDisplayNames}
           />
           {saved ? (
             <p className="text-sm text-success">Conversation saved.</p>
@@ -118,6 +121,7 @@ function HomeAsk({ teamId }) {
             </div>
           </>
         ) : null}
+        </div>
       </Card.Content>
     </Card>
   );

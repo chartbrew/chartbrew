@@ -284,6 +284,46 @@ describe("MCP result and variable handling", () => {
       .toEqual([{ content: "No rows" }]);
   });
 
+  it("turns pipe, markdown, and CSV text tables into object rows", () => {
+    expect(normalizeToolResult({
+      content: [{ type: "text", text: "day|visits\n2026-07-15|42\n2026-07-16|191" }],
+    })).toEqual([
+      { day: "2026-07-15", visits: 42 },
+      { day: "2026-07-16", visits: 191 },
+    ]);
+    expect(normalizeToolResult({
+      content: [{
+        type: "text",
+        text: "| day | visits |\n| --- | --- |\n| 2026-07-15 | 42 |\n| 2026-07-16 | 191 |",
+      }],
+    })).toEqual([
+      { day: "2026-07-15", visits: 42 },
+      { day: "2026-07-16", visits: 191 },
+    ]);
+    expect(selectToolOutput([{
+      content: "pathname,visitors\n/tools/seo,120\n/tools/utm,80",
+    }])).toEqual([
+      { pathname: "/tools/seo", visitors: 120 },
+      { pathname: "/tools/utm", visitors: 80 },
+    ]);
+    expect(normalizeToolResult({
+      content: [{ type: "text", text: "day\tvisits\n2026-07-15\t42\n2026-07-16\t191" }],
+    })).toEqual([
+      { day: "2026-07-15", visits: 42 },
+      { day: "2026-07-16", visits: 191 },
+    ]);
+    expect(normalizeToolResult({
+      content: [{ type: "text", text: "visitors\n17280" }],
+    })).toEqual([{ visitors: 17280 }]);
+    expect(normalizeToolResult({
+      content: [{ type: "text", text: "| visitors |\n| --- |\n| 17280 |" }],
+    })).toEqual([{ visitors: 17280 }]);
+    expect(selectToolOutput([{ content: "visitors\n17280" }])).toEqual([{ visitors: 17280 }]);
+    expect(normalizeToolResult({
+      content: [{ type: "text", text: "No rows\nfound" }],
+    })).toEqual([{ content: "No rows\nfound" }]);
+  });
+
   it("rejects tool errors, interactive results, media, HTML, and resource links", () => {
     expect(() => normalizeToolResult({ isError: true, content: [] })).toThrow("returned an error");
     expect(() => normalizeToolResult({ resultType: "input_required" })).toThrow("interactive");
@@ -311,6 +351,36 @@ describe("MCP result and variable handling", () => {
     const value = { payload: { records: [{ id: 1 }] } };
     expect(selectToolOutput(value, { mode: "path", path: "payload.records" }))
       .toEqual([{ id: 1 }]);
+  });
+
+  it("turns HogQL column/result tuples into object rows", () => {
+    expect(selectToolOutput({
+      columns: ["pathname", "visitors"],
+      results: [["/tools/seo", 120], ["/tools/utm", 80]],
+    })).toEqual([
+      { pathname: "/tools/seo", visitors: 120 },
+      { pathname: "/tools/utm", visitors: 80 },
+    ]);
+  });
+
+  it("turns ClickHouse meta/data tuples into object rows", () => {
+    expect(selectToolOutput({
+      meta: [{ name: "day" }, { name: "visitors" }],
+      data: [["2026-07-15", 12], ["2026-07-16", 18]],
+    })).toEqual([
+      { day: "2026-07-15", visitors: 12 },
+      { day: "2026-07-16", visitors: 18 },
+    ]);
+  });
+
+  it("leaves object result rows unchanged", () => {
+    expect(selectToolOutput({
+      columns: ["pathname", "visitors"],
+      results: [{ pathname: "/tools/seo", visitors: 120 }],
+    })).toEqual([{ pathname: "/tools/seo", visitors: 120 }]);
+    expect(selectToolOutput({
+      results: [{ pathname: "/tools/seo", visitors: 120 }],
+    })).toEqual([{ pathname: "/tools/seo", visitors: 120 }]);
   });
 
   it("rejects dataset results above the central row limit", () => {
@@ -403,12 +473,193 @@ describe("MCP source integration contracts", () => {
 
     expect(mcpAi.getCapabilities({ connection: createConnection(tool) })).toMatchObject({
       approvedToolCount: 1,
+      catalog: { search: true, describe: true, truncated: false },
       approvedTools: [{
         id: "execute-sql",
         name: "Execute SQL",
         requiredArguments: ["query"],
       }],
     });
+    expect(mcpAi.getCapabilities({ connection: createConnection(tool) }).approvedTools[0].inputSchema)
+      .toBeUndefined();
+  });
+
+  it("searches the approved catalog and describes only requested tools", () => {
+    const sql = createTool({
+      name: "execute-sql",
+      title: "Execute SQL",
+      description: "Run a read-only SQL query over analytics events",
+      inputSchema: {
+        type: "object",
+        properties: { query: { type: "string" } },
+        required: ["query"],
+      },
+    });
+    const events = createTool({
+      name: "event-definitions-list",
+      title: "Event definitions",
+      description: "List event and path property definitions",
+    });
+    const feedback = createTool({
+      name: "agent-feedback",
+      title: "Agent feedback",
+      description: "Send feedback about analytics results",
+    });
+    const connection = createConnection(sql);
+    [events, feedback].forEach((tool) => {
+      connection.schema.mcp.tools.push(tool);
+      connection.schema.mcp.allowedTools[tool.name] = {
+        datasets: true,
+        ask: true,
+        confirmedReadOnly: true,
+        contractFingerprint: tool.contractFingerprint,
+        riskFingerprint: tool.riskFingerprint,
+      };
+    });
+
+    const index = mcpAi.listResources({ connection });
+    expect(index).toMatchObject({ mode: "index", total: 3, truncated: false });
+    expect(index.resources.map((resource) => resource.id).sort()).toEqual([
+      "agent-feedback",
+      "event-definitions-list",
+      "execute-sql",
+    ]);
+    expect(index.resources.every((resource) => !resource.inputSchema)).toBe(true);
+
+    const search = mcpAi.listResources({ connection, query: "sql event" });
+    expect(search.mode).toBe("search");
+    expect(search.resources.map((resource) => resource.id)).toEqual([
+      "event-definitions-list",
+      "execute-sql",
+    ]);
+
+    const described = mcpAi.listResources({ connection, names: ["execute-sql", "missing-tool"] });
+    expect(described).toMatchObject({
+      mode: "describe",
+      truncated: true,
+      resources: [{ id: "execute-sql", requiredArguments: ["query"] }],
+    });
+    expect(described.resources[0].inputSchema).toEqual(sql.inputSchema);
+  });
+
+  it("keeps a large Ask catalog compact until a tool is described", () => {
+    const tools = Array.from({ length: 20 }, (_, index) => createTool({
+      name: `tool-${String(index).padStart(2, "0")}`,
+      title: `Tool ${index}`,
+      description: `Read data for tool ${index}`,
+    }));
+    const connection = {
+      schema: {
+        mcp: {
+          tools,
+          allowedTools: Object.fromEntries(tools.map((tool) => [tool.name, {
+            datasets: true,
+            ask: true,
+            confirmedReadOnly: true,
+            contractFingerprint: tool.contractFingerprint,
+            riskFingerprint: tool.riskFingerprint,
+          }])),
+        },
+      },
+    };
+
+    const capabilities = mcpAi.getCapabilities({ connection });
+    expect(capabilities.approvedToolCount).toBe(20);
+    expect(capabilities.approvedTools).toEqual([]);
+    expect(capabilities.catalog.truncated).toBe(true);
+
+    const index = mcpAi.listResources({ connection });
+    expect(index.resources).toHaveLength(15);
+    expect(index.truncated).toBe(true);
+    expect(index.resources[0].inputSchema).toBeUndefined();
+  });
+
+  it("remaps guessed chart bindings onto preview columns", () => {
+    const rows = [
+      { pathname: "/tools/seo", visitors: 120 },
+      { pathname: "/tools/utm", visitors: 80 },
+    ];
+    expect(mcpAi.alignChartBindings({
+      rows,
+      type: "bar",
+      xAxis: "root[].page",
+      yAxis: [],
+    })).toMatchObject({
+      xAxis: "root[].pathname",
+      yAxis: "root[].visitors",
+      suggestedBindings: {
+        xAxis: "root[].pathname",
+        yAxis: "root[].visitors",
+      },
+    });
+    expect(mcpAi.alignChartBindings({
+      rows: [{ day: "2026-07-15", visitors: 12 }, { day: "2026-07-16", visitors: 18 }],
+      type: "line",
+      xAxis: "root[].page",
+      yAxis: "root[].count",
+    })).toMatchObject({
+      xAxis: "root[].day",
+      yAxis: "root[].visitors",
+      dateField: "root[].day",
+    });
+  });
+
+  it("returns suggestedBindings from an MCP preview", async () => {
+    const tool = createTool();
+    const connection = createConnection(tool);
+    const executeSpy = vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+      data: [{ pathname: "/tools/seo", visitors: 120 }],
+      tool,
+    });
+    try {
+      const preview = await mcpAi.previewConfiguration({
+        connection,
+        configuration: {
+          source: "mcp",
+          tool: {
+            name: tool.name,
+            contractFingerprint: tool.contractFingerprint,
+          },
+          arguments: {},
+          output: { mode: "auto", path: [] },
+        },
+      });
+      expect(preview.status).toBe("ok");
+      expect(preview.columns.map((column) => column.name)).toEqual(["pathname", "visitors"]);
+      expect(preview.suggestedBindings).toMatchObject({
+        xAxis: "root[].pathname",
+        yAxis: "root[].visitors",
+      });
+    } finally {
+      executeSpy.mockRestore();
+    }
+  });
+
+  it("warns when an MCP preview returns a zero metric", async () => {
+    const tool = createTool();
+    const connection = createConnection(tool);
+    const executeSpy = vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+      data: [{ visitors: 0 }],
+      tool,
+    });
+    try {
+      const preview = await mcpAi.previewConfiguration({
+        connection,
+        configuration: {
+          source: "mcp",
+          tool: {
+            name: tool.name,
+            contractFingerprint: tool.contractFingerprint,
+          },
+          arguments: {},
+          output: { mode: "auto", path: [] },
+        },
+      });
+      expect(preview.status).toBe("ok");
+      expect(preview.warnings[0]).toMatch(/Confirm the real event/);
+    } finally {
+      executeSpy.mockRestore();
+    }
   });
 
   it("does not select an MCP tool from a weak description match", async () => {

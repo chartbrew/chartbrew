@@ -9,9 +9,9 @@ import AiMarkdown from "./AiMarkdown";
 
 export function AiUserPrompt({ children }) {
   return (
-    <div className="flex w-full justify-end">
-      <div className="max-w-[85%] rounded-2xl bg-content2 px-4 py-3 text-sm leading-6 text-foreground">
-        <p className="whitespace-pre-wrap">{children}</p>
+    <div className="flex min-w-0 w-full justify-end">
+      <div className="min-w-0 max-w-[85%] rounded-2xl bg-content2 px-4 py-3 text-sm leading-6 text-foreground">
+        <p className="break-words whitespace-pre-wrap">{children}</p>
       </div>
     </div>
   );

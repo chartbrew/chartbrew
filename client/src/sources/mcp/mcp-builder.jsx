@@ -1,18 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
+  Accordion,
   Alert,
   Button,
-  Chip,
+  ComboBox,
+  Description,
   Input,
   Label,
   ListBox,
   Select,
-  Separator,
   Switch,
+  Table,
+  TextArea,
   TextField,
+  Tooltip,
 } from "@heroui/react";
-import { LuCode, LuPlay, LuRefreshCw, LuSave, LuTrash2 } from "react-icons/lu";
+import { LuCode, LuInfo, LuPlay, LuRefreshCw, LuSave, LuTrash2 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router";
 
@@ -25,6 +29,9 @@ import {
   runDataRequest,
 } from "../../slices/dataset";
 import { selectTeam } from "../../slices/team";
+
+const PREVIEW_ROW_LIMIT = 50;
+const LONG_TEXT_FIELDS = new Set(["query", "sql", "hogql", "statement", "context", "prompt"]);
 
 function getSchemaType(schema = {}) {
   if (Array.isArray(schema.type)) return schema.type.find((type) => type !== "null") || "string";
@@ -42,73 +49,147 @@ function getSchemaDefault(schema = {}) {
   return Object.keys(value).length ? value : undefined;
 }
 
+function summarizeText(value, limit = 88) {
+  const text = String(value || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/[#>*_`[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return "";
+  const period = text.indexOf(". ");
+  const sentence = period === -1 ? text : text.slice(0, period + 1);
+  if (sentence.length <= limit) return sentence;
+  return `${sentence.slice(0, limit - 1).trim()}…`;
+}
+
+function humanizeName(name) {
+  return name
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\bid\b/gi, "ID")
+    .replace(/^\w/, (letter) => letter.toUpperCase());
+}
+
+function fieldLabel(name, schema = {}) {
+  if (schema.title && schema.title !== name) return schema.title;
+  return humanizeName(name);
+}
+
+function isLongTextField(name, schema) {
+  if (getSchemaType(schema) !== "string") return false;
+  if (LONG_TEXT_FIELDS.has(String(name).toLowerCase())) return true;
+  return Number(schema.maxLength) > 200;
+}
+
+function partitionFields(schema = {}) {
+  const required = schema.required || [];
+  const long = [];
+  const main = [];
+  const extra = [];
+  Object.entries(schema.properties || {}).forEach(([name, fieldSchema]) => {
+    const isRequired = required.includes(name);
+    if (isLongTextField(name, fieldSchema)) long.push([name, fieldSchema, isRequired]);
+    else if (isRequired) main.push([name, fieldSchema, true]);
+    else extra.push([name, fieldSchema, false]);
+  });
+  long.sort(([left], [right]) => {
+    const rank = (name) => (["query", "sql", "hogql"].includes(name.toLowerCase()) ? 0 : 1);
+    return rank(left) - rank(right);
+  });
+  return { extra, long, main };
+}
+
+function formatPreviewCell(value) {
+  if (value == null) return "";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function LabelWithTip({ label, required, tip }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      {label}{required ? " *" : ""}
+      {tip ? (
+        <Tooltip delay={0}>
+          <Tooltip.Trigger>
+            <span className="flex text-muted">
+              <LuInfo size={14} aria-hidden />
+            </span>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="max-w-sm">{tip}</Tooltip.Content>
+        </Tooltip>
+      ) : null}
+    </span>
+  );
+}
+
 function SchemaField({ name, schema, value, required, onChange }) {
   const type = getSchemaType(schema);
-  const label = schema.title || name;
-  const description = schema.description || "";
+  const label = fieldLabel(name, schema);
+  const tip = summarizeText(schema.description, 220);
 
   if (Array.isArray(schema.enum)) {
     return (
       <Select
         aria-label={label}
-        value={value === undefined ? null : String(value)}
         onChange={(nextValue) => {
           const selected = schema.enum.find((option) => String(option) === String(nextValue));
           onChange(selected);
         }}
         selectionMode="single"
+        value={value === undefined ? null : String(value)}
         variant="secondary"
       >
-        <Label>{label}{required ? " *" : ""}</Label>
+        <Label>
+          <LabelWithTip label={label} required={required} tip={tip} />
+        </Label>
         <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
         <Select.Popover>
           <ListBox>
             {schema.enum.map((option) => (
-              <ListBox.Item key={String(option)} id={String(option)} textValue={String(option)}>
-                {String(option)}<ListBox.ItemIndicator />
+              <ListBox.Item id={String(option)} key={String(option)} textValue={String(option)}>
+                {String(option)}
+                <ListBox.ItemIndicator />
               </ListBox.Item>
             ))}
           </ListBox>
         </Select.Popover>
-        {description && <p className="mt-1 text-xs text-muted">{description}</p>}
       </Select>
     );
   }
 
   if (type === "boolean") {
     return (
-      <div>
-        <Switch isSelected={value === true} onChange={onChange}>
-          <Switch.Content>
-            <Switch.Control><Switch.Thumb /></Switch.Control>
-            {label}{required ? " *" : ""}
-          </Switch.Content>
-        </Switch>
-        {description && <p className="mt-1 text-xs text-muted">{description}</p>}
-      </div>
+      <Switch isSelected={value === true} onChange={onChange}>
+        <Switch.Content>
+          <Switch.Control><Switch.Thumb /></Switch.Control>
+          <LabelWithTip label={label} required={required} tip={tip} />
+        </Switch.Content>
+      </Switch>
     );
   }
 
   if (type === "object" && Object.keys(schema.properties || {}).length > 0) {
     const objectValue = value && typeof value === "object" && !Array.isArray(value) ? value : {};
     return (
-      <fieldset className="rounded-xl border border-divider p-4 md:col-span-2">
-        <legend className="px-1 text-sm font-medium">{label}{required ? " *" : ""}</legend>
-        {description && <p className="mb-4 text-xs text-muted">{description}</p>}
+      <fieldset className="md:col-span-2">
+        <legend className="mb-3 text-sm font-medium text-foreground">
+          <LabelWithTip label={label} required={required} tip={tip} />
+        </legend>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Object.entries(schema.properties).map(([childName, childSchema]) => (
             <SchemaField
               key={childName}
               name={childName}
-              schema={childSchema}
-              value={objectValue[childName]}
-              required={(schema.required || []).includes(childName)}
               onChange={(childValue) => {
                 const nextValue = { ...objectValue };
                 if (childValue === "" || childValue === undefined) delete nextValue[childName];
                 else nextValue[childName] = childValue;
                 onChange(nextValue);
               }}
+              required={(schema.required || []).includes(childName)}
+              schema={childSchema}
+              value={objectValue[childName]}
             />
           ))}
         </div>
@@ -119,31 +200,52 @@ function SchemaField({ name, schema, value, required, onChange }) {
   if (type === "object" || type === "array") {
     return (
       <TextField name={`mcp-argument-${name}`}>
-        <Label>{label}{required ? " *" : ""}</Label>
-        <textarea
-          className="min-h-28 w-full rounded-xl border border-divider bg-surface-secondary px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-primary"
-          value={typeof value === "string" ? value : JSON.stringify(value ?? (type === "array" ? [] : {}), null, 2)}
+        <Label>
+          <LabelWithTip label={label} required={required} tip={tip} />
+        </Label>
+        <TextArea
+          aria-label={label}
+          className="min-h-28 font-mono text-sm"
           onChange={(event) => {
             try {
               onChange(JSON.parse(event.target.value));
-            } catch (error) {
+            } catch (_error) {
               onChange(event.target.value);
             }
           }}
-          aria-label={label}
+          value={typeof value === "string" ? value : JSON.stringify(value ?? (type === "array" ? [] : {}), null, 2)}
+          variant="secondary"
         />
-        {description && <p className="mt-1 text-xs text-muted">{description}</p>}
+      </TextField>
+    );
+  }
+
+  if (isLongTextField(name, schema)) {
+    const isQuery = ["query", "sql", "hogql", "statement"].includes(name.toLowerCase());
+    return (
+      <TextField name={`mcp-argument-${name}`}>
+        <Label>
+          <LabelWithTip label={label} required={required} tip={tip} />
+        </Label>
+        <TextArea
+          aria-label={label}
+          className={isQuery ? "min-h-44 font-mono text-sm" : "min-h-28 text-sm"}
+          onChange={(event) => onChange(event.target.value)}
+          rows={isQuery ? 10 : 4}
+          value={value ?? ""}
+          variant="secondary"
+        />
       </TextField>
     );
   }
 
   return (
     <TextField name={`mcp-argument-${name}`}>
-      <Label>{label}{required ? " *" : ""}</Label>
+      <Label>
+        <LabelWithTip label={label} required={required} tip={tip} />
+      </Label>
       <Input
-        type="text"
         inputMode={type === "number" || type === "integer" ? "decimal" : undefined}
-        value={value ?? ""}
         onChange={(event) => {
           if (["number", "integer"].includes(type)
             && event.target.value !== ""
@@ -154,9 +256,10 @@ function SchemaField({ name, schema, value, required, onChange }) {
           }
         }}
         placeholder={schema.default !== undefined ? String(schema.default) : ""}
+        type="text"
+        value={value ?? ""}
         variant="secondary"
       />
-      {description && <p className="mt-1 text-xs text-muted">{description}</p>}
     </TextField>
   );
 }
@@ -170,7 +273,7 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
   const [advanced, setAdvanced] = useState(false);
   const [argumentsText, setArgumentsText] = useState("{}");
   const [argumentsError, setArgumentsError] = useState("");
-  const [result, setResult] = useState("");
+  const [previewRows, setPreviewRows] = useState(null);
   const [runError, setRunError] = useState("");
   const [showTransform, setShowTransform] = useState(false);
 
@@ -188,6 +291,16 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
     return (metadata?.tools || []).filter((tool) => tool.approval?.datasets === true);
   }, [metadata]);
   const selectedTool = approvedTools.find((tool) => tool.name === configuration.tool?.name);
+  const fieldGroups = useMemo(
+    () => partitionFields(selectedTool?.inputSchema),
+    [selectedTool],
+  );
+  const previewColumns = useMemo(() => {
+    if (!Array.isArray(previewRows) || !previewRows.length) return [];
+    const first = previewRows.find((row) => row && typeof row === "object" && !Array.isArray(row));
+    return first ? Object.keys(first) : [];
+  }, [previewRows]);
+  const previewIsTextBlock = previewColumns.length === 1 && previewColumns[0] === "content";
 
   useEffect(() => {
     setRequest(dataRequest || {});
@@ -235,6 +348,7 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
     };
     setArgumentsText(JSON.stringify(defaultArguments, null, 2));
     setArgumentsError("");
+    setPreviewRows(null);
     updateConfiguration(nextConfiguration);
   };
 
@@ -286,214 +400,316 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
       const payload = action.payload;
       if (payload?.status?.statusCode >= 400) {
         setRunError(typeof payload.response === "string" ? payload.response : JSON.stringify(payload.response));
+        setPreviewRows(null);
         return;
       }
       const rows = payload?.response?.dataRequest?.responseData?.data;
-      setResult(JSON.stringify(rows ?? payload?.response ?? {}, null, 2));
+      setPreviewRows(Array.isArray(rows) ? rows : rows ? [rows] : []);
     } catch (error) {
-      setRunError(error.message || "The MCP tool could not run.");
+      setRunError(error.message || "The tool could not run.");
+      setPreviewRows(null);
     } finally {
       setRunLoading(false);
     }
   };
 
+  const renderFields = (fields) => fields.map(([name, schema, required]) => (
+    <SchemaField
+      key={name}
+      name={name}
+      onChange={(value) => updateArgument(name, value)}
+      required={required}
+      schema={schema}
+      value={configuration.arguments?.[name]}
+    />
+  ));
+
+  const toolSummary = summarizeText(selectedTool?.description, 160);
+
   return (
-    <div className="rounded-3xl border border-divider bg-surface p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="w-full max-w-2xl">
-          <Select
-            aria-label="MCP tool"
-            value={configuration.tool?.name || null}
-            onChange={selectTool}
-            selectionMode="single"
-            disallowEmptySelection
-            variant="secondary"
-          >
-            <Label>Tool</Label>
-            <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-            <Select.Popover>
-              <ListBox>
-                {approvedTools.map((tool) => (
-                  <ListBox.Item key={tool.name} id={tool.name} textValue={tool.title || tool.name}>
-                    <div className="min-w-0">
-                      <p className="font-medium">{tool.title || tool.name}</p>
-                      {tool.description && <p className="truncate text-xs text-muted">{tool.description}</p>}
-                    </div>
+    <div className="flex flex-col gap-6 pl-1 pr-1 sm:pl-4 sm:pr-4">
+      <div className="flex flex-wrap items-end gap-2">
+        <ComboBox
+          aria-label="Tool"
+          className="min-w-0 flex-1"
+          menuTrigger="focus"
+          onSelectionChange={(toolName) => {
+            if (toolName) selectTool(String(toolName));
+          }}
+          selectedKey={configuration.tool?.name || null}
+          variant="secondary"
+        >
+          <Label>
+            <LabelWithTip label="Tool" tip={toolSummary} />
+          </Label>
+          <ComboBox.InputGroup>
+            <Input placeholder="Search tools" />
+            <ComboBox.Trigger />
+          </ComboBox.InputGroup>
+          <ComboBox.Popover className="max-w-md">
+            <ListBox>
+              {approvedTools.map((tool) => {
+                const title = tool.title || tool.name;
+                const summary = summarizeText(tool.description);
+                return (
+                  <ListBox.Item
+                    id={tool.name}
+                    key={tool.name}
+                    textValue={`${title} ${summary}`.trim()}
+                  >
+                    <Label>{title}</Label>
+                    {summary ? <Description className="line-clamp-2">{summary}</Description> : null}
                     <ListBox.ItemIndicator />
                   </ListBox.Item>
-                ))}
-              </ListBox>
-            </Select.Popover>
-          </Select>
-        </div>
-        <Button variant="tertiary" isPending={metadataLoading} onPress={loadMetadata}>
-          {metadataLoading ? <ButtonSpinner /> : <LuRefreshCw />}
-          Reload tools
-        </Button>
+                );
+              })}
+            </ListBox>
+          </ComboBox.Popover>
+        </ComboBox>
+        <Tooltip delay={0}>
+          <Tooltip.Trigger>
+            <Button
+              aria-label="Reload tools"
+              isIconOnly
+              isPending={metadataLoading}
+              onPress={loadMetadata}
+              variant="tertiary"
+            >
+              {metadataLoading ? <ButtonSpinner /> : <LuRefreshCw size={16} aria-hidden />}
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>Reload tools</Tooltip.Content>
+        </Tooltip>
+        {selectedTool ? (
+          <Button onPress={() => setAdvanced(!advanced)} variant="tertiary">
+            <LuCode size={16} aria-hidden />
+            {advanced ? "Use form" : "Edit JSON"}
+          </Button>
+        ) : null}
       </div>
 
       {!metadataLoading && approvedTools.length === 0 && (
-        <Alert className="mt-5 shadow-none" status="warning">
+        <Alert className="shadow-none" status="warning">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>No tools are approved for datasets</Alert.Title>
-            <Alert.Description>Open the connection and approve a read-only tool for Datasets.</Alert.Description>
+            <Alert.Title>No tools are available for datasets</Alert.Title>
+            <Alert.Description>Open the connection and allow a read-only tool for datasets.</Alert.Description>
           </Alert.Content>
         </Alert>
       )}
 
       {selectedTool && (
         <>
-          <div className="mt-6 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="font-semibold">{selectedTool.title || selectedTool.name}</p>
-              {selectedTool.description && <p className="mt-1 max-w-3xl text-sm text-muted">{selectedTool.description}</p>}
+          {advanced ? (
+            <div className="flex flex-col gap-2">
+              <CodeEditor
+                height="280px"
+                mode="json"
+                onChange={updateAdvancedArguments}
+                theme={isDark ? "one_dark" : "tomorrow"}
+                value={argumentsText}
+              />
+              {argumentsError ? <p className="text-sm text-danger">{argumentsError}</p> : null}
             </div>
-            <Button size="sm" variant={advanced ? "secondary" : "tertiary"} onPress={() => setAdvanced(!advanced)}>
-              <LuCode /> {advanced ? "Use form" : "Edit JSON"}
+          ) : (
+            <div className="flex flex-col gap-6">
+              {fieldGroups.long.length > 0 ? (
+                <div className="flex flex-col gap-5">
+                  {renderFields(fieldGroups.long)}
+                </div>
+              ) : null}
+              {fieldGroups.main.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {renderFields(fieldGroups.main)}
+                </div>
+              ) : null}
+              {fieldGroups.long.length === 0 && fieldGroups.main.length === 0 && fieldGroups.extra.length === 0 ? (
+                <p className="text-sm text-muted">This tool does not need extra details.</p>
+              ) : null}
+              <Accordion className="border-0 bg-transparent shadow-none" hideSeparator variant="surface">
+                <Accordion.Item id="mcp-more-options" textValue="More options">
+                  <Accordion.Heading>
+                    <Accordion.Trigger className="rounded-lg px-0 py-1.5">
+                      <span className="text-sm font-medium text-foreground">More options</span>
+                      <Accordion.Indicator />
+                    </Accordion.Trigger>
+                  </Accordion.Heading>
+                  <Accordion.Panel>
+                    <Accordion.Body className="flex flex-col gap-5 px-0 pb-1 pt-3">
+                      {fieldGroups.extra.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          {renderFields(fieldGroups.extra)}
+                        </div>
+                      ) : null}
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <Select
+                          aria-label="Result format"
+                          disallowEmptySelection
+                          onChange={(mode) => updateConfiguration({
+                            ...configuration,
+                            output: { ...configuration.output, mode },
+                          })}
+                          selectionMode="single"
+                          value={configuration.output?.mode || "auto"}
+                          variant="secondary"
+                        >
+                          <Label>Result format</Label>
+                          <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                          <Select.Popover>
+                            <ListBox>
+                              <ListBox.Item id="auto" textValue="Detect automatically">
+                                Detect automatically
+                                <ListBox.ItemIndicator />
+                              </ListBox.Item>
+                              <ListBox.Item id="path" textValue="Choose a field path">
+                                Choose a field path
+                                <ListBox.ItemIndicator />
+                              </ListBox.Item>
+                            </ListBox>
+                          </Select.Popover>
+                        </Select>
+                        {configuration.output?.mode === "path" ? (
+                          <TextField name="mcp-output-path">
+                            <Label>Field path</Label>
+                            <Input
+                              onChange={(event) => updateConfiguration({
+                                ...configuration,
+                                output: { ...configuration.output, path: event.target.value },
+                              })}
+                              placeholder="data.items"
+                              value={Array.isArray(configuration.output?.path)
+                                ? configuration.output.path.join(".")
+                                : configuration.output?.path || ""}
+                              variant="secondary"
+                            />
+                          </TextField>
+                        ) : null}
+                      </div>
+                    </Accordion.Body>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button isPending={runLoading} onPress={runRequest} variant="primary">
+              {runLoading ? <ButtonSpinner /> : <LuPlay size={16} aria-hidden />}
+              Run
             </Button>
-          </div>
-
-          <div className="mt-5">
-            {advanced ? (
-              <>
-                <CodeEditor
-                  mode="json"
-                  theme={isDark ? "one_dark" : "tomorrow"}
-                  height="300px"
-                  value={argumentsText}
-                  onChange={updateAdvancedArguments}
-                />
-                {argumentsError && <p className="mt-2 text-sm text-danger">{argumentsError}</p>}
-              </>
-            ) : (
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                {Object.entries(selectedTool.inputSchema?.properties || {}).map(([name, schema]) => (
-                  <SchemaField
-                    key={name}
-                    name={name}
-                    schema={schema}
-                    value={configuration.arguments?.[name]}
-                    required={(selectedTool.inputSchema?.required || []).includes(name)}
-                    onChange={(value) => updateArgument(name, value)}
-                  />
-                ))}
-                {Object.keys(selectedTool.inputSchema?.properties || {}).length === 0 && (
-                  <p className="text-sm text-muted">This tool does not need arguments.</p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <Separator className="my-6" />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Select
-              aria-label="Output selection"
-              value={configuration.output?.mode || "auto"}
-              onChange={(mode) => updateConfiguration({
-                ...configuration,
-                output: { ...configuration.output, mode },
-              })}
-              selectionMode="single"
-              disallowEmptySelection
-              variant="secondary"
-            >
-              <Label>Output</Label>
-              <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  <ListBox.Item id="auto" textValue="Automatic">Automatic<ListBox.ItemIndicator /></ListBox.Item>
-                  <ListBox.Item id="path" textValue="Select a path">Select a path<ListBox.ItemIndicator /></ListBox.Item>
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            {configuration.output?.mode === "path" && (
-              <TextField name="mcp-output-path">
-                <Label>Result path</Label>
-                <Input
-                  value={Array.isArray(configuration.output?.path)
-                    ? configuration.output.path.join(".")
-                    : configuration.output?.path || ""}
-                  onChange={(event) => updateConfiguration({
-                    ...configuration,
-                    output: { ...configuration.output, path: event.target.value },
-                  })}
-                  placeholder="data.items"
-                  variant="secondary"
-                />
-              </TextField>
-            )}
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Button variant="primary" isPending={runLoading} onPress={runRequest}>
-              {runLoading ? <ButtonSpinner /> : <LuPlay />}
-              Run tool
-            </Button>
-            <Button variant="secondary" isPending={saveLoading} onPress={saveRequest}>
-              {saveLoading ? <ButtonSpinner /> : <LuSave />}
+            <Button isPending={saveLoading} onPress={saveRequest} variant="secondary">
+              {saveLoading ? <ButtonSpinner /> : <LuSave size={16} aria-hidden />}
               Save
             </Button>
-            <Button variant="tertiary" onPress={() => setShowTransform(true)}>
-              Transform data
+            <Button onPress={() => setShowTransform(true)} variant="ghost">
+              Transform
             </Button>
-            <Button variant="tertiary" onPress={() => onDelete(dataRequest.id)}>
-              <LuTrash2 /> Delete
+            <Button className="ml-auto" onPress={() => onDelete(dataRequest.id)} variant="danger-soft">
+              <LuTrash2 size={16} aria-hidden />
+              Delete
             </Button>
           </div>
 
-          {runError && (
-            <Alert className="mt-5 shadow-none" status="danger">
+          {runError ? (
+            <Alert className="shadow-none" status="danger">
               <Alert.Indicator />
-              <Alert.Content><Alert.Title>Tool run failed</Alert.Title><Alert.Description>{runError}</Alert.Description></Alert.Content>
+              <Alert.Content>
+                <Alert.Title>Could not run this tool</Alert.Title>
+                <Alert.Description>{runError}</Alert.Description>
+              </Alert.Content>
             </Alert>
-          )}
-          {result && (
-            <div className="mt-6">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="font-semibold">Preview</p>
-                <Chip size="sm" variant="secondary">JSON</Chip>
-              </div>
+          ) : null}
+
+          {previewRows === null ? (
+            <div className="flex min-h-36 flex-col items-center justify-center rounded-2xl border border-dashed border-divider px-6 py-8 text-center">
+              <p className="text-sm text-muted">Run to preview rows</p>
+            </div>
+          ) : previewIsTextBlock || previewColumns.length === 0 ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm font-medium text-foreground">Preview</p>
+              <p className="text-sm text-muted">This result is not rows and columns yet.</p>
               <CodeEditor
+                height="240px"
                 mode="json"
-                theme={isDark ? "one_dark" : "tomorrow"}
-                height="320px"
-                value={result}
                 readOnly
+                theme={isDark ? "one_dark" : "tomorrow"}
+                value={JSON.stringify(previewRows, null, 2)}
               />
             </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-sm font-medium text-foreground">Preview</p>
+                <p className="text-sm text-muted">
+                  {previewRows.length} {previewRows.length === 1 ? "row" : "rows"}
+                </p>
+              </div>
+              <Table className="border border-divider shadow-none">
+                <Table.ScrollContainer>
+                  <Table.Content aria-label="Tool preview" className="min-w-[560px]">
+                    <Table.Header>
+                      {previewColumns.map((column, index) => (
+                        <Table.Column id={column} isRowHeader={index === 0} key={column}>
+                          {column}
+                        </Table.Column>
+                      ))}
+                    </Table.Header>
+                    <Table.Body>
+                      {previewRows.slice(0, PREVIEW_ROW_LIMIT).map((row, rowIndex) => (
+                        <Table.Row id={`preview-${rowIndex}`} key={`preview-${rowIndex}`}>
+                          {previewColumns.map((column) => (
+                            <Table.Cell key={column}>
+                              <span className="block max-w-[240px] truncate" title={formatPreviewCell(row[column])}>
+                                {formatPreviewCell(row[column])}
+                              </span>
+                            </Table.Cell>
+                          ))}
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Content>
+                </Table.ScrollContainer>
+              </Table>
+            </div>
           )}
-          {showTransform && (
+
+          {showTransform ? (
             <DataTransform
+              initialTransform={request.transform}
               isOpen={showTransform}
               onClose={() => setShowTransform(false)}
-              initialTransform={request.transform}
               onSave={(transform) => {
                 const nextRequest = { ...request, transform };
                 setRequest(nextRequest);
                 onChangeRequest(nextRequest);
               }}
             />
-          )}
+          ) : null}
         </>
       )}
     </div>
   );
 }
 
+LabelWithTip.propTypes = {
+  label: PropTypes.string.isRequired,
+  required: PropTypes.bool,
+  tip: PropTypes.string,
+};
+
 SchemaField.propTypes = {
   name: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  required: PropTypes.bool,
   schema: PropTypes.object.isRequired,
   value: PropTypes.any,
-  required: PropTypes.bool,
-  onChange: PropTypes.func.isRequired,
 };
 
 McpBuilder.propTypes = {
   dataRequest: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  onSave: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
 };
 
 export default McpBuilder;

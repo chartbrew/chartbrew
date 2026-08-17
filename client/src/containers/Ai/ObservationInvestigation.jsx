@@ -21,11 +21,13 @@ function ObservationInvestigation({ observationId, teamId }) {
       onSave={chat.save}
       onSubmit={chat.sendMessage}
       placeholder="Ask a follow-up about this change"
+      progressEvents={chat.progressEvents}
       showSave={Boolean(chat.sessionId)}
       suggestions={[
         "What should I investigate first?",
         "Which accessible dataset can explain this?",
       ]}
+      toolDisplayNames={chat.toolDisplayNames}
     />
   );
 }
