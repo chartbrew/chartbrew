@@ -4,6 +4,7 @@ import {
 import request from "supertest";
 import bcrypt from "bcrypt";
 import simplecrypt from "simplecrypt";
+import jwt from "jsonwebtoken";
 
 import { createTestAppWithUserRoutes } from "../helpers/testApp.js";
 import { getModels } from "../helpers/dbHelpers.js";
@@ -54,6 +55,8 @@ describe("User Auth API", () => {
       const teamRole = await models.TeamRole.findOne({ where: { user_id: createdUser.id } });
       expect(teamRole).toBeTruthy();
       expect(teamRole.role).toBe("teamOwner");
+      const ownedTeam = await models.Team.findByPk(teamRole.team_id);
+      expect(ownedTeam.onboardingCompletedAt).toBeNull();
     });
 
     it("should keep later users out of platform administration", async () => {
@@ -85,6 +88,23 @@ describe("User Auth API", () => {
         .expect(409);
 
       expect(response.text).toBe("The email is already used");
+    });
+
+    it("does not create an owned team for an invited signup", async () => {
+      const settings = require("../../settings-dev");
+      const inviteToken = jwt.sign({ team_id: 987, role: "projectViewer" }, settings.encryptionKey);
+      const response = await request(app)
+        .post("/user/invited")
+        .send({
+          name: "Invited User",
+          email: "invited@example.com",
+          password: "password123",
+          inviteToken,
+        })
+        .expect(200);
+      const roles = await models.TeamRole.findAll({ where: { user_id: response.body.id } });
+      expect(roles).toHaveLength(0);
+      expect(response.body.admin).toBe(false);
     });
   });
 

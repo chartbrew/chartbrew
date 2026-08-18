@@ -61,6 +61,15 @@ export async function createTestAppWithUserRoutes() {
   return app;
 }
 
+export async function createTestAppWithTeamRoutes() {
+  const app = await createTestApp();
+  const userRoute = require("../../api/UserRoute.js");
+  const teamRoute = require("../../api/TeamRoute.js");
+  userRoute(app);
+  teamRoute(app);
+  return app;
+}
+
 export async function createTestAppWithPlatformSettingsRoutes() {
   const app = await createTestApp();
 

@@ -99,7 +99,47 @@ module.exports = (app) => {
       const team = await teamController.createTeam(req.body, req.user.id);
       return res.status(200).send(team);
     } catch (error) {
-      return res.status(400).send({ error: "Error creating team" });
+      return res.status(400).send({ error: error.message || "Error creating team" });
+    }
+  });
+  // --------------------------------------
+
+  app.patch("/team/:id/onboarding", verifyToken, apiLimiter(20), async (req, res) => {
+    try {
+      const team = await teamController.saveOnboarding(req.params.id, req.user.id, req.body);
+      return res.status(200).send(team);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: error.message || "Unable to save team setup" });
+    }
+  });
+  // --------------------------------------
+
+  app.put("/team/:id/business-profile", verifyToken, apiLimiter(20), async (req, res) => {
+    try {
+      const profile = await teamController.updateBusinessProfile(req.params.id, req.user.id, req.body);
+      return res.status(200).send(profile);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: error.message || "Unable to save business profile" });
+    }
+  });
+  // --------------------------------------
+
+  app.get("/team/:id/business-profile/logo", verifyToken, async (req, res) => {
+    try {
+      const profile = await teamController.getBusinessProfileLogo(req.params.id, req.user.id);
+      if (!profile?.logoData || !profile?.logoMimeType) {
+        return res.status(404).send({ error: "Business logo not found" });
+      }
+      res.set("Content-Type", profile.logoMimeType);
+      res.set("Cache-Control", "private, max-age=3600");
+      res.set("X-Content-Type-Options", "nosniff");
+      if (profile.updatedAt) res.set("Last-Modified", profile.updatedAt.toUTCString());
+      return res.status(200).send(profile.logoData);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: "Unable to load business logo" });
     }
   });
   // --------------------------------------

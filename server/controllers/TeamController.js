@@ -1,11 +1,16 @@
 const { v4: uuidv4 } = require("uuid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
-const { nanoid } = require("nanoid");
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const runtimeCache = require("../modules/runtimeCache");
+const createOwnedTeam = require("../modules/teamOnboarding/createOwnedTeam");
+const {
+  sanitizeBusinessProfile,
+  sanitizeTeamName,
+  sanitizeUseCases,
+} = require("../modules/teamOnboarding/businessProfile");
 const UserController = require("./UserController");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -18,6 +23,13 @@ const TEAM_ROLES = new Set([
   "projectViewer",
 ]);
 const TEAM_ROLE_UPDATE_FIELDS = new Set(["role", "projects", "canExport"]);
+const TEAM_UPDATE_FIELDS = new Set([
+  "name",
+  "showBranding",
+  "useCases",
+  "allowReportRefresh",
+  "allowReportExport",
+]);
 
 class TeamController {
   constructor() {
@@ -36,39 +48,20 @@ class TeamController {
 
   // create a new team
   async createTeam(data, userId) {
-    const team = await db.Team.create({ "name": data.name });
-    await db.TeamRole.create({
-      team_id: team.id,
-      user_id: userId,
-      role: "teamOwner",
-    });
-
-    // create an empty ghost project for the team
-    await db.Project.create({
-      team_id: team.id,
-      name: "Ghost Project",
-      brewName: `ghost-project-${nanoid(8)}`,
-      dashboardTitle: "Ghost Project",
-      ghost: true,
-      public: false,
-    });
-
-    // create a default dashboard for the team
-    await db.Project.create({
-      team_id: team.id,
-      name: "First Dashboard",
-      brewName: `first-dashboard-${nanoid(8)}`,
-      description: `First dashboard for ${team.name}`,
-      public: false,
-    });
-
-    // get the team with the TeamRoles
-    const teamWithRoles = await db.Team.findOne({
-      where: { id: team.id },
-      include: [{ model: db.TeamRole }],
-    });
-
-    return teamWithRoles;
+    const transaction = await db.sequelize.transaction();
+    try {
+      const team = await createOwnedTeam({
+        name: data?.name,
+        useCases: data?.useCases,
+        userId,
+        transaction,
+      });
+      await transaction.commit();
+      return this.findById(team.id);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async deleteTeam(teamId, userId) {
@@ -352,6 +345,10 @@ class TeamController {
       include: [
         { model: db.TeamRole },
         {
+          model: db.TeamBusinessProfile,
+          attributes: { exclude: ["logoData"] },
+        },
+        {
           model: db.Project,
           include: [{ model: db.Chart, attributes: ["id"] }],
         }
@@ -367,7 +364,12 @@ class TeamController {
   }
 
   update(id, data) {
-    return db.Team.update(data, { where: { "id": id } })
+    const updateData = Object.fromEntries(
+      Object.entries(data || {}).filter(([field]) => TEAM_UPDATE_FIELDS.has(field))
+    );
+    if (updateData.name !== undefined) updateData.name = sanitizeTeamName(updateData.name);
+    if (updateData.useCases !== undefined) updateData.useCases = sanitizeUseCases(updateData.useCases);
+    return db.Team.update(updateData, { where: { "id": id } })
       .then(() => {
         return this.findById(id);
       })
@@ -388,6 +390,10 @@ class TeamController {
           where: { id: idsArray },
           include: [
             { model: db.TeamRole },
+            {
+              model: db.TeamBusinessProfile,
+              attributes: { exclude: ["logoData"] },
+            },
             {
               model: db.Project,
               include: [
@@ -427,6 +433,69 @@ class TeamController {
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
+  }
+
+  async saveOnboarding(teamId, userId, data = {}) {
+    const teamRole = await this.getTeamRole(teamId, userId);
+    if (!teamRole || teamRole.role !== "teamOwner") throw new Error(401);
+    const transaction = await db.sequelize.transaction();
+    try {
+      const teamUpdate = {};
+      if (data.name !== undefined) teamUpdate.name = sanitizeTeamName(data.name);
+      if (data.useCases !== undefined) teamUpdate.useCases = sanitizeUseCases(data.useCases);
+      if (data.complete === true) teamUpdate.onboardingCompletedAt = new Date();
+      if (Object.keys(teamUpdate).length) {
+        await db.Team.update(teamUpdate, { where: { id: teamId }, transaction });
+      }
+      if (data.businessProfile !== undefined) {
+        const profile = sanitizeBusinessProfile(data.businessProfile);
+        await db.TeamBusinessProfile.upsert({
+          team_id: parseInt(teamId, 10),
+          ...profile,
+          aiContextAllowed: data.aiContextAllowed === true,
+        }, { transaction });
+      } else if (data.aiContextAllowed !== undefined) {
+        await db.TeamBusinessProfile.update(
+          { aiContextAllowed: data.aiContextAllowed === true },
+          { where: { team_id: teamId }, transaction }
+        );
+      }
+      await transaction.commit();
+      return this.findById(teamId);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async updateBusinessProfile(teamId, userId, data = {}) {
+    const teamRole = await this.getTeamRole(teamId, userId);
+    if (!teamRole || !["teamOwner", "teamAdmin"].includes(teamRole.role)) throw new Error(401);
+    const currentProfile = await db.TeamBusinessProfile.findOne({ where: { team_id: teamId } });
+    const profileInput = data.businessProfile || data;
+    const sanitized = sanitizeBusinessProfile(profileInput, {
+      includeLogo: profileInput.logo !== undefined,
+    });
+    const aiContextAllowed = teamRole.role === "teamOwner" && data.aiContextAllowed !== undefined
+      ? data.aiContextAllowed === true : currentProfile?.aiContextAllowed === true;
+    await db.TeamBusinessProfile.upsert({
+      team_id: parseInt(teamId, 10),
+      ...sanitized,
+      aiContextAllowed,
+    });
+    return db.TeamBusinessProfile.findOne({
+      where: { team_id: teamId },
+      attributes: { exclude: ["logoData"] },
+    });
+  }
+
+  async getBusinessProfileLogo(teamId, userId) {
+    const teamRole = await this.getTeamRole(teamId, userId);
+    if (!teamRole) throw new Error(401);
+    return db.TeamBusinessProfile.findOne({
+      where: { team_id: teamId },
+      attributes: ["logoData", "logoMimeType", "updatedAt"],
+    });
   }
 
   saveTeamInvite(teamId, data, userId) {
