@@ -22,6 +22,7 @@ import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 import TeamAiDataControls from "./TeamAiDataControls";
 import TeamMembers from "./TeamMembers";
+import BusinessProfileSettings from "./BusinessProfileSettings";
 
 /*
   Contains team update functionality
@@ -294,6 +295,7 @@ function TeamSettings() {
       </section>
 
       <TeamMembers />
+      {canAccess("teamAdmin", user.id, team.TeamRoles) ? <BusinessProfileSettings /> : null}
       {canAccess("teamAdmin", user.id, team.TeamRoles) ? <TeamAiDataControls /> : null}
     </div>
   );

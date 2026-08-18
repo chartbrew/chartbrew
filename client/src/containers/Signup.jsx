@@ -100,7 +100,7 @@ function Signup() {
     }
 
     setLoading(false);
-    navigate("/?welcome=true");
+    navigate("/start?welcome=1");
   };
 
   return (

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { Avatar, Badge, Button, Chip, Dropdown, Input, Label, Modal, Separator, TextField, Tooltip } from "@heroui/react"
+import { Avatar, Badge, Button, Chip, Dropdown, Separator, Tooltip } from "@heroui/react"
 import { Link, useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
 import { LuActivity, LuChevronDown, LuCoffee, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
@@ -11,22 +11,19 @@ import cbLogoLight from "../assets/cb_logo_light.svg"
 import cbLogoSmallDark from "../assets/logo_blue.png";
 import cbLogoSmallLight from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess"
-import { createTeam, getTeamMembers, saveActiveTeam, selectTeam, selectTeams } from "../slices/team"
+import { getTeamMembers, saveActiveTeam, selectTeam, selectTeams } from "../slices/team"
 import { clearConnections } from "../slices/connection"
 import { clearDatasets, getDatasets } from "../slices/dataset"
 import { selectSidebarCollapsed } from "../slices/ui"
-import toast from "react-hot-toast"
 import { logout } from "../slices/user"
 import { getHome } from "../api/observations"
+import { shouldResumeOnboarding } from "../containers/Onboarding/onboardingState"
 
 
 function Sidebar() {
   const { isDark, theme, setTheme } = useTheme()
   const collapsed = useSelector(selectSidebarCollapsed);
 
-  const [createTeamModal, setCreateTeamModal] = useState(false);
-  const [creatingTeam, setCreatingTeam] = useState(false);
-  const [teamName, setTeamName] = useState("");
   const [activityCount, setActivityCount] = useState(0);
   
   const user = useSelector((state) => state.user);
@@ -121,6 +118,10 @@ function Sidebar() {
     dispatch(getTeamMembers({ team_id: team.id }));
     dispatch(getDatasets({ team_id: team.id }));
 
+    if (shouldResumeOnboarding(team, user.data.id)) {
+      navigate(`/start?team=${team.id}`);
+      return;
+    }
     navigate("/");
   };
 
@@ -152,19 +153,6 @@ function Sidebar() {
       setTheme("system");
     }
   };
-
-  const _onCreateTeam = async () => {
-    setCreatingTeam(true);
-    const teamData = await dispatch(createTeam({ name: teamName }));
-    if (teamData.error) {
-      toast.error(teamData.error);
-    }
-
-    setCreateTeamModal(false);
-    setTeamName("");
-    setCreatingTeam(false);
-  };
-
 
   return (
     <aside
@@ -212,7 +200,7 @@ function Sidebar() {
                   <Dropdown.Menu
                     onAction={(key) => {
                       if (key === "createTeam") {
-                        setCreateTeamModal(true);
+                        navigate("/start?new=1");
                         return;
                       }
 
@@ -692,42 +680,6 @@ function Sidebar() {
           <div className="h-2" />
         </div>
       </div>
-
-      <Modal.Backdrop isOpen={createTeamModal} onOpenChange={setCreateTeamModal}>
-        <Modal.Container>
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>Create a new team</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <div className="flex flex-col gap-2 p-1 pt-4">
-                <TextField name="team-name">
-                  <Label>Team name</Label>
-                  <Input
-                    id="team-name"
-                    placeholder="Enter your new team name"
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
-                    variant="secondary"
-                  />
-                </TextField>
-            </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="outline" onPress={() => setCreateTeamModal(false)}>
-              Close
-            </Button>
-            <Button
-              isPending={creatingTeam}
-              onPress={_onCreateTeam}
-              isDisabled={!teamName}
-            >
-              Create team
-            </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
     </aside>
   );
 }
