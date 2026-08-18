@@ -112,4 +112,11 @@ describe("outboundTargetPolicy", () => {
       reason: "private_network",
     });
   });
+
+  it("can limit an outbound feature to standard web ports", async () => {
+    await expect(validateOutboundUrl("https://8.8.8.8:8443", { allowedPorts: [80, 443] }))
+      .rejects.toMatchObject({ code: "SSRF_BLOCKED", reason: "disallowed_port" });
+    await expect(validateOutboundUrl("https://8.8.8.8", { allowedPorts: [80, 443] }))
+      .resolves.toMatchObject({ hostname: "8.8.8.8" });
+  });
 });

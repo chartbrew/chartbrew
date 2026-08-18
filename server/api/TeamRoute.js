@@ -6,6 +6,10 @@ const TeamController = require("../controllers/TeamController");
 const UserController = require("../controllers/UserController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const {
+  discoverBusinessProfile,
+  normalizeWebsiteUrl,
+} = require("../modules/teamOnboarding/businessProfileDiscovery");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -13,6 +17,26 @@ const apiLimiter = (max = 10) => {
     max,
   });
 };
+
+const onboardingDiscoveryUserLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => `user:${req.user?.id || "unknown"}`,
+  message: { error: "Please wait before reading another website." },
+});
+
+const onboardingDiscoveryDomainLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  keyGenerator: (req) => {
+    try {
+      return `domain:${new URL(normalizeWebsiteUrl(req.body?.websiteUrl)).hostname}`;
+    } catch (error) {
+      return "domain:invalid";
+    }
+  },
+  message: { error: "Please wait before reading this website again." },
+});
 
 function filterProjects(projects, teamRole) {
   return projects.filter((p) => _.indexOf(teamRole.projects, p.id) > -1);
@@ -102,6 +126,28 @@ module.exports = (app) => {
       return res.status(400).send({ error: error.message || "Error creating team" });
     }
   });
+  // --------------------------------------
+
+  app.post(
+    "/team/:id/onboarding/discover",
+    verifyToken,
+    onboardingDiscoveryUserLimiter,
+    onboardingDiscoveryDomainLimiter,
+    async (req, res) => {
+      try {
+        const teamRole = await teamController.getTeamRole(req.params.id, req.user.id);
+        if (!teamRole || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+          return res.status(403).send({ error: "Access denied" });
+        }
+        const profile = await discoverBusinessProfile(req.body?.websiteUrl);
+        return res.status(200).send(profile);
+      } catch (error) {
+        return res.status(400).send({
+          error: "We could not read that website. Check the address or add the details yourself.",
+        });
+      }
+    }
+  );
   // --------------------------------------
 
   app.patch("/team/:id/onboarding", verifyToken, apiLimiter(20), async (req, res) => {
