@@ -34,6 +34,7 @@ const ALLOWED_SECTIONS = new Set([
   "account",
   "activity",
   "alerts",
+  "business_profile",
   "dashboards",
   "datasets",
   "health",
@@ -46,6 +47,7 @@ const TOOL_SECTIONS = new Map([
   ["get_workspace_activity", new Set(["activity", "alerts", "health"])],
   ["get_workspace_context", new Set([
     "account",
+    "business_profile",
     "dashboards",
     "datasets",
     "kpiReviews",

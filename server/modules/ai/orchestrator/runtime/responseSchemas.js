@@ -181,6 +181,7 @@ const SYNTHESIS_SCHEMA = {
                 type: "string",
                 enum: [
                   "account",
+                  "business_profile",
                   "coverage",
                   "dashboards",
                   "datasets",

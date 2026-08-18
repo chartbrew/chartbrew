@@ -23,6 +23,7 @@ const FIELD_LABELS = {
 const SECTION_LABELS = {
   account: "available actions",
   activity: "workspace activity",
+  business_profile: "business profile",
   dashboards: "dashboard details",
   datasets: "dataset details",
   kpiReviews: "KPI reviews",

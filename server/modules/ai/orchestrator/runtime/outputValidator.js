@@ -12,6 +12,7 @@ const CLAIM_PATTERNS = Object.freeze({
 });
 const ALLOWED_SECTION_TYPES = new Set([
   "account",
+  "business_profile",
   "coverage",
   "dashboards",
   "datasets",

@@ -24,6 +24,7 @@ function buildContextManifest({
     externalProviderUsed,
     factCounts: {
       alerts: count(activity.alerts || context.alerts),
+      businessProfiles: context.business_profile ? 1 : 0,
       evaluations: count(activity.evaluations),
       health: count(activity.health || context.health),
       learning: count(context.learning),

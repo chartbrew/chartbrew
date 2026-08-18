@@ -315,7 +315,7 @@ async function availableTools() {
     {
       name: "get_workspace_context",
       displayName: "Review workspace context",
-      description: "Get only the selected workspace context sections after workspace Activity has been reviewed. Use watches, KPI reviews, dashboard metadata, dataset summaries, account capabilities, or local learning only when they are needed for the current task. Never request every section by default.",
+      description: "Get only the selected workspace context sections after workspace Activity has been reviewed. Use watches, KPI reviews, dashboard metadata, dataset summaries, account capabilities, an approved business profile, or local learning only when they are needed for the current task. Never request every section by default.",
       parameters: {
         type: "object",
         properties: {
@@ -323,7 +323,7 @@ async function availableTools() {
             type: "array",
             items: {
               type: "string",
-              enum: ["watches", "kpiReviews", "dashboards", "datasets", "account", "learning"],
+              enum: ["watches", "kpiReviews", "dashboards", "datasets", "account", "business_profile", "learning"],
             },
             minItems: 1,
           },
