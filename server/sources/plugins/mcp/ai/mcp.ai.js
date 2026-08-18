@@ -24,8 +24,6 @@ function getApprovedAskTools(connection) {
   const tools = connection?.schema?.mcp?.tools || [];
   const approvals = connection?.schema?.mcp?.allowedTools || {};
   return tools.filter((tool) => approvals[tool.name]?.ask === true
-    && approvals[tool.name]?.contractFingerprint === tool.contractFingerprint
-    && approvals[tool.name]?.riskFingerprint === tool.riskFingerprint
     && isToolReadOnly(tool, approvals[tool.name]));
 }
 

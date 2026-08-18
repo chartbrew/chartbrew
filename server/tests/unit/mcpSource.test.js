@@ -11,6 +11,7 @@ const require = createRequire(import.meta.url);
 const mcpAi = require("../../sources/plugins/mcp/ai/mcp.ai");
 const { normalizeToolResult, selectToolOutput } = require("../../sources/plugins/mcp/mcp.normalize");
 const {
+  applyToolApproval,
   assertToolApproved,
   mergeApprovals,
   normalizeCustomHeaders,
@@ -89,7 +90,7 @@ describe("MCP source policy", () => {
     expect(approvals[tool.name]).toMatchObject({ datasets: true, ask: false });
   });
 
-  it("removes approval after a contract or risk change", () => {
+  it("keeps approval after a contract or risk change and refreshes fingerprints", () => {
     const original = createTool();
     const changedContract = createTool({
       inputSchema: {
@@ -106,8 +107,21 @@ describe("MCP source policy", () => {
       riskFingerprint: original.riskFingerprint,
     };
 
-    expect(mergeApprovals([changedContract], { [original.name]: approval })).toEqual({});
-    expect(mergeApprovals([changedRisk], { [original.name]: approval })).toEqual({});
+    const contractApprovals = mergeApprovals([changedContract], { [original.name]: approval });
+    expect(contractApprovals[original.name]).toMatchObject({
+      datasets: true,
+      ask: true,
+      contractFingerprint: changedContract.contractFingerprint,
+      riskFingerprint: changedContract.riskFingerprint,
+    });
+
+    const riskApprovals = mergeApprovals([changedRisk], { [original.name]: approval });
+    expect(riskApprovals[original.name]).toMatchObject({
+      datasets: true,
+      ask: true,
+      contractFingerprint: changedRisk.contractFingerprint,
+      riskFingerprint: changedRisk.riskFingerprint,
+    });
   });
 
   it("never approves a tool marked as destructive", () => {
@@ -177,11 +191,44 @@ describe("MCP source policy", () => {
     expect(approved[tool.name]).toMatchObject({ datasets: true, ask: true });
   });
 
-  it("requires exact approval fingerprints at execution time", () => {
+  it("keeps execution approval when a tool fingerprint changes", () => {
     const tool = createTool();
     const connection = createConnection(tool, { contractFingerprint: "old" });
-    expect(() => assertToolApproved(connection, tool, "datasets"))
-      .toThrow("changed after approval");
+    expect(assertToolApproved(connection, tool, "datasets")).toMatchObject({ datasets: true });
+  });
+
+  it("applies a tool approval without matching the previous fingerprints", () => {
+    const tool = createTool();
+    const result = applyToolApproval(
+      [tool],
+      {
+        [tool.name]: {
+          datasets: false,
+          ask: false,
+          confirmedReadOnly: true,
+          contractFingerprint: "old",
+          riskFingerprint: "old",
+        },
+      },
+      tool.name,
+      { datasets: true },
+      { id: 12 }
+    );
+    expect(result.approval).toMatchObject({
+      datasets: true,
+      ask: false,
+      confirmedReadOnly: true,
+      contractFingerprint: tool.contractFingerprint,
+      riskFingerprint: tool.riskFingerprint,
+      approvedBy: 12,
+    });
+    expect(result.allowedTools[tool.name].datasets).toBe(true);
+  });
+
+  it("does not apply approval to a destructive tool", () => {
+    const tool = createTool({ annotations: { destructiveHint: true } });
+    expect(() => applyToolApproval([tool], {}, tool.name, { datasets: true }, { id: 1 }))
+      .toThrow("cannot be used");
   });
 
   it("blocks transport-managed custom headers", () => {
@@ -484,6 +531,15 @@ describe("MCP source integration contracts", () => {
       .toBeUndefined();
   });
 
+  it("keeps Ask access when a tool fingerprint changes", () => {
+    const tool = createTool();
+    const connection = createConnection(tool, {
+      contractFingerprint: "old",
+      riskFingerprint: "old",
+    });
+    expect(mcpAi.getCapabilities({ connection }).approvedToolCount).toBe(1);
+  });
+
   it("searches the approved catalog and describes only requested tools", () => {
     const sql = createTool({
       name: "execute-sql",
@@ -717,6 +773,14 @@ describe("MCP source integration contracts", () => {
   it("requires an owner or admin to start OAuth", async () => {
     await expect(mcpOauth.startOAuth({
       connection: { authentication: { type: "oauth" } },
+      user: { isEditor: false },
+    })).rejects.toMatchObject({ code: "MCP_ADMIN_REQUIRED", statusCode: 403 });
+  });
+
+  it("requires an owner or admin to update tool approvals", async () => {
+    await expect(mcpProtocol.actions.updateToolApproval({
+      connection: { schema: { mcp: { tools: [] } } },
+      params: { toolName: "list_orders", datasets: true },
       user: { isEditor: false },
     })).rejects.toMatchObject({ code: "MCP_ADMIN_REQUIRED", statusCode: 403 });
   });

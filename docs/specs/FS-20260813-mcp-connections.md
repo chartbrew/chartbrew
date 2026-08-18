@@ -77,12 +77,16 @@ Chartbrew does not add a second pagination layer.
 4. The connection page shows the safe server identity and a **Tools** tab.
 5. Chartbrew allows tools the server marks as read-only. The user can turn Datasets or Ask off.
    Tools without that mark stay off and show a warning until the user allows them.
-6. Chartbrew saves safe discovery metadata and approval fingerprints.
+6. Chartbrew saves safe discovery metadata and tool approvals. Changing a tool does not turn
+   Datasets or Ask off. Those toggles save as soon as they are changed.
 
 The Tools tab shows the server logo, display name, short description, sanitized website link, last
 successful refresh, and tool count. Each tool row shows its title, description, required inputs,
 known output shape, and approval state. An expanded row shows its input and output schema. The UI
 does not show protocol versions, cache data, fingerprints, or raw discovery records.
+
+The tool list is searchable and can be filtered by MCP annotation hints: read-only, destructive,
+idempotent, open world, or no hints.
 
 Tool annotations are untrusted hints. Chartbrew can show **Read-only** and allow those tools by
 default. An owner or admin can still turn Datasets or Ask off. A tool that the server marks as
@@ -149,8 +153,9 @@ descriptions, safe icons, input and output schemas, annotations, and timestamps.
 - A contract fingerprint over the tool name and input/output schemas.
 - A risk fingerprint over the description and risk annotations.
 
-Approval binds to both fingerprints. A title or icon change does not stop a dataset. A schema,
-description, or risk change moves the tool to **Needs review**. Removed tools also fail closed.
+Approval is stored per tool for Datasets and Ask. A title, icon, schema, description, or risk
+change does not turn those permissions off. Saving the connection must not overwrite approvals that
+were already persisted. Datasets still fail if their saved tool contract no longer matches.
 
 Use `ttlMs` and `cacheScope` when the server provides them, within Chartbrew cache limits. Legacy
 catalogs use a short private cache. Refresh discovery on a connection test, explicit refresh, stale
@@ -251,12 +256,15 @@ policy. Extend the cross-source AI harness to prove that MCP uses only generic `
 
 - A user can connect to a remote MCP endpoint with no auth, static auth, or MCP OAuth.
 - The connection page shows safe server metadata and a searchable, bounded tool catalog.
-- An owner or admin can approve a read-only tool separately for datasets and Ask.
+- An owner or admin can approve a read-only tool separately for datasets and Ask. Those toggles
+  persist immediately and stay on if the tool later changes.
+- The connection page can filter the tool catalog by MCP annotation hints.
 - A user can configure, preview, save, refresh, transform, join, and chart compatible tool data.
 - Ask can answer from an approved preview and create a normal dataset or chart from it.
 - Manual and Ask flows persist the same configuration and call the same executor.
 - Scheduled calls never run tools that need input, tasks, write access, or renewed scopes.
-- Tool contract or risk changes fail closed and show a clear review action.
+- Tool contract changes fail closed for saved datasets and show a clear review action. Connection
+  Datasets and Ask permissions stay as the user left them.
 - Credentials, raw metadata, and result content do not leak through UI, logs, audits, or LLM context.
 - Existing source behavior does not change.
 

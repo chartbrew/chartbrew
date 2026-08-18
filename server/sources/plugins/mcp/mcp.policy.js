@@ -293,31 +293,58 @@ function isToolReadOnly(tool, approval = {}) {
   return approval.confirmedReadOnly === true;
 }
 
+function buildToolApproval(tool, approval = {}, updates = {}, user = null) {
+  return {
+    datasets: updates.datasets === undefined ? approval.datasets === true : updates.datasets === true,
+    ask: updates.ask === undefined ? approval.ask === true : updates.ask === true,
+    confirmedReadOnly: true,
+    contractFingerprint: tool.contractFingerprint,
+    riskFingerprint: tool.riskFingerprint,
+    approvedAt: approval.approvedAt || new Date().toISOString(),
+    approvedBy: user?.id || approval.approvedBy || null,
+  };
+}
+
 function mergeApprovals(tools, requested = {}) {
   return tools.reduce((result, tool) => {
     if (tool.annotations?.destructiveHint === true) return result;
 
     const approval = requested?.[tool.name];
     if (!approval) return result;
-    if (approval.contractFingerprint !== tool.contractFingerprint) {
-      return result;
-    }
-    if (approval.riskFingerprint !== tool.riskFingerprint) {
-      return result;
-    }
     if (!isToolReadOnly(tool, approval)) return result;
 
-    result[tool.name] = {
-      datasets: approval.datasets === true,
-      ask: approval.ask === true,
-      confirmedReadOnly: true,
-      contractFingerprint: tool.contractFingerprint,
-      riskFingerprint: tool.riskFingerprint,
-      approvedAt: approval.approvedAt || new Date().toISOString(),
-      approvedBy: approval.approvedBy || null,
-    };
+    result[tool.name] = buildToolApproval(tool, approval);
     return result;
   }, {});
+}
+
+function applyToolApproval(tools, allowedTools, toolName, updates, user) {
+  const tool = (tools || []).find((item) => item.name === toolName);
+  if (!tool) {
+    throw createMcpError("MCP_TOOL_NOT_FOUND", "That tool is no longer on this MCP server.", 404);
+  }
+  if (tool.annotations?.destructiveHint === true) {
+    throw createMcpError(
+      "MCP_TOOL_NOT_AVAILABLE",
+      "This tool cannot be used in Chartbrew.",
+      403
+    );
+  }
+
+  const nextApproval = buildToolApproval(
+    tool,
+    allowedTools?.[toolName] || {},
+    updates,
+    user
+  );
+  return {
+    allowedTools: {
+      ...(allowedTools || {}),
+      [tool.name]: nextApproval,
+    },
+    approval: nextApproval,
+    toolName: tool.name,
+  };
 }
 
 function getApprovalReview(tools, requested = {}) {
@@ -349,16 +376,11 @@ function assertToolApproved(connection, tool, use) {
   if (!isToolReadOnly(tool, approval)) {
     throw createMcpError("MCP_TOOL_NOT_READ_ONLY", "Only confirmed read-only MCP tools can run in Chartbrew.", 403);
   }
-  if (
-    approval.contractFingerprint !== tool.contractFingerprint
-    || approval.riskFingerprint !== tool.riskFingerprint
-  ) {
-    throw createMcpError("MCP_TOOL_CHANGED", "This MCP tool changed after approval. Review the connection tools again.", 409);
-  }
   return approval;
 }
 
 module.exports = {
+  applyToolApproval,
   assertToolApproved,
   canonicalize,
   createMcpError,

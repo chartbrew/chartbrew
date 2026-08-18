@@ -10,7 +10,7 @@ module.exports = {
   description: "Connect to a remote MCP server and use approved read-only tools as data sources.",
 
   capabilities: {
-    actions: ["startOAuth"],
+    actions: ["startOAuth", "updateToolApproval"],
     connection: {
       supportsTest: true,
       supportsOAuth: true,

@@ -15,8 +15,11 @@ const { discoverMcpConnection } = require("./mcp.discovery");
 const { normalizeToolResult, selectToolOutput } = require("./mcp.normalize");
 const mcpOauth = require("./mcp.oauth");
 const {
+  applyToolApproval,
   assertToolApproved,
   createMcpError,
+  getApprovalReview,
+  mergeApprovals,
   normalizeAuthentication,
   normalizeEndpoint,
   sanitizeTool,
@@ -160,7 +163,6 @@ async function prepareConnectionData({ connection, existingConnection = null, us
         ...(existing.schema || {}),
         mcp: {
           ...(existing.schema?.mcp || {}),
-          allowedTools: {},
           setupRequired: "oauth",
           setupExpiresAt: new Date(Date.now() + (30 * 60 * 1000)).toISOString(),
         },
@@ -169,20 +171,21 @@ async function prepareConnectionData({ connection, existingConnection = null, us
   }
 
   const requestedApprovals = stampRequestedApprovals(
-    incoming.schema?.mcp?.allowedTools,
+    existing?.id ? existing.schema?.mcp?.allowedTools : incoming.schema?.mcp?.allowedTools,
     user
   );
   const discovery = await discoverMcpConnection(normalized, {
     allowedTools: requestedApprovals,
     loadIcon: true,
   });
+  const mcp = await attachPersistedApprovals(discovery, existing?.id, requestedApprovals);
   return {
     ...normalized,
     active: true,
     schema: {
       ...(existing.schema || {}),
       ...(incoming.schema || {}),
-      mcp: discovery,
+      mcp,
     },
   };
 }
@@ -217,22 +220,42 @@ function redactConnection({ connection }) {
   };
 }
 
+async function attachPersistedApprovals(discovery, connectionId, fallbackApprovals) {
+  let allowedTools = fallbackApprovals || discovery.allowedTools || {};
+  if (connectionId) {
+    const latest = await db.Connection.findByPk(connectionId);
+    allowedTools = toPlain(latest)?.schema?.mcp?.allowedTools || allowedTools;
+  }
+  const approvalReview = getApprovalReview(discovery.tools, allowedTools);
+  return {
+    ...discovery,
+    allowedTools: mergeApprovals(discovery.tools, allowedTools),
+    reviewRequired: approvalReview.changedTools,
+    removedTools: approvalReview.removedTools,
+  };
+}
+
 async function refreshDiscovery(connection, options = {}) {
   const savedConnection = await getSavedConnection(connection);
   const discovery = await discoverMcpConnection(savedConnection, {
     allowedTools: savedConnection?.schema?.mcp?.allowedTools,
     loadIcon: options.loadIcon !== false,
   });
+  const mcp = await attachPersistedApprovals(
+    discovery,
+    savedConnection.id,
+    savedConnection?.schema?.mcp?.allowedTools
+  );
   if (savedConnection.id && options.persist !== false) {
     await db.Connection.update({
       schema: {
         ...(savedConnection.schema || {}),
-        mcp: discovery,
+        mcp,
       },
       active: true,
     }, { where: { id: savedConnection.id } });
   }
-  return { savedConnection, discovery };
+  return { savedConnection, discovery: mcp };
 }
 
 async function testConnection({ connection }) {
@@ -260,17 +283,53 @@ function getDefaultDataRequest() {
 async function completeOAuth(options) {
   const authenticatedConnection = await mcpOauth.completeOAuth(options);
   const discovery = await discoverMcpConnection(authenticatedConnection, {
-    allowedTools: {},
+    allowedTools: authenticatedConnection?.schema?.mcp?.allowedTools,
     loadIcon: true,
   });
+  const mcp = await attachPersistedApprovals(
+    discovery,
+    authenticatedConnection.id,
+    authenticatedConnection?.schema?.mcp?.allowedTools
+  );
   await db.Connection.update({
     active: true,
     schema: {
       ...(authenticatedConnection.schema || {}),
-      mcp: discovery,
+      mcp,
     },
   }, { where: { id: authenticatedConnection.id, team_id: authenticatedConnection.team_id } });
-  return discovery;
+  return mcp;
+}
+
+async function updateToolApproval({ connection, params, user }) {
+  authorizeConnectionWrite({ user });
+  const plain = await getSavedConnection(connection);
+  if (!plain?.id) {
+    throw createMcpError(
+      "MCP_CONNECTION_REQUIRED",
+      "Save this connection before updating tool permissions."
+    );
+  }
+  const result = applyToolApproval(
+    plain.schema?.mcp?.tools,
+    plain.schema?.mcp?.allowedTools,
+    String(params?.toolName || "").trim(),
+    {
+      datasets: params?.datasets,
+      ask: params?.ask,
+    },
+    user
+  );
+  await db.Connection.update({
+    schema: {
+      ...(plain.schema || {}),
+      mcp: {
+        ...(plain.schema?.mcp || {}),
+        allowedTools: result.allowedTools,
+      },
+    },
+  }, { where: { id: plain.id, team_id: plain.team_id } });
+  return result;
 }
 
 function oauthClientMetadata({ connection }) {
@@ -471,6 +530,7 @@ module.exports = {
   authorizeConnectionWrite,
   actions: {
     startOAuth: mcpOauth.startOAuth,
+    updateToolApproval,
   },
   completeOAuth,
   getDefaultDataRequest,

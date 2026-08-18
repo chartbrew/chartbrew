@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuArrowLeft, LuBrainCircuit, LuClipboard, LuClipboardCheck, LuCompass, LuSearch } from "react-icons/lu";
+import { LuArrowLeft, LuCircleHelp, LuClipboard, LuClipboardCheck, LuCompass, LuPanelRightClose, LuSearch } from "react-icons/lu";
 import { Button, Card, Chip, Input, InputGroup, Surface, TextField, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
@@ -10,7 +10,6 @@ import {
   getSourceLogo,
   getSourcePickerItems,
   getSourcePlugin,
-  isSourceAiPowered,
 } from "../../sources";
 import { canCreateSourceConnections } from "../../sources/sourceAvailability";
 import { useTheme } from "../../modules/ThemeContext";
@@ -20,6 +19,16 @@ import { generateInviteUrl, selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 
+const HELP_PANEL_STORAGE_KEY = "__cb_connection_help_panel_collapsed";
+
+const getInitialHelpPanelState = () => {
+  try {
+    return window.localStorage.getItem(HELP_PANEL_STORAGE_KEY) === "true";
+  } catch (error) {
+    return false;
+  }
+};
+
 function ConnectionWizard() {
   const [connectionSearch, setConnectionSearch] = useState("");
   const [selectedType, setSelectedType] = useState("");
@@ -27,6 +36,7 @@ function ConnectionWizard() {
   const [inviteUrl, setInviteUrl] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
   const [connectionToEdit, setConnectionToEdit] = useState(null);
+  const [helpPanelCollapsed, setHelpPanelCollapsed] = useState(getInitialHelpPanelState);
 
   const { isDark } = useTheme();
   const initRef = useRef(null);
@@ -59,7 +69,7 @@ function ConnectionWizard() {
   }, [team]);
 
   useEffect(() => {
-    if (selectedType) {
+    if (selectedType && params.connectionId === "new") {
       bottomRef?.current?.scrollIntoView({
         behavior: "smooth",
         block: "end",
@@ -74,7 +84,7 @@ function ConnectionWizard() {
         });
       }, 500);
     }
-  }, [selectedType]);
+  }, [selectedType, params.connectionId]);
 
   useEffect(() => {
     if (params.connectionId && params.connectionId !== "new" && team?.id && !paramsInitRef.current) {
@@ -175,6 +185,18 @@ function ConnectionWizard() {
     }, 2000);
   };
 
+  const _toggleHelpPanel = () => {
+    setHelpPanelCollapsed((currentValue) => {
+      const nextValue = !currentValue;
+      try {
+        window.localStorage.setItem(HELP_PANEL_STORAGE_KEY, String(nextValue));
+      } catch (error) {
+        // Keep the UI responsive even if storage is unavailable.
+      }
+      return nextValue;
+    });
+  };
+
   const _canAccess = (role, teamRoles) => {
     return canAccess(role, user.id, teamRoles);
   };
@@ -199,7 +221,7 @@ function ConnectionWizard() {
   return (
     <div>
       <div className="flex flex-col">
-        <div className="sm:mr-96">          
+        <div className={helpPanelCollapsed ? "" : "lg:mr-96"}>          
           <div className="h-2" />
 
           {!newConnection && (
@@ -242,7 +264,7 @@ function ConnectionWizard() {
                         <Card.Content className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
                           <img
                             alt={conn.name}
-                            className="h-[100px] rounded-lg object-contain"
+                            className="h-25 rounded-lg object-contain"
                             src={getSourceLogo(conn, isDark)}
                           />
                         </Card.Content>
@@ -297,79 +319,107 @@ function ConnectionWizard() {
 
           <div ref={bottomRef} />
         </div>
-        <aside className="hidden sm:block fixed top-0 right-0 z-40 w-96 h-screen" aria-label="Sidebar">
-          <div className="h-full px-3 py-4 overflow-y-auto bg-surface dark:bg-gray-800">
-            <div className="flex flex-col gap-2 p-2">
-              <div className="h-10" />
-
-              <Card className="border border-divider shadow-none">
-                <Card.Header className="flex flex-col items-start">
-                  <p className="font-semibold">Missing the data source credentials?</p>
-                </Card.Header>
-                <Card.Content>
-                  <p className="text-sm text-gray-500">
-                    {"Someone from your engineering team can help you with this."}
-                  </p>
-                  <div className="h-4" />
-                  <p className="text-sm text-gray-500">
-                    Ask them to join your team with this link
-                  </p>
-                  <div className="h-2" />
-                  <Input
-                    readOnly
-                    labelPlacement="outside"
-                    value={inviteUrl}
-                  />
-                </Card.Content>
-                <Card.Footer>
-                  <Button
-                    size="sm"
-                    variant={inviteCopied ? "tertiary" : "primary"}
-                    fullWidth
-                    onPress={() => _onCopyInviteUrl()}
-                  >
-                    {inviteCopied ? "Copied to clipboard" : "Copy invite link"}
-                    {inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
-                  </Button>
-                </Card.Footer>
-              </Card>
-
-              <div className="h-2" />
-
-              <Card className="border border-divider shadow-none">
-                <Card.Header className="flex flex-col items-start">
-                  <p className="font-semibold">Check out our tutorials</p>
-                </Card.Header>
-                <Card.Content>
-                  <p className="text-sm text-gray-500">
-                    {"We have a number of tutorials that can help you get started with Chartbrew and learn more about the platform."}
-                  </p>
-                </Card.Content>
-                <Card.Footer>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    fullWidth
-                    onPress={() => window.open("https://chartbrew.com/blog?tag=tutorial", "_blank")}
-                  >
-                    Open the tutorials
-                    <LuCompass />
-                  </Button>
-                </Card.Footer>
-              </Card>
-
-              <div className="h-2" />
-
-              {selectedType && (
-                <HelpBanner
-                  type={selectedType}
-                  imageUrl={getSourceLogo(selectedSource, isDark)}
-                />
-              )}
-            </div>
-
-            <div ref={asideRef} />
+        <aside
+          className={`hidden overflow-visible lg:block fixed top-0 right-0 z-40 h-screen ${helpPanelCollapsed ? "w-0" : "w-96"}`}
+          aria-label="Help"
+        >
+          <div
+            className={`absolute top-16 z-50 ${
+              helpPanelCollapsed ? "right-3" : "left-0 -translate-x-1/2"
+            }`}
+          >
+            <Tooltip delay={0}>
+              <Tooltip.Trigger>
+                <Button
+                  aria-label={helpPanelCollapsed ? "Show help" : "Hide help"}
+                  className="border border-divider bg-surface rounded-xl"
+                  isIconOnly
+                  onPress={_toggleHelpPanel}
+                  variant="outline"
+                  size="sm"
+                >
+                  {helpPanelCollapsed ? <LuCircleHelp size={18} /> : <LuPanelRightClose size={18} />}
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>
+                {helpPanelCollapsed ? "Show help" : "Hide help"}
+              </Tooltip.Content>
+            </Tooltip>
           </div>
+          {!helpPanelCollapsed && (
+            <div className="h-full overflow-y-auto bg-surface px-3 py-4 dark:bg-gray-800">
+              <div className="flex flex-col gap-2 p-2">
+                <div className="h-10" />
+
+                <Card className="border border-divider shadow-none">
+                  <Card.Header className="flex flex-col items-start">
+                    <p className="font-semibold">Missing the data source credentials?</p>
+                  </Card.Header>
+                  <Card.Content>
+                    <p className="text-sm text-gray-500">
+                      {"Someone from your engineering team can help you with this."}
+                    </p>
+                    <div className="h-4" />
+                    <p className="text-sm text-gray-500">
+                      Ask them to join your team with this link
+                    </p>
+                    <div className="h-2" />
+                    <Input
+                      readOnly
+                      labelPlacement="outside"
+                      value={inviteUrl}
+                    />
+                  </Card.Content>
+                  <Card.Footer>
+                    <Button
+                      size="sm"
+                      variant={inviteCopied ? "tertiary" : "primary"}
+                      fullWidth
+                      onPress={() => _onCopyInviteUrl()}
+                    >
+                      {inviteCopied ? "Copied to clipboard" : "Copy invite link"}
+                      {inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
+                    </Button>
+                  </Card.Footer>
+                </Card>
+
+                <div className="h-2" />
+
+                <Card className="border border-divider shadow-none">
+                  <Card.Header className="flex flex-col items-start">
+                    <p className="font-semibold">Check out our tutorials</p>
+                  </Card.Header>
+                  <Card.Content>
+                    <p className="text-sm text-gray-500">
+                      {"We have a number of tutorials that can help you get started with Chartbrew and learn more about the platform."}
+                    </p>
+                  </Card.Content>
+                  <Card.Footer>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      fullWidth
+                      onPress={() => window.open("https://chartbrew.com/blog?tag=tutorial", "_blank")}
+                    >
+                      Open the tutorials
+                      <LuCompass />
+                    </Button>
+                  </Card.Footer>
+                </Card>
+
+                <div className="h-2" />
+
+                {selectedType && (
+                  <HelpBanner
+                    type={selectedType}
+                    imageUrl={getSourceLogo(selectedSource, isDark)}
+                  />
+                )}
+              </div>
+
+              <div ref={asideRef} />
+            </div>
+          )}
         </aside>
       </div>
     </div>

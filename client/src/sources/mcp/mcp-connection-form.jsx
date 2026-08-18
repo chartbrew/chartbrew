@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -30,6 +30,7 @@ import {
   LuTriangleAlert,
 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import {
@@ -45,6 +46,27 @@ const AUTH_OPTIONS = [
   { id: "headers", label: "Custom headers" },
   { id: "oauth", label: "OAuth" },
 ];
+
+const TOOL_HINT_FILTERS = [
+  { id: "all", label: "All tools" },
+  { id: "readOnlyHint", label: "Read-only" },
+  { id: "destructiveHint", label: "Destructive" },
+  { id: "idempotentHint", label: "Idempotent" },
+  { id: "openWorldHint", label: "Open world" },
+  { id: "unmarked", label: "No hints" },
+];
+
+function toolMatchesHintFilter(tool, filterId) {
+  const annotations = tool?.annotations || {};
+  if (!filterId || filterId === "all") return true;
+  if (filterId === "unmarked") {
+    return !annotations.readOnlyHint
+      && !annotations.destructiveHint
+      && !annotations.idempotentHint
+      && !annotations.openWorldHint;
+  }
+  return annotations[filterId] === true;
+}
 
 const markdownComponents = {
   h1: ({ children }) => <h3 className="mb-2 mt-4 text-sm font-semibold first:mt-0">{children}</h3>,
@@ -196,6 +218,12 @@ function McpToolRow({ tool, approval, needsReview, onChangeApproval }) {
               {isReadOnlyHint && (
                 <Chip size="sm" variant="soft" color="success">Read-only</Chip>
               )}
+              {tool.annotations?.idempotentHint === true && (
+                <Chip size="sm" variant="soft">Idempotent</Chip>
+              )}
+              {tool.annotations?.openWorldHint === true && (
+                <Chip size="sm" variant="soft">Open world</Chip>
+              )}
               {isDestructive && (
                 <Chip size="sm" variant="soft" color="danger">Not available</Chip>
               )}
@@ -208,7 +236,7 @@ function McpToolRow({ tool, approval, needsReview, onChangeApproval }) {
                 <Switch
                   aria-label={`Allow ${tool.name} in datasets`}
                   isSelected={approval?.datasets === true}
-                  onChange={(selected) => onChangeApproval(tool, { datasets: selected })}
+                  onChange={(selected) => onChangeApproval(tool, { datasets: selected === true })}
                 >
                   <Switch.Content>
                     <Switch.Control><Switch.Thumb /></Switch.Control>
@@ -221,7 +249,7 @@ function McpToolRow({ tool, approval, needsReview, onChangeApproval }) {
                 <Switch
                   aria-label={`Allow ${tool.name} in Ask`}
                   isSelected={approval?.ask === true}
-                  onChange={(selected) => onChangeApproval(tool, { ask: selected })}
+                  onChange={(selected) => onChangeApproval(tool, { ask: selected === true })}
                 >
                   <Switch.Content>
                     <Switch.Control><Switch.Thumb /></Switch.Control>
@@ -316,11 +344,16 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
   const [saveLoading, setSaveLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
   const [toolSearch, setToolSearch] = useState("");
+  const [toolHintFilter, setToolHintFilter] = useState("all");
+  const connectionRef = useRef(connection);
+  const approvalTasksRef = useRef({});
 
   const dispatch = useDispatch();
   const team = useSelector(selectTeam);
+  connectionRef.current = connection;
   const tools = connection.schema?.mcp?.tools || [];
   const visibleTools = tools.filter((tool) => {
+    if (!toolMatchesHintFilter(tool, toolHintFilter)) return false;
     const query = toolSearch.trim().toLowerCase();
     if (!query) return true;
     return `${tool.name} ${tool.title || ""} ${tool.description || ""}`.toLowerCase().includes(query);
@@ -374,16 +407,29 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const buildConnection = () => ({
-    ...connection,
-    type: "mcp",
-    subType: "mcp",
-    host: connection.host.trim(),
-    authentication: {
-      ...connection.authentication,
-      type: authenticationType,
-    },
-  });
+  const buildConnection = ({ includeApprovals = true } = {}) => {
+    const payload = {
+      ...connection,
+      type: "mcp",
+      subType: "mcp",
+      host: connection.host.trim(),
+      authentication: {
+        ...connection.authentication,
+        type: authenticationType,
+      },
+    };
+    if (!includeApprovals && payload.schema?.mcp) {
+      payload.schema = {
+        ...payload.schema,
+        mcp: {
+          ...payload.schema.mcp,
+          allowedTools: undefined,
+        },
+      };
+      delete payload.schema.mcp.allowedTools;
+    }
+    return payload;
+  };
 
   const applyDiscovery = (discovery) => {
     if (!discovery) return;
@@ -439,7 +485,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
     if (!validate()) return false;
     setSaveLoading(true);
     try {
-      return await onComplete(buildConnection());
+      return await onComplete(buildConnection({ includeApprovals: !editConnection?.id }));
     } finally {
       setSaveLoading(false);
     }
@@ -449,7 +495,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
     if (!editConnection?.id || !validate()) return;
     setOauthLoading(true);
     try {
-      const saved = await onComplete(buildConnection());
+      const saved = await onComplete(buildConnection({ includeApprovals: !editConnection?.id }));
       if (!saved) return;
       const action = await dispatch(runSourceAction({
         team_id: team.id,
@@ -506,30 +552,87 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
   };
 
   const onChangeApproval = (tool, updates) => {
-    const current = approvals[tool.name] || {};
+    const currentConnection = connectionRef.current;
+    const currentApprovals = currentConnection.schema?.mcp?.allowedTools || {};
+    const currentApproval = currentApprovals[tool.name] || {};
     const nextApproval = {
-      ...current,
-      datasets: current.datasets === true,
-      ask: current.ask === true,
+      ...currentApproval,
+      datasets: currentApproval.datasets === true,
+      ask: currentApproval.ask === true,
       confirmedReadOnly: true,
       contractFingerprint: tool.contractFingerprint,
       riskFingerprint: tool.riskFingerprint,
       ...updates,
     };
-    setConnection({
-      ...connection,
+    const nextConnection = {
+      ...currentConnection,
       schema: {
-        ...connection.schema,
+        ...currentConnection.schema,
         mcp: {
-          ...connection.schema.mcp,
-          allowedTools: { ...approvals, [tool.name]: nextApproval },
+          ...currentConnection.schema.mcp,
+          allowedTools: { ...currentApprovals, [tool.name]: nextApproval },
         },
       },
+    };
+    connectionRef.current = nextConnection;
+    setConnection(nextConnection);
+
+    if (!editConnection?.id || !team?.id) return;
+
+    const persist = async () => {
+      const action = await dispatch(runSourceAction({
+        team_id: team.id,
+        connection_id: editConnection.id,
+        action: "updateToolApproval",
+        params: {
+          toolName: tool.name,
+          datasets: nextApproval.datasets === true,
+          ask: nextApproval.ask === true,
+        },
+      }));
+      if (!action.payload?.approval) {
+        throw new Error(action.payload?.error || action.payload?.message || "Could not update tool permissions");
+      }
+      const use = Object.prototype.hasOwnProperty.call(updates, "datasets") ? "datasets" : "ask";
+      const enabled = nextApproval[use] === true;
+      const useLabel = use === "datasets" ? "Datasets" : "Ask";
+      toast.success(`${useLabel} ${enabled ? "enabled" : "disabled"} for ${tool.title || tool.name}`);
+    };
+
+    const previous = approvalTasksRef.current[tool.name] || Promise.resolve();
+    approvalTasksRef.current[tool.name] = previous.catch(() => {}).then(persist).catch(() => {
+      let shouldToast = true;
+      setConnection((latest) => {
+        const latestApproval = latest.schema?.mcp?.allowedTools?.[tool.name] || {};
+        if (
+          latestApproval.datasets !== nextApproval.datasets
+          || latestApproval.ask !== nextApproval.ask
+        ) {
+          shouldToast = false;
+          return latest;
+        }
+        const rolledBack = {
+          ...latest,
+          schema: {
+            ...latest.schema,
+            mcp: {
+              ...latest.schema.mcp,
+              allowedTools: {
+                ...(latest.schema?.mcp?.allowedTools || {}),
+                [tool.name]: currentApproval,
+              },
+            },
+          },
+        };
+        connectionRef.current = rolledBack;
+        return rolledBack;
+      });
+      if (shouldToast) toast.error("Could not update tool permissions");
     });
   };
 
   return (
-    <div className="flex max-w-3xl flex-col gap-8">
+    <div className="flex max-w-5xl flex-col gap-8">
       <Card className="gap-6 rounded-3xl border border-divider p-6 shadow-none">
         <Card.Header className="flex flex-row items-center gap-3">
           <Avatar className="size-10 shrink-0">
@@ -566,7 +669,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
             </TextField>
           </div>
 
-          <div className="max-w-sm">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Select
               aria-label="Authentication method"
               value={authenticationType}
@@ -714,22 +817,11 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
               {connection.schema?.mcp?.discoveredAt && (
                 <span>{`Updated ${new Date(connection.schema.mcp.discoveredAt).toLocaleString()}`}</span>
               )}
-              {connection.schema?.mcp?.discoveredAt && (
-                <span aria-hidden="true">·</span>
-              )}
-              <Tooltip delay={0}>
-                <Tooltip.Trigger>
-                  <span className="inline-flex items-center gap-1">
-                    Approvals reset if a tool changes
-                  </span>
-                </Tooltip.Trigger>
-                <Tooltip.Content className="max-w-xs">
-                  Review this list again after the server updates a tool.
-                </Tooltip.Content>
-              </Tooltip>
               {server?.websiteUrl && (
                 <>
-                  <span aria-hidden="true">·</span>
+                  {connection.schema?.mcp?.discoveredAt && (
+                    <span aria-hidden="true">·</span>
+                  )}
                   <Link href={server.websiteUrl} rel="noreferrer" target="_blank">
                     Server website
                   </Link>
@@ -738,10 +830,10 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
             </div>
           </div>
 
-          {tools.length > 4 && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <SearchField
               aria-label="Search tools"
-              className="max-w-md"
+              className="min-w-0 flex-1"
               name="mcp-tool-search"
               value={toolSearch}
               onChange={(value) => setToolSearch(typeof value === "string" ? value : "")}
@@ -753,7 +845,31 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
                 <SearchField.ClearButton />
               </SearchField.Group>
             </SearchField>
-          )}
+            <Select
+              aria-label="Filter by tool hint"
+              className="w-full sm:w-52"
+              disallowEmptySelection
+              onChange={(value) => setToolHintFilter(String(value || "all"))}
+              selectionMode="single"
+              value={toolHintFilter}
+              variant="secondary"
+            >
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {TOOL_HINT_FILTERS.map((option) => (
+                    <ListBox.Item key={option.id} id={option.id} textValue={option.label}>
+                      {option.label}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+          </div>
 
           <div className="flex flex-col gap-5">
             {visibleTools.map((tool) => (
