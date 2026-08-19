@@ -9,10 +9,9 @@ const { createMcpError, sanitizeMcpClientError } = require("./mcp.policy");
 const refreshes = new Map();
 
 function getApiBaseUrl() {
-  // const value = process.env.NODE_ENV === "production"
-  //   ? process.env.VITE_APP_API_HOST
-  //   : process.env.VITE_APP_API_HOST_DEV;
-  const value = "https://samson-nonperfected-encephalographically.ngrok-free.dev";
+  const value = process.env.NODE_ENV === "production"
+    ? process.env.VITE_APP_API_HOST
+    : process.env.VITE_APP_API_HOST_DEV;
   if (!value) {
     throw createMcpError(
       "MCP_OAUTH_CALLBACK_MISSING",

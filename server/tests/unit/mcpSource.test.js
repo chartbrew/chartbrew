@@ -1057,7 +1057,7 @@ describe("MCP source integration contracts", () => {
         },
       });
       expect(preview.status).toBe("ok");
-      expect(preview.warnings[0]).toMatch(/Confirm the real event/);
+      expect(preview.warnings[0]).toMatch(/Verify the argument values/);
     } finally {
       executeSpy.mockRestore();
     }
