@@ -101,7 +101,8 @@ If no safe logo exists, it uses the MCP logo and server initials.
 1. The user selects an MCP connection and one tool approved for datasets.
 2. Chartbrew renders primitives, enums, arrays, nested objects, defaults, descriptions, and required
    fields from `inputSchema`.
-3. Complex schemas use an advanced JSON editor, so the normal form does not limit compatibility.
+3. If a tool has no form fields, Chartbrew opens JSON mode with an arguments editor and an example
+   object. Complex schemas also use the JSON editor, so the normal form does not limit compatibility.
 4. The user can insert Chartbrew variables in supported fields.
 5. **Preview** validates the arguments, calls the tool, and shows normalized data.
 6. The user selects a nested result path when needed, applies existing transforms, and saves the

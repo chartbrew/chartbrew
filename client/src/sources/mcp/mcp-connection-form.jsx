@@ -287,9 +287,9 @@ function McpToolRow({ tool, approval, needsReview, onChangeApproval }) {
         {tool.description && (
           <Accordion.Item id={`${tool.name}-about`} textValue="About this tool">
             <Accordion.Heading>
-              <Accordion.Trigger className="px-6 py-3.5">
-                <span className="flex-1 text-start text-sm font-medium">About this tool</span>
-                <Accordion.Indicator />
+              <Accordion.Trigger className="justify-start gap-2 px-6 py-4">
+                <span className="text-sm font-medium">About this tool</span>
+                <Accordion.Indicator className="ms-0" />
               </Accordion.Trigger>
             </Accordion.Heading>
             <Accordion.Panel>
@@ -301,9 +301,9 @@ function McpToolRow({ tool, approval, needsReview, onChangeApproval }) {
         )}
         <Accordion.Item id={`${tool.name}-schema`} textValue="Input and output">
           <Accordion.Heading>
-            <Accordion.Trigger className="px-6 py-3.5">
-              <span className="flex-1 text-start text-sm font-medium">Input and output</span>
-              <Accordion.Indicator />
+              <Accordion.Trigger className="justify-start gap-2 px-6 py-4">
+                <span className="text-sm font-medium">Input and output</span>
+                <Accordion.Indicator className="ms-0" />
             </Accordion.Trigger>
           </Accordion.Heading>
           <Accordion.Panel>
