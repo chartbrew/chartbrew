@@ -464,7 +464,7 @@ function DatasetQuery(props) {
                 </div>
               </div>
             )}
-            <div className="py-6">
+            <div className="">
               {dataRequests.map((dr) => (
                 <Fragment key={dr.id}>
                   {_renderDataRequestBuilder(dr)}

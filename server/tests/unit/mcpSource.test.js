@@ -8,6 +8,7 @@ import {
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
+const db = require("../../models/models");
 const mcpAi = require("../../sources/plugins/mcp/ai/mcp.ai");
 const { normalizeToolResult, selectToolOutput } = require("../../sources/plugins/mcp/mcp.normalize");
 const {
@@ -371,6 +372,15 @@ describe("MCP result and variable handling", () => {
     })).toEqual([{ content: "No rows\nfound" }]);
   });
 
+  it("turns a header-only pipe table into empty rows", () => {
+    expect(normalizeToolResult({
+      content: [{ type: "text", text: "day|visitors" }],
+    })).toEqual([]);
+    expect(normalizeToolResult({
+      content: [{ type: "text", text: "No rows | found" }],
+    })).toEqual([{ content: "No rows | found" }]);
+  });
+
   it("rejects tool errors, interactive results, media, HTML, and resource links", () => {
     expect(() => normalizeToolResult({ isError: true, content: [] })).toThrow("returned an error");
     expect(() => normalizeToolResult({ resultType: "input_required" })).toThrow("interactive");
@@ -531,6 +541,285 @@ describe("MCP source integration contracts", () => {
       .toBeUndefined();
   });
 
+  it("offers AI only tools approved for datasets and Ask", () => {
+    const allowed = createTool({ name: "list_orders" });
+    const datasetOnly = createTool({ name: "list_customers" });
+    const askOnly = createTool({ name: "list_products" });
+    const connection = createConnection(allowed);
+    connection.schema.mcp.tools.push(datasetOnly, askOnly);
+    connection.schema.mcp.allowedTools[datasetOnly.name] = {
+      datasets: true,
+      ask: false,
+      confirmedReadOnly: true,
+    };
+    connection.schema.mcp.allowedTools[askOnly.name] = {
+      datasets: false,
+      ask: true,
+      confirmedReadOnly: true,
+    };
+
+    const candidates = mcpAi._private.getDatasetAiCandidates(
+      connection,
+      "List my recent orders"
+    );
+
+    expect(candidates.map((candidate) => candidate.toolName)).toEqual([allowed.name]);
+  });
+
+  it("generates and validates an MCP dataset configuration", async () => {
+    const tool = createTool({
+      name: "list_orders",
+      inputSchema: {
+        type: "object",
+        properties: { status: { type: "string" } },
+        required: ["status"],
+      },
+    });
+    const create = vi.fn()
+      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce({
+        choices: [{
+          message: {
+            tool_calls: [{
+              function: {
+                name: "propose_mcp_dataset",
+                arguments: JSON.stringify({
+                  toolName: tool.name,
+                  arguments: { status: "paid" },
+                }),
+              },
+            }],
+          },
+        }],
+      });
+
+    const result = await mcpAi.generateConfiguration({
+      client: { chat: { completions: { create } } },
+      connection: createConnection(tool),
+      currentConfiguration: {},
+      question: "Show paid orders",
+    });
+
+    expect(result).toMatchObject({
+      status: "ready",
+      tool: { name: tool.name, title: tool.title },
+      configuration: {
+        source: "mcp",
+        tool: {
+          name: tool.name,
+          contractFingerprint: tool.contractFingerprint,
+        },
+        arguments: { status: "paid" },
+        output: { mode: "auto", path: [] },
+      },
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses MCP server instructions and approved discovery results for the final setup", async () => {
+    const queryTool = createTool({
+      name: "execute-sql",
+      title: "Execute SQL query",
+      description: "Run a read-only HogQL query",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string" },
+          context: { type: "string" },
+        },
+        required: ["query"],
+      },
+    });
+    const discoveryTool = createTool({
+      name: "event-definitions-list",
+      title: "Event definitions",
+      description: "List PostHog event definitions",
+      inputSchema: { type: "object", properties: {} },
+    });
+    const connection = createConnection(queryTool);
+    connection.schema.mcp.instructions = "Use HogQL. Page views use the $pageview event.";
+    connection.schema.mcp.server = { name: "PostHog" };
+    connection.schema.mcp.tools.push(discoveryTool);
+    connection.schema.mcp.allowedTools[discoveryTool.name] = {
+      datasets: false,
+      ask: true,
+      confirmedReadOnly: true,
+      contractFingerprint: discoveryTool.contractFingerprint,
+      riskFingerprint: discoveryTool.riskFingerprint,
+    };
+
+    const query = [
+      "SELECT toDate(timestamp) AS day, uniqExact(distinct_id) AS visitors",
+      "FROM events",
+      "WHERE event = '$pageview' AND timestamp >= now() - INTERVAL 30 DAY",
+      "GROUP BY day ORDER BY day",
+    ].join(" ");
+    const create = vi.fn()
+      .mockResolvedValueOnce({
+        choices: [{
+          message: {
+            tool_calls: [{
+              function: {
+                name: "search_mcp_context",
+                arguments: JSON.stringify({ query: "page view event definitions" }),
+              },
+            }],
+          },
+        }],
+      })
+      .mockResolvedValueOnce({
+        choices: [{
+          message: {
+            tool_calls: [{
+              function: {
+                name: "inspect_mcp_context",
+                arguments: JSON.stringify({
+                  actions: [{
+                    kind: "tool",
+                    toolName: discoveryTool.name,
+                    arguments: {},
+                  }],
+                }),
+              },
+            }],
+          },
+        }],
+      })
+      .mockResolvedValueOnce({
+        choices: [{
+          message: {
+            tool_calls: [{
+              function: {
+                name: "propose_mcp_dataset",
+                arguments: JSON.stringify({
+                  toolName: queryTool.name,
+                  arguments: {
+                    query,
+                    context: "Daily blog visitors for the last 30 days",
+                  },
+                }),
+              },
+            }],
+          },
+        }],
+      });
+    const executeSpy = vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+      data: [{ event: "$pageview", description: "A page was viewed" }],
+      tool: discoveryTool,
+    });
+
+    try {
+      const result = await mcpAi.generateConfiguration({
+        client: { chat: { completions: { create } } },
+        connection,
+        currentConfiguration: {},
+        question: "Show visitors to my blog in the last 30 days",
+      });
+
+      expect(result.configuration.arguments.query).toBe(query);
+      expect(create).toHaveBeenCalledTimes(3);
+      const finalRequest = create.mock.calls[2][0];
+      expect(finalRequest.messages[1].content).toContain("Use HogQL");
+      expect(finalRequest.messages[1].content).toContain("$pageview");
+      expect(finalRequest.messages[0].content).not.toContain("page traffic");
+    } finally {
+      executeSpy.mockRestore();
+    }
+  });
+
+  it("revises a generated page query when its preview has no rows", async () => {
+    const queryTool = createTool({
+      name: "execute-sql",
+      title: "Execute SQL query",
+      description: "Run a read-only HogQL query",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string" },
+          context: { type: "string" },
+        },
+        required: ["query"],
+      },
+    });
+    const badQuery = [
+      "SELECT toDate(timestamp) AS day, uniqExact(distinct_id) AS visitors",
+      "FROM events WHERE properties['$current_url'] = '/blog'",
+      "GROUP BY day ORDER BY day",
+    ].join(" ");
+    const fixedQuery = [
+      "SELECT toDate(timestamp) AS day, uniqExact(distinct_id) AS visitors",
+      "FROM events WHERE event = '$pageview'",
+      "AND position(properties['$current_url'], '/blog') > 0",
+      "GROUP BY day ORDER BY day",
+    ].join(" ");
+    const create = vi.fn()
+      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce({
+        choices: [{
+          message: {
+            tool_calls: [{
+              function: {
+                name: "propose_mcp_dataset",
+                arguments: JSON.stringify({
+                  toolName: queryTool.name,
+                  arguments: { query: badQuery },
+                }),
+              },
+            }],
+          },
+        }],
+      })
+      .mockResolvedValueOnce({
+        choices: [{
+          message: {
+            tool_calls: [{
+              function: {
+                name: "propose_mcp_dataset",
+                arguments: JSON.stringify({
+                  toolName: queryTool.name,
+                  arguments: { query: fixedQuery },
+                }),
+              },
+            }],
+          },
+        }],
+      });
+    const executeSpy = vi.spyOn(mcpProtocol._private, "executeTool")
+      .mockResolvedValueOnce({ data: [], tool: queryTool })
+      .mockResolvedValueOnce({
+        data: [{ day: "2026-07-15", visitors: 12 }],
+        tool: queryTool,
+      });
+
+    try {
+      const result = await mcpAi.generateConfiguration({
+        client: { chat: { completions: { create } } },
+        connection: createConnection(queryTool),
+        currentConfiguration: {
+          tool: {
+            name: queryTool.name,
+            contractFingerprint: queryTool.contractFingerprint,
+          },
+          arguments: { query: "SELECT count() FROM events" },
+          output: { mode: "auto", path: [] },
+        },
+        question: "Only include visitors to /blog",
+      });
+
+      expect(result.configuration.arguments.query).toBe(fixedQuery);
+      expect(create).toHaveBeenCalledTimes(3);
+      expect(create.mock.calls[2][0].messages[1].content).toContain("previousProposal");
+      expect(executeSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      executeSpy.mockRestore();
+    }
+  });
+
+  it("rejects placeholder SQL proposals", () => {
+    expect(mcpAi._private.hasPlaceholderQuery({ query: "SELECT 1" })).toBe(true);
+    expect(mcpAi._private.hasPlaceholderQuery({ query: "SELECT count() FROM events" })).toBe(false);
+  });
+
   it("keeps Ask access when a tool fingerprint changes", () => {
     const tool = createTool();
     const connection = createConnection(tool, {
@@ -596,6 +885,62 @@ describe("MCP source integration contracts", () => {
       resources: [{ id: "execute-sql", requiredArguments: ["query"] }],
     });
     expect(described.resources[0].inputSchema).toEqual(sql.inputSchema);
+  });
+
+  it("searches generic MCP resources without provider rules", () => {
+    const connection = createConnection(createTool());
+    connection.schema.mcp.resources = [{
+      uri: "docs://billing/invoices",
+      name: "Invoice query guide",
+      description: "Fields and filters for invoice records",
+      mimeType: "text/plain",
+    }];
+
+    expect(mcpAi._private.getContextResourceCandidates(
+      connection,
+      "invoice fields filters"
+    )).toEqual([expect.objectContaining({
+      uri: "docs://billing/invoices",
+      name: "Invoice query guide",
+    })]);
+  });
+
+  it("uses safe saved dataset context without argument values", async () => {
+    const findDataset = vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({
+      name: "Paid invoices",
+      fieldsSchema: { "root[].date": "date", "root[].amount": "number" },
+      DatasetIntelligence: null,
+    });
+    const findRequests = vi.spyOn(db.DataRequest, "findAll").mockResolvedValue([{
+      id: 12,
+      configuration: {
+        tool: { name: "list_invoices" },
+        arguments: { status: "paid", apiToken: "must-not-leak" },
+        output: { mode: "auto", path: [] },
+      },
+    }]);
+
+    try {
+      const context = await mcpAi._private.getExistingDatasetContext({
+        id: 10,
+        dataset_id: 5,
+        connection_id: 3,
+      });
+      expect(context).toMatchObject({
+        dataset: {
+          name: "Paid invoices",
+          fields: ["root[].date", "root[].amount"],
+        },
+        existingRequests: [{
+          toolName: "list_invoices",
+          argumentNames: ["status", "apiToken"],
+        }],
+      });
+      expect(JSON.stringify(context)).not.toContain("must-not-leak");
+    } finally {
+      findDataset.mockRestore();
+      findRequests.mockRestore();
+    }
   });
 
   it("keeps a large Ask catalog compact until a tool is described", () => {

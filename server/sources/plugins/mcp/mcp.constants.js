@@ -10,6 +10,8 @@ const MCP_LIMITS = Object.freeze({
   maxCatalogBytes: 1024 * 1024,
   maxRedirects: 5,
   maxResponseBytes: 5 * 1024 * 1024,
+  maxResources: 100,
+  maxResourceTextCharacters: 8000,
   maxResultRows: 10000,
   maxSchemaBytes: 64 * 1024,
   maxSchemaDepth: 20,

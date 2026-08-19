@@ -45,6 +45,7 @@ import {
   runDataRequest,
 } from "../../slices/dataset";
 import { selectTeam } from "../../slices/team";
+import McpAiBuilder from "./mcp-ai-builder";
 import {
   getFieldTypeLabel,
   getSchemaDefault,
@@ -503,6 +504,17 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
     }
   };
 
+  const applyAiConfiguration = (nextConfiguration) => {
+    const tool = approvedTools.find((item) => item.name === nextConfiguration?.tool?.name);
+    const nextArguments = nextConfiguration?.arguments || {};
+    setArgumentsText(JSON.stringify(nextArguments, null, 2));
+    setArgumentsError("");
+    setPreviewRows(null);
+    setRunError("");
+    setAdvanced(!hasFormFields(tool?.inputSchema));
+    updateConfiguration(nextConfiguration);
+  };
+
   const saveRequest = async () => {
     if (!selectedTool || argumentsError) return null;
     setSaveLoading(true);
@@ -568,7 +580,15 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
   const showMoreOptions = selectedTool && (!advanced || !canRenderForm);
 
   return (
-    <div className="flex flex-col gap-8 px-4 sm:px-6">
+    <div className="flex flex-col gap-8 px-4 sm:px-6 pb-6">
+      {team?.id ? (
+        <McpAiBuilder
+          configuration={configuration}
+          dataRequest={dataRequest}
+          onApply={applyAiConfiguration}
+          teamId={team.id}
+        />
+      ) : null}
       <Card className="gap-0 overflow-visible bg-transparent p-0 shadow-none" variant="transparent">
         <Card.Content className="gap-0 p-0">
           <section className="flex flex-col gap-4 pb-8">

@@ -59,6 +59,22 @@ function createFixtureHandler({ legacy = false, paginate = false, auth = null } 
       structuredContent: { rows: Array.from({ length: limit }, (_, index) => ({ id: index + 1 })) },
       content: [{ type: "text", text: "fixture" }],
     }));
+    server.registerResource(
+      "fixture_query_guide",
+      "docs://fixture/querying",
+      {
+        title: "Fixture query guide",
+        description: "How to query fixture records",
+        mimeType: "text/plain",
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: "text/plain",
+          text: "Use fixture_tool with a small positive limit.",
+        }],
+      })
+    );
     return server;
   };
   const baseHandler = createMcpHandler(factory, { responseMode: "json" });
@@ -200,6 +216,10 @@ describe("MCP HTTP fixture", () => {
         ttlMs: expect.any(Number),
       });
       expect(discovery.tools.map((tool) => tool.name)).toEqual(["fixture_tool"]);
+      expect(discovery.resources).toEqual([expect.objectContaining({
+        uri: "docs://fixture/querying",
+        name: "fixture_query_guide",
+      })]);
       expect(result.data).toEqual([{ id: 1 }, { id: 2 }]);
     } finally {
       await fixture.close();

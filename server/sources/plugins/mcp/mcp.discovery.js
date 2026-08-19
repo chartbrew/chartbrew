@@ -291,6 +291,29 @@ function getCatalogCache(listResult, protocolEra) {
   };
 }
 
+function sanitizeResource(resource) {
+  if (!resource?.uri) return null;
+  return {
+    uri: trimText(resource.uri, 2000),
+    name: trimText(resource.name || resource.title || resource.uri, 256),
+    description: trimText(resource.description || "", 1000),
+    mimeType: trimText(resource.mimeType || "", 128),
+  };
+}
+
+async function listContextResources(client) {
+  if (!client.getServerCapabilities()?.resources) return [];
+  try {
+    const result = await client.listResources(undefined, { cacheMode: "refresh" });
+    const resources = (Array.isArray(result?.resources) ? result.resources : [])
+      .map(sanitizeResource)
+      .filter(Boolean);
+    return resources.slice(0, MCP_LIMITS.maxResources);
+  } catch (error) {
+    return [];
+  }
+}
+
 async function discoverMcpConnection(connection, options = {}) {
   return withMcpClient(connection, async (client, session) => {
     const listResult = await client.listTools(undefined, { cacheMode: "refresh" });
@@ -303,6 +326,7 @@ async function discoverMcpConnection(connection, options = {}) {
     }
 
     const tools = rawTools.map(sanitizeTool).sort((a, b) => a.name.localeCompare(b.name));
+    const resources = await listContextResources(client);
     const protocolEra = client.getProtocolEra() || "legacy";
     const serverInfo = client.getServerVersion() || {};
     const icon = options.loadIcon === false
@@ -317,8 +341,10 @@ async function discoverMcpConnection(connection, options = {}) {
       protocolEra,
       capabilities: {
         tools: Boolean(client.getServerCapabilities()?.tools),
+        resources: Boolean(client.getServerCapabilities()?.resources),
       },
       instructions: trimText(client.getInstructions(), 4000),
+      resources,
       tools,
       catalogCache: getCatalogCache(listResult, protocolEra),
       discoveredAt: new Date().toISOString(),
@@ -330,6 +356,10 @@ async function discoverMcpConnection(connection, options = {}) {
         name: tool.name,
         contractFingerprint: tool.contractFingerprint,
         riskFingerprint: tool.riskFingerprint,
+      })),
+      resources: resources.map((resource) => ({
+        uri: resource.uri,
+        name: resource.name,
       })),
     });
     if (Buffer.byteLength(JSON.stringify(discovery)) > MCP_LIMITS.maxCatalogBytes) {

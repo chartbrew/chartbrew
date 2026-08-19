@@ -81,9 +81,15 @@ function parseNewlineColumn(lines) {
 }
 
 function rowsFromCells(rows) {
-  if (rows.length < 2) return null;
+  if (!rows.length) return null;
   const headers = rows[0].map((name, index) => name || `column_${index}`);
   if (!headers.length) return null;
+  if (rows.length === 1) {
+    const isStandaloneHeader = headers.length > 1
+      && new Set(headers).size === headers.length
+      && headers.every((name) => isHeaderName(name) && !/\s/.test(name));
+    return isStandaloneHeader ? [] : null;
+  }
   const aligned = rows.slice(1).filter((cells) => cells.length === headers.length);
   if (!aligned.length) return null;
   return aligned.map((cells) => headers.reduce((row, name, index) => {
@@ -95,7 +101,7 @@ function rowsFromCells(rows) {
 function parseTabularText(text) {
   if (typeof text !== "string") return null;
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (lines.length < 2) return null;
+  if (!lines.length) return null;
   const delimiter = detectDelimiter(lines);
   if (!delimiter) return parseNewlineColumn(lines);
 
