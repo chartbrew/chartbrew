@@ -5,6 +5,7 @@ const { getDatasetName } = require("../../../resolveChartDatasetOptions");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
 const createChart = require("./createChart");
 const {
+  alignSourceChartBindings,
   removeCompiledMetricAccumulation,
   repairSourceDatasetIntentAsync,
 } = require("./sourceIntentRepair");
@@ -153,9 +154,19 @@ async function createTemporaryChart(payload) {
     subType = chartSanitization.subType;
     spec = chartSanitization.spec;
     const chartType = type || spec.type || "line";
-    const resolvedXAxis = resolveXAxis({
-      chartType, xAxis, yAxis, spec
+    const alignedBindings = await alignSourceChartBindings(source, {
+      connection,
+      configuration,
+      type: chartType,
+      xAxis: resolveXAxis({
+        chartType, xAxis, yAxis, spec
+      }),
+      yAxis: yAxis ?? spec.yAxis,
+      dateField: dateField ?? spec.dateField,
     });
+    const resolvedXAxis = alignedBindings.xAxis;
+    yAxis = alignedBindings.yAxis ?? yAxis;
+    dateField = alignedBindings.dateField ?? dateField;
 
     // Find the temporary preview project for this team
     const ghostProject = await db.Project.findOne({

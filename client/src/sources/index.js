@@ -10,6 +10,7 @@ import FirestoreConnectionForm from "./firestore/firestore-connection-form";
 import RealtimeDbConnectionForm from "./realtimedb/realtimedb-connection-form";
 import GaConnectionForm from "./googleAnalytics/googleAnalytics-connection-form";
 import JiraConnectionForm from "./jira/jira-connection-form";
+import McpConnectionForm from "./mcp/mcp-connection-form";
 import StrapiConnectionForm from "./strapi/strapi-connection-form";
 import StripeConnectionForm from "./stripe/stripe-connection-form";
 import StripeTemplateSetup from "./stripe/stripe-template-setup";
@@ -28,6 +29,7 @@ import RealtimeDbBuilder from "./realtimedb/realtimedb-builder";
 import FirestoreBuilder from "./firestore/firestore-builder";
 import GaBuilder from "./googleAnalytics/googleAnalytics-builder";
 import JiraBuilder from "./jira/jira-builder";
+import McpBuilder from "./mcp/mcp-builder";
 import CustomerioBuilder from "./customerio/customerio-builder";
 import ClickHouseBuilder from "./clickhouse/clickhouse-builder";
 import StripeOfficialBuilder from "./stripeOfficial/stripeOfficial-builder";
@@ -42,6 +44,10 @@ import SOURCE_DEFINITIONS, {
 import { canCreateSourceConnections } from "./sourceAvailability";
 
 const FRONTEND_BY_SOURCE_ID = {
+  mcp: {
+    ConnectionForm: McpConnectionForm,
+    DataRequestBuilder: McpBuilder,
+  },
   api: {
     ConnectionForm: ApiConnectionForm,
     DataRequestBuilder: ApiBuilder,

@@ -94,6 +94,26 @@ export function getProgressEventMessage(event, displayNames = {}) {
   return "Analyzing the data";
 }
 
+export function normalizeProgressEvent(data = {}) {
+  return {
+    id: Date.now() + Math.random(),
+    conversationId: data.conversationId,
+    type: data.event,
+    message: data.data?.message || "Processing...",
+    tools: data.data?.tools || [],
+    toolDisplayNames: data.data?.toolDisplayNames || data.data?.tool_display_names || [],
+    toolEvents: data.data?.toolEvents || data.data?.tool_events || [],
+    status: data.data?.status,
+    timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
+  };
+}
+
+export function isProgressForConversation(event, conversationId) {
+  if (conversationId == null || conversationId === "") return false;
+  if (event?.conversationId == null || event.conversationId === "") return true;
+  return `${event.conversationId}` === `${conversationId}`;
+}
+
 function parseJson(value) {
   try {
     return JSON.parse(value);

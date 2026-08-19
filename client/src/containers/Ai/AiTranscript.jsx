@@ -9,9 +9,9 @@ import AiMarkdown from "./AiMarkdown";
 
 export function AiUserPrompt({ children }) {
   return (
-    <div className="mx-auto flex w-full max-w-3xl justify-end">
-      <div className="max-w-[85%] rounded-2xl bg-content2 px-4 py-3 text-sm leading-6 text-foreground">
-        <p className="whitespace-pre-wrap">{children}</p>
+    <div className="flex min-w-0 w-full justify-end">
+      <div className="min-w-0 max-w-[85%] rounded-2xl bg-content2 px-4 py-3 text-sm leading-6 text-foreground">
+        <p className="break-words whitespace-pre-wrap">{children}</p>
       </div>
     </div>
   );
@@ -69,7 +69,7 @@ AiAnswer.propTypes = {
 
 export function AiLoadingActivity({ children = "Working through the available data…" }) {
   return (
-    <div className="mx-auto flex w-full max-w-3xl items-center gap-2 text-sm text-muted">
+    <div className="flex w-full items-center gap-2 text-sm text-muted">
       <LuLoader className="animate-spin text-accent" size={15} aria-hidden />
       {children}
     </div>

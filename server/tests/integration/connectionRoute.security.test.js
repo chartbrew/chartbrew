@@ -178,6 +178,21 @@ describe("ConnectionRoute project scoping", () => {
     vi.stubEnv("CB_DISABLED_SERVER_SOURCES", "");
   });
 
+  it("serves bounded MCP OAuth client metadata for a public HTTPS API", async () => {
+    vi.stubEnv("VITE_APP_API_HOST_DEV", "https://chartbrew.example");
+    const response = await request(app)
+      .get("/mcp/oauth/client-metadata?team_id=4&connection_id=8")
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      client_name: "Chartbrew",
+      redirect_uris: [
+        "https://chartbrew.example/team/4/connections/8/mcp/oauth/callback",
+      ],
+      grant_types: ["authorization_code", "refresh_token"],
+    });
+  });
+
   it("allows source actions for connections assigned to the caller's project", async () => {
     const seeded = await seedProjectScopedAccess(models);
     const actionSpy = vi.spyOn(CustomerioConnection, "getAllSegments")

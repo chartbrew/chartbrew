@@ -123,4 +123,17 @@ describe("AI conversation ownership", () => {
       socketManager.canJoinConversation(otherUser.id, conversation.id)
     ).resolves.toBe(false);
   });
+
+  it("allows joining ephemeral Ask session rooms with a team", async () => {
+    const { owner, team } = await createOwnedConversation(models);
+    const sessionId = "11111111-1111-4111-8111-111111111111";
+
+    await expect(
+      socketManager.canJoinConversation(owner.id, sessionId, team.id)
+    ).resolves.toBe(true);
+
+    await expect(
+      socketManager.canJoinConversation(owner.id, sessionId)
+    ).resolves.toBe(false);
+  });
 });

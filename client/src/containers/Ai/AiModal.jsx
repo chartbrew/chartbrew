@@ -22,12 +22,14 @@ import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiContextPicker from "./AiContextPicker";
 import AiMessageGroup from "./AiMessageGroup";
 import AiProgress from "./AiProgress";
-import { AiLoadingActivity, AiUserPrompt } from "./AiTranscript";
+import { AiUserPrompt } from "./AiTranscript";
 import useChatAutoScroll from "./hooks/useChatAutoScroll";
 import {
   getChartToolMessageInfo,
   getCompletedActionIds,
   groupAiMessages,
+  isProgressForConversation,
+  normalizeProgressEvent,
 } from "./aiMessageUtils";
 
 function formatDate(date) {
@@ -286,16 +288,8 @@ function AiModal({ isOpen, onClose }) {
 
     // Listen for progress events
     const handleProgress = (data) => {
-      setProgressEvents(prev => [...prev, {
-        id: Date.now() + Math.random(),
-        type: data.event,
-        message: data.data?.message || "Processing...",
-        tools: data.data?.tools || [],
-        toolDisplayNames: data.data?.toolDisplayNames || data.data?.tool_display_names || [],
-        toolEvents: data.data?.toolEvents || data.data?.tool_events || [],
-        status: data.data?.status,
-        timestamp: new Date(data.timestamp)
-      }]);
+      if (!isProgressForConversation(data, conversation.id)) return;
+      setProgressEvents((prev) => [...prev, normalizeProgressEvent(data)]);
     };
 
     socketClient.on("ai-progress", handleProgress);
@@ -705,7 +699,7 @@ function AiModal({ isOpen, onClose }) {
       >
         <Modal.Container className={conversation ? "sm:mt-3" : ""} scroll="outside">
           <Modal.Dialog className={conversation ? "h-[min(880px,92vh)] sm:max-w-[1180px]" : "sm:max-w-2xl"}>
-            <Modal.CloseTrigger />
+            <Modal.CloseTrigger className="z-20" />
             {!conversation && (
               <Modal.Body className="flex flex-col gap-5 pb-6 pt-8">
                 <div className="flex w-full flex-col gap-1.5">
@@ -932,7 +926,7 @@ function AiModal({ isOpen, onClose }) {
                     </div>
                   </aside>
                   <div className="relative flex min-w-0 flex-1 flex-col">
-                    <header className="shrink-0 border-b border-divider px-5 py-3">
+                    <header className="shrink-0 border-b border-divider px-5 py-3 pr-12">
                       <div className="mx-auto flex w-full max-w-3xl flex-row items-start gap-3">
                         <div className="flex flex-col gap-1 flex-1 min-w-0">
                           <div className="flex flex-row items-center gap-2">
@@ -1001,20 +995,32 @@ function AiModal({ isOpen, onClose }) {
                                 />
                               </div>
                             ))}
-                            <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
-                            {isLoading && progressEvents.length === 0 && (
-                              <div className="mb-5 px-4"><AiLoadingActivity /></div>
-                            )}
+                            <AiProgress
+                              className="mx-auto mb-5 w-full max-w-3xl px-4"
+                              isLoading={isLoading}
+                              progressEvents={progressEvents}
+                              toolDisplayNames={toolDisplayNames}
+                            />
+                          </>
+                        ) : localMessages.length > 0 ? (
+                          <>
+                            <div className="mx-auto mb-5 w-full max-w-3xl px-4">
+                              <AiUserPrompt>{localMessages[0].content}</AiUserPrompt>
+                            </div>
+                            <AiProgress
+                              className="mx-auto mb-5 w-full max-w-3xl px-4"
+                              isLoading={isLoading}
+                              progressEvents={progressEvents}
+                              toolDisplayNames={toolDisplayNames}
+                            />
                           </>
                         ) : progressEvents.length > 0 ? (
-                          <>
-                            {localMessages.length > 0 && (
-                              <div className="mx-auto mb-5 w-full max-w-3xl px-4">
-                                <AiUserPrompt>{localMessages[0].content}</AiUserPrompt>
-                              </div>
-                            )}
-                            <AiProgress progressEvents={progressEvents} toolDisplayNames={toolDisplayNames} />
-                          </>
+                          <AiProgress
+                            className="mx-auto mb-5 w-full max-w-3xl px-4"
+                            isLoading={isLoading}
+                            progressEvents={progressEvents}
+                            toolDisplayNames={toolDisplayNames}
+                          />
                         ) : isLoading ? (
                           <div className="flex justify-center items-center h-full">
                             <div className="flex items-center gap-2 text-muted">

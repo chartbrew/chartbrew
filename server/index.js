@@ -33,6 +33,7 @@ const periodEvaluationScheduler = require("./modules/observations/periodEvaluati
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
 const { setUpQueues } = require("./setUpQueues");
 const socketManager = require("./modules/socketManager");
+const { shouldMigrateOnStartup } = require("./modules/databaseMigrations");
 const {
   refreshPlatformSettings,
   startPlatformSettingsRefresh,
@@ -127,7 +128,14 @@ _.each(appsRoutes, (controller, route) => {
 
 const port = process.env.PORT || app.settings.port || 4019;
 
-db.migrate()
+const migrateOnStartup = shouldMigrateOnStartup();
+if (!migrateOnStartup) {
+  console.info("Skipping automatic database migrations in development. Run npm run db:migrate when needed."); // eslint-disable-line
+}
+
+const databasePreparation = migrateOnStartup ? db.migrate() : Promise.resolve([]);
+
+databasePreparation
   .then(async (data) => {
     if (data && data.length > 0) {
       console.info("Updated database schema to the latest version!"); // eslint-disable-line

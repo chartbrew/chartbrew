@@ -278,6 +278,24 @@ module.exports = (app) => {
   // -------------------------------------------------
 
   /*
+  ** Route to propose a source-owned DataRequest configuration
+  */
+  app.post(`${root}/:id/ai-configuration`, verifyToken, checkPermissions, apiLimiter(10), (req, res) => {
+    return dataRequestController.proposeAiConfiguration(
+      req.params.id,
+      req.body.question,
+      req.body.currentConfiguration,
+    )
+      .then((proposal) => {
+        return res.status(200).send(proposal);
+      })
+      .catch((error) => {
+        return res.status(error.statusCode || 400).json({ error: error.message });
+      });
+  });
+  // -------------------------------------------------
+
+  /*
   ** Route to create a new variable binding
   */
   app.post(`${root}/:id/variableBindings`, verifyToken, checkPermissions, (req, res) => {

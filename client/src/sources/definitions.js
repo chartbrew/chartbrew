@@ -3,6 +3,7 @@ import clickhouseSource from "./clickhouse/clickhouse.source";
 import firestoreSource from "./firestore/firestore.source";
 import googleAnalyticsSource from "./googleAnalytics/googleAnalytics.source";
 import jiraSource from "./jira/jira.source";
+import mcpSource from "./mcp/mcp.source";
 import mongodbSource from "./mongodb/mongodb.source";
 import mysqlSource from "./mysql/mysql.source";
 import postgresSource from "./postgres/postgres.source";
@@ -18,6 +19,8 @@ import customerioSource from "./customerio/customerio.source";
 import { applySourceAvailability } from "./sourceAvailability";
 
 const SOURCE_DEFINITIONS = [{
+  ...mcpSource,
+}, {
   ...apiSource,
 }, {
   ...mongodbSource,

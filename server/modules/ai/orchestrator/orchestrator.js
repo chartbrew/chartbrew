@@ -501,14 +501,14 @@ async function availableTools() {
     {
       name: "list_connections",
       displayName: "Find data sources",
-      description: `List AI-orchestrator-supported source connections (${supportedSourceList}) available to the project/user context.`,
+      description: `List AI-orchestrator-supported source connections (${supportedSourceList}) available to the project/user context. Use this when the user names a provider because that provider can be connected through an MCP server.`,
       parameters: {
         type: "object",
         properties: {
           project_id: { type: "string" },
           scope: { type: "string", enum: ["all", "dashboard", "recent"], default: "all" }
         },
-        required: ["project_id"]
+        required: []
       }
       // returns: { connections: [{ id, type, subType, source_id, source_name, name }] }
     },
@@ -546,11 +546,24 @@ async function availableTools() {
     {
       name: "source_list_resources",
       displayName: "List source resources",
-      description: "List source-owned resources, metrics, dimensions, filters, and compiled metrics for a connection.",
+      description: "List source-owned resources for a connection. For MCP, omit extra fields for a compact approved-tool index, pass query to search, or pass names to load full schemas for up to 3 tools.",
       parameters: {
         type: "object",
         properties: {
-          connection_id: { type: "string" }
+          connection_id: { type: "string" },
+          query: {
+            type: "string",
+            description: "Search approved MCP tools by name or description. Omit to get a compact index.",
+          },
+          names: {
+            type: "array",
+            items: { type: "string" },
+            description: "Load full input schemas for up to 3 approved MCP tool names.",
+          },
+          question: {
+            type: "string",
+            description: "Optional search text when query is not set. Used as a catalog search for MCP.",
+          },
         },
         required: ["connection_id"]
       }
@@ -614,13 +627,22 @@ async function availableTools() {
     {
       name: "source_plan_dataset",
       displayName: "Plan dataset",
-      description: "Plan a source-owned DataRequest configuration and chart bindings from a natural-language request. Use this for configuration-based sources instead of generate_query.",
+      description: "Plan a source-owned DataRequest configuration and chart bindings from a natural-language request. Use this for configuration-based sources instead of generate_query. For MCP, pass the selected approved tool and its arguments in overrides.",
       parameters: {
         type: "object",
         properties: {
           connection_id: { type: "string" },
           question: { type: "string" },
-          overrides: { type: "object", description: "Optional explicit source configuration overrides such as date range, filters, pagination, metric, dimension, or resource." },
+          overrides: {
+            type: "object",
+            description: "Optional explicit source configuration overrides. For MCP, set toolName to an approved remote tool from source_list_resources and set arguments to values that match its input schema.",
+            properties: {
+              toolName: { type: "string", description: "Approved MCP tool name from source_list_resources." },
+              arguments: { type: "object", description: "MCP tool arguments that match the selected tool input schema." },
+              output: { type: "object", description: "Optional MCP output selection." }
+            },
+            additionalProperties: true
+          },
           mode: { type: "string", enum: ["preview", "persist"], default: "preview", description: "Use preview for temporary exploration. Use persist before creating saved datasets, charts, or dashboards so the source can request disambiguation instead of guessing IDs." }
         },
         required: ["connection_id", "question"]
@@ -678,7 +700,7 @@ async function availableTools() {
     {
       name: "source_preview_configuration",
       displayName: "Preview data",
-      description: "Run a capped preview for a source-owned DataRequest configuration and return compact rows, columns, warnings, and recommended chart bindings.",
+      description: "Run a capped preview for a source-owned DataRequest configuration and return compact rows, columns, warnings, and recommended chart bindings. For MCP, this runs the approved remote tool selected by source_plan_dataset.",
       parameters: {
         type: "object",
         properties: {
@@ -1398,6 +1420,7 @@ ${ENTITY_CREATION_RULES}
 
 - **Infer context automatically**: For connections and data sources, use context from the conversation. If only one connection exists or is obvious from context, use it automatically.
 - **Use obvious connections**: If only one connection exists, or the connection is clear from context (e.g., "my sales database"), use it automatically. Only ask when multiple ambiguous options exist.
+- **Inspect named providers**: A provider named by the user can be the name of an MCP connection. Call list_connections before you say that a named provider is unsupported or unavailable.
 - **Create charts proactively**: After answering a data question, automatically create a TEMPORARY preview chart. Don't ask "would you like me to create a chart?" - just create it. This gives users a visual preview and control over dashboard placement.
 - **KPI means a visualization**: A request to create, build, display, or convert something to a KPI means a KPI chart. It does not mean a KPI review or a watched metric unless the user explicitly asks for those features.
 - **Complete explicit visualization requests**: Never answer a chart or KPI creation request with choices, a workspace report, or a promise to create it later. Use the tools and show the result in the current turn.
@@ -1431,6 +1454,7 @@ ${ENTITY_CREATION_RULES}
      * **DEFAULT: Always create a temporary preview chart to show the results visually**
    - For source-owned configuration connections:
      * Call source_get_capabilities or source_list_resources only when you truly need source context that is not already known. Do not call them as a default prerequisite for dashboard creation.
+     * For MCP answer-first requests, search with source_list_resources query, then pass names to load at most 3 full schemas. Call source_plan_dataset with explicit overrides.toolName and overrides.arguments, then source_preview_configuration. Never use run_query or source_run_action for a remote MCP tool. If the question names pages, events, properties, or features, first run a list/search/schema tool and read the real values. Do not invent path or event strings from the question wording. Empty rows or a zero metric usually mean the filter missed; verify the dimension before concluding there is no traffic. A bar or timeseries needs one row per category or day and xAxis/yAxis bound to those exact preview columns as root[].column. A single total cannot draw a timeline. Use suggestedBindings from preview when present.
      * Use source_resolve_context when a Jira follow-up needs to inspect or correct project, board, sprint, version, or user context.
      * Use source_run_action for bounded Jira metadata lookups such as users, projects, boards, sprints, versions, or JQL validation.
      * Use source_search_records for answer-first Jira issue lists before creating datasets. This is preferred for prompts like "what is Raz working on", "show open issues assigned to X", "show blockers", or "what is in the active sprint".
@@ -1980,6 +2004,33 @@ function getVisualizationToolChoice({ blocked, complete, required }) {
   return required && !complete && !blocked ? "required" : "auto";
 }
 
+function getConnectionInspectionToolChoice(question, connections = []) {
+  const ignoredTokens = new Set([
+    "analytics",
+    "api",
+    "connection",
+    "data",
+    "database",
+    "mcp",
+    "official",
+    "server",
+    "source",
+  ]);
+  const questionTokens = new Set(
+    String(question || "").toLowerCase().split(/[^a-z0-9]+/)
+      .filter((token) => token.length > 3)
+  );
+  const hasNamedConnection = connections.some((connection) => (
+    String(connection?.name || "").toLowerCase().split(/[^a-z0-9]+/)
+      .filter((token) => token.length > 3 && !ignoredTokens.has(token))
+      .some((token) => questionTokens.has(token))
+  ));
+
+  return hasNamedConnection
+    ? { type: "function", name: "list_connections" }
+    : null;
+}
+
 function getChartPreviewsFromToolResults(toolResults = []) {
   const previewsByChartId = new Map();
   toolResults.forEach((result) => {
@@ -2388,14 +2439,14 @@ async function orchestrate(
     ),
   });
 
-  const createModelResponse = async () => {
+  const createModelResponse = async (toolChoice = null) => {
     const startTime = Date.now();
     const response = await openaiClient.responses.create({
       model: modelName,
       instructions: systemPrompt,
       input: buildResponseInputFromMessages(modelMessages),
       tools,
-      tool_choice: getVisualizationToolChoice({
+      tool_choice: toolChoice || getVisualizationToolChoice({
         blocked: visualizationActionBlocked,
         complete: visualizationActionComplete,
         required: requiresVisualizationAction,
@@ -2419,7 +2470,10 @@ async function orchestrate(
   };
 
   // Initial API call
-  let response = await createModelResponse();
+  const connectionInspectionToolChoice = permittedToolNames.has("list_connections")
+    ? getConnectionInspectionToolChoice(question, semanticLayer.connections)
+    : null;
+  let response = await createModelResponse(connectionInspectionToolChoice);
   let assistantMessage = buildAssistantMessageFromResponse(response);
   const maxIterations = 16; // Prevent infinite loops while allowing mixed-source dashboard creation
   let iterations = 0;
@@ -2726,6 +2780,7 @@ module.exports = {
   appendTemporaryChartNextStep,
   attachContextManifest,
   filterToolDefinitionsForUser,
+  getConnectionInspectionToolChoice,
   getVisualizationToolChoice,
   getChartPreviewsFromToolResults,
   sanitizeToolError,

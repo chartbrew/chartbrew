@@ -101,6 +101,27 @@ describe("source registry", () => {
     expect(source.backend.testUnsavedConnection).toEqual(expect.any(Function));
   });
 
+  it("resolves MCP by id", () => {
+    const source = getSourceById("mcp");
+
+    expect(source).toMatchObject({
+      id: "mcp",
+      type: "mcp",
+      subType: "mcp",
+      name: "MCP server",
+      availability: {
+        server: {
+          enabled: true,
+        },
+      },
+    });
+    expect(source.backend.runDataRequest).toEqual(expect.any(Function));
+    expect(source.backend.getBuilderMetadata).toEqual(expect.any(Function));
+    expect(source.backend.testConnection).toEqual(expect.any(Function));
+    expect(source.backend.testUnsavedConnection).toEqual(expect.any(Function));
+    expect(source.backend.ai.planDataset).toEqual(expect.any(Function));
+  });
+
   it("includes source availability in source summaries", () => {
     const stripeSummary = getSourceSummaries().find((source) => source.id === "stripe");
 

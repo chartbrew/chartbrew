@@ -308,6 +308,25 @@ class RequestController {
       });
   }
 
+  proposeAiConfiguration(id, question, currentConfiguration) {
+    return this.findById(id)
+      .then(async (dataRequest) => {
+        const connection = await db.Connection.findByPk(dataRequest.Connection.id);
+        const source = findSourceForConnection(connection);
+        if (!source?.backend?.ai?.generateConfiguration) {
+          throw new Error("AI setup is not available for this source.");
+        }
+
+        assertSourceServerEnabled(source);
+        return source.backend.ai.generateConfiguration({
+          connection,
+          currentConfiguration,
+          dataRequest,
+          question,
+        });
+      });
+  }
+
   createVariableBinding(id, data) {
     const newVar = {
       ...data,
