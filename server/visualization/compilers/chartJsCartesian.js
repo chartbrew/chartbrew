@@ -2,9 +2,13 @@ const BarChart = require("../../charts/BarChart");
 const LineChart = require("../../charts/LineChart");
 const { chartColors } = require("../../charts/colors");
 const { buildChartMetrics } = require("../metrics");
-const { serializeTypedValue } = require("../seriesIdentity");
-const { createMoment, expandTimeValues, formatTimeValues } = require("../time");
-const { applyValueFormula } = require("../valueFormula");
+const {
+  buildProjectedSeries,
+  buildTimeRange,
+  getDomain,
+  hasField,
+  projectPreparedSeries,
+} = require("../seriesProjection");
 
 const SERIES_COLORS = Object.values(chartColors).map((color) => color.hex);
 const DEFAULT_RADAR_FILL_OPACITY = 0.15;
@@ -51,50 +55,6 @@ function getStableColor(seriesId, usedColors = new Set()) {
   return SERIES_COLORS[preferredIndex];
 }
 
-function getDimensionRole(layer) {
-  if (layer.fields.time) return "time";
-  return "category";
-}
-
-function getDomain(frame) {
-  const domain = new Map();
-
-  frame.layers.forEach((layerFrame) => {
-    const role = getDimensionRole(layerFrame);
-
-    layerFrame.rows.forEach((row) => {
-      const value = row[role];
-      const key = serializeTypedValue(value);
-      if (!domain.has(key)) domain.set(key, value);
-    });
-  });
-
-  return domain;
-}
-
-function buildTimeRange(runtimeContext, values, timeUnit, timezone) {
-  const effectiveRange = runtimeContext?.effectiveDateRange;
-  const configuredStart = createMoment(effectiveRange?.startDate, timezone);
-  const configuredEnd = createMoment(effectiveRange?.endDate, timezone);
-  if (configuredStart?.isValid() && configuredEnd?.isValid()) {
-    return {
-      end: configuredEnd.clone().add(1, "millisecond").toISOString(),
-      start: configuredStart.toISOString(),
-    };
-  }
-
-  const parsed = values
-    .map((value) => createMoment(value, timezone))
-    .filter((value) => value?.isValid())
-    .sort((left, right) => left.valueOf() - right.valueOf());
-  if (parsed.length === 0) return null;
-
-  return {
-    end: parsed[parsed.length - 1].clone().add(1, timeUnit || "day").toISOString(),
-    start: parsed[0].toISOString(),
-  };
-}
-
 function getSeriesStyle(layer, series, options = {}) {
   const overrides = layer.style?.series || {};
   const override = overrides[series.id] || overrides[series.key] || {};
@@ -126,20 +86,20 @@ function getSeriesStyle(layer, series, options = {}) {
   };
 }
 
-function getAvailableCatalog(layerFrame) {
-  const visible = layerFrame.series || [];
+function getAvailableCatalog(result) {
+  const visible = result.series || [];
   const visibleIds = new Set(visible.map((series) => series.id));
   return [
     ...visible,
-    ...(layerFrame.availableSeries || []).filter((series) => !visibleIds.has(series.id)),
+    ...(result.availableSeries || []).filter((series) => !visibleIds.has(series.id)),
   ];
 }
 
-function buildSeriesStyleMap(frame, visualization) {
-  const entries = frame.layers.flatMap((layerFrame) => {
-    const layer = visualization.layers.find((item) => item.id === layerFrame.id);
-    return getAvailableCatalog(layerFrame)
-      .map((series) => ({ layer, layerFrame, series }));
+function buildSeriesStyleMap(preparedData, visualization) {
+  const entries = preparedData.results.flatMap((result) => {
+    const layer = visualization.layers.find((item) => item.id === result.id);
+    return getAvailableCatalog(result)
+      .map((series) => ({ layer, result, series }));
   });
   const usedColors = new Set(entries.map(({ layer, series }) => {
     const overrides = layer.style?.series || {};
@@ -157,124 +117,75 @@ function buildSeriesStyleMap(frame, visualization) {
   return styles;
 }
 
-function buildSeriesMetadata(frame, visualization) {
-  const styles = buildSeriesStyleMap(frame, visualization);
-  return frame.layers.flatMap((layerFrame) => {
-    const layer = visualization.layers.find((item) => item.id === layerFrame.id);
-    return layerFrame.series.map((series) => {
+function buildSeriesMetadata(preparedData, visualization) {
+  const styles = buildSeriesStyleMap(preparedData, visualization);
+  return preparedData.results.flatMap((result) => {
+    const layer = visualization.layers.find((item) => item.id === result.id);
+    return result.series.map((series) => {
       const style = styles.get(series.id);
       return {
         ...series,
-        bindingId: layerFrame.bindingId,
+        bindingId: result.bindingId,
         color: style.datasetColor,
         fillColor: style.fillColor,
-        layerId: layerFrame.id,
+        layerId: result.id,
         layerName: layer?.name || null,
       };
     });
   });
 }
 
-function buildAvailableSeriesMetadata(frame, visualization) {
-  const styles = buildSeriesStyleMap(frame, visualization);
-  return frame.layers.flatMap((layerFrame) => {
-    const layer = visualization.layers.find((item) => item.id === layerFrame.id);
-    return getAvailableCatalog(layerFrame).map((series) => {
+function buildAvailableSeriesMetadata(preparedData, visualization) {
+  const styles = buildSeriesStyleMap(preparedData, visualization);
+  return preparedData.results.flatMap((result) => {
+    const layer = visualization.layers.find((item) => item.id === result.id);
+    return getAvailableCatalog(result).map((series) => {
       const style = styles.get(series.id);
       return {
         ...series,
-        bindingId: layerFrame.bindingId,
+        bindingId: result.bindingId,
         color: style.datasetColor,
         fillColor: style.fillColor,
-        layerId: layerFrame.id,
+        layerId: result.id,
         layerName: layer?.name || null,
       };
     });
   });
 }
 
-function buildChartJsDatasets(frame, spec, domain, missingValue) {
-  const datasets = [];
-  const configs = [];
-  const styles = buildSeriesStyleMap(frame, spec);
-
-  frame.layers.forEach((layerFrame) => {
-    const layer = spec.layers.find((item) => item.id === layerFrame.id);
-    const dimensionRole = getDimensionRole(layerFrame);
-    const valuesBySeries = new Map();
-
-    layerFrame.rows.forEach((row) => {
-      if (!valuesBySeries.has(row.__seriesId)) {
-        valuesBySeries.set(row.__seriesId, new Map());
-      }
-      valuesBySeries.get(row.__seriesId).set(
-        serializeTypedValue(row[dimensionRole]),
-        row.value
-      );
-    });
-
-    layerFrame.series.forEach((series) => {
-      const valuesByDimension = valuesBySeries.get(series.id) || new Map();
-      const isCumulative = layer.transforms.some((transform) => {
-        return transform.type === "window" && transform.operation === "cumulativeSum";
-      });
-
-      const style = styles.get(series.id);
-      let cumulativeValue = 0;
-      datasets.push([...domain.keys()].map((key) => {
-        if (!valuesByDimension.has(key) && !isCumulative) return missingValue;
-        if (valuesByDimension.has(key)) cumulativeValue = valuesByDimension.get(key);
-        return applyValueFormula(
-          cumulativeValue,
-          layer.encoding.value?.formula,
-          { formatted: ["kpi", "avg", "gauge"].includes(layer.mark) }
-        );
-      }));
-      configs.push({
-        ...style,
-        formula: layer.encoding.value?.formula || null,
-        goal: layer.encoding.breakdown ? null : layer.goal ?? null,
-        id: series.id,
-        layerId: layer.id,
-      });
-    });
-  });
+function buildChartJsDatasets(preparedData, spec, domain, missingValue) {
+  const styles = buildSeriesStyleMap(preparedData, spec);
+  const projected = buildProjectedSeries(preparedData, spec, domain, missingValue);
+  const datasets = projected.map((series) => series.values);
+  const configs = projected.map((series) => ({
+    ...styles.get(series.id),
+    formula: series.formula,
+    goal: series.goal,
+    id: series.id,
+    layerId: series.layerId,
+  }));
 
   return { configs, datasets };
 }
 
-function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visualization }) {
-  const marks = [...new Set(frame.layers.map((layer) => layer.mark))];
+function compileChartJsCartesian({ chart, preparedData, runtimeContext, timezone, visualization }) {
+  const marks = [...new Set(preparedData.results.map((result) => result.mark))];
   if (marks.length !== 1 || !["bar", "line"].includes(marks[0])) {
     throw new Error("Cartesian Chart.js compiler requires uniform bar or line layers");
   }
 
-  let domain = getDomain(frame);
-  const timeLayer = frame.layers.find((layer) => layer.fields.time);
-  const timeUnit = timeLayer
-    ? visualization.layers.find((layer) => layer.id === timeLayer.id)?.encoding.time?.timeUnit
-      || visualization.settings?.timeInterval
-      || chart.timeInterval
-      || "day"
-    : null;
-  if (timeLayer) {
-    const includeZeros = visualization.settings?.includeZeros ?? chart.includeZeros;
-    const canExpand = !["minute", "second"].includes(timeUnit);
-    if (includeZeros && canExpand) {
-      const expanded = expandTimeValues(
-        [...domain.values()],
-        timeUnit,
-        timezone,
-        runtimeContext?.effectiveDateRange || visualization.settings?.dateWindow || {}
-      );
-      domain = new Map(expanded.map((value) => [serializeTypedValue(value), value]));
-    } else {
-      domain = new Map([...domain.entries()].sort((left, right) => left[1] - right[1]));
-    }
-  }
+  const projection = projectPreparedSeries({
+    chart,
+    preparedData,
+    runtimeContext,
+    timezone,
+    visualization,
+  });
+  const domain = projection.domain;
+  const timeResult = preparedData.results.find((result) => hasField(result, "time"));
   const missingPolicy = visualization.settings?.missingValues?.policy || "preserve";
   const missingValue = missingPolicy === "zero" ? 0 : null;
-  const compiled = buildChartJsDatasets(frame, visualization, domain, missingValue);
+  const compiled = buildChartJsDatasets(preparedData, visualization, domain, missingValue);
   const mark = marks[0];
   const chartWithSeries = {
     ...chart,
@@ -284,12 +195,8 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
     stacked: visualization.layers.some((layer) => layer.stack !== "none"),
     type: mark,
   };
-  const domainValues = [...domain.values()];
-  const formattedTime = timeLayer
-    ? formatTimeValues(domainValues, timeUnit, timezone)
-    : null;
   const axisData = {
-    x: formattedTime?.labels || domainValues,
+    x: projection.labels,
     y: compiled.datasets,
   };
   const compiler = mark === "bar"
@@ -299,22 +206,20 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
   buildChartMetrics(configuration, compiled.configs, chartWithSeries);
 
   configuration.meta = {
-    availableSeries: buildAvailableSeriesMetadata(frame, visualization),
-    frameVersion: frame.version,
-    series: buildSeriesMetadata(frame, visualization),
-    timeRange: timeLayer
-      ? buildTimeRange(runtimeContext, domainValues, timeUnit, timezone)
-      : null,
+    availableSeries: buildAvailableSeriesMetadata(preparedData, visualization),
+    frameVersion: preparedData.frameVersion,
+    series: buildSeriesMetadata(preparedData, visualization),
+    timeRange: projection.timeRange,
     visualizationVersion: visualization.version,
-    warnings: frame.warnings,
+    warnings: preparedData.warnings,
   };
 
   return {
     conditionsOptions: [],
     configuration,
-    frame,
-    isTimeseries: visualization.layers.some((layer) => Boolean(layer.encoding.time)),
-    dateFormat: formattedTime?.format || "",
+    preparedData,
+    isTimeseries: Boolean(timeResult),
+    dateFormat: projection.dateFormat,
   };
 }
 

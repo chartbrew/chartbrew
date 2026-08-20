@@ -17,6 +17,7 @@ export default defineConfig({
       "tests/unit/replaySynthbrewPeriods.test.js",
       "tests/unit/scheduleWeekdays.test.js",
       "tests/unit/visualizationCompilers.test.js",
+      "tests/unit/visualizationPreparedData.test.js",
     ],
     maxWorkers: 1,
     pool: "forks",

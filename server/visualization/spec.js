@@ -122,6 +122,10 @@ function validateVisualizationSpec(input, options = {}) {
     const layerPath = `layers[${layerIndex}]`;
     const markDefinition = getMarkDefinition(layer.mark);
 
+    if (!allowIncomplete && !input.layers[layerIndex]?.id) {
+      errors.push(`${layerPath}.id is required for a ready visualization`);
+    }
+
     if (layerIds.has(layer.id)) {
       errors.push(`${layerPath}.id must be unique`);
     }

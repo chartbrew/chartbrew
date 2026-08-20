@@ -11,26 +11,26 @@ const { createSeriesId, getSeriesLabel, serializeTypedValue } = require("../seri
 const CATEGORY_MARKS = new Set(["pie", "doughnut", "radar", "polar"]);
 const SLICE_COLOR_MARKS = new Set(["pie", "doughnut", "polar"]);
 
-function buildCategoryMetadata(frame, visualization, domain) {
+function buildCategoryMetadata(preparedData, visualization, domain) {
   const usedColors = new Set();
 
-  return frame.layers.flatMap((layerFrame) => {
-    if (!SLICE_COLOR_MARKS.has(layerFrame.mark)) return [];
-    const layer = visualization.layers.find((item) => item.id === layerFrame.id);
-    const presentKeys = new Set(layerFrame.rows.map((row) => serializeTypedValue(row.category)));
+  return preparedData.results.flatMap((result) => {
+    if (!SLICE_COLOR_MARKS.has(result.mark)) return [];
+    const layer = visualization.layers.find((item) => item.id === result.id);
+    const presentKeys = new Set(result.rows.map((row) => serializeTypedValue(row.category)));
 
     return [...domain.entries()].filter(([key]) => presentKeys.has(key)).map(([key, value]) => {
-      const id = createSeriesId(layerFrame.id, value);
+      const id = createSeriesId(result.id, value);
       const override = layer?.style?.series?.[id] || layer?.style?.series?.[key] || {};
       const color = override.color || getStableColor(id, usedColors);
       usedColors.add(color);
       return {
-        bindingId: layerFrame.bindingId,
+        bindingId: result.bindingId,
         color,
         id,
         key,
         label: getSeriesLabel(value, "Unclassified"),
-        layerId: layerFrame.id,
+        layerId: result.id,
         layerName: layer?.name || null,
         value,
       };
@@ -38,28 +38,28 @@ function buildCategoryMetadata(frame, visualization, domain) {
   });
 }
 
-function compileChartJsCategory({ chart, frame, visualization }) {
-  const marks = [...new Set(frame.layers.map((layer) => layer.mark))];
+function compileChartJsCategory({ chart, preparedData, visualization }) {
+  const marks = [...new Set(preparedData.results.map((result) => result.mark))];
   if (marks.length !== 1 || !CATEGORY_MARKS.has(marks[0])) {
     throw new Error("Category Chart.js compiler requires a uniform category mark");
   }
 
-  const domain = getDomain(frame);
-  const compiled = buildChartJsDatasets(frame, visualization, domain, null);
-  const categories = buildCategoryMetadata(frame, visualization, domain);
+  const domain = getDomain(preparedData);
+  const compiled = buildChartJsDatasets(preparedData, visualization, domain, null);
+  const categories = buildCategoryMetadata(preparedData, visualization, domain);
   if (SLICE_COLOR_MARKS.has(marks[0])) {
     compiled.configs.forEach((config) => {
-      const layerFrame = frame.layers.find((candidate) => {
+      const result = preparedData.results.find((candidate) => {
         return candidate.series.some((series) => series.id === config.id);
       });
-      const layer = visualization.layers.find((candidate) => candidate.id === layerFrame?.id);
-      const layerCategories = categories.filter((category) => category.layerId === layerFrame?.id);
+      const layer = visualization.layers.find((candidate) => candidate.id === result?.id);
+      const layerCategories = categories.filter((category) => category.layerId === result?.id);
       const categoryByKey = new Map(layerCategories.map((category) => [category.key, category]));
       const usedColors = new Set(layerCategories.map((category) => category.color));
       const categoryColors = [...domain.entries()].map(([key, value]) => {
         const category = categoryByKey.get(key);
         if (category) return category.color;
-        const id = createSeriesId(layerFrame.id, value);
+        const id = createSeriesId(result.id, value);
         const override = layer?.style?.series?.[id] || layer?.style?.series?.[key] || {};
         const color = override.color || getStableColor(id, usedColors);
         usedColors.add(color);
@@ -85,15 +85,15 @@ function compileChartJsCategory({ chart, frame, visualization }) {
   buildChartMetrics(configuration, compiled.configs, chartWithSeries);
   configuration.meta = {
     categories,
-    frameVersion: frame.version,
-    series: buildSeriesMetadata(frame, visualization),
+    frameVersion: preparedData.frameVersion,
+    series: buildSeriesMetadata(preparedData, visualization),
     visualizationVersion: visualization.version,
-    warnings: frame.warnings,
+    warnings: preparedData.warnings,
   };
 
   return {
     configuration,
-    frame,
+    preparedData,
     isTimeseries: false,
   };
 }

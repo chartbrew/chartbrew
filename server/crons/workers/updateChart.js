@@ -69,16 +69,17 @@ async function updateDate(chart) {
 
 async function runUpdate(chart, traceContext) {
   try {
-    const chartData = await chartController.updateChartData(chart.id, null, {
+    const updateResult = await chartController.updateChartData(chart.id, null, {
       traceContext,
       finalizeRun: false,
+      returnPreparedData: true,
     });
-    checkChartForAlerts(chartData);
+    await checkChartForAlerts(updateResult.chart, updateResult.preparedData);
     const dateUpdated = await updateDate(chart);
     if (!dateUpdated) {
       throw toAuditError(`Failed to update date for chart ${chart.id}`, "persist");
     }
-    return chartData;
+    return updateResult.chart;
   } catch (error) {
     throw toAuditError(error, error.auditStage || "unknown");
   }

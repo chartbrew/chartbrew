@@ -9,6 +9,7 @@ const { recordAdapterUsage } = require("./adapterUsage");
 const { filterVisualizationDatasets } = require("./filterDatasets");
 const { buildVisualizationFrame } = require("./frameBuilder");
 const { legacyChartToVisualization } = require("./legacyChartToVisualization");
+const { createPreparedData } = require("./preparedData");
 const { assertVisualizationSpec } = require("./spec");
 
 function parseStoredVisualization(value) {
@@ -80,52 +81,73 @@ class VisualizationEngine {
     };
   }
 
-  render(options = {}) {
+  prepare(options = {}) {
     const resolved = this.buildFrame(options);
-    const marks = [...new Set(resolved.frame.layers.map((layer) => layer.mark))];
+    const preparedData = createPreparedData({
+      chart: this.chart,
+      datasets: resolved.datasets,
+      frame: resolved.frame,
+      generatedAt: options.generatedAt,
+      timezone: options.timezone || this.timezone,
+      visualization: resolved.visualization,
+    });
+
+    return {
+      ...resolved,
+      preparedData,
+    };
+  }
+
+  render(options = {}) {
+    const resolved = this.prepare(options);
+    const marks = [...new Set(resolved.preparedData.results.map((result) => result.mark))];
 
     let compiled;
     if (marks.length === 1 && (marks[0] === "bar" || marks[0] === "line")) {
       compiled = compileChartJsCartesian({
         chart: this.chart,
-        frame: resolved.frame,
+        preparedData: resolved.preparedData,
         runtimeContext: resolved.runtimeContext,
-        timezone: this.timezone,
+        timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
       });
     } else if (marks.length === 1 && CATEGORY_MARKS.has(marks[0])) {
       compiled = compileChartJsCategory({
         chart: this.chart,
-        frame: resolved.frame,
+        preparedData: resolved.preparedData,
         visualization: resolved.visualization,
       });
     } else if (marks.length === 1 && METRIC_MARKS.has(marks[0])) {
       compiled = compileChartJsMetric({
         chart: this.chart,
-        frame: resolved.frame,
+        preparedData: resolved.preparedData,
         visualization: resolved.visualization,
       });
     } else if (marks.length === 1 && marks[0] === "table") {
       compiled = compileChartJsTable({
         chart: this.chart,
         conditionsOptions: resolved.conditionsOptions,
-        datasets: resolved.datasets,
-        frame: resolved.frame,
-        timezone: this.timezone,
+        preparedData: resolved.preparedData,
+        timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
       });
     } else if (marks.length === 1 && marks[0] === "matrix") {
       compiled = compileChartJsMatrix({
         chart: this.chart,
-        frame: resolved.frame,
+        preparedData: resolved.preparedData,
         runtimeContext: resolved.runtimeContext,
-        timezone: this.timezone,
+        timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
       });
     } else if (marks.length === 1 && marks[0] === "markdown") {
       compiled = {
-        configuration: { content: resolved.visualization.layers[0]?.content || this.chart.content || "" },
-        frame: resolved.frame,
+        configuration: {
+          content: resolved.preparedData.results[0]?.rows[0]?.content
+            ?? resolved.visualization.layers[0]?.content
+            ?? this.chart.content
+            ?? "",
+        },
+        preparedData: resolved.preparedData,
         isTimeseries: false,
       };
     } else {
@@ -137,22 +159,58 @@ class VisualizationEngine {
       adapted: resolved.adapted,
       conditionsOptions: resolved.conditionsOptions,
       frame: resolved.frame,
+      preparedData: resolved.preparedData,
       visualization: resolved.visualization,
     };
   }
 
   export(options = {}) {
     if (options.mode === "shown") {
-      const rendered = this.render(options);
+      const resolved = this.prepare(options);
+      const marks = [...new Set(resolved.preparedData.results.map((result) => result.mark))];
+      let configuration;
+      if (marks.length === 1 && marks[0] === "table") {
+        configuration = compileChartJsTable({
+          chart: this.chart,
+          conditionsOptions: resolved.conditionsOptions,
+          preparedData: resolved.preparedData,
+          timezone: options.timezone || this.timezone,
+          visualization: resolved.visualization,
+        }).configuration;
+      } else if (marks.length === 1 && marks[0] === "markdown") {
+        configuration = {
+          content: resolved.preparedData.results[0]?.rows[0]?.content
+            ?? resolved.visualization.layers[0]?.content
+            ?? this.chart.content
+            ?? "",
+        };
+      } else if (marks.length === 1 && marks[0] === "matrix") {
+        configuration = compileChartJsMatrix({
+          chart: this.chart,
+          preparedData: resolved.preparedData,
+          runtimeContext: resolved.runtimeContext,
+          timezone: options.timezone || this.timezone,
+          visualization: resolved.visualization,
+        }).configuration;
+      } else {
+        configuration = compileShownExport({
+          chart: this.chart,
+          preparedData: resolved.preparedData,
+          runtimeContext: resolved.runtimeContext,
+          timezone: options.timezone || this.timezone,
+          visualization: resolved.visualization,
+        });
+      }
       return {
-        adapted: rendered.adapted,
-        conditionsOptions: rendered.conditionsOptions,
-        configuration: compileShownExport(rendered.configuration, this.chart),
+        adapted: resolved.adapted,
+        conditionsOptions: resolved.conditionsOptions,
+        configuration,
         exportMode: "shown",
-        visualization: rendered.visualization,
+        preparedData: resolved.preparedData,
+        visualization: resolved.visualization,
       };
     }
-    const resolved = this.buildFrame(options);
+    const resolved = this.prepare(options);
     return {
       ...compileTabularExport({
         conditionsOptions: resolved.conditionsOptions,
@@ -161,6 +219,7 @@ class VisualizationEngine {
       }),
       adapted: resolved.adapted,
       exportMode: "source",
+      preparedData: resolved.preparedData,
       visualization: resolved.visualization,
     };
   }

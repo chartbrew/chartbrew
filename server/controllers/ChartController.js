@@ -515,6 +515,7 @@ class ChartController {
     runtimeOnly = false,
     traceContext,
     finalizeRun = true,
+    returnPreparedData = false,
   }) {
     let gChart;
     let gCache;
@@ -1053,12 +1054,12 @@ class ChartController {
           && !effectiveGetCache
           && !effectiveNoSource
           && !hasObservationRuntimePayload
-          && Boolean(gChartData?.frame);
+          && Boolean(gChartData?.preparedData);
         if (shouldProcessObservations) {
           try {
             await processChartResult({
               chart: gChart,
-              frame: gChartData.frame,
+              preparedData: gChartData.preparedData,
               refreshedAt: new Date(),
               teamId: project?.team_id || chartTraceContext?.teamId || null,
               updateRunId: chartTraceContext?.runId || null,
@@ -1079,6 +1080,13 @@ class ChartController {
               labelCount: gChartData?.configuration?.data?.labels?.length || 0,
             },
           });
+        }
+
+        if (returnPreparedData) {
+          return {
+            chart: finalChart,
+            preparedData: gChartData?.preparedData || null,
+          };
         }
 
         return finalChart;
