@@ -10,6 +10,7 @@ const { filterVisualizationDatasets } = require("./filterDatasets");
 const { buildVisualizationFrame } = require("./frameBuilder");
 const { legacyChartToVisualization } = require("./legacyChartToVisualization");
 const { assertPreparedData, createPreparedData } = require("./preparedData");
+const { getServerPresetImplementation } = require("./presetImplementations");
 const { assertVisualizationSpec } = require("./spec");
 
 function parseStoredVisualization(value) {
@@ -102,7 +103,7 @@ class VisualizationEngine {
     const marks = [...new Set(preparedData.results.map((result) => result.mark))];
 
     let compiled;
-    if (marks.length === 1 && (marks[0] === "bar" || marks[0] === "line")) {
+    if (marks.length === 1 && ["area", "bar", "line"].includes(marks[0])) {
       compiled = compileChartJsCartesian({
         chart: this.chart,
         preparedData,
@@ -153,12 +154,38 @@ class VisualizationEngine {
       throw new Error(`Visualization compiler is not implemented for: ${marks.join(", ")}`);
     }
 
+    const presetId = marks[0];
+    const presetImplementation = getServerPresetImplementation(presetId);
+    let renderer = "chartjs";
+    let renderConfiguration = compiled.configuration;
+    if (presetImplementation?.renderer === "native") {
+      presetImplementation.validate({
+        preparedData,
+        visualization: resolved.visualization,
+      });
+      renderer = "native";
+    } else if (presetImplementation?.renderer === "echarts") {
+      try {
+        renderConfiguration = presetImplementation.compile({
+          chart: this.chart,
+          preparedData,
+          renderContext: options.renderContext,
+          visualization: resolved.visualization,
+        });
+        renderer = "echarts";
+      } catch (error) {
+        console.error(`[visualization] ECharts fallback for ${presetId}: ${error.message}`); // oxlint-disable-line no-console
+      }
+    }
+
     return {
       ...compiled,
       adapted: resolved.adapted,
       conditionsOptions: resolved.conditionsOptions,
       frame: resolved.frame,
       preparedData,
+      renderConfiguration,
+      renderer,
       visualization: resolved.visualization,
     };
   }

@@ -278,6 +278,10 @@ or internal cache state.
 - Add the locked ECharts 6 dependency to the client.
 - Add the shared serializable preset manifest, client/server implementation maps, and a pure-JSON
   ECharts compiler.
+- When `render.renderer` is `echarts`, keep `chartData` as the deprecated Chart.js compatibility
+  payload instead of treating it as an alias for `render.configuration`. Native presets can keep
+  the same payload in both fields. This gives old clients and the ECharts error boundary a fallback
+  without making either renderer output durable.
 - Add a central React `ChartRenderer` and an ECharts error boundary.
 - First reach parity for line, bar, pie, doughnut, radar, polar, matrix, and gauge. Then add area as
   the first new polished preset. Keep KPI, average, table, and markdown native unless a measured

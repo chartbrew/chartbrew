@@ -144,9 +144,11 @@ describe("Runtime cache integration", () => {
     runRequestSpy.mockRestore();
 
     expect(firstChart.chartData.data.labels).toEqual(["Jan"]);
-    expect(firstChart.chartData).toBe(firstChart.render.configuration);
+    expect(firstChart.render.renderer).toBe("echarts");
+    expect(firstChart.render.configuration.dataset.source).toEqual([["Jan", 1]]);
     expect(firstChart.cacheStatus).toBe("miss");
     expect(secondChart.chartData.data.labels).toEqual(["Jan"]);
+    expect(secondChart.render.configuration).toEqual(firstChart.render.configuration);
     expect(secondChart.cacheStatus).toBe("hit");
     expect(preparedCacheWriteSpy).toHaveBeenCalledWith(expect.objectContaining({
       payload: expect.objectContaining({ version: 1 }),

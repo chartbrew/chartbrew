@@ -7,6 +7,7 @@ export default defineConfig({
     include: [
       "tests/unit/chartJsCartesianCompiler.test.js",
       "tests/unit/embeddedChartPayload.test.js",
+      "tests/unit/echartsCompiler.test.js",
       "tests/unit/kpiReview.test.js",
       "tests/unit/nodemail.passwordReset.test.js",
       "tests/unit/observationPeriodCorpus.test.js",

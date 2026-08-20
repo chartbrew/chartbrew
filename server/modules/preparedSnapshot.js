@@ -27,9 +27,9 @@ function toPlainChart(chart) {
 
 function buildRenderEnvelope(compiled, preparedData, options = {}) {
   return {
-    configuration: compiled.configuration,
+    configuration: compiled.renderConfiguration || compiled.configuration,
     generatedAt: preparedData.generatedAt || null,
-    renderer: "chartjs",
+    renderer: compiled.renderer || "chartjs",
     stale: Boolean(options.stale),
     updatedAt: options.updatedAt || preparedData.generatedAt || null,
     version: 1,
@@ -41,7 +41,7 @@ function attachPreparedRender(chart, compiled, preparedData, options = {}) {
   const render = buildRenderEnvelope(compiled, preparedData, options);
   return {
     ...plainChart,
-    chartData: render.configuration,
+    chartData: compiled.configuration,
     chartDataUpdated: render.updatedAt,
     dateFormat: compiled.dateFormat,
     isTimeseries: compiled.isTimeseries,

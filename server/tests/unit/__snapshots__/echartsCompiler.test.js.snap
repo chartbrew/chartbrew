@@ -1,0 +1,94 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ECharts compiler > builds deterministic JSON for area 1`] = `
+[
+  [
+    10,
+  ],
+  [
+    null,
+  ],
+  [
+    30,
+  ],
+]
+`;
+
+exports[`ECharts compiler > builds deterministic JSON for bar 1`] = `
+[
+  [
+    10,
+  ],
+  [
+    null,
+  ],
+  [
+    30,
+  ],
+]
+`;
+
+exports[`ECharts compiler > builds deterministic JSON for doughnut 1`] = `
+[
+  70,
+  30,
+]
+`;
+
+exports[`ECharts compiler > builds deterministic JSON for gauge 1`] = `
+[
+  72,
+]
+`;
+
+exports[`ECharts compiler > builds deterministic JSON for line 1`] = `
+[
+  [
+    10,
+  ],
+  [
+    null,
+  ],
+  [
+    30,
+  ],
+]
+`;
+
+exports[`ECharts compiler > builds deterministic JSON for matrix 1`] = `
+[
+  4,
+  9,
+]
+`;
+
+exports[`ECharts compiler > builds deterministic JSON for pie 1`] = `
+[
+  70,
+  30,
+]
+`;
+
+exports[`ECharts compiler > builds deterministic JSON for polar 1`] = `
+[
+  [
+    70,
+  ],
+  [
+    30,
+  ],
+]
+`;
+
+exports[`ECharts compiler > builds deterministic JSON for radar 1`] = `
+[
+  [
+    8,
+    9,
+  ],
+  [
+    5,
+    6,
+  ],
+]
+`;

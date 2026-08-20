@@ -14,28 +14,19 @@ import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX, LuGauge, LuX, LuPlus } fr
 import { findIndex, isEqual } from "lodash";
 import { chartColors } from "../../../config/colors";
 
-import LineChart from "../../Chart/components/LineChart";
-import BarChart from "../../Chart/components/BarChart";
-import RadarChart from "../../Chart/components/RadarChart";
-import DoughnutChart from "../../Chart/components/DoughnutChart";
-import PolarChart from "../../Chart/components/PolarChart";
-import PieChart from "../../Chart/components/PieChart";
-import MatrixChart from "../../Chart/components/MatrixChart";
-import TableContainer from "../../Chart/components/TableView/TableContainer";
+import ChartRenderer from "../../Chart/components/ChartRenderer";
 import Row from "../../../components/Row";
 import { ButtonSpinner } from "../../../components/ButtonSpinner";
 import Text from "../../../components/Text";
-import KpiMode from "../../Chart/components/KpiMode";
 import ChartFilters from "../../Chart/components/ChartFilters";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
-import GaugeChart from "../../Chart/components/GaugeChart";
 import { getExposedChartFilters } from "../../../modules/getChartDatasetConditions";
 import ColorPickerControl from "../../../components/ColorPickerControl";
 
 function ChartPreview(props) {
   const {
-    chart, onChange, onRefreshData, chartLoading, changeCache, useCache,
+    chart, onChange, onRefreshData, chartLoading, changeCache, transitioning, useCache,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
@@ -305,91 +296,17 @@ function ChartPreview(props) {
               <Separator />
             </Row>
             <div className="h-4" />
-            <div className="h-[300px] w-full">
-              {chart.type === "line"
-                && (
-                  <LineChart
-                    editMode
-                    chart={chart}
-                    redraw={redraw}
-                    redrawComplete={_redrawComplete}
-                  />
-                )}
-              {chart.type === "bar"
-                && (
-                  <BarChart
-                    editMode
-                    chart={chart}
-                    redraw={redraw}
-                    redrawComplete={_redrawComplete}
-                  />
-                )}
-              {chart.type === "pie"
-                && (
-                  <PieChart
-                    chart={chart}
-                    height={300}
-                    editMode
-                  />
-                )}
-              {chart.type === "doughnut"
-                && (
-                  <DoughnutChart
-                    chart={chart}
-                    height={300}
-                    editMode
-                  />
-                )}
-              {chart.type === "radar"
-                && (
-                  <RadarChart
-                    chart={chart}
-                    height={300}
-                    editMode
-                  />
-                )}
-              {chart.type === "polar"
-                && (
-                  <PolarChart
-                    chart={chart}
-                    height={300}
-                    editMode
-                  />
-                )}
-              {chart.type === "matrix"
-                && (
-                  <MatrixChart
-                    chart={chart}
-                    height={300}
-                    editMode
-                    redraw={redraw}
-                    redrawComplete={() => setRedraw(false)}
-                  />
-                )}
-              {chart.type === "table"
-                && (
-                  <div className="h-full">
-                    <TableContainer
-                      tabularData={chart.chartData}
-                      datasets={chart.ChartDatasetConfigs}
-                      height={400}
-                      editMode
-                      defaultRowsPerPage={chart.defaultRowsPerPage}
-                    />
-                  </div>
-                )}
-
-              {(chart.type === "kpi" || chart.type === "avg") && (
-                <KpiMode chart={chart} editMode />
-              )}
-
-              {chart.type === "gauge" && (
-                <GaugeChart
+            <div className="flex h-[300px] w-full items-center justify-center">
+              <div className="h-full w-full min-h-0">
+                <ChartRenderer
                   chart={chart}
+                  editMode
+                  height={300}
+                  loading={chartLoading || transitioning}
                   redraw={redraw}
                   redrawComplete={_redrawComplete}
                 />
-              )}
+              </div>
             </div>
           </div>
           <div className="h-4" />
@@ -411,7 +328,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "outline" : "primary"} onPress={_toggleAccumulation}
-                      isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
+                      isDisabled={chart.type !== "line" && chart.type !== "area" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
                       isIconOnly
                     >
                       <FaChartLine size={20} />
@@ -445,6 +362,17 @@ function ChartPreview(props) {
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Display as line chart</Tooltip.Content>
+                </Tooltip>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "area" ? "outline" : "primary"}
+                      onPress={() => _onChangeChartType({ type: "area" })} isIconOnly
+                    >
+                      <FaChartLine size={20} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as area chart</Tooltip.Content>
                 </Tooltip>
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -759,7 +687,12 @@ ChartPreview.propTypes = {
   onRefreshData: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
   changeCache: PropTypes.func.isRequired,
+  transitioning: PropTypes.bool,
   useCache: PropTypes.bool.isRequired,
+};
+
+ChartPreview.defaultProps = {
+  transitioning: false,
 };
 
 const mapStateToProps = (state) => {

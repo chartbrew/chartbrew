@@ -176,6 +176,7 @@ function buildLegacySettings(chart) {
     missingValues: { policy: "zero" },
     timeInterval: chart.timeInterval || null,
     xLabelTicks: chart.xLabelTicks || null,
+    ranges: chart.ranges || null,
   });
 }
 

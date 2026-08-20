@@ -4,7 +4,7 @@ const { serializeTypedValue } = require("./seriesIdentity");
 const { createMoment, expandTimeValues, formatTimeValues } = require("./time");
 const { applyValueFormula } = require("./valueFormula");
 
-const CARTESIAN_MARKS = new Set(["bar", "line"]);
+const CARTESIAN_MARKS = new Set(["area", "bar", "line"]);
 const CATEGORY_MARKS = new Set(["doughnut", "pie", "polar", "radar"]);
 const METRIC_MARKS = new Set(["avg", "gauge", "kpi"]);
 

@@ -15,24 +15,15 @@ import { useDispatch } from "react-redux";
 import {
   getSharedChart, runQueryWithFilters,
 } from "../slices/chart";
-import LineChart from "./Chart/components/LineChart";
-import BarChart from "./Chart/components/BarChart";
-import TableContainer from "./Chart/components/TableView/TableContainer";
+import ChartRenderer from "./Chart/components/ChartRenderer";
 import ChartFilters from "./Chart/components/ChartFilters";
-import PieChart from "./Chart/components/PieChart";
-import DoughnutChart from "./Chart/components/DoughnutChart";
-import RadarChart from "./Chart/components/RadarChart";
-import PolarChart from "./Chart/components/PolarChart";
 import useInterval from "../modules/useInterval";
 import Row from "../components/Row";
 import Text from "../components/Text";
-import KpiMode from "./Chart/components/KpiMode";
 import useChartSize from "../modules/useChartSize";
 import { useTheme } from "../modules/ThemeContext";
 import toast from "react-hot-toast";
 import { canExportChart, exportChartToExcel } from "../modules/exportChart";
-import GaugeChart from "./Chart/components/GaugeChart";
-import MatrixChart from "./Chart/components/MatrixChart";
 import { getExposedChartFilters } from "../modules/getChartDatasetConditions";
 
 const pageHeight = window.innerHeight;
@@ -382,69 +373,13 @@ function SharedChart() {
       <div className="h-1" />
       {chart && (
         <div className="h-[calc(100vh-100px)]">
-          {chart.type === "line" && (
-            <LineChart
-              chart={chart}
-              redraw={redraw}
-              redrawComplete={() => setRedraw(false)}
-              embedded
-            />
-          )}
-          {chart.type === "bar" && (
-            <BarChart chart={chart} height={pageHeight - 100} />
-          )}
-          {chart.type === "pie" && (
-            <PieChart
-              chart={chart}
-              height={pageHeight - 100}
-            />
-          )}
-          {chart.type === "doughnut" && (
-            <DoughnutChart
-              chart={chart}
-              height={pageHeight - 100}
-            />
-          )}
-          {chart.type === "radar" && (
-            <RadarChart
-              chart={chart}
-              height={pageHeight - 100}
-            />
-          )}
-          {chart.type === "polar" && (
-            <PolarChart
-              chart={chart}
-              height={pageHeight - 100}
-            />
-          )}
-          {chart.type === "table" && (
-            <TableContainer
-              height={pageHeight - 100}
-              tabularData={chart.chartData}
-              embedded
-              datasets={chart.ChartDatasetConfigs}
-              defaultRowsPerPage={chart.defaultRowsPerPage}
-            />
-          )}
-          {(chart.type === "kpi" || chart.type === "avg") && (
-            <KpiMode chart={chart} />
-          )}
-          {chart.type === "matrix" && (
-            <MatrixChart
-              chart={chart}
-              redraw={redraw}
-              redrawComplete={() => setRedraw(false)}
-              embedded
-            />
-          )}
-          {chart.type === "gauge" && (
-            <GaugeChart
-              chart={chart}
-              redraw={redraw}
-              redrawComplete={() => setRedraw(false)}
-              embedded
-            />
-          )}
+          <ChartRenderer
+            chart={chart}
+            embedded
+            height={pageHeight - 100}
+            redraw={redraw}
+            redrawComplete={() => setRedraw(false)}
+          />
         </div>
       )}
       <div className="h-2" />

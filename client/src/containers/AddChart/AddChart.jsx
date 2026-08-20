@@ -603,6 +603,7 @@ function AddChart() {
           <div className="bg-surface rounded-3xl border border-divider">
             <ChartPreview
               chart={newChart}
+              transitioning={loading}
               onChange={_onChangeChart}
               onRefreshData={_onRefreshData}
               onRefreshPreview={_onRefreshPreview}

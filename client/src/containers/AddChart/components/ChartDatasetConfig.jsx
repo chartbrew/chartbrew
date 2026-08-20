@@ -617,7 +617,9 @@ function ChartDatasetConfig(props) {
 
   const seriesLabel = cdc.legend || getDatasetDisplayName(dataset) || "Untitled dataset";
   const fillLayer = bindingLayers[0];
-  const fillEnabled = fillLayer?.style?.fill ?? cdc.fill ?? chart.type === "bar";
+  const fillEnabled = fillLayer?.style?.fill
+    ?? cdc.fill
+    ?? (chart.type === "bar" || chart.type === "area");
   const configuredFillOpacity = fillLayer?.style?.fillOpacity;
   const fillOpacity = Number.isFinite(configuredFillOpacity)
     ? Math.min(1, Math.max(0, configuredFillOpacity))

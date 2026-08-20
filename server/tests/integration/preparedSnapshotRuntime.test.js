@@ -25,7 +25,7 @@ describe("Prepared snapshot runtime", () => {
     await runtimeCache.resetForTests();
   });
 
-  it("stores PreparedData and recompiles Chart.js after runtime caches are empty", async () => {
+  it("stores PreparedData and compiles ECharts with a Chart.js fallback after caches are empty", async () => {
     const team = await models.Team.create({ name: "Prepared Team" });
     const project = await models.Project.create({
       brewName: "prepared-project",
@@ -77,8 +77,14 @@ describe("Prepared snapshot runtime", () => {
     });
     requestSpy.mockRestore();
 
-    expect(refreshed.chartData).toBe(refreshed.render.configuration);
-    expect(refreshed.render).toMatchObject({ renderer: "chartjs", stale: false, version: 1 });
+    expect(refreshed.chartData).not.toBe(refreshed.render.configuration);
+    expect(refreshed.render).toMatchObject({ renderer: "echarts", stale: false, version: 1 });
+    expect(refreshed.render.configuration.dataset.source).toEqual([
+      ["Jan", 10],
+      ["Feb", 20],
+    ]);
+    expect(refreshed.render.configuration.series[0].id)
+      .toBe(refreshed.chartData.meta.series[0].id);
 
     const stored = await models.Chart.unscoped().findByPk(chart.id);
     expect(stored.preparedData).toMatchObject({ version: 1 });
@@ -95,6 +101,11 @@ describe("Prepared snapshot runtime", () => {
     const coldRead = await coldController.findById(chart.id);
 
     expect(coldRead.chartData.data.labels).toEqual(["Jan", "Feb"]);
+    expect(coldRead.render.renderer).toBe("echarts");
+    expect(coldRead.render.configuration.dataset.source).toEqual([
+      ["Jan", 10],
+      ["Feb", 20],
+    ]);
     expect(coldRead.render.stale).toBe(false);
     expect(coldRequestSpy).not.toHaveBeenCalled();
 

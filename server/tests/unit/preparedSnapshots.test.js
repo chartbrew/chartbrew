@@ -45,6 +45,38 @@ function buildPreparedData() {
   };
 }
 
+function buildLinePreparedData() {
+  return {
+    frameVersion: 1,
+    generatedAt: "2026-08-20T00:00:00.000Z",
+    identityVersion: 1,
+    resource: { id: 43, kind: "chart" },
+    results: [{
+      availableSeries: [],
+      bindingId: 8,
+      fields: [
+        { key: "category", role: "dimension", type: "nominal" },
+        { key: "value", role: "measure", type: "quantitative" },
+      ],
+      id: "revenue",
+      mark: "line",
+      name: "Revenue",
+      rows: [{ category: "Jan", seriesId: "series-1111111111111111", value: 10 }],
+      series: [{
+        id: "series-1111111111111111",
+        key: "string:__default__",
+        label: "Revenue",
+        value: null,
+      }],
+      warnings: [],
+    }],
+    stats: {},
+    timezone: "UTC",
+    version: 1,
+    warnings: [],
+  };
+}
+
 afterEach(() => {
   delete process.env.CB_PREPARED_SNAPSHOT_MAX_BYTES;
   vi.restoreAllMocks();
@@ -93,7 +125,7 @@ describe("prepared snapshots", () => {
     }), expect.objectContaining({ where: { id: 42 } }));
   });
 
-  it("compiles Chart.js at read time and keeps chartData as the response alias", () => {
+  it("uses the native render envelope for native presets", () => {
     const chart = {
       content: "Legacy content",
       id: 42,
@@ -119,11 +151,44 @@ describe("prepared snapshots", () => {
     expect(rendered.chartData).toBe(rendered.render.configuration);
     expect(rendered.render).toMatchObject({
       generatedAt: "2026-08-20T00:00:00.000Z",
-      renderer: "chartjs",
+      renderer: "native",
       stale: false,
       version: 1,
     });
     expect(rendered.chartData.content).toBe("Prepared content");
+  });
+
+  it("returns ECharts while keeping Chart.js as the graphical fallback", () => {
+    const chart = {
+      id: 43,
+      name: "Revenue",
+      type: "line",
+      visualization: {
+        layers: [{
+          bindingId: 8,
+          encoding: {
+            category: { field: "root[].month", type: "nominal" },
+            value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+          },
+          id: "revenue",
+          mark: "line",
+          name: "Revenue",
+          orientation: "vertical",
+          stack: "none",
+          style: { color: "#048BDE" },
+          transforms: [],
+        }],
+        settings: { legend: { visible: true } },
+        status: "ready",
+        version: 2,
+      },
+    };
+    const rendered = compilePreparedRender(chart, buildLinePreparedData());
+
+    expect(rendered.render.renderer).toBe("echarts");
+    expect(rendered.render.configuration.series[0].id).toBe("series-1111111111111111");
+    expect(rendered.chartData.data.datasets[0].data).toEqual([10]);
+    expect(rendered.chartData).not.toBe(rendered.render.configuration);
   });
 
   it("backfills missing snapshots in resumable ID order", async () => {

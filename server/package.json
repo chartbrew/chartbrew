@@ -11,6 +11,7 @@
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run tests/unit",
     "test:pure": "vitest run --config vitest.pure.config.js",
+    "test:echarts-browser": "vitest run --config vitest.echarts-browser.config.js",
     "test:integration": "vitest run tests/integration",
     "test:ui": "vitest --ui",
     "start-dev": "set NODE_ENV=development && nodemon index",

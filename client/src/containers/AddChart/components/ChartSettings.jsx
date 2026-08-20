@@ -393,7 +393,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
       <div className="h-4" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {chart.type === "line" && (
+        {(chart.type === "line" || chart.type === "area") && (
           <div>
             <Checkbox
               id="chart-settings-data-points"
@@ -505,7 +505,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Select>
           </div>
         )}
-        {(chart.type === "line" || chart.type === "bar") && (
+        {(chart.type === "line" || chart.type === "area" || chart.type === "bar") && (
           <div>
             <Checkbox
               id="chart-settings-log-scale"
@@ -522,7 +522,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Checkbox>
           </div>
         )}
-        {chart.type === "line" && (
+        {(chart.type === "line" || chart.type === "area") && (
           <div>
             <Checkbox
               id="chart-settings-dashed-last"

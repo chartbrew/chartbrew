@@ -30,23 +30,14 @@ import {
   removeChart, runQuery, runQueryWithFilters, getChart, updateChart,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
-import LineChart from "./components/LineChart";
-import BarChart from "./components/BarChart";
-import RadarChart from "./components/RadarChart";
-import PolarChart from "./components/PolarChart";
-import DoughnutChart from "./components/DoughnutChart";
-import PieChart from "./components/PieChart";
-import MatrixChart from "./components/MatrixChart";
-import TableContainer from "./components/TableView/TableContainer";
+import ChartRenderer from "./components/ChartRenderer";
 import ChartFilters from "./components/ChartFilters";
 import useInterval from "../../modules/useInterval";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import KpiMode from "./components/KpiMode";
 import useChartSize from "../../modules/useChartSize";
 import DatasetAlerts from "../AddChart/components/DatasetAlerts";
 import isMac from "../../modules/isMac";
-import GaugeChart from "./components/GaugeChart";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
@@ -1011,96 +1002,17 @@ function Chart(props) {
           <Card.Content
             className="overflow-y-hidden"
           >
-            {chart.chartData && (
-              <div className="h-full">
-                {chart.type === "line"
-                  && (
-                    <LineChart
-                      chart={chart}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "bar"
-                  && (
-                    <BarChart
-                      chart={chart}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "pie"
-                  && (
-                  <PieChart
+            {(chart.chartData || chart.render?.configuration) && (
+              <div className="flex h-full w-full items-center justify-center">
+                <div className="h-full w-full min-h-0">
+                  <ChartRenderer
                     chart={chart}
                     height={height}
+                    loading={chartLoading || chart.loading}
                     redraw={redraw}
                     redrawComplete={() => setRedraw(false)}
                   />
-                  )}
-                {chart.type === "doughnut"
-                  && (
-                    <DoughnutChart
-                      chart={chart}
-                      height={height}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "radar"
-                  && (
-                  <RadarChart
-                    chart={chart}
-                    height={height}
-                    redraw={redraw}
-                    redrawComplete={() => setRedraw(false)}
-                  />
-                  )}
-                {chart.type === "polar"
-                  && (
-                    <PolarChart
-                      chart={chart}
-                      height={height}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "matrix"
-                  && (
-                    <MatrixChart
-                      chart={chart}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "table"
-                  && (
-                    <div className="h-full">
-                      <TableContainer
-                        tabularData={chart.chartData}
-                        datasets={chart.ChartDatasetConfigs}
-                        defaultRowsPerPage={chart.defaultRowsPerPage}
-                      />
-                    </div>
-                  )}
-                {(chart.type === "kpi" || chart.type === "avg")
-                  && (
-                    <KpiMode
-                      chart={chart}
-                      height={height}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "gauge"
-                  && (
-                    <GaugeChart
-                      chart={chart}
-                      height={height}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
+                </div>
               </div>
             )}
           </Card.Content>

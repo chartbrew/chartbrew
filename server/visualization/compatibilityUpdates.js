@@ -81,12 +81,14 @@ function getStyleForMark(layer, mark, saved = {}) {
     style.fill = true;
   } else if (mark === "line" || mark === "radar") {
     style.fill = false;
+  } else if (mark === "area") {
+    style.fill = true;
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
     style.fillOpacity = saved.fillOpacity;
   } else if (mark === "bar") {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
-  } else if (mark === "line") {
+  } else if (mark === "line" || mark === "area") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
   } else if (mark === "radar") {
     style.fillOpacity = DEFAULT_RADAR_FILL_OPACITY;
@@ -102,7 +104,7 @@ function updateLayerMark(layer, mark) {
   const savedMark = layer.options?.markState?.[mark] || {};
   if (layer.mark === mark) {
     if (
-      !["bar", "line", "radar"].includes(mark)
+      !["area", "bar", "line", "radar"].includes(mark)
       || (
         Object.prototype.hasOwnProperty.call(savedMark, "fill")
         && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
@@ -203,6 +205,8 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     "minValue",
     "timeInterval",
     "xLabelTicks",
+    "ranges",
+    "dataLabelsFormat",
   ];
   directSettings.forEach((field) => {
     if (data[field] !== undefined) settings[field] = data[field];
