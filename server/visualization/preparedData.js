@@ -258,6 +258,10 @@ function serializePreparedData(preparedData, options = {}) {
   return JSON.stringify(toPublicPreparedData(preparedData, options));
 }
 
+function serializePreparedDataSnapshot(preparedData) {
+  return JSON.stringify(toJsonValue(assertPreparedData(preparedData)));
+}
+
 function getPreparedDataFingerprint(preparedData) {
   return crypto.createHash("sha256")
     .update(serializePreparedData(preparedData, { includeGeneratedAt: false }))
@@ -290,6 +294,7 @@ module.exports = {
   getSafeSourceOptions,
   inferFieldType,
   serializePreparedData,
+  serializePreparedDataSnapshot,
   toJsonValue,
   toPublicPreparedData,
 };

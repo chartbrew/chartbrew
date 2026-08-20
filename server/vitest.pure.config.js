@@ -14,6 +14,7 @@ export default defineConfig({
       "tests/unit/periodEvaluator.test.js",
       "tests/unit/periodObservationPersistence.test.js",
       "tests/unit/platformSettings.test.js",
+      "tests/unit/preparedSnapshots.test.js",
       "tests/unit/replaySynthbrewPeriods.test.js",
       "tests/unit/scheduleWeekdays.test.js",
       "tests/unit/visualizationCompilers.test.js",

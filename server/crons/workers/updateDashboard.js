@@ -142,7 +142,7 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
       summary: {
         chartId: chart.id,
         dashboardId: dashboard.id,
-        chartDataUpdatedAt: chartData?.chartDataUpdated || null,
+        preparedDataUpdatedAt: chartData?.preparedDataUpdatedAt || null,
         prewarmedVariants: variantsToPrewarm.length,
       },
     });

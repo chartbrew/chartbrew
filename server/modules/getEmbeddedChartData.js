@@ -5,6 +5,8 @@ module.exports = (chart, team = {}) => ({
   subType: chart.subType,
   chartDataUpdated: chart.chartDataUpdated,
   chartData: chart.chartData,
+  preparedDataUpdatedAt: chart.preparedDataUpdatedAt,
+  render: chart.render,
   visualization: chart.visualization,
   ChartDatasetConfigs: chart.ChartDatasetConfigs,
   mode: chart.mode,

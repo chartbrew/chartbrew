@@ -108,7 +108,7 @@ module.exports = async (job) => {
       status: "success",
       summary: {
         chartId: chartToUpdate.id,
-        chartDataUpdatedAt: updatedChart?.chartDataUpdated || null,
+        preparedDataUpdatedAt: updatedChart?.preparedDataUpdatedAt || null,
       },
     });
     return true;

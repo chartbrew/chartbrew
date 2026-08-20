@@ -115,7 +115,7 @@ async function updateCharts(queue) {
       autoUpdate: { [Op.gt]: 0 },
       type: { [Op.not]: "markdown" },
     },
-    attributes: ["id", "project_id", "name", "lastAutoUpdate", "autoUpdate", "chartData"],
+    attributes: ["id", "project_id", "name", "lastAutoUpdate", "autoUpdate"],
     include: [
       { model: db.ChartDatasetConfig },
       { model: db.Project, attributes: ["team_id"] },

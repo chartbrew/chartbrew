@@ -9,7 +9,7 @@ const { recordAdapterUsage } = require("./adapterUsage");
 const { filterVisualizationDatasets } = require("./filterDatasets");
 const { buildVisualizationFrame } = require("./frameBuilder");
 const { legacyChartToVisualization } = require("./legacyChartToVisualization");
-const { createPreparedData } = require("./preparedData");
+const { assertPreparedData, createPreparedData } = require("./preparedData");
 const { assertVisualizationSpec } = require("./spec");
 
 function parseStoredVisualization(value) {
@@ -98,15 +98,14 @@ class VisualizationEngine {
     };
   }
 
-  render(options = {}) {
-    const resolved = this.prepare(options);
-    const marks = [...new Set(resolved.preparedData.results.map((result) => result.mark))];
+  compilePrepared(preparedData, resolved, options = {}) {
+    const marks = [...new Set(preparedData.results.map((result) => result.mark))];
 
     let compiled;
     if (marks.length === 1 && (marks[0] === "bar" || marks[0] === "line")) {
       compiled = compileChartJsCartesian({
         chart: this.chart,
-        preparedData: resolved.preparedData,
+        preparedData,
         runtimeContext: resolved.runtimeContext,
         timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
@@ -114,27 +113,27 @@ class VisualizationEngine {
     } else if (marks.length === 1 && CATEGORY_MARKS.has(marks[0])) {
       compiled = compileChartJsCategory({
         chart: this.chart,
-        preparedData: resolved.preparedData,
+        preparedData,
         visualization: resolved.visualization,
       });
     } else if (marks.length === 1 && METRIC_MARKS.has(marks[0])) {
       compiled = compileChartJsMetric({
         chart: this.chart,
-        preparedData: resolved.preparedData,
+        preparedData,
         visualization: resolved.visualization,
       });
     } else if (marks.length === 1 && marks[0] === "table") {
       compiled = compileChartJsTable({
         chart: this.chart,
         conditionsOptions: resolved.conditionsOptions,
-        preparedData: resolved.preparedData,
+        preparedData,
         timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
       });
     } else if (marks.length === 1 && marks[0] === "matrix") {
       compiled = compileChartJsMatrix({
         chart: this.chart,
-        preparedData: resolved.preparedData,
+        preparedData,
         runtimeContext: resolved.runtimeContext,
         timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
@@ -142,12 +141,12 @@ class VisualizationEngine {
     } else if (marks.length === 1 && marks[0] === "markdown") {
       compiled = {
         configuration: {
-          content: resolved.preparedData.results[0]?.rows[0]?.content
+          content: preparedData.results[0]?.rows[0]?.content
             ?? resolved.visualization.layers[0]?.content
             ?? this.chart.content
             ?? "",
         },
-        preparedData: resolved.preparedData,
+        preparedData,
         isTimeseries: false,
       };
     } else {
@@ -159,9 +158,28 @@ class VisualizationEngine {
       adapted: resolved.adapted,
       conditionsOptions: resolved.conditionsOptions,
       frame: resolved.frame,
-      preparedData: resolved.preparedData,
+      preparedData,
       visualization: resolved.visualization,
     };
+  }
+
+  render(options = {}) {
+    const resolved = this.prepare(options);
+    return this.compilePrepared(resolved.preparedData, resolved, options);
+  }
+
+  renderPrepared(preparedData, options = {}) {
+    const resolved = resolveVisualization(this.chart);
+    const validatedPreparedData = assertPreparedData(preparedData);
+    return this.compilePrepared(validatedPreparedData, {
+      ...resolved,
+      conditionsOptions: options.conditionsOptions || [],
+      frame: null,
+      runtimeContext: options.runtimeContext || null,
+    }, {
+      ...options,
+      timezone: options.timezone || validatedPreparedData.timezone || this.timezone,
+    });
   }
 
   export(options = {}) {

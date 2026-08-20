@@ -80,6 +80,15 @@ module.exports = async (teamId, projectId, {
       const sourceConfigs = chart.ChartDatasetConfigs || [];
       const chartData = { ...chart };
       delete chartData.ChartDatasetConfigs;
+      [
+        "chartData",
+        "chartDataUpdated",
+        "preparedData",
+        "preparedDataFingerprint",
+        "preparedDataSourceFingerprint",
+        "preparedDataUpdatedAt",
+        "preparedDataVisualizationFingerprint",
+      ].forEach((field) => delete chartData[field]);
       const createdChart = await db.Chart.create(chartData);
       const createdConfigs = await Promise.all(sourceConfigs.map((cdc) => {
         const newCdc = { ...cdc, chart_id: createdChart.id };

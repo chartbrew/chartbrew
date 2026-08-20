@@ -203,6 +203,9 @@ exceeds the limit, keep the previous valid snapshot when possible, continue thro
 cache or source path, and record an internal size metric. The cold-start guarantee applies to
 snapshots within this limit. Move snapshots to a `ChartPreparedSnapshot` table or object storage
 only if production size and query measurements show that the main Chart row remains too costly.
+The Phase 2 implementation uses `CB_PREPARED_SNAPSHOT_MAX_BYTES` with a default of 5 MiB. The
+canonical, resumable backfill runs with `npm run viz:prepared-backfill` from `server/`; reruns skip
+charts that already have a prepared snapshot unless `--force` is set.
 
 Runtime variants remain in Redis. Change the cache layers to:
 
