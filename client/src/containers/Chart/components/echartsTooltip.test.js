@@ -6,6 +6,7 @@ import {
   buildDoughnutValueTitle,
   createEChartsTooltipFormatter,
   formatDoughnutPercent,
+  getDoughnutSliceFromChart,
 } from "./echartsTooltip.js";
 
 const colors = {
@@ -51,6 +52,28 @@ test("formats matrix tooltips without repeating the date", () => {
   assert.equal((html.match(/May 6, 2024/g) || []).length, 1);
   assert.match(html, /User signups/);
   assert.match(html, />1</);
+});
+
+test("reads doughnut slices from dataset rows or hover params", () => {
+  const instance = {
+    getOption: () => ({
+      dataset: [{
+        source: [
+          { category: "api", value: 412 },
+          { category: "web", value: 239 },
+        ],
+      }],
+    }),
+  };
+
+  assert.deepEqual(
+    getDoughnutSliceFromChart(instance, { dataIndex: 0 }),
+    { name: "api", percent: 412 / 651 * 100, value: 412 }
+  );
+  assert.deepEqual(
+    getDoughnutSliceFromChart(instance, { data: { category: "web", value: 239 }, name: "web" }),
+    { name: "web", percent: 239 / 651 * 100, value: 239 }
+  );
 });
 
 test("formats doughnut hover titles as label, value, then percentage", () => {

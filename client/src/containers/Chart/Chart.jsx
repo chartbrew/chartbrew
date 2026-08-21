@@ -649,11 +649,11 @@ function Chart(props) {
                   <>
                     {_canAccess("projectEditor") && !editingLayout && (
                       <Link to={`/dashboard/${params.projectId}/chart/${chart.id}/edit`}>
-                        <div className={"text-foreground font-bold text-sm"}>{chart.name}</div>
+                        <div className={"text-foreground font-medium text-sm"}>{chart.name}</div>
                       </Link>
                     )}
                     {(!_canAccess("projectEditor") || editingLayout) && (
-                      <Text b>{chart.name}</Text>
+                      <Text className="text-sm font-medium">{chart.name}</Text>
                     )}
                   </>
                 </Row>

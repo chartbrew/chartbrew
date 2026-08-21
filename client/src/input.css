@@ -6,6 +6,7 @@
 
 @theme inline {
   --font-sans: Inter, -apple-system, system-ui, sans-serif;
+  --font-tight: "Inter Tight", Inter, -apple-system, system-ui, sans-serif;
   --font-tw: "Titillium Web", -apple-system, system-ui, sans-serif;
 
   --breakpoint-sm: 40rem;

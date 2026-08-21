@@ -41,7 +41,7 @@ function KpiChartSegment(props) {
               key={c.label}
             >
               <div className="flex flex-row items-center gap-2">
-                <div className="text-xl text-default-800 font-bold font-tw">
+                <div className="text-xl text-default-800 font-bold font-tight">
                   {`${c.value?.toLocaleString()}`}
                 </div>
                 {chart.showGrowth && (
@@ -63,7 +63,7 @@ function KpiChartSegment(props) {
                 )}
               </div>
               <div>
-                <Text size="sm" className={"text-default-600"}>
+                <Text size="sm" className={"text-muted"}>
                   <span
                     style={c.color ? styles.datasetLabelColor(c.color) : undefined}
                   >

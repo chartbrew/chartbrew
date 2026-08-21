@@ -256,11 +256,16 @@ describe("ECharts compiler", () => {
     });
     expect(option.title.textStyle.rich).toMatchObject({
       label: { fontSize: 10, fontWeight: 400, lineHeight: 15 },
-      percent: { fontSize: 11, fontWeight: 400, lineHeight: 16 },
+      percent: {
+        fontFamily: "Inter Tight, sans-serif",
+        fontSize: 11,
+        fontWeight: 700,
+        lineHeight: 16,
+      },
       value: {
-        fontFamily: "Inter, sans-serif",
+        fontFamily: "Inter Tight, sans-serif",
         fontSize: 26,
-        fontWeight: 400,
+        fontWeight: 700,
         lineHeight: 31,
       },
     });
@@ -279,9 +284,9 @@ describe("ECharts compiler", () => {
     expect(tight.option.title.text).toBe("{value|100}");
     expect(tight.option.title.text).not.toMatch(/Total/);
     expect(tight.option.title.textStyle.rich.value).toMatchObject({
-      fontFamily: "Inter, sans-serif",
+      fontFamily: "Inter Tight, sans-serif",
       fontSize: 16,
-      fontWeight: 400,
+      fontWeight: 700,
     });
   });
 
@@ -296,6 +301,21 @@ describe("ECharts compiler", () => {
     ]);
     expect(option.series[0].id).toBe(defaultSeries[0].id);
     expect(option.series[0].markLine.data[0].yAxis).toBe(25);
+  });
+
+  it("shows horizontal bar categories in the prepared sort order from top to bottom", () => {
+    const fixture = buildFixture("bar");
+    fixture.visualization.layers[0].orientation = "horizontal";
+    fixture.preparedData.results[0].rows = [
+      { category: "High", seriesId: defaultSeries[0].id, value: 30 },
+      { category: "Medium", seriesId: defaultSeries[0].id, value: 20 },
+      { category: "Low", seriesId: defaultSeries[0].id, value: 10 },
+    ];
+
+    const option = buildEChartsOption(fixture);
+
+    expect(option.dataset.source.map((row) => row[0])).toEqual(["High", "Medium", "Low"]);
+    expect(option.yAxis.inverse).toBe(true);
   });
 
   it("keeps ECharts series IDs stable when source rows are reordered", () => {
@@ -418,24 +438,37 @@ describe("ECharts compiler", () => {
     expect(pointer.axisTick.show).toBe(false);
     expect(pointer.splitLine.show).toBe(false);
     expect(pointer.data[0].value).toBe(72);
-    expect(pointer.detail.offsetCenter).toEqual([0, "0%"]);
+    expect(pointer.detail).toMatchObject({
+      fontFamily: "Inter Tight, sans-serif",
+      fontWeight: 700,
+      offsetCenter: [0, "0%"],
+    });
+    expect(pointer.pointer).toMatchObject({
+      length: "50%",
+      offsetCenter: [0, "-50%"],
+    });
+    expect(pointer.radius).toBe("90%");
     expect(pointer.title.offsetCenter).toEqual([0, "22%"]);
     expect(pointer.title.show).toBe(true);
     expect(pointer.tooltip.show).toBe(false);
   });
 
-  it("moves the gauge value beside the gauge in short, wide containers", () => {
+  it("moves the gauge value beside the gauge only in the smallest wide containers", () => {
     const option = buildEChartsOption(buildFixture("gauge"));
     const sideLayout = option.media.find((media) => media.query.minWidth === 420);
     const narrowLayout = option.media.find((media) => media.query.maxWidth === 320);
 
-    expect(sideLayout.query).toEqual({ maxHeight: 260, minWidth: 420 });
+    expect(sideLayout.query).toEqual({ maxHeight: 160, minWidth: 420 });
     expect(sideLayout.option.title).toMatchObject({
       left: "10%",
       show: true,
       subtext: "Revenue",
       text: "72",
       top: "34%",
+      textStyle: {
+        fontFamily: "Inter Tight, sans-serif",
+        fontWeight: 700,
+      },
     });
     expect(sideLayout.option.series[0]).toMatchObject({
       center: ["72%", "52%"],

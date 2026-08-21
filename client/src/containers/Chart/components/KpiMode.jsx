@@ -145,8 +145,7 @@ function KpiMode(props) {
         <div className={`${isCompact ? "p-0" : "p-3"}`}>
           <Row justify="center" align="center">
             <Text
-              b
-              className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800`}
+              className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-bold font-tight`}
             >
               {chart.chartData && chart.chartData.data && _getKpi(chart.chartData.data)}
             </Text>
@@ -162,7 +161,7 @@ function KpiMode(props) {
           <div key={dataset.id || dataset.label} className={`p-2 ${goal && isCompact ? "w-full" : ""} gap-4`}>
             {chart.ChartDatasetConfigs[index] && (
               <div className={`flex items-center ${goal ? "justify-start" : "justify-center"}`}>
-                <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
+                <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-muted`}>
                   <span>
                     {dataset.label}
                   </span>
@@ -172,7 +171,7 @@ function KpiMode(props) {
 
             <div className={`flex items-center ${goal ? "justify-between" : "justify-center"} gap-4`}>
               <div
-                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-bold font-tw`}
+                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-bold font-tight`}
                 key={dataset.label}
               >
                 {dataset.data && _getKpi(dataset.data)}

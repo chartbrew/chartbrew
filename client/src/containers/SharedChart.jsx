@@ -293,7 +293,7 @@ function SharedChart() {
       <div className="pl-unit-sm w-full" style={styles.header(chart.type)}>
         <div className="flex flex-row items-center justify-between">
           <div>
-            <Text b>{chart.name}</Text>
+            <Text className="text-sm font-medium">{chart.name}</Text>
             <div className="flex flex-row items-center">
               {!dataLoading && !isSnapshot && (
                 <>

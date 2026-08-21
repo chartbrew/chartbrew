@@ -150,8 +150,10 @@ function applyDoughnutLayout(option, width, height) {
     : 0;
   const centerX = Math.round(width / 2);
   const centerY = Math.round(legendHeight + Math.max(1, height - legendHeight) / 2);
+  const rest = { ...option };
+  delete rest.media;
   return {
-    ...option,
+    ...rest,
     legend: tight ? { ...option.legend, show: false } : option.legend,
     tooltip: { ...option.tooltip, show: tight },
     series: option.series.map((item) => (
@@ -167,25 +169,25 @@ function applyDoughnutLayout(option, width, height) {
       textAlign: "center",
       textVerticalAlign: "middle",
       top: centerY,
-      ...(tight ? {
-        text: getDoughnutValueText(option.title),
-        textStyle: {
-          ...option.title.textStyle,
-          rich: {
-            ...option.title.textStyle?.rich,
-            value: {
-              ...option.title.textStyle?.rich?.value,
-              fontSize: 16,
-              lineHeight: 20,
-            },
-            percent: {
-              ...option.title.textStyle?.rich?.percent,
-              fontSize: 9,
-              lineHeight: 12,
-            },
+      ...(tight ? { text: getDoughnutValueText(option.title) } : {}),
+      textStyle: {
+        ...option.title.textStyle,
+        rich: {
+          ...option.title.textStyle?.rich,
+          value: {
+            ...option.title.textStyle?.rich?.value,
+            fontFamily: "Inter Tight, sans-serif",
+            fontWeight: 700,
+            ...(tight ? { fontSize: 16, lineHeight: 20 } : {}),
+          },
+          percent: {
+            ...option.title.textStyle?.rich?.percent,
+            fontFamily: "Inter Tight, sans-serif",
+            fontWeight: 700,
+            ...(tight ? { fontSize: 9, lineHeight: 12 } : {}),
           },
         },
-      } : {}),
+      },
     } : option.title,
   };
 }
@@ -227,7 +229,12 @@ function EChartsRenderer({
       ...(reducedMotion ? { animation: false } : {}),
       series: option.series?.map((series) => series.type === "gauge" ? {
         ...series,
-        detail: { ...series.detail, color: colors.foreground.DEFAULT },
+        detail: {
+          ...series.detail,
+          color: colors.foreground.DEFAULT,
+          fontFamily: "Inter Tight, sans-serif",
+          fontWeight: 700,
+        },
         itemStyle: { ...series.itemStyle, color: colors.foreground.DEFAULT },
         title: { ...series.title, color: colors.foreground[500] },
       } : series),

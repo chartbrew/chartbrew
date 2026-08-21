@@ -5,6 +5,7 @@ const { buildEChartsOption } = require("../../visualization/compilers/echarts");
 
 const PRESETS = ["line", "area", "bar", "pie", "doughnut", "radar", "polar", "matrix", "gauge"];
 const SIZES = [
+  { height: 150, width: 500 },
   { height: 160, width: 240 },
   { height: 200, width: 600 },
   { height: 300, width: 800 },
@@ -176,10 +177,13 @@ describe("ECharts fixed-size browser rendering", () => {
         expect(rendered.matrixSymbolSize[0]).toBeGreaterThan(0);
         expect(new Set(rendered.matrixFills.filter(Boolean)).size).toBeGreaterThan(1);
       }
-      expect(rendered).toMatchObject(preset === "gauge" && size.width === 600 ? {
+      const isSmallestWideGauge = preset === "gauge" && size.height <= 160 && size.width >= 420;
+      expect(rendered).toMatchObject(isSmallestWideGauge ? {
         gaugeCenter: ["72%", "52%"],
         gaugeDetailShow: false,
         titleText: "72",
+      } : preset === "gauge" && size.width > 320 ? {
+        gaugeCenter: ["50%", "55%"],
       } : {});
       await page.close();
     }

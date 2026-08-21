@@ -15,6 +15,7 @@ const {
 
 const CARTESIAN_PRESETS = new Set(["area", "bar", "line"]);
 const PIE_PRESETS = new Set(["doughnut", "pie"]);
+const CENTRAL_VALUE_FONT = "Inter Tight, sans-serif";
 const MATRIX_CELL_GAP = 3;
 const MATRIX_GRID_INSET = Object.freeze({
   bottom: 24,
@@ -185,6 +186,7 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
       ? {
         axisLabel: { fontSize: 10, hideOverlap: true, margin: 8 },
         axisTick: { show: false },
+        inverse: true,
         type: "category",
       }
       : {
@@ -289,15 +291,15 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
         rich: {
           label: { fontSize: 10, fontWeight: 400, lineHeight: 15 },
           value: {
-            fontFamily: "Inter, sans-serif",
+            fontFamily: CENTRAL_VALUE_FONT,
             fontSize: 26,
-            fontWeight: 400,
+            fontWeight: 700,
             lineHeight: 31,
           },
           percent: {
-            fontFamily: "Inter, sans-serif",
+            fontFamily: CENTRAL_VALUE_FONT,
             fontSize: 11,
-            fontWeight: 400,
+            fontWeight: 700,
             lineHeight: 16,
           },
         },
@@ -638,6 +640,7 @@ function buildGaugeOption({ chart, preparedData, visualization, renderContext })
       center: ["50%", "55%"],
       data: [{ id: seriesDefinition.id, name: label, value }],
       detail: {
+        fontFamily: CENTRAL_VALUE_FONT,
         fontSize: 28,
         fontWeight: 700,
         formatter: `${formula.prefix}{value}${formula.suffix}`,
@@ -650,11 +653,12 @@ function buildGaugeOption({ chart, preparedData, visualization, renderContext })
       name: label,
       pointer: {
         icon: "rect",
-        length: "18%",
-        offsetCenter: [0, "-62%"],
+        length: "50%",
+        offsetCenter: [0, "-50%"],
         showAbove: true,
         width: 5,
       },
+      radius: "90%",
       splitLine: { show: false },
       startAngle: 225,
       title: { fontSize: 12, offsetCenter: [0, "22%"], show: true },
@@ -701,11 +705,12 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
     detail: { fontSize: 18, offsetCenter: [0, "5%"] },
     pointer: {
       icon: "rect",
-      length: "16%",
-      offsetCenter: [0, "-62%"],
+      length: "50%",
+      offsetCenter: [0, "-50%"],
       showAbove: true,
       width: 4,
     },
+    radius: "90%",
     title: { show: false },
   }];
   const sideGaugeSeries = [{
@@ -717,11 +722,12 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
     detail: { show: false },
     pointer: {
       icon: "rect",
-      length: "17%",
-      offsetCenter: [0, "-62%"],
+      length: "50%",
+      offsetCenter: [0, "-50%"],
       showAbove: true,
       width: 4,
     },
+    radius: "92%",
     title: { show: false },
   }];
   const compactGaugeTitle = presetId === "gauge" ? {
@@ -732,7 +738,7 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
     subtextStyle: { fontSize: 14, fontWeight: 400, lineHeight: 22 },
     text: `${option.series[1].detail.formatter}`.replace("{value}", option.series[1].data[0].value),
     textAlign: "left",
-    textStyle: { fontSize: 28, fontWeight: 700 },
+    textStyle: { fontFamily: CENTRAL_VALUE_FONT, fontSize: 28, fontWeight: 700 },
     top: "34%",
   } : undefined;
   const compactGrid = { containLabel: true, left: 8, right: 8, top: 12, bottom: 8 };
@@ -744,7 +750,7 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
         series: sideGaugeSeries,
         title: compactGaugeTitle,
       },
-      query: { maxHeight: 260, minWidth: 420 },
+      query: { maxHeight: 160, minWidth: 420 },
     }, {
       option: {
         grid: compactGrid,
@@ -761,15 +767,15 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
         fontWeight: 400,
         rich: {
           value: {
-            fontFamily: "Inter, sans-serif",
+            fontFamily: CENTRAL_VALUE_FONT,
             fontSize: 16,
-            fontWeight: 400,
+            fontWeight: 700,
             lineHeight: 20,
           },
           percent: {
-            fontFamily: "Inter, sans-serif",
+            fontFamily: CENTRAL_VALUE_FONT,
             fontSize: 9,
-            fontWeight: 400,
+            fontWeight: 700,
             lineHeight: 12,
           },
         },

@@ -268,7 +268,7 @@ function EmbeddedChart() {
       <div className="pl-unit-sm w-full" style={styles.header(chart.type)}>
         <Row justify="space-between">
           <div>
-            <Text b>{chart.name}</Text>
+            <Text className="text-sm font-medium">{chart.name}</Text>
             <div className="flex flex-row items-center">
               {!dataLoading && !isSnapshot && (
                 <>

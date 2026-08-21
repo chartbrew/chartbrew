@@ -89,18 +89,23 @@ export function getDoughnutSliceFromChart(instance, params) {
   const dataIndex = Number.isInteger(params?.dataIndex)
     ? params.dataIndex
     : params?.batch?.find((item) => Number.isInteger(item.dataIndex))?.dataIndex;
-  if (!Number.isInteger(dataIndex) || dataIndex < 0) return null;
   const option = instance.getOption();
   const dataset = Array.isArray(option.dataset) ? option.dataset[0] : option.dataset;
   const source = dataset?.source;
-  if (!Array.isArray(source) || !source[dataIndex]) return null;
-  const row = source[dataIndex];
-  const value = Number(row?.value ?? row?.[2]);
-  const total = source.reduce((sum, item) => sum + (Number(item?.value ?? item?.[2]) || 0), 0);
+  const row = Number.isInteger(dataIndex) && Array.isArray(source) ? source[dataIndex] : null;
+  const rawValue = row?.value
+    ?? (Array.isArray(row) ? row[2] : undefined)
+    ?? params?.data?.value
+    ?? (typeof params?.value === "number" ? params.value : undefined);
+  const value = Number(rawValue);
+  if (!Number.isFinite(value)) return null;
+  const total = Array.isArray(source)
+    ? source.reduce((sum, item) => sum + (Number(item?.value ?? item?.[2]) || 0), 0)
+    : 0;
   return {
-    name: row?.category ?? row?.[1] ?? params?.name ?? "",
+    name: row?.category ?? row?.[1] ?? params?.name ?? params?.data?.category ?? "",
     percent: total > 0 ? (value / total) * 100 : 0,
-    value: Number.isFinite(value) ? value : 0,
+    value,
   };
 }
 export function createEChartsTooltipFormatter(colors, { doughnutNameOnly } = {}) {
