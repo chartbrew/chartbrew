@@ -40,6 +40,51 @@ test("formats cartesian tooltips with one heading and regular-weight rows", () =
   assert.doesNotMatch(html, /font-weight:(?:600|700|bold)/);
 });
 
+test("formats compact cartesian tooltips as date and value", () => {
+  const html = createEChartsTooltipFormatter(colors, { compact: true })({
+    axisValueLabel: "Aug 7",
+    color: "#4385F5",
+    data: ["Aug 7", 146],
+    encode: { y: [1] },
+    seriesName: "Visits in the last 30 days",
+    seriesType: "line",
+    value: ["Aug 7", 146],
+  });
+
+  assert.match(html, /color:#71717a/);
+  assert.match(html, /Aug 7: /);
+  assert.match(html, /color:#27272a/);
+  assert.match(html, />146</);
+  assert.doesNotMatch(html, /Visits in the last 30 days/);
+  assert.doesNotMatch(html, /min-width/);
+});
+
+test("formats compact multi-series tooltips without series names", () => {
+  const html = createEChartsTooltipFormatter(colors, { compact: true })([{
+    axisValueLabel: "Aug 7",
+    color: "#4385F5",
+    data: ["Aug 7", 146, 20],
+    encode: { y: [1] },
+    seriesName: "Visits in the last 30 days",
+    seriesType: "line",
+    value: ["Aug 7", 146, 20],
+  }, {
+    axisValueLabel: "Aug 7",
+    color: "#FF9500",
+    data: ["Aug 7", 146, 20],
+    encode: { y: [2] },
+    seriesName: "Tools visits",
+    seriesType: "line",
+    value: ["Aug 7", 146, 20],
+  }]);
+
+  assert.match(html, /Aug 7: /);
+  assert.match(html, />146</);
+  assert.match(html, />20</);
+  assert.doesNotMatch(html, /Visits in the last 30 days/);
+  assert.doesNotMatch(html, /Tools visits/);
+});
+
 test("formats matrix tooltips without repeating the date", () => {
   const html = createEChartsTooltipFormatter(colors)({
     color: "#F17041",

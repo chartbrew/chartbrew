@@ -59,7 +59,7 @@ function SharedChart() {
     });
     
     // We pass all query parameters so the backend can process variables based on the share policy
-    dispatch(getSharedChart({ 
+    return dispatch(getSharedChart({
       share_string: params.share_string, 
       token: searchParams.get("token"),
       queryParams: allQueryParams

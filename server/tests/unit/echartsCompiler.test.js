@@ -336,7 +336,7 @@ describe("ECharts compiler", () => {
   });
 
   it("contains responsive fixed-size rules and reduced-motion support", () => {
-    const fixture = buildFixture("bar");
+    const fixture = buildFixture("area");
     const option = buildEChartsOption({
       ...fixture,
       renderContext: {
@@ -354,6 +354,110 @@ describe("ECharts compiler", () => {
     ]));
     expect(option.aria.enabled).toBe(true);
     expect(option.aria.decal.show).toBe(false);
+  });
+
+  it("compiles line analysis, limited, and sparkline compositions", () => {
+    const fixture = buildFixture("line");
+    fixture.preparedData.results[0].rows = Array.from({ length: 30 }, (_, index) => ({
+      category: `Day ${index + 1}`,
+      seriesId: defaultSeries[0].id,
+      value: index + 1,
+    }));
+    const option = buildEChartsOption(fixture);
+    const limited = option.media.find((item) => item.query.maxWidth === 519);
+    const narrow = option.media.find((item) => item.query.maxWidth === 259);
+    const shallow = option.media.find((item) => item.query.maxHeight === 149);
+
+    expect(limited.query).toEqual({ maxWidth: 519, minHeight: 150, minWidth: 260 });
+    expect(limited.option).toMatchObject({
+      legend: { show: true },
+      series: [{ label: { show: false }, showSymbol: false, symbolSize: 0 }],
+      xAxis: { axisLabel: { interval: 5, showMaxLabel: true, showMinLabel: true } },
+      yAxis: { splitLine: { lineStyle: { opacity: 0.28 }, show: true } },
+    });
+    expect(narrow.option).toMatchObject({
+      grid: { containLabel: false },
+      legend: { show: false },
+      series: [{ label: { show: false }, showSymbol: false, symbolSize: 0 }],
+      xAxis: { show: false },
+      yAxis: { show: false },
+    });
+    expect(shallow.query).toEqual({ maxHeight: 149, minWidth: 260 });
+    expect(shallow.option.xAxis.show).toBe(false);
+    expect(shallow.option.yAxis.show).toBe(false);
+  });
+
+  it("compiles vertical bar analysis, limited, and sparkline compositions", () => {
+    const fixture = buildFixture("bar");
+    fixture.preparedData.results[0].rows = Array.from({ length: 30 }, (_, index) => ({
+      category: `Day ${index + 1}`,
+      seriesId: defaultSeries[0].id,
+      value: index + 1,
+    }));
+    const option = buildEChartsOption(fixture);
+    const limited = option.media.find((item) => item.query.maxWidth === 519);
+    const narrow = option.media.find((item) => item.query.maxWidth === 259);
+    const shallow = option.media.find((item) => item.query.maxHeight === 149);
+
+    expect(limited.query).toEqual({ maxWidth: 519, minHeight: 150, minWidth: 260 });
+    expect(limited.option).toMatchObject({
+      legend: { show: true },
+      series: [{ label: { show: false } }],
+      xAxis: { axisLabel: { interval: 5, showMaxLabel: true, showMinLabel: true } },
+      yAxis: { splitLine: { lineStyle: { opacity: 0.28 }, show: true } },
+    });
+    expect(narrow.option).toMatchObject({
+      grid: { containLabel: false },
+      legend: { show: false },
+      series: [{ label: { show: false } }],
+      xAxis: { show: false },
+      yAxis: { show: false },
+    });
+    expect(shallow.query).toEqual({ maxHeight: 149, minWidth: 260 });
+    expect(shallow.option.xAxis.show).toBe(false);
+    expect(shallow.option.yAxis.show).toBe(false);
+    expect(option.series[0].label.show).toBe(true);
+  });
+
+  it("limits wide vertical bar charts when their mark density is high", () => {
+    const fixture = buildFixture("bar");
+    fixture.preparedData.results[0].rows = Array.from({ length: 80 }, (_, index) => ({
+      category: `Day ${index + 1}`,
+      seriesId: defaultSeries[0].id,
+      value: index + 1,
+    }));
+    const option = buildEChartsOption(fixture);
+    const dense = option.media.find((item) => item.query.minWidth === 520);
+
+    expect(dense.query).toEqual({ maxWidth: 1120, minHeight: 150, minWidth: 520 });
+    expect(dense.option.series[0].label.show).toBe(false);
+    expect(dense.option.xAxis.axisLabel.interval).toBe(15);
+  });
+
+  it("keeps generic compact media for horizontal bars", () => {
+    const fixture = buildFixture("bar");
+    fixture.visualization.layers[0].orientation = "horizontal";
+    const option = buildEChartsOption(fixture);
+
+    expect(option.media).toEqual(expect.arrayContaining([
+      expect.objectContaining({ query: { maxHeight: 220 } }),
+      expect.objectContaining({ query: { maxWidth: 320 } }),
+    ]));
+  });
+
+  it("limits wide line charts when their mark density is high", () => {
+    const fixture = buildFixture("line");
+    fixture.preparedData.results[0].rows = Array.from({ length: 80 }, (_, index) => ({
+      category: `Day ${index + 1}`,
+      seriesId: defaultSeries[0].id,
+      value: index + 1,
+    }));
+    const option = buildEChartsOption(fixture);
+    const dense = option.media.find((item) => item.query.minWidth === 520);
+
+    expect(dense.query).toEqual({ maxWidth: 1120, minHeight: 150, minWidth: 520 });
+    expect(dense.option.series[0].label.show).toBe(false);
+    expect(dense.option.xAxis.axisLabel.interval).toBe(15);
   });
 
   it("builds a calendar-style matrix with weekday rows and filled missing dates", () => {

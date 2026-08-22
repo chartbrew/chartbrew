@@ -13,6 +13,7 @@ import { CanvasRenderer } from "echarts/renderers";
 
 import { semanticColors } from "../../../lib/themeTokens";
 import { useTheme } from "../../../modules/ThemeContext";
+import { getResponsiveGeometry } from "../../../visualization/responsiveLayout";
 import {
   buildDoughnutHoverTitle,
   buildDoughnutValueTitle,
@@ -116,6 +117,24 @@ function isTightContainer(width, height) {
   return height <= TIGHT_MAX_HEIGHT || width <= TIGHT_MAX_WIDTH;
 }
 
+function isCompactTooltipLayout(width, height) {
+  const geometry = getResponsiveGeometry(width, height);
+  return geometry.width === "narrow" || geometry.height === "shallow";
+}
+
+function getTooltipColors(themeMode) {
+  const colors = semanticColors[themeMode];
+  return {
+    background: colors.content1.DEFAULT,
+    border: colors.content3.DEFAULT,
+    muted: colors.foreground[500],
+    shadow: themeMode === "dark"
+      ? "0 6px 18px rgba(0,0,0,0.28)"
+      : "0 6px 18px rgba(17,24,39,0.12)",
+    text: colors.foreground.DEFAULT,
+  };
+}
+
 function getDoughnutValueText(title) {
   return `${title?.text || ""}`.match(/\{value\|[^}]+\}/)?.[0] || title?.text;
 }
@@ -205,6 +224,7 @@ function EChartsRenderer({
 }) {
   const containerRef = useRef(null);
   const instanceRef = useRef(null);
+  const compactTooltipRef = useRef(false);
   const [renderError, setRenderError] = useState(null);
   const { isDark } = useTheme();
   const themeMode = isDark ? "dark" : "light";
@@ -215,15 +235,6 @@ function EChartsRenderer({
   }, []);
   const effectiveOption = useMemo(() => {
     const colors = semanticColors[themeMode];
-    const tooltipColors = {
-      background: colors.content1.DEFAULT,
-      border: colors.content3.DEFAULT,
-      muted: colors.foreground[500],
-      shadow: themeMode === "dark"
-        ? "0 6px 18px rgba(0,0,0,0.28)"
-        : "0 6px 18px rgba(17,24,39,0.12)",
-      text: colors.foreground.DEFAULT,
-    };
     return {
       ...option,
       ...(reducedMotion ? { animation: false } : {}),
@@ -238,7 +249,7 @@ function EChartsRenderer({
         itemStyle: { ...series.itemStyle, color: colors.foreground.DEFAULT },
         title: { ...series.title, color: colors.foreground[500] },
       } : series),
-      tooltip: getEChartsTooltipOption(option, tooltipColors),
+      tooltip: getEChartsTooltipOption(option, getTooltipColors(themeMode)),
     };
   }, [option, reducedMotion, themeMode]);
   const optionRef = useRef(effectiveOption);
@@ -247,11 +258,14 @@ function EChartsRenderer({
   const applyOption = (instance, nextOption, { clear = false } = {}) => {
     const container = containerRef.current;
     if (!instance || !container) return;
-    const laidOut = applyChartLayout(
-      nextOption,
-      container.clientWidth,
-      container.clientHeight
-    );
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    const compact = isCompactTooltipLayout(width, height);
+    compactTooltipRef.current = compact;
+    const laidOut = applyChartLayout({
+      ...nextOption,
+      tooltip: getEChartsTooltipOption(nextOption, getTooltipColors(themeMode), { compact }),
+    }, width, height);
     if (clear) instance.clear();
     instance.setOption(laidOut, { lazyUpdate: false, notMerge: true });
     instance.resize();
@@ -265,7 +279,15 @@ function EChartsRenderer({
       instanceRef.current = instance;
       resizeObserver = new ResizeObserver(() => {
         const current = optionRef.current;
-        if (isMatrixSeries(current?.series?.[0]) || isDoughnutChart(current)) {
+        const container = containerRef.current;
+        const compact = container
+          ? isCompactTooltipLayout(container.clientWidth, container.clientHeight)
+          : false;
+        if (
+          isMatrixSeries(current?.series?.[0])
+          || isDoughnutChart(current)
+          || compact !== compactTooltipRef.current
+        ) {
           applyOption(instance, current);
         } else {
           instance.resize();
@@ -298,7 +320,9 @@ function EChartsRenderer({
     const instance = instanceRef.current;
     if (!instance || !onChartEvent) return undefined;
     instance.on("click", onChartEvent);
-    return () => instance.off("click", onChartEvent);
+    return () => {
+      if (!instance.isDisposed()) instance.off("click", onChartEvent);
+    };
   }, [onChartEvent, themeName]);
 
   useEffect(() => {
@@ -306,6 +330,7 @@ function EChartsRenderer({
     if (!instance || !isDoughnutChart(effectiveOption)) return undefined;
 
     const restoreTitle = () => {
+      if (instance.isDisposed()) return;
       const container = containerRef.current;
       if (!container) return;
       const laidOut = applyChartLayout(
@@ -317,6 +342,7 @@ function EChartsRenderer({
     };
 
     const showSlice = (params) => {
+      if (instance.isDisposed()) return;
       const slice = getDoughnutSliceFromChart(instance, params);
       if (!slice) return;
       const container = containerRef.current;
@@ -341,6 +367,7 @@ function EChartsRenderer({
     instance.on("highlight", showSlice);
     instance.on("globalout", restoreTitle);
     return () => {
+      if (instance.isDisposed()) return;
       instance.off("mouseover", showSlice);
       instance.off("highlight", showSlice);
       instance.off("globalout", restoreTitle);
@@ -352,7 +379,7 @@ function EChartsRenderer({
   return (
     <div
       ref={containerRef}
-      className="h-full min-h-[80px] w-full"
+      className="h-full min-h-0 w-full"
       role="img"
       aria-label={ariaLabel}
     />

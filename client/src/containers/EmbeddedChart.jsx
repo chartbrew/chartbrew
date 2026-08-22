@@ -56,7 +56,7 @@ function EmbeddedChart() {
     });
     
     // We pass all query parameters so the backend can process variables based on the share policy
-    dispatch(getEmbeddedChart({ 
+    return dispatch(getEmbeddedChart({
       embed_id: params.chartId, 
       token: searchParams.get("token"),
       queryParams: allQueryParams

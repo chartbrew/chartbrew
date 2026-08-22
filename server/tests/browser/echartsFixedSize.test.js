@@ -108,6 +108,21 @@ function buildFixture(preset) {
   };
 }
 
+function buildCartesianFixture(preset = "line", pointCount = 30) {
+  const fixture = buildFixture(preset);
+  fixture.preparedData.results[0].rows = Array.from({ length: pointCount }, (_, index) => ({
+    category: `Day ${index + 1}`,
+    seriesId: SERIES_ID,
+    value: 100 + ((index * 17) % 90),
+  }));
+  fixture.preparedData.results[0].stats = {
+    inputRows: pointCount,
+    outputRows: pointCount,
+  };
+  fixture.preparedData.stats = { inputRows: pointCount, outputRows: pointCount };
+  return fixture;
+}
+
 describe("ECharts fixed-size browser rendering", () => {
   let browser;
 
@@ -178,14 +193,87 @@ describe("ECharts fixed-size browser rendering", () => {
         expect(new Set(rendered.matrixFills.filter(Boolean)).size).toBeGreaterThan(1);
       }
       const isSmallestWideGauge = preset === "gauge" && size.height <= 160 && size.width >= 420;
-      expect(rendered).toMatchObject(isSmallestWideGauge ? {
+      let expectedGauge = {};
+      if (isSmallestWideGauge) expectedGauge = {
         gaugeCenter: ["72%", "52%"],
         gaugeDetailShow: false,
         titleText: "72",
-      } : preset === "gauge" && size.width > 320 ? {
+      };
+      else if (preset === "gauge" && size.width > 320) expectedGauge = {
         gaugeCenter: ["50%", "55%"],
-      } : {});
+      };
+      expect(rendered).toMatchObject(expectedGauge);
       await page.close();
     }
+  }, 30000);
+
+  it.each([
+    { composition: "sparkline", height: 104, preset: "line", width: 189 },
+    { composition: "sparkline", height: 80, preset: "line", width: 424 },
+    { composition: "limited", height: 231, preset: "line", width: 424 },
+    { composition: "analysis", height: 300, preset: "line", width: 800 },
+    { composition: "sparkline", height: 104, preset: "bar", width: 189 },
+    { composition: "sparkline", height: 80, preset: "bar", width: 424 },
+    { composition: "limited", height: 231, preset: "bar", width: 424 },
+    { composition: "analysis", height: 300, preset: "bar", width: 800 },
+  ])("renders the $preset $composition composition at $width x $height", async ({
+    composition, height, preset, width,
+  }) => {
+    const page = await browser.newPage({ viewport: { height, width } });
+    const option = buildEChartsOption({
+      ...buildCartesianFixture(preset),
+      renderContext: { height, surface: "dashboard", width },
+    });
+    await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
+    await page.addScriptTag({
+      path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+    });
+    const rendered = await page.evaluate((chartOption) => {
+      const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
+      chart.setOption(chartOption, { notMerge: true });
+      chart.resize();
+      const current = chart.getOption();
+      const result = {
+        containLabel: current.grid[0].containLabel,
+        legend: current.legend[0].show,
+        seriesLabel: current.series[0].label.show,
+        showSymbol: current.series[0].showSymbol,
+        xAxis: current.xAxis[0].show,
+        xInterval: current.xAxis[0].axisLabel.interval,
+        yAxis: current.yAxis[0].show,
+      };
+      chart.dispose();
+      return result;
+    }, option);
+
+    if (composition === "sparkline") {
+      expect(rendered).toMatchObject({
+        containLabel: false,
+        legend: false,
+        seriesLabel: false,
+        showSymbol: false,
+        xAxis: false,
+        yAxis: false,
+      });
+    } else if (composition === "limited") {
+      expect(rendered).toMatchObject({
+        containLabel: true,
+        legend: true,
+        seriesLabel: false,
+        showSymbol: false,
+        xAxis: true,
+        xInterval: 5,
+        yAxis: true,
+      });
+    } else {
+      expect(rendered).toMatchObject({
+        containLabel: true,
+        legend: true,
+        seriesLabel: true,
+        xAxis: true,
+        yAxis: true,
+      });
+    }
+    await page.close();
   }, 30000);
 });

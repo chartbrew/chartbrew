@@ -108,7 +108,21 @@ export function getDoughnutSliceFromChart(instance, params) {
     value,
   };
 }
-export function createEChartsTooltipFormatter(colors, { doughnutNameOnly } = {}) {
+
+function compactLine(title, items, textColor, mutedColor) {
+  const values = items.map((param) => {
+    const value = `<span style="color:${textColor};font-family:${MONO_FONT}">${escapeHtml(getValue(param))}</span>`;
+    if (items.length === 1) return value;
+    return `<span style="display:inline-flex;align-items:center;gap:4px">${marker(param.color)}${value}</span>`;
+  }).join("<span style=\"padding:0 4px\">·</span>");
+  const prefix = title
+    ? `<span style="color:${mutedColor}">${escapeHtml(title)}: </span>`
+    : "";
+  return `<div style="font-size:11px;font-weight:400;line-height:16px;`
+    + `white-space:nowrap">${prefix}${values}</div>`;
+}
+
+export function createEChartsTooltipFormatter(colors, { compact = false, doughnutNameOnly } = {}) {
   return (input) => {
     const params = (Array.isArray(input) ? input : [input]).filter(Boolean);
     if (params.length === 0) return "";
@@ -123,6 +137,8 @@ export function createEChartsTooltipFormatter(colors, { doughnutNameOnly } = {})
       ? getMatrixHeading(first)
       : first.axisValueLabel ?? first.name;
     const items = isMatrix ? [first] : params;
+    if (compact) return compactLine(title, items, colors.text, colors.muted);
+
     return heading(title, colors.text) + items.map((param) => row(
       param.seriesName || "Value",
       getValue(param),
@@ -133,7 +149,7 @@ export function createEChartsTooltipFormatter(colors, { doughnutNameOnly } = {})
   };
 }
 
-export function getEChartsTooltipOption(option, colors) {
+export function getEChartsTooltipOption(option, colors, { compact = false } = {}) {
   return {
     ...(option.tooltip || {}),
     backgroundColor: colors.background,
@@ -143,9 +159,10 @@ export function getEChartsTooltipOption(option, colors) {
     enterable: false,
     extraCssText: `border-radius:8px;box-shadow:${colors.shadow};`,
     formatter: createEChartsTooltipFormatter(colors, {
+      compact,
       doughnutNameOnly: isDoughnutChart(option),
     }),
-    padding: [7, 9],
+    padding: compact ? [4, 6] : [7, 9],
     textStyle: {
       color: colors.text,
       fontSize: 11,

@@ -1,4 +1,6 @@
-import React, { useMemo, useRef } from "react";
+import React, {
+  useEffect, useMemo, useRef, useState,
+} from "react";
 import PropTypes from "prop-types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,6 +10,7 @@ import {
   isCompatibleEChartsRender,
   selectEChartsRender,
 } from "../../../visualization/echartsRenderState";
+import { getResponsiveGeometry } from "../../../visualization/responsiveLayout";
 import BarChart from "./BarChart";
 import DoughnutChart from "./DoughnutChart";
 import EChartsErrorBoundary from "./EChartsErrorBoundary";
@@ -43,6 +46,42 @@ function LegacyGraphicalRenderer({ chart, ...props }) {
 
 LegacyGraphicalRenderer.propTypes = {
   chart: PropTypes.object.isRequired,
+};
+
+function KpiChartLayout({ chart, children, editMode }) {
+  const containerRef = useRef(null);
+  const [shallow, setShallow] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    const updateLayout = () => {
+      const geometry = getResponsiveGeometry(container.clientWidth, container.clientHeight);
+      setShallow(geometry.height === "shallow");
+    };
+    const observer = new ResizeObserver(updateLayout);
+    observer.observe(container);
+    updateLayout();
+    return () => observer.disconnect();
+  }, []);
+
+  const growth = chart.chartData?.growth;
+  return (
+    <div ref={containerRef} className="flex h-full min-h-0 w-full flex-col gap-1">
+      {Array.isArray(growth) && growth.length > 0 && (
+        <KpiChartSegment chart={chart} compact={shallow} editMode={editMode} />
+      )}
+      <div className="min-h-0 flex-1">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+KpiChartLayout.propTypes = {
+  chart: PropTypes.object.isRequired,
+  children: PropTypes.node.isRequired,
+  editMode: PropTypes.bool.isRequired,
 };
 
 function ChartRenderer({
@@ -122,7 +161,7 @@ function ChartRenderer({
 
   const chartBody = (
     <EChartsErrorBoundary
-      key={`${chart.id || "preview"}:${effectiveRender.updatedAt || "runtime"}:${effectiveRender.type}`}
+      key={`${chart.id || "preview"}:${effectiveRender.type}`}
       fallback={fallback}
     >
       <EChartsRenderer
@@ -136,10 +175,9 @@ function ChartRenderer({
 
   if (chart.mode === "kpichart") {
     return (
-      <div className="h-full pb-2">
-        {chart.chartData?.growth && <KpiChartSegment chart={chart} editMode={editMode} />}
-        <div className="h-full pb-[50px]">{chartBody}</div>
-      </div>
+      <KpiChartLayout chart={chart} editMode={editMode}>
+        {chartBody}
+      </KpiChartLayout>
     );
   }
 

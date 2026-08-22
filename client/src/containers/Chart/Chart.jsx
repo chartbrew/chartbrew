@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router";
 import {
-  Card, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
+  Card, Dropdown, Button, Modal, Input, Link as LinkNext,
   Popover, Chip, Select,
   Badge,
   Separator,
@@ -46,6 +46,7 @@ import { getExposedChartFilters } from "../../modules/getChartDatasetConditions"
 import { buildChartRuntimeRequest, normalizeChartFilterCondition } from "../../modules/chartRuntimeFilters";
 import { createMonitor, getMonitorOptions } from "../../api/observations";
 import WatchMetricModal from "./components/WatchMetricModal";
+import getChartRefreshInterval from "../../modules/getChartRefreshInterval";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -151,7 +152,7 @@ function Chart(props) {
         fromInterval: true
       }));
     }
-  }, !isPublic && chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
+  }, getChartRefreshInterval(chart.autoUpdate, isPublic));
 
   useEffect(() => {
     if (Array.isArray(externalChartFilters)) {
@@ -622,6 +623,8 @@ function Chart(props) {
   };
 
   const { projectId } = params;
+  const hasKpiSegment = chart.mode === "kpichart" || chart.type === "kpi";
+  const showChartTitle = !isCompact || !hasKpiSegment;
 
   return (
     <motion.div
@@ -637,108 +640,30 @@ function Chart(props) {
       )}
       {chart && (
         <Card
-          className={`h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
+          className={`relative h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
         >
-          <Card.Header className={`pb-0 flex flex-row justify-between items-start ${isCompact ? "h-0 p-0 overflow-hidden" : ""}`}>
-            <div className={`flex items-start justify-start ${isCompact ? "hidden" : ""}`}>
-              <div>
-                <Row align="center" className={"flex-wrap gap-1"}>
+          {showChartTitle && (
+            <Card.Header className="min-w-0 pb-0 pr-8 flex flex-row items-center">
+              <div className="min-w-0 flex-1" title={chart.name}>
+                <Row align="center" className="min-w-0 flex-nowrap gap-1">
                   {chart.draft && (
-                    <Chip variant="secondary" size="sm" className="rounded-sm">Draft</Chip>
+                    <Chip variant="secondary" size="sm" className="shrink-0 rounded-sm">Draft</Chip>
                   )}
                   <>
                     {_canAccess("projectEditor") && !editingLayout && (
-                      <Link to={`/dashboard/${params.projectId}/chart/${chart.id}/edit`}>
-                        <div className={"text-foreground font-medium text-sm"}>{chart.name}</div>
+                      <Link className="min-w-0" to={`/dashboard/${params.projectId}/chart/${chart.id}/edit`}>
+                        <div className="truncate text-foreground font-medium text-sm">{chart.name}</div>
                       </Link>
                     )}
                     {(!_canAccess("projectEditor") || editingLayout) && (
-                      <Text className="text-sm font-medium">{chart.name}</Text>
+                      <Text className="block min-w-0 truncate text-sm font-medium">{chart.name}</Text>
                     )}
                   </>
                 </Row>
-                {chart.chartData && (
-                  <Row justify="flex-start" align="center" className={"gap-1"}>
-                    {!chartLoading && !chart.loading && (
-                      <>
-                        <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart)}`}</span>
-                      </>
-                    )}
-                    {(chartLoading || chart.loading) && (
-                      <>
-                        <Spinner size="sm" color="default" aria-label="Updating chart" />
-                        <span className="text-[10px] text-default-500">{"Updating..."}</span>
-                      </>
-                    )}
-                    {chart.autoUpdate > 0 && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuCalendarClock size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>
-                          {`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}
-                        </Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {chart.public && !isPublic && !print && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuLockOpen size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>This chart is public</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {(chart.onReport && !isPublic && !print && !chart.draft) && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuMonitor size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Visible on your report and snapshots</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {(!chart.onReport || chart.draft) && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuMonitorX size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>
-                          {chart.draft ? "Drafts are not visible on report and snapshots" : "Hidden on reports and snapshots"}
-                        </Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {chart?.Alerts?.length > 0 && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div className="hover:text-accent cursor-pointer" onClick={_openAlertsModal}>
-                            <LuBell size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>This chart has alerts</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {_onGetVariables()?.length > 0 && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuVariable size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>This chart has variables</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                  </Row>
-                )}
               </div>
-            </div>
-            <div className={`flex items-center justify-end gap-1 ${isCompact ? "absolute right-2 top-2" : ""}`}>
+            </Card.Header>
+          )}
+          <div className="absolute right-2 top-2 z-10 flex items-center justify-end gap-1">
               {_checkIfFilters() && (
                 <div className="flex items-center gap-1">
                   {chartSize?.[2] > 3 && (
@@ -784,7 +709,7 @@ function Chart(props) {
                 <Dropdown aria-label="Select a chart option">
                   <Dropdown.Trigger>
                     <LinkNext className="cursor-pointer chart-settings-tutorial">
-                      <LuEllipsisVertical className="text-default-500" />
+                      <LuEllipsisVertical size={16} className="text-default-500" />
                     </LinkNext>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
@@ -938,21 +863,29 @@ function Chart(props) {
                         <Dropdown.Item id="status" isReadOnly className="opacity-100" textValue="Chart details">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-default-500">Last updated: {_getUpdatedTime(chart)}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {chart.autoUpdate > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <LuCalendarClock size={12} />
-                                  <span className="text-[10px] text-default-500">Updates every {_getUpdateFreqText(chart.autoUpdate)}</span>
-                                </div>
+                              {(chartLoading || chart.loading) ? (
+                                <span className="text-[10px] text-default-500">Updating...</span>
+                              ) : (
+                                <span className="text-[10px] text-default-500">Last updated: {_getUpdatedTime(chart)}</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
+                            {chart.autoUpdate > 0 && (
+                              <div className="flex items-center gap-1">
+                                <LuCalendarClock size={12} />
+                                <span className="text-[10px] text-default-500">Updates every {_getUpdateFreqText(chart.autoUpdate)}</span>
+                              </div>
+                            )}
+                            <div className="flex flex-wrap items-center gap-2">
                               {chart.public && !isPublic && !print && (
                                 <div className="flex items-center gap-1">
                                   <LuLockOpen size={12} />
                                   <span className="text-[10px] text-default-500">Public chart</span>
+                                </div>
+                              )}
+                              {(chart.onReport && !isPublic && !print && !chart.draft) && (
+                                <div className="flex items-center gap-1">
+                                  <LuMonitor size={12} />
+                                  <span className="text-[10px] text-default-500">On report</span>
                                 </div>
                               )}
                               {(!chart.onReport || chart.draft) && (
@@ -965,6 +898,12 @@ function Chart(props) {
                                 <div className="flex items-center gap-1">
                                   <LuBell size={12} />
                                   <span className="text-[10px] text-default-500">Has alerts</span>
+                                </div>
+                              )}
+                              {_onGetVariables()?.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <LuVariable size={12} />
+                                  <span className="text-[10px] text-default-500">Has variables</span>
                                 </div>
                               )}
                             </div>
@@ -998,7 +937,6 @@ function Chart(props) {
                 </Dropdown>
               )}
             </div>
-          </Card.Header>
           <Card.Content
             className="overflow-y-hidden"
           >

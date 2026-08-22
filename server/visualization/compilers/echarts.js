@@ -2,6 +2,11 @@ const moment = require("moment-timezone");
 
 const { toJsonValue } = require("../preparedData");
 const { createRenderContext } = require("../renderContext");
+const {
+  RESPONSIVE_LAYOUT,
+  getBarLimitedMaxWidth,
+  getLineLimitedMaxWidth,
+} = require("../responsiveLayout");
 const { createSeriesId, serializeTypedValue } = require("../seriesIdentity");
 const { projectPreparedSeries } = require("../seriesProjection");
 const { applyValueFormula, parseValueFormula } = require("../valueFormula");
@@ -114,6 +119,128 @@ function buildMarkLine(series, horizontal) {
     silent: true,
     symbol: "none",
   };
+}
+
+function getLineSeriesMedia(series, showSymbol) {
+  return series.map((item) => ({
+    label: { show: false },
+    markLine: item.markLine ? { label: { show: false } } : undefined,
+    showSymbol,
+    symbolSize: showSymbol ? item.symbolSize : 0,
+  }));
+}
+
+function getBarSeriesMedia(series, showLabel) {
+  return series.map((item) => ({
+    label: { show: showLabel },
+    markLine: item.markLine ? { label: { show: false } } : undefined,
+  }));
+}
+
+function buildCartesianResponsiveMedia(option, pointCount, {
+  getLimitedMaxWidth,
+  limitedTickCount,
+  seriesMedia,
+}) {
+  const { geometry } = RESPONSIVE_LAYOUT;
+  const seriesCount = option.series.length;
+  const limitedMaxWidth = getLimitedMaxWidth(pointCount, seriesCount);
+  const limitedLegend = option.legend?.show !== false;
+  const limitedInterval = Math.max(0, Math.ceil(pointCount / limitedTickCount) - 1);
+  const limited = {
+    grid: {
+      bottom: 8,
+      containLabel: true,
+      left: 8,
+      right: 8,
+      top: limitedLegend ? 32 : 12,
+    },
+    legend: { show: limitedLegend },
+    series: seriesMedia(option.series, "limited"),
+    xAxis: {
+      axisLabel: {
+        fontSize: 10,
+        hideOverlap: true,
+        interval: limitedInterval,
+        margin: 6,
+        showMaxLabel: true,
+        showMinLabel: true,
+      },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      axisLabel: { fontSize: 10, margin: 6 },
+      axisTick: { show: false },
+      splitLine: { lineStyle: { opacity: 0.28 }, show: true },
+    },
+  };
+  const sparkline = {
+    grid: { bottom: 6, containLabel: false, left: 6, right: 6, top: 6 },
+    legend: { show: false },
+    series: seriesMedia(option.series, "sparkline"),
+    xAxis: {
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      show: false,
+      splitLine: { show: false },
+    },
+    yAxis: {
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      show: false,
+      splitLine: { show: false },
+    },
+  };
+  const media = [{
+    option: limited,
+    query: {
+      maxWidth: geometry.width.regularMax,
+      minHeight: geometry.height.shallowMax + 1,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }];
+
+  if (limitedMaxWidth > geometry.width.regularMax) {
+    media.push({
+      option: limited,
+      query: {
+        maxWidth: limitedMaxWidth,
+        minHeight: geometry.height.shallowMax + 1,
+        minWidth: geometry.width.regularMax + 1,
+      },
+    });
+  }
+
+  media.push({
+    option: sparkline,
+    query: { maxWidth: geometry.width.narrowMax },
+  }, {
+    option: sparkline,
+    query: {
+      maxHeight: geometry.height.shallowMax,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  });
+
+  return media;
+}
+
+function buildLineResponsiveMedia(option, pointCount) {
+  return buildCartesianResponsiveMedia(option, pointCount, {
+    getLimitedMaxWidth: getLineLimitedMaxWidth,
+    limitedTickCount: RESPONSIVE_LAYOUT.presets.line.limitedTickCount,
+    seriesMedia: (series) => getLineSeriesMedia(series, false),
+  });
+}
+
+function buildVerticalBarResponsiveMedia(option, pointCount) {
+  return buildCartesianResponsiveMedia(option, pointCount, {
+    getLimitedMaxWidth: getBarLimitedMaxWidth,
+    limitedTickCount: RESPONSIVE_LAYOUT.presets.bar.limitedTickCount,
+    seriesMedia: (series) => getBarSeriesMedia(series, false),
+  });
 }
 
 function buildCartesianOption({ preparedData, visualization, renderContext }) {
@@ -742,7 +869,11 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
     top: "34%",
   } : undefined;
   const compactGrid = { containLabel: true, left: 8, right: 8, top: 12, bottom: 8 };
-  if (presetId === "gauge") {
+  if (presetId === "line") {
+    option.media = buildLineResponsiveMedia(option, option.dataset.source.length);
+  } else if (presetId === "bar" && option.xAxis?.type === "category") {
+    option.media = buildVerticalBarResponsiveMedia(option, option.dataset.source.length);
+  } else if (presetId === "gauge") {
     option.media = [{
       option: {
         grid: compactGrid,
