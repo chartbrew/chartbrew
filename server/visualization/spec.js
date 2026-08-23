@@ -58,6 +58,11 @@ function normalizeFieldEncoding(encoding = {}) {
   return normalized;
 }
 
+function normalizeMark(mark) {
+  const normalized = `${mark || "line"}`.toLowerCase();
+  return normalized === "horizontalbar" ? "horizontalBar" : normalized;
+}
+
 function normalizeVisualizationSpec(input = {}) {
   const source = input && typeof input === "object" ? input : {};
   const layers = Array.isArray(source.layers) ? source.layers : [];
@@ -69,7 +74,7 @@ function normalizeVisualizationSpec(input = {}) {
       ...layer,
       id: layer?.id ? `${layer.id}` : `layer-${index + 1}`,
       bindingId: layer?.bindingId ?? null,
-      mark: layer?.mark ? `${layer.mark}`.toLowerCase() : "line",
+      mark: normalizeMark(layer?.mark),
       encoding: normalizeEncoding(layer?.encoding),
       transforms: Array.isArray(layer?.transforms) ? layer.transforms.map((item) => ({ ...item })) : [],
       style: layer?.style && typeof layer.style === "object" ? { ...layer.style } : {},

@@ -21,7 +21,7 @@ snapshots.
 - Define one responsive contract for dashboard, editor, embed, export, report, and snapshot surfaces.
 - Give every ready preset explicit rules for different widths, heights, shapes, and data densities.
 - Make `KpiChartSegment` part of the chart composition instead of reserving a fixed plot offset.
-- Provide a wide category composition with a value and percentage breakdown beside pie-like marks.
+- Provide category summary compositions with a total, hover value, and percentage beside pie-like marks.
 - Keep values, ordering, colors, formulas, goals, ranges, and stable series identities unchanged.
 - Make the same data and fixed `RenderContext` produce the same composition and output.
 
@@ -54,7 +54,7 @@ Browser rendering uses observed container pixels. Fixed surfaces use `RenderCont
 `RenderContext.height`.
 
 Each preset returns a named composition that is meaningful to that preset, such as `analysis`,
-`sparkline`, `split-breakdown`, `centered-ring`, `side-gauge`, or `dense-matrix`. These names are
+`sparkline`, `side-summary`, `stacked-summary`, `centered-ring`, `side-gauge`, or `dense-matrix`. These names are
 internal and must not appear in the product UI.
 
 ## Shared Composition Rules
@@ -78,6 +78,10 @@ internal and must not appear in the product UI.
 `KpiChartSegment` is optional semantic content for `chart.mode === "kpichart"`; a small layout must
 not enable KPI mode by itself.
 
+- Only presets with the shared `kpiOverlay` capability can enter `kpichart` mode. Pie, doughnut,
+  polar area, radar, matrix, and gauge do not show the KPI overlay control. The renderer ignores an
+  old unsupported `kpichart` value.
+
 - Replace fixed bottom padding with one flex composition that measures the KPI region and lets the
   plot fill the remaining space.
 - In shallow cards, place the KPI value and optional growth chip in a compact top row. Put the
@@ -96,27 +100,59 @@ not enable KPI mode by itself.
 | Line | Sparkline; no Y axis, grid, legend, or point symbols; at most first/latest X context | Limited ticks and subtle grid; keep the legend | Full axes, goals, legend, and user-enabled points |
 | Area | Line sparkline with restrained fill; same KPI rules as line | Limited ticks and low-opacity fill | Full axes, goals, stacking, and legend |
 | Vertical bar | Hide data labels when bar width is insufficient; reduce ticks and grid | Keep readable category ticks and conditional inside labels | Full axes, stacking, goals, and legend |
-| Horizontal bar | Keep category labels; calculate visible row height; use an explicit scroll or overflow treatment when all rows do not fit | Show all rows that meet minimum height | Full ordered category analysis; never invert prepared sort order |
-| Doughnut | Center total, hide labels and external legend, use tooltips | Centered ring with conditional labels | Use `split-breakdown`: category rows with color, value, and percent beside the ring |
-| Pie | Hide labels that do not meet minimum arc length; use tooltips | Centered pie with conditional labels | Use `split-breakdown` beside the pie; no center total |
+| Horizontal bar | Compact comparison: keep category and value axes, hide legend and direct labels | Clear top value axis, ordered categories, optional end labels, row hover | Full comparison view, stacking, goals, legend, and linked row emphasis |
+| Doughnut | Use `micro`, `side-summary`, or `stacked-summary` from the independent width and height bands | Centered ring with conditional labels and center total | Use `side-breakdown` when wide and `stacked-breakdown` when tall; keep the ring and value list linked on hover and focus |
+| Pie | Use `micro`, `side-summary`, or `stacked-summary` from the independent width and height bands | Centered pie with conditional labels and no center total | Use `side-breakdown` when wide and `stacked-breakdown` when tall; keep the pie and value list linked on hover and focus |
 | Polar area | Remove external legend and labels when arcs are too small | Centered polar mark with tooltips | Use the category breakdown when it improves comparison |
 | Radar | Hide point labels that overlap; keep the shape and tooltip | Reduce indicators only through visible wrapping or rotation rules, not data removal | Full indicators and multi-series legend |
-| Matrix | Hide axes before cells become unreadable; preserve all cells as a dense map | Square cells with bounded axis labels | Larger square cells, full week/row labels, and useful gutters |
-| Gauge | Use the approved value-plus-gauge composition for panoramic shallow cards; use value and active range when the pointer cannot remain clear | Centered gauge with value inside | Larger centered gauge with range labels when space permits |
+| Matrix | Use `dense`: hide both axes, reduce cell gaps, preserve every cell, and use the tooltip for detail | Use `bounded`: square cells with overlap-safe axis labels | Use `labeled`: larger square cells, full row context, and useful gutters; fall back to `bounded` when column density is high |
+| Gauge | Use `micro` when width and height are both small: keep only the mark and the card title. Use `side-summary` for shallow regular/wide cards and `compact` for narrow cards that still have height | Use `centered`: value and active-range marker inside, with the muted metric label below | Use `large`: larger centered value, active-range marker, and muted metric label below |
 | KPI / Average | Primary value, optional growth, and optional goal progress; never shrink the value below its minimum | Support multiple metrics when each has enough width | Full metric set with goal and comparison context |
 | Table | Preserve headers and horizontal scrolling; fit rows from available height | Normal pagination and column sizing | More rows and columns without changing the data contract |
 | Markdown | Preserve readable text and scrolling; do not line-clamp essential content | Normal document flow | Use available width without making lines excessively long |
 
-## Wide Category Breakdown
+### Horizontal Bar Comparison Contract
 
-For doughnut, pie, and applicable category presets, `split-breakdown` places a compact breakdown on
-the left and the mark on the right. Each row contains the stable color marker, category label,
-formatted value, and percentage of the displayed total. The row count comes from available height.
-If rows do not fit, combine the remaining categories into one deterministic `Other` row and matching
-mark segment. Hover or focus links a row and its segment. The doughnut keeps its total in the center.
+- `horizontalBar` is a canonical preset. It is not an orientation option on `bar`.
+- `bar` always uses a vertical category axis. `horizontalBar` always uses a horizontal value axis.
+- Keep prepared category order and show the first category at the top.
+- Place the value axis at the top. Keep the baseline and split grid visible in compact and comparison states.
+- For stacked data, the axis tooltip lists every series for the active category. Hovering one segment
+  emphasizes all segments in that category.
+- Migrate stored `bar` charts with `horizontal = true` to `type = horizontalBar`. Update active layer
+  marks and prepared snapshot result marks in the same migration.
 
-The breakdown is presentation output compiled from `PreparedData`; it is not a new dataset, series,
-or persisted visualization field.
+## Category Summary Compositions
+
+For doughnut and pie, the resolver uses these states:
+
+- `micro`: narrow and shallow. Hide legend, labels, values, and total. Use the full plot for the mark.
+  Hover or focus shows one compact tooltip: `{trimmed label}: {formatted value} {percentage}`.
+- `side-summary`: regular or wide and shallow. Put the summary on the left and the mark on the right.
+  Hide the legend and all mark labels, even when data labels are enabled.
+- `stacked-summary`: narrow and regular or tall. Put the summary above the mark. Hide the legend and
+  all mark labels, even when data labels are enabled.
+- `side-breakdown`: wide and not shallow. Put a scrollable category list on the left and the mark on
+  the right. Each row shows the stable color, label, formatted value, and percentage.
+- `stacked-breakdown`: tall and not wide. Put the mark above a scrollable category list. Each row
+  shows the same fields as `side-breakdown`.
+- `centered`: all other geometry. Apply the saved legend and data-label settings. Doughnut shows the
+  total in the center. Pie does not show a center total.
+
+The side and stacked summaries show `Total` and the formatted total at rest. Segment hover or focus
+replaces that content with the stable color marker and category label, formatted value, and
+percentage on separate lines. These summary compositions do not also show a floating tooltip.
+
+The large breakdown list and chart use one active category. Hover or keyboard focus on a list row
+highlights the matching segment and dims the other segments. Segment hover highlights the matching
+row and dims the other rows. Doughnut shows the active formatted value in its center and restores the
+total when the pointer or focus leaves. Pie keeps its center empty. The list remains scrollable so the
+renderer does not remove categories.
+Fixed SVG and PNG output uses the same list placement. When a fixed surface cannot fit every row, it
+shows a visible `+N more` row instead of silently removing categories.
+
+The summary is presentation output compiled from `PreparedData`; it is not a new dataset, series, or
+persisted visualization field.
 
 ## Architecture
 
@@ -125,7 +161,7 @@ or persisted visualization field.
    optional KPI state.
 3. Keep server compiler implementations pure JSON. Use ECharts `media` only where it can express the
    complete rule without client callbacks.
-4. Keep client implementation maps for measured geometry such as matrix cells, split breakdowns,
+4. Keep client implementation maps for measured geometry such as matrix cells, category summaries,
    KPI allocation, and chart chrome. Remove duplicate hard-coded thresholds from components.
 5. Add the same fixed-size corpus to compiler and browser tests so client and fixed-surface behavior
    cannot drift.
@@ -134,8 +170,8 @@ or persisted visualization field.
 
 1. Shared geometry, density resolver, chart chrome allocation, and KPI composition.
 2. Line and area, including KPI plus sparkline.
-3. Vertical and horizontal bar.
-4. Doughnut, pie, and polar area, including `split-breakdown`.
+3. Vertical bar, then the separate `horizontalBar` comparison preset.
+4. Doughnut and pie category summaries, then polar area.
 5. Matrix and gauge.
 6. Radar, KPI, average, table, and markdown.
 7. Cross-surface visual review and fallback removal only after all gates pass.
@@ -146,7 +182,13 @@ or persisted visualization field.
 - [x] Add line `analysis`, `limited`, and `sparkline` compositions.
 - [x] Replace the fixed KPI plot offset with measured flex allocation for KPI plus line charts.
 - [x] Add vertical bar `analysis`, `limited`, and `sparkline` compositions.
-- [ ] Apply the contract to area, horizontal bar, and the remaining presets in the delivery order.
+- [x] Add the canonical `horizontalBar` preset with `comparison` and `compact` compositions.
+- [x] Migrate legacy `bar` charts with `horizontal = true`, including prepared snapshot marks.
+- [x] Add doughnut and pie `centered`, `side-summary`, `stacked-summary`, and `micro` compositions.
+- [x] Add matrix `labeled`, `bounded`, and `dense` compositions with square cells in every state.
+- [x] Add gauge `large`, `centered`, `side-summary`, and `compact` compositions with active-range context.
+- [x] Limit KPI overlays to presets with the shared `kpiOverlay` capability.
+- [ ] Apply the contract to area and the remaining presets in the delivery order.
 
 ## Testing And Acceptance
 

@@ -103,7 +103,7 @@ class VisualizationEngine {
     const marks = [...new Set(preparedData.results.map((result) => result.mark))];
 
     let compiled;
-    if (marks.length === 1 && ["area", "bar", "line"].includes(marks[0])) {
+    if (marks.length === 1 && ["area", "bar", "horizontalBar", "line"].includes(marks[0])) {
       compiled = compileChartJsCartesian({
         chart: this.chart,
         preparedData,

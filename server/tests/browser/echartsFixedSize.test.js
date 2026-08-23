@@ -3,7 +3,9 @@ const { chromium } = require("playwright");
 
 const { buildEChartsOption } = require("../../visualization/compilers/echarts");
 
-const PRESETS = ["line", "area", "bar", "pie", "doughnut", "radar", "polar", "matrix", "gauge"];
+const PRESETS = [
+  "line", "area", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
+];
 const SIZES = [
   { height: 150, width: 500 },
   { height: 160, width: 240 },
@@ -94,7 +96,7 @@ function buildFixture(preset) {
         id: "layer-1",
         mark: preset,
         name: "Revenue",
-        orientation: "vertical",
+        orientation: preset === "horizontalBar" ? "horizontal" : "vertical",
         stack: "none",
         style: { color: "#048BDE", fill: preset === "area" },
         transforms: [],
@@ -174,6 +176,7 @@ describe("ECharts fixed-size browser rendering", () => {
             y: matrixEl.scaleY,
           } : null,
           matrixSymbolSize: Array.isArray(symbolSize) ? symbolSize : [symbolSize, symbolSize],
+          titleShow: current.title?.[0]?.show,
           titleText: current.title?.[0]?.text,
           seriesIds: current.series.map((series) => series.id),
           width: chart.getWidth(),
@@ -192,19 +195,82 @@ describe("ECharts fixed-size browser rendering", () => {
         expect(rendered.matrixSymbolSize[0]).toBeGreaterThan(0);
         expect(new Set(rendered.matrixFills.filter(Boolean)).size).toBeGreaterThan(1);
       }
-      const isSmallestWideGauge = preset === "gauge" && size.height <= 160 && size.width >= 420;
       let expectedGauge = {};
-      if (isSmallestWideGauge) expectedGauge = {
-        gaugeCenter: ["72%", "52%"],
+      if (preset === "gauge" && size.height <= 160 && size.width >= 260) expectedGauge = {
+        gaugeCenter: ["72%", "50%"],
         gaugeDetailShow: false,
-        titleText: "72",
+        titleText: "{value|72} {marker|●}\n{label|Revenue}",
       };
-      else if (preset === "gauge" && size.width > 320) expectedGauge = {
+      else if (preset === "gauge" && size.width <= 259 && size.height <= 149) expectedGauge = {
         gaugeCenter: ["50%", "55%"],
+        gaugeDetailShow: false,
+        titleShow: false,
+      };
+      else if (preset === "gauge" && size.width <= 259) expectedGauge = {
+        gaugeCenter: ["50%", "70%"],
+        gaugeDetailShow: false,
+        titleText: "{value|72} {marker|●}\n{label|Revenue}",
+      };
+      else if (preset === "gauge") expectedGauge = {
+        gaugeCenter: ["50%", "55%"],
+        gaugeDetailShow: false,
+        titleText: "{value|72} {marker|●}\n{label|Revenue}",
       };
       expect(rendered).toMatchObject(expectedGauge);
       await page.close();
     }
+  }, 30000);
+
+  it.each([
+    { center: ["50%", "55%"], composition: "micro", height: 104, titleShow: false, width: 189 },
+    { center: ["72%", "50%"], composition: "side-summary", fontSize: 28, height: 104, left: "8%", titleShow: true, width: 424 },
+    { center: ["50%", "70%"], composition: "compact", fontSize: 22, height: 231, left: "50%", titleShow: true, width: 189 },
+    { center: ["50%", "55%"], composition: "centered", fontSize: 32, height: 231, left: "50%", titleShow: true, width: 424 },
+    { center: ["50%", "55%"], composition: "large", fontSize: 42, height: 300, left: "50%", titleShow: true, width: 800 },
+  ])("renders the gauge $composition composition at $width x $height", async ({
+    center, fontSize, height, left, titleShow, width,
+  }) => {
+    const page = await browser.newPage({ viewport: { height, width } });
+    const option = buildEChartsOption({
+      ...buildFixture("gauge"),
+      renderContext: { height, surface: "dashboard", width },
+    });
+    await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
+    await page.addScriptTag({
+      path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+    });
+    const rendered = await page.evaluate((chartOption) => {
+      const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
+      chart.setOption(chartOption, { notMerge: true });
+      chart.resize();
+      const current = chart.getOption();
+      const gauge = current.series.find((series) => series.type === "gauge");
+      const title = current.title[0];
+      const result = {
+        center: gauge.center,
+        detail: gauge.detail.show,
+        labelColor: title.textStyle.rich.label.color,
+        left: title.left,
+        markerColor: title.textStyle.rich.marker.color,
+        titleShow: title.show,
+        valueFontSize: title.textStyle.rich.value.fontSize,
+      };
+      chart.dispose();
+      return result;
+    }, option);
+
+    expect(rendered).toMatchObject({
+      center,
+      detail: false,
+      titleShow,
+      ...(titleShow ? {
+        labelColor: "#71717a",
+        left,
+        markerColor: "#22c55e",
+        valueFontSize: fontSize,
+      } : {}),
+    });
+    await page.close();
   }, 30000);
 
   it.each([
@@ -275,5 +341,89 @@ describe("ECharts fixed-size browser rendering", () => {
       });
     }
     await page.close();
+  }, 30000);
+
+  it.each([
+    { composition: "dense", height: 104, showAxes: false, width: 424 },
+    { composition: "dense", height: 231, showAxes: false, width: 189 },
+    { composition: "bounded", height: 231, showAxes: true, width: 424 },
+    { composition: "labeled", height: 400, showAxes: true, width: 800 },
+  ])("renders the matrix $composition composition at $width x $height", async ({
+    height, showAxes, width,
+  }) => {
+    const page = await browser.newPage({ viewport: { height, width } });
+    const option = buildEChartsOption({
+      ...buildFixture("matrix"),
+      renderContext: { height, surface: "dashboard", width },
+    });
+    await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
+    await page.addScriptTag({
+      path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+    });
+    const rendered = await page.evaluate((chartOption) => {
+      const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
+      chart.setOption(chartOption, { notMerge: true });
+      chart.resize();
+      const current = chart.getOption();
+      const result = {
+        symbolSize: current.series[0].symbolSize,
+        xAxis: current.xAxis[0].show,
+        yAxis: current.yAxis[0].show,
+      };
+      chart.dispose();
+      return result;
+    }, option);
+
+    expect(rendered).toMatchObject({ xAxis: showAxes, yAxis: showAxes });
+    expect(rendered.symbolSize).toBeGreaterThan(0);
+    await page.close();
+  }, 30000);
+
+  it.each([
+    { center: ["50%", "50%"], composition: "micro", height: 104, title: false, width: 189 },
+    { center: ["73%", "50%"], composition: "side-summary", height: 104, title: true, width: 424 },
+    { center: ["50%", "69%"], composition: "stacked-summary", height: 231, title: true, width: 189 },
+    { center: ["50%", "50%"], composition: "centered", height: 231, title: null, width: 424 },
+    { center: ["75%", "50%"], composition: "side-breakdown", height: 300, title: null, width: 800 },
+    { center: ["50%", "27%"], composition: "stacked-breakdown", height: 400, title: null, width: 424 },
+  ])("renders pie and doughnut $composition at $width x $height", async ({
+    center, composition, height, title, width,
+  }) => {
+    for (const preset of ["pie", "doughnut"]) {
+      const page = await browser.newPage({ viewport: { height, width } });
+      const option = buildEChartsOption({
+        ...buildFixture(preset),
+        renderContext: { height, surface: "dashboard", width },
+      });
+      await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
+      await page.addScriptTag({
+        path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+      });
+      const rendered = await page.evaluate((chartOption) => {
+        const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
+        chart.setOption(chartOption, { notMerge: true });
+        chart.resize();
+        const current = chart.getOption();
+        const result = {
+          center: current.series[0].center,
+          label: current.series[0].label.show,
+          legend: current.legend[0].show,
+          title: current.title[0].show,
+        };
+        chart.dispose();
+        return result;
+      }, option);
+
+      const expected = composition === "centered"
+        ? { center, title: preset === "doughnut" }
+        : {
+          center,
+          label: false,
+          legend: false,
+          title: title ?? preset === "doughnut",
+        };
+      expect(rendered).toMatchObject(expected);
+      await page.close();
+    }
   }, 30000);
 });

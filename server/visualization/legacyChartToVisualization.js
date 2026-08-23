@@ -12,6 +12,7 @@ function toPlainObject(value) {
 
 function getLegacyMark(chart) {
   const requestedMark = chart.type || (chart.mode === "kpichart" ? "kpi" : "line");
+  if (requestedMark === "bar" && chart.horizontal) return "horizontalBar";
   return getMarkDefinition(requestedMark) ? requestedMark : "line";
 }
 
@@ -138,7 +139,7 @@ function buildLegacyLayer(chart, cdc, index) {
     id: `legacy-${plainCdc.id || index + 1}`,
     mark,
     name: options.legend || options.name || `Series ${index + 1}`,
-    orientation: chart.horizontal ? "horizontal" : "vertical",
+    orientation: mark === "horizontalBar" ? "horizontal" : "vertical",
     rowPath: mark === "table" ? options.xAxis || "root[]" : undefined,
     stack: chart.stacked ? "normal" : "none",
     style: compactObject({

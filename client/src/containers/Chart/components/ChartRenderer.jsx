@@ -5,7 +5,11 @@ import PropTypes from "prop-types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { getClientPresetImplementation, isReadyPreset } from "../../../visualization/presetRegistry";
+import {
+  getClientPresetImplementation,
+  hasPresetCapability,
+  isReadyPreset,
+} from "../../../visualization/presetRegistry";
 import {
   isCompatibleEChartsRender,
   selectEChartsRender,
@@ -29,6 +33,7 @@ const LEGACY_COMPONENTS = {
   line: LineChart,
   area: LineChart,
   bar: BarChart,
+  horizontalBar: BarChart,
   pie: PieChart,
   doughnut: DoughnutChart,
   radar: RadarChart,
@@ -40,7 +45,11 @@ const LEGACY_COMPONENTS = {
 function LegacyGraphicalRenderer({ chart, ...props }) {
   const Component = LEGACY_COMPONENTS[chart.type];
   if (!Component) return null;
-  const fallbackChart = chart.type === "area" ? { ...chart, type: "line" } : chart;
+  const fallbackChart = chart.type === "area"
+    ? { ...chart, type: "line" }
+    : chart.type === "horizontalBar"
+      ? { ...chart, horizontal: true, type: "bar" }
+      : chart;
   return <Component chart={fallbackChart} {...props} />;
 }
 
@@ -173,7 +182,7 @@ function ChartRenderer({
     </EChartsErrorBoundary>
   );
 
-  if (chart.mode === "kpichart") {
+  if (chart.mode === "kpichart" && hasPresetCapability(chart.type, "kpiOverlay")) {
     return (
       <KpiChartLayout chart={chart} editMode={editMode}>
         {chartBody}

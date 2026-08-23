@@ -9,7 +9,7 @@
       "renderer": "echarts",
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["time", "category"]],
-      "capabilities": ["breakdown", "goal", "legend", "responsive", "theme", "timeseries"],
+      "capabilities": ["breakdown", "goal", "kpiOverlay", "legend", "responsive", "theme", "timeseries"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
     },
@@ -21,19 +21,31 @@
       "renderer": "echarts",
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["time", "category"]],
-      "capabilities": ["breakdown", "goal", "legend", "responsive", "theme", "timeseries"],
+      "capabilities": ["breakdown", "goal", "kpiOverlay", "legend", "responsive", "theme", "timeseries"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
     },
     {
       "id": "bar",
-      "label": "Bar",
+      "label": "Vertical bar",
       "mark": "bar",
       "releaseState": "ready",
       "renderer": "echarts",
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["category", "time"]],
-      "capabilities": ["breakdown", "goal", "legend", "orientation", "responsive", "stack", "theme"],
+      "capabilities": ["breakdown", "goal", "kpiOverlay", "legend", "responsive", "stack", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "horizontalBar",
+      "label": "Horizontal bar",
+      "mark": "horizontalBar",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["value"],
+      "requiredOneOf": [["category", "time"]],
+      "capabilities": ["breakdown", "goal", "legend", "responsive", "stack", "theme"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
     },

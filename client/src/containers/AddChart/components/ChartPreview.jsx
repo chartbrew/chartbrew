@@ -2,15 +2,16 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Chip, ProgressCircle, Separator, Input, Link, Popover, Skeleton, Tooltip,
+  Button, Checkbox, Chip, Separator, Input, Link, Popover, Skeleton, Tooltip,
 } from "@heroui/react";
 import {
-  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash, TbMathAvg,
+  TbChartBar, TbChartColumn, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash,
+  TbMathAvg,
 } from "react-icons/tb";
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
 import { BsTable } from "react-icons/bs";
-import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX, LuGauge, LuX, LuPlus } from "react-icons/lu";
+import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX, LuGauge, LuX, LuPlus, LuChartBarBig } from "react-icons/lu";
 import { findIndex, isEqual } from "lodash";
 import { chartColors } from "../../../config/colors";
 
@@ -23,6 +24,7 @@ import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { getExposedChartFilters } from "../../../modules/getChartDatasetConditions";
 import ColorPickerControl from "../../../components/ColorPickerControl";
+import { hasPresetCapability } from "../../../visualization/presetRegistry";
 
 function ChartPreview(props) {
   const {
@@ -33,6 +35,8 @@ function ChartPreview(props) {
   const [conditions, setConditions] = useState([]);
   const [ranges, setRanges] = useState([]);
   const [rangeErrors, setRangeErrors] = useState(null);
+  const supportsKpiOverlay = hasPresetCapability(chart?.type, "kpiOverlay");
+  const supportsGrowth = supportsKpiOverlay || hasPresetCapability(chart?.type, "growth");
 
   useEffect(() => {
     setRedraw(true);
@@ -378,12 +382,24 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.type !== "bar" ? "outline" : "primary"}
-                      onPress={() => _onChangeChartType({ type: "bar" })} isIconOnly
+                      onPress={() => _onChangeChartType({ horizontal: false, type: "bar" })} isIconOnly
                     >
                       <TbChartBar size={24} />
                     </Button>
                   </Tooltip.Trigger>
-                  <Tooltip.Content>Display as bar chart</Tooltip.Content>
+                  <Tooltip.Content>Display as vertical bar chart</Tooltip.Content>
+                </Tooltip>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={chart.type !== "horizontalBar" ? "outline" : "primary"}
+                      onPress={() => _onChangeChartType({ horizontal: false, type: "horizontalBar" })}
+                      isIconOnly
+                    >
+                      <LuChartBarBig size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Display as horizontal comparison chart</Tooltip.Content>
                 </Tooltip>
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -471,59 +487,42 @@ function ChartPreview(props) {
         </>
       )}
 
-      <div>
-        {chart && chart.type && !chart.chartData && (
-          <>
-            {chartLoading && (
-              <>
-                <Row>
-                  <ProgressCircle size="lg" aria-label="Loading chart data" />
-                </Row>
-                <Row>
-                  <Text b>Loading chart data...</Text>
-                </Row>
-                <div className="h-4" />
-              </>
-            )}
-            {!chartLoading && (
-              <>
-                <div className={"container mx-auto"}>
-                  <Text className={"text-foreground-500 text-[20px]"}>{"Configure the dataset to get started"}</Text>
-                  <div className="h-2" />
-                  <Skeleton className="rounded-3xl">
-                    <div className="h-5 rounded-3xl bg-default-300"></div>
-                  </Skeleton>
-                </div>
-                <div className="h-1" />
-              </>
-            )}
-          </>
-        )}
-      </div>
+      {chart && chart.type && !chart.chartData && (
+        <div className="flex h-[300px] w-full items-center justify-center">
+          {chartLoading ? (
+            <div className="h-full w-full" role="status" aria-label="Loading chart data">
+              <Skeleton className="h-full w-full rounded-3xl" />
+            </div>
+          ) : (
+            <Text className="text-muted text-[20px]">Configure the dataset to get started</Text>
+          )}
+        </div>
+      )}
 
       {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0
-        && chart.type !== "gauge" && chart.type !== "matrix" && (
+        && supportsGrowth && (
         <div style={styles.topBuffer} className="chart-preview-growth">
           <div className="flex flex-row items-center gap-4">
-            <Checkbox
-              id="chart-preview-kpi-mode"
-              isSelected={chart.mode === "kpichart"}
-              onChange={_onChangeMode}
-              isDisabled={chart.type === "kpi" || chart.type === "avg"}
-              variant="secondary"
-            >
-              <Checkbox.Content>
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                Show KPI on chart
-              </Checkbox.Content>
-            </Checkbox>
+            {supportsKpiOverlay && (
+              <Checkbox
+                id="chart-preview-kpi-mode"
+                isSelected={chart.mode === "kpichart"}
+                onChange={_onChangeMode}
+                variant="secondary"
+              >
+                <Checkbox.Content>
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  Show KPI on chart
+                </Checkbox.Content>
+              </Checkbox>
+            )}
             <Checkbox
               id="chart-preview-growth"
               isSelected={chart.showGrowth}
               onChange={_onChangeGrowth}
-              isDisabled={chart.mode === "chart" && chart.type !== "kpi"}
+              isDisabled={supportsKpiOverlay && chart.mode !== "kpichart"}
               variant="secondary"
             >
               <Checkbox.Content>
@@ -537,6 +536,7 @@ function ChartPreview(props) {
               id="chart-preview-invert-growth"
               isSelected={chart.invertGrowth}
               onChange={_onChangeInvertGrowth}
+              isDisabled={supportsKpiOverlay && chart.mode !== "kpichart"}
               variant="secondary"
             >
               <Checkbox.Content>

@@ -47,6 +47,7 @@ import { buildChartRuntimeRequest, normalizeChartFilterCondition } from "../../m
 import { createMonitor, getMonitorOptions } from "../../api/observations";
 import WatchMetricModal from "./components/WatchMetricModal";
 import getChartRefreshInterval from "../../modules/getChartRefreshInterval";
+import { hasPresetCapability } from "../../visualization/presetRegistry";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -623,7 +624,8 @@ function Chart(props) {
   };
 
   const { projectId } = params;
-  const hasKpiSegment = chart.mode === "kpichart" || chart.type === "kpi";
+  const hasKpiSegment = chart.type === "kpi"
+    || (chart.mode === "kpichart" && hasPresetCapability(chart.type, "kpiOverlay"));
   const showChartTitle = !isCompact || !hasKpiSegment;
 
   return (

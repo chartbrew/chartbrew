@@ -162,6 +162,12 @@ function removeRuntimeChartFields(data = {}) {
     "preparedDataVisualizationFingerprint",
     "render",
   ].forEach((field) => delete chartData[field]);
+  if ((chartData.type === "bar" || chartData.type === undefined) && chartData.horizontal === true) {
+    chartData.type = "horizontalBar";
+    chartData.horizontal = false;
+  } else if (chartData.type === "horizontalBar") {
+    chartData.horizontal = false;
+  }
   return chartData;
 }
 
@@ -217,7 +223,12 @@ class ChartController {
       chart.id,
       options.timezone
     );
-    if (snapshot.visualizationFingerprint !== fingerprints.visualization) {
+    const migratedHorizontalSnapshot = !snapshot.visualizationFingerprint
+      && chart.type === "horizontalBar"
+      && snapshot.preparedData.results.every((result) => result.mark === "horizontalBar");
+    if (snapshot.visualizationFingerprint !== fingerprints.visualization
+      && !migratedHorizontalSnapshot
+    ) {
       if (options.refresh !== false) {
         try {
           return await runtimeCache.runSingleFlight(refreshKey, refresh);
@@ -228,7 +239,12 @@ class ChartController {
       return applyRuntimeChartValues(chart, attachLegacyRender(chart, { stale: true }));
     }
 
-    const stale = snapshot.sourceFingerprint !== fingerprints.source;
+    if (migratedHorizontalSnapshot && options.refresh !== false) {
+      runtimeCache.triggerBackgroundRefresh(refreshKey, refresh);
+    }
+
+    const stale = migratedHorizontalSnapshot
+      || snapshot.sourceFingerprint !== fingerprints.source;
     let renderedChart;
     try {
       renderedChart = compilePreparedRender(chart, snapshot.preparedData, {
@@ -1750,6 +1766,7 @@ class ChartController {
       chartDatasetConfigs = [],
       ...chartData
     } = data;
+    const canonicalChartData = removeRuntimeChartFields(chartData);
 
     // Filter out legacy fields and auto-populated fields
     const legacyFields = ["dashboardOrder", "chartSize"];
@@ -1767,11 +1784,11 @@ class ChartController {
     ];
 
     allowedFields.forEach((field) => {
-      if (chartData[field] !== undefined
+      if (canonicalChartData[field] !== undefined
         && !legacyFields.includes(field)
         && !autoPopulatedFields.includes(field)
       ) {
-        cleanChartData[field] = chartData[field];
+        cleanChartData[field] = canonicalChartData[field];
       }
     });
 

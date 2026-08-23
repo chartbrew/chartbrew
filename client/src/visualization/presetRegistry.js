@@ -12,6 +12,10 @@ export function getClientPresetImplementation(presetId) {
   return CLIENT_PRESET_IMPLEMENTATIONS[presetId] || null;
 }
 
+export function hasPresetCapability(presetId, capability) {
+  return Boolean(getPresetDefinition(presetId)?.capabilities?.includes(capability));
+}
+
 export function isReadyPreset(presetId) {
   return getPresetDefinition(presetId)?.releaseState === "ready"
     && Boolean(getClientPresetImplementation(presetId));

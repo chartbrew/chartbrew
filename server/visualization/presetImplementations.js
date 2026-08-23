@@ -44,6 +44,7 @@ const SERVER_PRESET_IMPLEMENTATIONS = Object.freeze({
   line: echartsImplementation("line"),
   area: echartsImplementation("area"),
   bar: echartsImplementation("bar"),
+  horizontalBar: echartsImplementation("horizontalBar"),
   pie: echartsImplementation("pie"),
   doughnut: echartsImplementation("doughnut"),
   radar: echartsImplementation("radar"),

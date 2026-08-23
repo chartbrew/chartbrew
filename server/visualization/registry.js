@@ -22,7 +22,17 @@ const MARK_DEFINITIONS = Object.freeze({
     },
   },
   bar: {
-    label: "Bar",
+    label: "Vertical bar",
+    requiredOneOf: [["category", "time"]],
+    slots: {
+      category: { kind: "dimension", types: ["nominal", "ordinal", "temporal"] },
+      time: { kind: "dimension", types: ["temporal"] },
+      value: { kind: "measure", required: true, types: ["quantitative"] },
+      breakdown: { kind: "dimension", types: ["nominal", "ordinal"] },
+    },
+  },
+  horizontalBar: {
+    label: "Horizontal bar",
     requiredOneOf: [["category", "time"]],
     slots: {
       category: { kind: "dimension", types: ["nominal", "ordinal", "temporal"] },

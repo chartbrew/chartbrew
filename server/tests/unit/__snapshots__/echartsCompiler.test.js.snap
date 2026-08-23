@@ -41,6 +41,20 @@ exports[`ECharts compiler > builds deterministic JSON for gauge 1`] = `
 ]
 `;
 
+exports[`ECharts compiler > builds deterministic JSON for horizontalBar 1`] = `
+[
+  [
+    10,
+  ],
+  [
+    null,
+  ],
+  [
+    30,
+  ],
+]
+`;
+
 exports[`ECharts compiler > builds deterministic JSON for line 1`] = `
 [
   [

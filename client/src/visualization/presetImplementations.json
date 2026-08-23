@@ -2,6 +2,7 @@
   "line": "echarts",
   "area": "echarts",
   "bar": "echarts",
+  "horizontalBar": "echarts",
   "pie": "echarts",
   "doughnut": "echarts",
   "radar": "echarts",

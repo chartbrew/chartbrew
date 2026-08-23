@@ -27,6 +27,27 @@
       "compositions": ["analysis", "limited", "sparkline"],
       "denseBarSpacing": 14,
       "limitedTickCount": 5
+    },
+    "horizontalBar": {
+      "compositions": ["comparison", "compact"]
+    },
+    "category": {
+      "compositions": [
+        "centered",
+        "side-summary",
+        "stacked-summary",
+        "micro",
+        "side-breakdown",
+        "stacked-breakdown"
+      ]
+    },
+    "matrix": {
+      "compositions": ["labeled", "bounded", "dense"],
+      "minimumLabeledCellSize": 18
+    },
+    "gauge": {
+      "compositions": ["large", "centered", "side-summary", "compact", "micro"],
+      "sideSummaryMaxHeight": 160
     }
   }
 }

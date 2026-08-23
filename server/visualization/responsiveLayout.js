@@ -73,11 +73,55 @@ function resolveBarComposition({ height, pointCount, seriesCount, width }) {
   });
 }
 
+function resolveHorizontalBarComposition({ height, width }) {
+  const geometry = getResponsiveGeometry(width, height);
+  return geometry.width === "narrow" || geometry.height === "shallow"
+    ? "compact"
+    : "comparison";
+}
+
+function resolveCategoryComposition({ height, width }) {
+  const geometry = getResponsiveGeometry(width, height);
+  if (geometry.width === "narrow" && geometry.height === "shallow") return "micro";
+  if (geometry.height === "shallow") return "side-summary";
+  if (geometry.width === "wide") return "side-breakdown";
+  if (geometry.height === "tall") return "stacked-breakdown";
+  if (geometry.width === "narrow") return "stacked-summary";
+  return "centered";
+}
+
+function resolveMatrixComposition({ columnCount = 1, height, rowCount = 1, width }) {
+  const geometry = getResponsiveGeometry(width, height);
+  if (geometry.width === "narrow" || geometry.height === "shallow") return "dense";
+  const cellSize = Math.min(
+    toSize(width) / Math.max(1, Number(columnCount) || 1),
+    toSize(height) / Math.max(1, Number(rowCount) || 1)
+  );
+  if (geometry.width === "regular"
+    || geometry.height === "regular"
+    || cellSize < responsiveLayout.presets.matrix.minimumLabeledCellSize) return "bounded";
+  return "labeled";
+}
+
+function resolveGaugeComposition({ height, width }) {
+  const geometry = getResponsiveGeometry(width, height);
+  if (geometry.width === "narrow" && geometry.height === "shallow") return "micro";
+  if (toSize(height) <= responsiveLayout.presets.gauge.sideSummaryMaxHeight
+    && geometry.width !== "narrow") return "side-summary";
+  if (geometry.width === "narrow") return "compact";
+  if (geometry.width === "wide" || geometry.height === "tall") return "large";
+  return "centered";
+}
+
 module.exports = {
   RESPONSIVE_LAYOUT: responsiveLayout,
   getBarLimitedMaxWidth,
   getLineLimitedMaxWidth,
   getResponsiveGeometry,
   resolveBarComposition,
+  resolveCategoryComposition,
+  resolveGaugeComposition,
+  resolveHorizontalBarComposition,
   resolveLineComposition,
+  resolveMatrixComposition,
 };

@@ -619,11 +619,12 @@ function ChartDatasetConfig(props) {
   const fillLayer = bindingLayers[0];
   const fillEnabled = fillLayer?.style?.fill
     ?? cdc.fill
-    ?? (chart.type === "bar" || chart.type === "area");
+    ?? (["area", "bar", "horizontalBar"].includes(chart.type));
   const configuredFillOpacity = fillLayer?.style?.fillOpacity;
   const fillOpacity = Number.isFinite(configuredFillOpacity)
     ? Math.min(1, Math.max(0, configuredFillOpacity))
-    : (chart.type === "bar" ? 0.65 : chart.type === "radar" ? 0.15 : 0.2);
+    : (["bar", "horizontalBar"].includes(chart.type)
+      ? 0.65 : chart.type === "radar" ? 0.15 : 0.2);
   const fillBaseColor = runtimeSeries[0]
     ? _getSeriesColor(runtimeSeries[0])
     : cdc.datasetColor || chartColors.blue.hex;

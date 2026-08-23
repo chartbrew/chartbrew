@@ -179,14 +179,14 @@ function getStyleForMark(layer, mark, saved = {}) {
   const style = { ...(layer.style || {}) };
   if (Object.prototype.hasOwnProperty.call(saved, "fill")) {
     style.fill = saved.fill;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fill = true;
   } else if (mark === "line" || mark === "radar") {
     style.fill = false;
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
     style.fillOpacity = saved.fillOpacity;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
   } else if (mark === "line") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
@@ -205,7 +205,7 @@ export function updateLayerMark(visualization, layerId, mark) {
     const savedMark = layer.options?.markState?.[mark] || {};
     if (layer.mark === mark) {
       if (
-        !["bar", "line", "radar"].includes(mark)
+        !["bar", "horizontalBar", "line", "radar"].includes(mark)
         || (
           Object.prototype.hasOwnProperty.call(savedMark, "fill")
           && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
@@ -239,6 +239,7 @@ export function updateLayerMark(visualization, layerId, mark) {
       ...layer,
       encoding: getEncodingForMark(layer, mark, markState),
       mark,
+      orientation: mark === "horizontalBar" ? "horizontal" : mark === "bar" ? "vertical" : layer.orientation,
       options,
       rowPath: saved?.rowPath || (mark === "table" ? layer.rowPath || "root[]" : layer.rowPath),
       style: getStyleForMark(layer, mark, saved),
@@ -258,7 +259,7 @@ export function updateBindingFill(visualization, bindingId, { fill, fillOpacity 
       fill: Boolean(fill),
       fillOpacity: Number.isFinite(normalizedOpacity)
         ? normalizedOpacity
-        : layer.mark === "bar"
+        : ["bar", "horizontalBar"].includes(layer.mark)
           ? DEFAULT_BAR_FILL_OPACITY
           : layer.mark === "radar"
             ? DEFAULT_RADAR_FILL_OPACITY

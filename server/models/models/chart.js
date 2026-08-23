@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     type: {
       type: DataTypes.STRING,
-      description: "The type of chart: line, area, bar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, markdown",
+      description: "The type of chart: line, area, bar, horizontalBar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, markdown",
     },
     subType: {
       type: DataTypes.STRING,
@@ -201,7 +201,7 @@ module.exports = (sequelize, DataTypes) => {
     horizontal: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      description: "Whether to display the chart horizontally - only works for bar charts"
+      description: "Legacy horizontal bar compatibility flag. Use the horizontalBar chart type."
     },
     showGrowth: {
       type: DataTypes.BOOLEAN,

@@ -170,8 +170,8 @@ function buildChartJsDatasets(preparedData, spec, domain, missingValue) {
 
 function compileChartJsCartesian({ chart, preparedData, runtimeContext, timezone, visualization }) {
   const marks = [...new Set(preparedData.results.map((result) => result.mark))];
-  if (marks.length !== 1 || !["area", "bar", "line"].includes(marks[0])) {
-    throw new Error("Cartesian Chart.js compiler requires uniform area, bar, or line layers");
+  if (marks.length !== 1 || !["area", "bar", "horizontalBar", "line"].includes(marks[0])) {
+    throw new Error("Cartesian Chart.js compiler requires uniform area, bar, horizontalBar, or line layers");
   }
 
   const projection = projectPreparedSeries({
@@ -192,19 +192,22 @@ function compileChartJsCartesian({ chart, preparedData, runtimeContext, timezone
       config.fill = true;
     });
   }
+  let chartType = mark;
+  if (mark === "area") chartType = "line";
+  if (mark === "horizontalBar") chartType = "bar";
   const chartWithSeries = {
     ...chart,
     ChartDatasetConfigs: compiled.configs,
     displayLegend: visualization.settings?.legend?.visible ?? chart.displayLegend ?? true,
-    horizontal: visualization.layers.some((layer) => layer.orientation === "horizontal"),
+    horizontal: mark === "horizontalBar",
     stacked: visualization.layers.some((layer) => layer.stack !== "none"),
-    type: mark === "area" ? "line" : mark,
+    type: chartType,
   };
   const axisData = {
     x: projection.labels,
     y: compiled.datasets,
   };
-  const compiler = mark === "bar"
+  const compiler = ["bar", "horizontalBar"].includes(mark)
     ? new BarChart(chartWithSeries, compiled.configs, axisData)
     : new LineChart(chartWithSeries, compiled.configs, axisData);
   const configuration = compiler.getConfiguration();

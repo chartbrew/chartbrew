@@ -357,7 +357,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
         </div>
       </div>
 
-      {["line", "bar"].includes(chart.type) && chart.visualization && (
+      {["line", "bar", "horizontalBar"].includes(chart.type) && chart.visualization && (
         <div className="mt-4 max-w-md">
           <Select
             aria-label="Missing data"
@@ -410,7 +410,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Checkbox>
           </div>
         )}
-        {chart.type === "bar" && (
+        {["bar", "horizontalBar"].includes(chart.type) && (
           <div>
             <Checkbox
               id="chart-settings-stacked"
@@ -423,23 +423,6 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                   <Checkbox.Indicator />
                 </Checkbox.Control>
                 Stack datasets
-              </Checkbox.Content>
-            </Checkbox>
-          </div>
-        )}
-        {chart.type === "bar" && (
-          <div>
-            <Checkbox
-              id="chart-settings-horizontal"
-              isSelected={chart.horizontal}
-              onChange={(selected) => onChange({ horizontal: selected })}
-              variant="secondary"
-            >
-              <Checkbox.Content>
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                Horizontal bars
               </Checkbox.Content>
             </Checkbox>
           </div>
@@ -505,7 +488,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Select>
           </div>
         )}
-        {(chart.type === "line" || chart.type === "area" || chart.type === "bar") && (
+        {(["line", "area", "bar", "horizontalBar"].includes(chart.type)) && (
           <div>
             <Checkbox
               id="chart-settings-log-scale"

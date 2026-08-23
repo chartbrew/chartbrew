@@ -12,6 +12,19 @@ test("distinguishes pie and doughnut ECharts options", () => {
   assert.equal(getEChartsPreset({ series: [{ radius: ["46%", "70%"], type: "pie" }] }), "doughnut");
 });
 
+test("distinguishes vertical and horizontal bar ECharts options", () => {
+  assert.equal(getEChartsPreset({
+    series: [{ type: "bar" }],
+    xAxis: { type: "category" },
+    yAxis: { type: "value" },
+  }), "bar");
+  assert.equal(getEChartsPreset({
+    series: [{ type: "bar" }],
+    xAxis: [{ type: "value" }],
+    yAxis: [{ type: "category" }],
+  }), "horizontalBar");
+});
+
 test("rejects a stale render after the chart type changes", () => {
   const render = {
     configuration: { series: [{ radius: "70%", type: "pie" }] },

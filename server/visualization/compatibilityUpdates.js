@@ -77,7 +77,7 @@ function getStyleForMark(layer, mark, saved = {}) {
   const style = { ...(layer.style || {}) };
   if (Object.prototype.hasOwnProperty.call(saved, "fill")) {
     style.fill = saved.fill;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fill = true;
   } else if (mark === "line" || mark === "radar") {
     style.fill = false;
@@ -86,7 +86,7 @@ function getStyleForMark(layer, mark, saved = {}) {
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
     style.fillOpacity = saved.fillOpacity;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
   } else if (mark === "line" || mark === "area") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
@@ -104,7 +104,7 @@ function updateLayerMark(layer, mark) {
   const savedMark = layer.options?.markState?.[mark] || {};
   if (layer.mark === mark) {
     if (
-      !["area", "bar", "line", "radar"].includes(mark)
+      !["area", "bar", "horizontalBar", "line", "radar"].includes(mark)
       || (
         Object.prototype.hasOwnProperty.call(savedMark, "fill")
         && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
@@ -168,11 +168,15 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
   const settings = { ...(next.settings || {}) };
 
   next.layers = next.layers.map((layer) => {
-    const mark = data.type || layer.mark;
-    const markedLayer = data.type ? updateLayerMark(layer, mark) : layer;
+    let mark = data.type || layer.mark;
+    if (data.horizontal === true && mark === "bar") mark = "horizontalBar";
+    if (data.type === undefined && data.horizontal === false && mark === "horizontalBar") mark = "bar";
+    const markedLayer = mark !== layer.mark ? updateLayerMark(layer, mark) : layer;
     let orientation = layer.orientation;
+    if (mark === "horizontalBar") orientation = "horizontal";
+    if (mark === "bar") orientation = "vertical";
     let stack = layer.stack;
-    if (data.horizontal !== undefined) {
+    if (data.horizontal !== undefined && !["bar", "horizontalBar"].includes(mark)) {
       orientation = data.horizontal ? "horizontal" : "vertical";
     }
     if (data.stacked !== undefined) {

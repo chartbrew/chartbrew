@@ -6,6 +6,7 @@ import {
   buildDoughnutValueTitle,
   createEChartsTooltipFormatter,
   formatDoughnutPercent,
+  getCategoryBreakdownItems,
   getDoughnutSliceFromChart,
 } from "./echartsTooltip.js";
 
@@ -124,17 +125,53 @@ test("reads doughnut slices from dataset rows or hover params", () => {
 test("formats doughnut hover titles as label, value, then percentage", () => {
   assert.equal(
     buildDoughnutHoverTitle({ name: "api", percent: 63.28, value: 412 }),
-    "{label|api}\n{value|412}\n{percent|63.3%}"
+    "{marker|●} {label|api}\n{value|412}\n{percent|63.28%}"
   );
   assert.equal(buildDoughnutValueTitle(651), "{value|651}");
   assert.equal(formatDoughnutPercent(12), "12%");
-  assert.equal(formatDoughnutPercent(12.04), "12%");
-  assert.equal(formatDoughnutPercent(12.25), "12.3%");
+  assert.equal(formatDoughnutPercent(12.04), "12.04%");
+  assert.equal(formatDoughnutPercent(12.25), "12.25%");
 });
 
-test("formats tight doughnut tooltips as the segment name only", () => {
-  const html = createEChartsTooltipFormatter(colors, { doughnutNameOnly: true })({
+test("builds stable category breakdown rows with colors, values, and percentages", () => {
+  const items = getCategoryBreakdownItems({
+    color: ["#4385F5", "#FF9500"],
+    dataset: [{
+      source: [
+        { category: "API", formattedPercent: "70%", formattedValue: "$70", id: "api", value: 70 },
+        { category: "Web", formattedPercent: "30%", formattedValue: "$30", id: "web", value: 30 },
+      ],
+    }],
+    series: [{ datasetIndex: 0, id: "series-1", type: "pie" }],
+  });
+
+  assert.deepEqual(items, [{
+    color: "#4385F5",
+    dataIndex: 0,
+    formattedPercent: "70%",
+    formattedValue: "$70",
+    key: "0:0",
+    name: "API",
+    seriesIndex: 0,
+    value: 70,
+  }, {
+    color: "#FF9500",
+    dataIndex: 1,
+    formattedPercent: "30%",
+    formattedValue: "$30",
+    key: "0:1",
+    name: "Web",
+    seriesIndex: 0,
+    value: 30,
+  }]);
+});
+
+test("formats micro category tooltips as trimmed label, value, and percentage", () => {
+  const html = createEChartsTooltipFormatter(colors, { category: true, compact: true })({
+    color: "#4385F5",
+    data: { formattedValue: "$412", value: 412 },
     name: "api",
+    percent: 63.28,
     seriesName: "Connections",
     seriesType: "pie",
     value: 412,
@@ -142,7 +179,8 @@ test("formats tight doughnut tooltips as the segment name only", () => {
 
   assert.equal((html.match(/api/g) || []).length, 1);
   assert.doesNotMatch(html, /Connections/);
-  assert.doesNotMatch(html, /412/);
+  assert.match(html, /\$412/);
+  assert.match(html, /63\.28%/);
   assert.doesNotMatch(html, /min-width/);
 });
 

@@ -6,6 +6,8 @@ const {
   RESPONSIVE_LAYOUT,
   getBarLimitedMaxWidth,
   getLineLimitedMaxWidth,
+  resolveCategoryComposition,
+  resolveMatrixComposition,
 } = require("../responsiveLayout");
 const { createSeriesId, serializeTypedValue } = require("../seriesIdentity");
 const { projectPreparedSeries } = require("../seriesProjection");
@@ -18,36 +20,36 @@ const {
   getStableColor,
 } = require("./chartJsCartesian");
 
-const CARTESIAN_PRESETS = new Set(["area", "bar", "line"]);
+const CARTESIAN_PRESETS = new Set(["area", "bar", "horizontalBar", "line"]);
 const PIE_PRESETS = new Set(["doughnut", "pie"]);
 const CENTRAL_VALUE_FONT = "Inter Tight, sans-serif";
-const MATRIX_CELL_GAP = 3;
-const MATRIX_GRID_INSET = Object.freeze({
-  bottom: 24,
-  left: 8,
-  right: 40,
-  top: 12,
+const MATRIX_GRID_INSETS = Object.freeze({
+  bounded: { bottom: 22, left: 6, right: 36, top: 10 },
+  dense: { bottom: 6, left: 6, right: 6, top: 6 },
+  labeled: { bottom: 24, left: 8, right: 40, top: 12 },
 });
 
-function getMatrixCellLayout(width, height, columnCount, rowCount) {
+function getMatrixCellLayout(width, height, columnCount, rowCount, composition) {
   const columns = Math.max(1, columnCount);
   const rows = Math.max(1, rowCount);
-  const availableWidth = Math.max(1, Number(width) - MATRIX_GRID_INSET.left - MATRIX_GRID_INSET.right);
-  const availableHeight = Math.max(1, Number(height) - MATRIX_GRID_INSET.top - MATRIX_GRID_INSET.bottom);
+  const inset = MATRIX_GRID_INSETS[composition];
+  const availableWidth = Math.max(1, Number(width) - inset.left - inset.right);
+  const availableHeight = Math.max(1, Number(height) - inset.top - inset.bottom);
   const cellSize = Math.max(1, Math.floor(Math.min(availableWidth / columns, availableHeight / rows)));
+  const cellGap = Math.min(3, Math.max(1, Math.floor(cellSize * 0.12)));
   const gridWidth = cellSize * columns;
   const gridHeight = cellSize * rows;
   return {
     cellSize,
-    gap: MATRIX_CELL_GAP,
+    gap: cellGap,
     grid: {
       containLabel: false,
       height: gridHeight,
-      left: MATRIX_GRID_INSET.left + Math.floor(Math.max(0, availableWidth - gridWidth) / 2),
-      top: MATRIX_GRID_INSET.top + Math.floor(Math.max(0, availableHeight - gridHeight) / 2),
+      left: inset.left + Math.floor(Math.max(0, availableWidth - gridWidth) / 2),
+      top: inset.top + Math.floor(Math.max(0, availableHeight - gridHeight) / 2),
       width: gridWidth,
     },
-    symbolSize: Math.max(1, cellSize - MATRIX_CELL_GAP),
+    symbolSize: Math.max(1, cellSize - cellGap),
   };
 }
 
@@ -104,6 +106,13 @@ function getLayerSeriesStyle(styles, series, layer) {
     name: style.legend || series.label,
     pointRadius,
   };
+}
+
+function getHorizontalBarRadius(stacked, stackIndex, stackCount) {
+  if (!stacked || stackCount <= 1) return 3;
+  const start = stackIndex === 0 ? 3 : 0;
+  const end = stackIndex === stackCount - 1 ? 3 : 0;
+  return [start, end, end, start];
 }
 
 function buildMarkLine(series, horizontal) {
@@ -243,6 +252,244 @@ function buildVerticalBarResponsiveMedia(option, pointCount) {
   });
 }
 
+function buildHorizontalBarResponsiveMedia(option) {
+  const { geometry } = RESPONSIVE_LAYOUT;
+  const compact = {
+    grid: {
+      bottom: 4,
+      containLabel: true,
+      left: 2,
+      right: 10,
+      top: 18,
+    },
+    legend: { show: false },
+    series: getBarSeriesMedia(option.series, false),
+    xAxis: {
+      axisLabel: { fontSize: 9, margin: 5, showMaxLabel: true, showMinLabel: true },
+      axisTick: { show: false },
+      position: "top",
+      splitLine: { show: false },
+    },
+    yAxis: {
+      axisLabel: { align: "left", fontSize: 9, margin: 76, overflow: "truncate", width: 68 },
+      axisTick: { show: false },
+    },
+  };
+  return [{
+    option: compact,
+    query: { maxWidth: geometry.width.narrowMax },
+  }, {
+    option: compact,
+    query: {
+      maxHeight: geometry.height.shallowMax,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }];
+}
+
+function getCategorySeriesMedia(series, composition) {
+  return series.map((item) => {
+    const doughnut = Array.isArray(item.radius);
+    let center = ["50%", "50%"];
+    let radius = doughnut ? ["52%", "90%"] : "90%";
+    if (composition === "side-summary") {
+      center = ["73%", "50%"];
+      radius = doughnut ? ["49%", "84%"] : "84%";
+    } else if (composition === "side-breakdown") {
+      center = ["75%", "50%"];
+      radius = doughnut ? ["51%", "88%"] : "88%";
+    } else if (composition === "stacked-summary") {
+      center = ["50%", "69%"];
+      radius = doughnut ? ["42%", "70%"] : "70%";
+    } else if (composition === "stacked-breakdown") {
+      center = ["50%", "27%"];
+      radius = doughnut ? ["49%", "84%"] : "84%";
+    }
+    return {
+      center,
+      label: { show: false },
+      labelLine: { show: false },
+      radius,
+    };
+  });
+}
+
+function buildCategoryResponsiveMedia(option) {
+  const { geometry } = RESPONSIVE_LAYOUT;
+  const summaryTitle = {
+    show: true,
+    textStyle: {
+      rich: {
+        value: { fontSize: 22, lineHeight: 27 },
+        percent: { fontSize: 10, lineHeight: 15 },
+      },
+    },
+  };
+  const doughnut = option.series.some((series) => Array.isArray(series.radius));
+  return [{
+    option: {
+      legend: { show: false },
+      series: getCategorySeriesMedia(option.series, "micro"),
+      title: { show: false },
+    },
+    query: {
+      maxHeight: geometry.height.shallowMax,
+      maxWidth: geometry.width.narrowMax,
+    },
+  }, {
+    option: {
+      legend: { show: false },
+      series: getCategorySeriesMedia(option.series, "side-summary"),
+      title: {
+        ...summaryTitle,
+        left: "8%",
+        textAlign: "left",
+        textVerticalAlign: "middle",
+        top: "50%",
+      },
+    },
+    query: {
+      maxHeight: geometry.height.shallowMax,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }, {
+    option: {
+      legend: { show: false },
+      series: getCategorySeriesMedia(option.series, "stacked-summary"),
+      title: {
+        ...summaryTitle,
+        left: "50%",
+        textAlign: "center",
+        textVerticalAlign: "top",
+        top: "8%",
+      },
+    },
+    query: {
+      maxHeight: geometry.height.regularMax,
+      maxWidth: geometry.width.narrowMax,
+      minHeight: geometry.height.shallowMax + 1,
+    },
+  }, {
+    option: {
+      legend: { show: false },
+      series: getCategorySeriesMedia(option.series, "side-breakdown"),
+      title: {
+        left: "75%",
+        show: doughnut,
+        textAlign: "center",
+        textVerticalAlign: "middle",
+        top: "50%",
+      },
+    },
+    query: {
+      minHeight: geometry.height.shallowMax + 1,
+      minWidth: geometry.width.regularMax + 1,
+    },
+  }, {
+    option: {
+      legend: { show: false },
+      series: getCategorySeriesMedia(option.series, "stacked-breakdown"),
+      title: {
+        left: "50%",
+        show: doughnut,
+        textAlign: "center",
+        textVerticalAlign: "middle",
+        top: "27%",
+      },
+    },
+    query: {
+      maxWidth: geometry.width.regularMax,
+      minHeight: geometry.height.regularMax + 1,
+    },
+  }];
+}
+
+function buildCategoryBreakdownGraphic(datasets, colors, renderContext, composition) {
+  if (!["side-breakdown", "stacked-breakdown"].includes(composition)) return [];
+  const width = Number(renderContext.width) || 0;
+  const height = Number(renderContext.height) || 0;
+  if (width < 10 || height < 10) return [];
+  const rows = datasets.flatMap((dataset) => dataset.source).map((row, index) => ({
+    color: colors[index % Math.max(1, colors.length)] || "#a1a1aa",
+    name: `${row.category ?? ""}`,
+    percent: row.formattedPercent,
+    value: row.formattedValue,
+  }));
+  const side = composition === "side-breakdown";
+  const rowHeight = 22;
+  const listWidth = Math.round(width * (side ? 0.42 : 0.84));
+  const availableHeight = Math.round(height * (side ? 0.88 : 0.46));
+  const capacity = Math.max(1, Math.floor(availableHeight / rowHeight));
+  const visibleRows = rows.slice(0, capacity);
+  const overflow = rows.length - visibleRows.length;
+  if (overflow > 0) {
+    visibleRows[visibleRows.length - 1] = {
+      color: "#a1a1aa",
+      name: `+${overflow + 1} more`,
+      percent: "",
+      value: "",
+    };
+  }
+  const listHeight = visibleRows.length * rowHeight;
+  const dark = renderContext.theme === "dark";
+  const textColor = dark ? "#f4f4f5" : "#27272a";
+  const mutedColor = dark ? "#a1a1aa" : "#71717a";
+  const children = visibleRows.flatMap((row, index) => {
+    const y = index * rowHeight + rowHeight / 2;
+    return [{
+      shape: { cx: 4, cy: y, r: 4 },
+      silent: true,
+      style: { fill: row.color },
+      type: "circle",
+    }, {
+      silent: true,
+      style: {
+        fill: textColor,
+        font: "11px Inter, sans-serif",
+        overflow: "truncate",
+        text: row.name,
+        textVerticalAlign: "middle",
+        width: Math.max(20, listWidth - 150),
+        x: 16,
+        y,
+      },
+      type: "text",
+    }, {
+      silent: true,
+      style: {
+        fill: textColor,
+        font: "11px ui-monospace, SFMono-Regular, Menlo, monospace",
+        text: row.value,
+        textAlign: "right",
+        textVerticalAlign: "middle",
+        x: listWidth - 58,
+        y,
+      },
+      type: "text",
+    }, {
+      silent: true,
+      style: {
+        fill: mutedColor,
+        font: "11px ui-monospace, SFMono-Regular, Menlo, monospace",
+        text: row.percent,
+        textAlign: "right",
+        textVerticalAlign: "middle",
+        x: listWidth,
+        y,
+      },
+      type: "text",
+    }];
+  });
+  return [{
+    children,
+    left: Math.round(width * (side ? 0.05 : 0.08)),
+    silent: true,
+    top: side ? Math.round((height - listHeight) / 2) : Math.round(height * 0.5),
+    type: "group",
+    z: 20,
+  }];
+}
+
 function buildCartesianOption({ preparedData, visualization, renderContext }) {
   const projection = projectPreparedSeries({
     chart: {},
@@ -257,51 +504,79 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
     label,
     ...projection.series.map((series) => series.values[index] ?? null),
   ]);
-  const horizontal = visualization.layers.some((layer) => layer.orientation === "horizontal");
+  const horizontal = preparedData.results[0]?.mark === "horizontalBar";
+  const dark = renderContext.theme === "dark";
+  const axisColor = dark ? "#71717a" : "#a1a1aa";
+  const stackGroups = new Map();
+  projection.series.forEach((series, index) => {
+    const layer = getLayer(visualization, series.layerId);
+    if (!layer.stack || layer.stack === "none") return;
+    const key = `stack-${layer.stack}`;
+    if (!stackGroups.has(key)) stackGroups.set(key, []);
+    stackGroups.get(key).push(index);
+  });
   const option = {
     ...getBaseOption(visualization, renderContext),
     dataset: { dimensions, source },
     grid: { containLabel: true, left: 16, right: 18, top: 42, bottom: 16 },
-    series: projection.series.map((series) => {
+    series: projection.series.map((series, seriesIndex) => {
       const layer = getLayer(visualization, series.layerId);
       const style = getLayerSeriesStyle(styles, series, layer);
-      const mark = series.mark === "area" ? "line" : series.mark;
+      let mark = series.mark;
+      if (series.mark === "area") mark = "line";
+      if (series.mark === "horizontalBar") mark = "bar";
       const formula = parseValueFormula(layer.encoding?.value?.formula);
+      const stacked = Boolean(layer.stack && layer.stack !== "none");
+      const stackMembers = stacked ? stackGroups.get(`stack-${layer.stack}`) || [] : [];
+      const stackIndex = stackMembers.indexOf(seriesIndex);
+      let labelPosition = "top";
+      if (mark === "bar") labelPosition = horizontal && !stacked ? "right" : "inside";
       return {
         areaStyle: style.areaStyle,
         connectNulls: visualization.settings?.missingValues?.policy === "zero",
         encode: horizontal
           ? { itemName: "category", x: series.id, y: "category" }
           : { itemName: "category", x: "category", y: series.id },
-        emphasis: { focus: "series" },
+        blur: horizontal ? { itemStyle: { opacity: 0.24 } } : undefined,
+        emphasis: {
+          focus: horizontal ? "self" : "series",
+          itemStyle: horizontal ? { opacity: 1 } : undefined,
+        },
         id: series.id,
         itemStyle: mark === "bar"
           ? {
             borderColor: style.color,
-            borderRadius: 3,
-            borderWidth: 1.5,
+            borderRadius: horizontal
+              ? getHorizontalBarRadius(stacked, stackIndex, stackMembers.length)
+              : 3,
+            borderWidth: horizontal && stacked ? 0 : 1.5,
             color: style.color,
           }
           : { color: style.color },
         label: {
           formatter: `${formula.prefix}{@${series.id}}${formula.suffix}`,
-          position: mark === "bar" ? "inside" : "top",
+          position: labelPosition,
           show: Boolean(visualization.settings?.dataLabels),
         },
         lineStyle: { color: style.color, width: 2 },
         markLine: buildMarkLine(series, horizontal),
         name: style.name,
+        barCategoryGap: horizontal ? "38%" : undefined,
+        barMaxWidth: horizontal ? 28 : undefined,
         showSymbol: Number(style.pointRadius) > 0,
         smooth: Boolean(layer.style?.smooth),
-        stack: layer.stack && layer.stack !== "none" ? `stack-${layer.stack}` : undefined,
+        stack: stacked ? `stack-${layer.stack}` : undefined,
         symbolSize: Number(style.pointRadius) > 0 ? Number(style.pointRadius) * 2 : 6,
         type: mark,
       };
     }),
     xAxis: horizontal
       ? {
-        axisLabel: { fontSize: 10, hideOverlap: true, margin: 8 },
+        axisLabel: { color: axisColor, fontSize: 10, hideOverlap: true, margin: 6 },
+        axisLine: { lineStyle: { color: axisColor, width: 1 }, show: true },
         axisTick: { show: false },
+        position: "top",
+        splitLine: { show: false },
         type: visualization.settings?.isLogarithmic || visualization.settings?.logarithmic ? "log" : "value",
       }
       : {
@@ -311,9 +586,19 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
       },
     yAxis: horizontal
       ? {
-        axisLabel: { fontSize: 10, hideOverlap: true, margin: 8 },
+        axisLabel: {
+          align: "left",
+          color: axisColor,
+          fontSize: 11,
+          hideOverlap: true,
+          margin: 96,
+          overflow: "truncate",
+          width: 88,
+        },
+        axisLine: { lineStyle: { color: axisColor, width: 1 }, show: true },
         axisTick: { show: false },
         inverse: true,
+        splitLine: { show: false },
         type: "category",
       }
       : {
@@ -322,6 +607,25 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
         type: visualization.settings?.isLogarithmic || visualization.settings?.logarithmic ? "log" : "value",
       },
   };
+
+  if (horizontal) {
+    option.legend = {
+      ...option.legend,
+      left: 0,
+      padding: 0,
+    };
+    option.grid = {
+      bottom: 4,
+      containLabel: true,
+      left: 2,
+      right: 16,
+      top: option.legend.show ? 28 : 20,
+    };
+    option.tooltip.axisPointer = {
+      shadowStyle: { color: dark ? "rgba(255, 255, 255, 0.06)" : "rgba(24, 24, 27, 0.05)" },
+      type: "shadow",
+    };
+  }
 
   if (!horizontal) {
     if (visualization.settings?.minValue !== null
@@ -333,6 +637,17 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
       && visualization.settings?.maxValue !== undefined
       && Number.isFinite(Number(visualization.settings.maxValue))) {
       option.yAxis.max = Number(visualization.settings.maxValue);
+    }
+  } else {
+    if (visualization.settings?.minValue !== null
+      && visualization.settings?.minValue !== undefined
+      && Number.isFinite(Number(visualization.settings.minValue))) {
+      option.xAxis.min = Number(visualization.settings.minValue);
+    }
+    if (visualization.settings?.maxValue !== null
+      && visualization.settings?.maxValue !== undefined
+      && Number.isFinite(Number(visualization.settings.maxValue))) {
+      option.xAxis.max = Number(visualization.settings.maxValue);
     }
   }
 
@@ -356,16 +671,27 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
     const layer = getLayer(visualization, result.id);
     const formula = parseValueFormula(layer.encoding?.value?.formula);
     const defaultSeries = result.series[0] || { id: `series-${result.id}`, label: result.name };
-    const source = result.rows.map((row) => {
+    const sourceValues = result.rows.map((row) => {
       const id = createSeriesId(result.id, row.category);
+      const value = applyValueFormula(row.value, layer.encoding?.value?.formula);
       return {
         category: row.category,
+        formattedValue: `${formula.prefix}${Number(value).toLocaleString(renderContext.locale)}${formula.suffix}`,
         id,
-        value: applyValueFormula(row.value, layer.encoding?.value?.formula),
+        value,
       };
     });
+    const sourceTotal = sourceValues.reduce((sum, row) => sum + (Number(row.value) || 0), 0);
+    const source = sourceValues.map((row) => ({
+      ...row,
+      formattedPercent: `${(sourceTotal > 0 ? (Number(row.value) / sourceTotal) * 100 : 0)
+        .toLocaleString(renderContext.locale, { maximumFractionDigits: 2 })}%`,
+    }));
     const datasetIndex = datasets.length;
-    datasets.push({ dimensions: ["id", "category", "value"], source });
+    datasets.push({
+      dimensions: ["id", "category", "value", "formattedValue", "formattedPercent"],
+      source,
+    });
     series.push({
       colorBy: "data",
       datasetIndex,
@@ -402,21 +728,40 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
     .reduce((sum, row) => sum + (Number(row.value) || 0), 0);
   const firstLayer = getLayer(visualization, preparedData.results[0]?.id);
   const totalFormula = parseValueFormula(firstLayer.encoding?.value?.formula);
+  const dark = renderContext.theme === "dark";
+  const colors = categoryMetadata.map((category) => metadataById.get(category.id).color);
+  const composition = resolveCategoryComposition({
+    height: renderContext.height,
+    width: renderContext.width,
+  });
+  const graphic = buildCategoryBreakdownGraphic(
+    datasets,
+    colors,
+    renderContext,
+    composition
+  );
   return {
     ...getBaseOption(visualization, renderContext, "item"),
-    color: categoryMetadata.map((category) => metadataById.get(category.id).color),
+    color: colors,
     dataset: datasets,
+    ...(graphic.length > 0 ? { graphic } : {}),
     series,
-    title: presetId === "doughnut" ? {
+    title: {
       left: "50%",
       padding: 0,
+      show: presetId === "doughnut",
       text: `{label|Total}\n{value|${totalFormula.prefix}${total.toLocaleString(renderContext.locale)}${totalFormula.suffix}}`,
       textAlign: "center",
       textVerticalAlign: "middle",
       textStyle: {
         fontWeight: 400,
         rich: {
-          label: { fontSize: 10, fontWeight: 400, lineHeight: 15 },
+          label: {
+            color: dark ? "#a1a1aa" : "#71717a",
+            fontSize: 10,
+            fontWeight: 400,
+            lineHeight: 15,
+          },
           value: {
             fontFamily: CENTRAL_VALUE_FONT,
             fontSize: 26,
@@ -424,15 +769,16 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
             lineHeight: 31,
           },
           percent: {
+            color: dark ? "#a1a1aa" : "#71717a",
             fontFamily: CENTRAL_VALUE_FONT,
             fontSize: 11,
-            fontWeight: 700,
+            fontWeight: 400,
             lineHeight: 16,
           },
         },
       },
       top: "50%",
-    } : undefined,
+    },
   };
 }
 
@@ -632,7 +978,20 @@ function buildMatrixOption({ preparedData, visualization, renderContext }) {
     : ["columnLabel", "rowLabel", "value"];
   const columnCount = (isCalendar ? matrix.weekLabels : matrix.columnLabels)?.length || 1;
   const rowCount = isCalendar ? 7 : (matrix.rowLabels?.length || 1);
-  const layout = getMatrixCellLayout(renderContext.width, renderContext.height, columnCount, rowCount);
+  const composition = resolveMatrixComposition({
+    columnCount,
+    height: renderContext.height,
+    rowCount,
+    width: renderContext.width,
+  });
+  const dense = composition === "dense";
+  const layout = getMatrixCellLayout(
+    renderContext.width,
+    renderContext.height,
+    columnCount,
+    rowCount,
+    composition
+  );
   return {
     ...getBaseOption(visualization, renderContext, "item"),
     dataset: [{
@@ -677,17 +1036,24 @@ function buildMatrixOption({ preparedData, visualization, renderContext }) {
       show: false,
     },
     xAxis: {
-      axisLabel: { fontSize: 10, hideOverlap: true, interval: "auto", margin: 8 },
+      axisLabel: {
+        fontSize: 10,
+        hideOverlap: true,
+        interval: "auto",
+        margin: 8,
+        show: !dense,
+      },
       axisLine: { show: false },
       axisTick: { show: false },
       boundaryGap: true,
       data: isCalendar ? matrix.weekLabels : matrix.columnLabels,
       splitArea: { show: false },
       splitLine: { show: false },
+      show: !dense,
       type: "category",
     },
     yAxis: {
-      axisLabel: { fontSize: 10, interval: 0, margin: 8 },
+      axisLabel: { fontSize: 10, interval: 0, margin: 8, show: !dense },
       axisLine: { show: false },
       axisTick: { show: false },
       boundaryGap: true,
@@ -698,6 +1064,7 @@ function buildMatrixOption({ preparedData, visualization, renderContext }) {
       position: "right",
       splitArea: { show: false },
       splitLine: { show: false },
+      show: !dense,
       type: "category",
     },
   };
@@ -707,6 +1074,16 @@ function toNumber(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   const parsed = Number.parseFloat(`${value}`.replace(/[^0-9.-]/g, ""));
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getGaugeActiveRangeIndex(ranges, value) {
+  const matchingIndex = ranges.findIndex((range, index) => {
+    const isLast = index === ranges.length - 1;
+    return value >= Number(range.min)
+      && (isLast ? value <= Number(range.max) : value < Number(range.max));
+  });
+  if (matchingIndex >= 0) return matchingIndex;
+  return value < Number(ranges[0]?.min) ? 0 : Math.max(0, ranges.length - 1);
 }
 
 function buildGaugeOption({ chart, preparedData, visualization, renderContext }) {
@@ -739,6 +1116,9 @@ function buildGaugeOption({ chart, preparedData, visualization, renderContext })
     value: Math.max(0, Number(range.max) - Number(range.min)),
   }));
   const label = seriesDefinition.label || result?.name || "Value";
+  const activeRange = rangeData[getGaugeActiveRangeIndex(ranges, value)];
+  const formattedValue = `${formula.prefix}${value.toLocaleString(renderContext.locale)}${formula.suffix}`;
+  const mutedColor = renderContext.theme === "dark" ? "#a1a1aa" : "#71717a";
   return {
     ...getBaseOption(visualization, renderContext, "item"),
     legend: { show: false },
@@ -772,6 +1152,7 @@ function buildGaugeOption({ chart, preparedData, visualization, renderContext })
         fontWeight: 700,
         formatter: `${formula.prefix}{value}${formula.suffix}`,
         offsetCenter: [0, "0%"],
+        show: false,
       },
       endAngle: -45,
       id: seriesDefinition.id,
@@ -788,12 +1169,146 @@ function buildGaugeOption({ chart, preparedData, visualization, renderContext })
       radius: "90%",
       splitLine: { show: false },
       startAngle: 225,
-      title: { fontSize: 12, offsetCenter: [0, "22%"], show: true },
+      title: { fontSize: 12, offsetCenter: [0, "22%"], show: false },
       tooltip: { show: false },
       type: "gauge",
       z: 10,
     }],
+    title: {
+      left: "50%",
+      padding: 0,
+      show: true,
+      text: `{value|${formattedValue}} {marker|●}\n{label|${label}}`,
+      textAlign: "center",
+      textVerticalAlign: "middle",
+      textStyle: {
+        fontWeight: 400,
+        rich: {
+          label: { color: mutedColor, fontSize: 15, fontWeight: 400, lineHeight: 23 },
+          marker: {
+            color: activeRange?.itemStyle?.color,
+            fontSize: 12,
+            fontWeight: 400,
+            lineHeight: 48,
+            padding: [0, 0, 0, 8],
+          },
+          value: {
+            fontFamily: CENTRAL_VALUE_FONT,
+            fontSize: 42,
+            fontWeight: 700,
+            lineHeight: 48,
+          },
+        },
+      },
+      top: "55%",
+    },
   };
+}
+
+function buildGaugeResponsiveMedia() {
+  const { geometry, presets } = RESPONSIVE_LAYOUT;
+  const compactSeries = [{
+    center: ["50%", "70%"],
+    label: { show: false },
+    radius: ["52%", "70%"],
+  }, {
+    center: ["50%", "70%"],
+    detail: { show: false },
+    pointer: { width: 4 },
+    radius: "70%",
+    title: { show: false },
+  }];
+  const sideSeries = [{
+    center: ["72%", "50%"],
+    label: { show: false },
+    radius: ["72%", "92%"],
+  }, {
+    center: ["72%", "50%"],
+    detail: { show: false },
+    pointer: { width: 4 },
+    radius: "92%",
+    title: { show: false },
+  }];
+  const microSeries = [{
+    center: ["50%", "55%"],
+    label: { show: false },
+    radius: ["70%", "90%"],
+  }, {
+    center: ["50%", "55%"],
+    detail: { show: false },
+    pointer: { width: 4 },
+    radius: "90%",
+    title: { show: false },
+  }];
+  return [{
+    option: {
+      series: microSeries,
+      title: { show: false },
+    },
+    query: {
+      maxHeight: geometry.height.shallowMax,
+      maxWidth: geometry.width.narrowMax,
+    },
+  }, {
+    option: {
+      series: sideSeries,
+      title: {
+        left: "8%",
+        textAlign: "left",
+        textStyle: {
+          rich: {
+            label: { fontSize: 13, lineHeight: 20 },
+            marker: { fontSize: 10, lineHeight: 34, padding: [0, 0, 0, 8] },
+            value: { fontSize: 28, lineHeight: 34 },
+          },
+        },
+        top: "50%",
+      },
+    },
+    query: {
+      maxHeight: presets.gauge.sideSummaryMaxHeight,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }, {
+    option: {
+      series: compactSeries,
+      title: {
+        left: "50%",
+        textAlign: "center",
+        textStyle: {
+          rich: {
+            label: { fontSize: 10, lineHeight: 15 },
+            marker: { fontSize: 8, lineHeight: 27, padding: [0, 0, 0, 8] },
+            value: { fontSize: 22, lineHeight: 27 },
+          },
+        },
+        textVerticalAlign: "top",
+        top: "8%",
+      },
+    },
+    query: {
+      maxWidth: geometry.width.narrowMax,
+      minHeight: geometry.height.shallowMax + 1,
+    },
+  }, {
+    option: {
+      title: {
+        textStyle: {
+          rich: {
+            label: { fontSize: 13, lineHeight: 20 },
+            marker: { fontSize: 10, lineHeight: 38, padding: [0, 0, 0, 8] },
+            value: { fontSize: 32, lineHeight: 38 },
+          },
+        },
+      },
+    },
+    query: {
+      maxHeight: geometry.height.regularMax,
+      maxWidth: geometry.width.regularMax,
+      minHeight: presets.gauge.sideSummaryMaxHeight + 1,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }];
 }
 
 function buildEChartsOption({ chart, preparedData, visualization, renderContext = {} }) {
@@ -823,107 +1338,17 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
     throw new Error(`ECharts compiler is not implemented for: ${presetId}`);
   }
 
-  const compactGaugeSeries = [{
-    center: ["50%", "52%"],
-    label: { show: false },
-    radius: ["70%", "90%"],
-  }, {
-    center: ["50%", "52%"],
-    detail: { fontSize: 18, offsetCenter: [0, "5%"] },
-    pointer: {
-      icon: "rect",
-      length: "50%",
-      offsetCenter: [0, "-50%"],
-      showAbove: true,
-      width: 4,
-    },
-    radius: "90%",
-    title: { show: false },
-  }];
-  const sideGaugeSeries = [{
-    center: ["72%", "52%"],
-    label: { show: false },
-    radius: ["72%", "92%"],
-  }, {
-    center: ["72%", "52%"],
-    detail: { show: false },
-    pointer: {
-      icon: "rect",
-      length: "50%",
-      offsetCenter: [0, "-50%"],
-      showAbove: true,
-      width: 4,
-    },
-    radius: "92%",
-    title: { show: false },
-  }];
-  const compactGaugeTitle = presetId === "gauge" ? {
-    itemGap: 4,
-    left: "10%",
-    show: true,
-    subtext: option.series[1].data[0].name,
-    subtextStyle: { fontSize: 14, fontWeight: 400, lineHeight: 22 },
-    text: `${option.series[1].detail.formatter}`.replace("{value}", option.series[1].data[0].value),
-    textAlign: "left",
-    textStyle: { fontFamily: CENTRAL_VALUE_FONT, fontSize: 28, fontWeight: 700 },
-    top: "34%",
-  } : undefined;
   const compactGrid = { containLabel: true, left: 8, right: 8, top: 12, bottom: 8 };
   if (presetId === "line") {
     option.media = buildLineResponsiveMedia(option, option.dataset.source.length);
   } else if (presetId === "bar" && option.xAxis?.type === "category") {
     option.media = buildVerticalBarResponsiveMedia(option, option.dataset.source.length);
+  } else if (presetId === "horizontalBar") {
+    option.media = buildHorizontalBarResponsiveMedia(option);
   } else if (presetId === "gauge") {
-    option.media = [{
-      option: {
-        grid: compactGrid,
-        legend: { show: false },
-        series: sideGaugeSeries,
-        title: compactGaugeTitle,
-      },
-      query: { maxHeight: 160, minWidth: 420 },
-    }, {
-      option: {
-        grid: compactGrid,
-        legend: { show: false },
-        series: compactGaugeSeries,
-        title: { show: false },
-      },
-      query: { maxWidth: 320 },
-    }];
-  } else if (presetId === "doughnut") {
-    const tightTitle = {
-      text: `${option.title?.text || ""}`.match(/\{value\|[^}]+\}/)?.[0] || option.title?.text,
-      textStyle: {
-        fontWeight: 400,
-        rich: {
-          value: {
-            fontFamily: CENTRAL_VALUE_FONT,
-            fontSize: 16,
-            fontWeight: 700,
-            lineHeight: 20,
-          },
-          percent: {
-            fontFamily: CENTRAL_VALUE_FONT,
-            fontSize: 9,
-            fontWeight: 700,
-            lineHeight: 12,
-          },
-        },
-      },
-    };
-    const tightDoughnut = {
-      legend: { show: false },
-      series: option.series.map(() => ({ label: { show: false } })),
-      title: tightTitle,
-    };
-    option.media = [{
-      option: tightDoughnut,
-      query: { maxHeight: 220 },
-    }, {
-      option: tightDoughnut,
-      query: { maxWidth: 320 },
-    }];
+    option.media = buildGaugeResponsiveMedia();
+  } else if (PIE_PRESETS.has(presetId)) {
+    option.media = buildCategoryResponsiveMedia(option);
   } else if (presetId !== "matrix") {
     option.media = [{
       option: {

@@ -3,7 +3,11 @@ const {
   getLineLimitedMaxWidth,
   getResponsiveGeometry,
   resolveBarComposition,
+  resolveCategoryComposition,
+  resolveGaugeComposition,
+  resolveHorizontalBarComposition,
   resolveLineComposition,
+  resolveMatrixComposition,
 } = require("../../visualization/responsiveLayout");
 
 describe("responsive visualization layout", () => {
@@ -36,5 +40,37 @@ describe("responsive visualization layout", () => {
     expect(resolveBarComposition({ height: 300, pointCount: 30, width: 800 })).toBe("analysis");
     expect(resolveBarComposition({ height: 300, pointCount: 80, width: 800 })).toBe("limited");
     expect(getBarLimitedMaxWidth(80)).toBe(1120);
+  });
+
+  it("selects category compositions from independent width and height bands", () => {
+    expect(resolveCategoryComposition({ height: 104, width: 189 })).toBe("micro");
+    expect(resolveCategoryComposition({ height: 104, width: 424 })).toBe("side-summary");
+    expect(resolveCategoryComposition({ height: 231, width: 189 })).toBe("stacked-summary");
+    expect(resolveCategoryComposition({ height: 231, width: 424 })).toBe("centered");
+    expect(resolveCategoryComposition({ height: 300, width: 800 })).toBe("side-breakdown");
+    expect(resolveCategoryComposition({ height: 400, width: 424 })).toBe("stacked-breakdown");
+    expect(resolveCategoryComposition({ height: 400, width: 189 })).toBe("stacked-breakdown");
+  });
+
+  it("selects horizontal bar comparison and compact compositions", () => {
+    expect(resolveHorizontalBarComposition({ height: 104, width: 424 })).toBe("compact");
+    expect(resolveHorizontalBarComposition({ height: 231, width: 189 })).toBe("compact");
+    expect(resolveHorizontalBarComposition({ height: 231, width: 424 })).toBe("comparison");
+  });
+
+  it("selects matrix compositions from geometry and cell density", () => {
+    expect(resolveMatrixComposition({ columnCount: 5, height: 104, rowCount: 7, width: 424 })).toBe("dense");
+    expect(resolveMatrixComposition({ columnCount: 5, height: 231, rowCount: 7, width: 189 })).toBe("dense");
+    expect(resolveMatrixComposition({ columnCount: 5, height: 231, rowCount: 7, width: 424 })).toBe("bounded");
+    expect(resolveMatrixComposition({ columnCount: 5, height: 400, rowCount: 7, width: 800 })).toBe("labeled");
+    expect(resolveMatrixComposition({ columnCount: 60, height: 400, rowCount: 7, width: 800 })).toBe("bounded");
+  });
+
+  it("selects gauge compositions from width and height", () => {
+    expect(resolveGaugeComposition({ height: 104, width: 189 })).toBe("micro");
+    expect(resolveGaugeComposition({ height: 104, width: 424 })).toBe("side-summary");
+    expect(resolveGaugeComposition({ height: 231, width: 189 })).toBe("compact");
+    expect(resolveGaugeComposition({ height: 231, width: 424 })).toBe("centered");
+    expect(resolveGaugeComposition({ height: 300, width: 800 })).toBe("large");
   });
 });
