@@ -31,7 +31,6 @@ import TableContainer from "./TableView/TableContainer";
 
 const LEGACY_COMPONENTS = {
   line: LineChart,
-  area: LineChart,
   bar: BarChart,
   horizontalBar: BarChart,
   pie: PieChart,
@@ -45,9 +44,7 @@ const LEGACY_COMPONENTS = {
 function LegacyGraphicalRenderer({ chart, ...props }) {
   const Component = LEGACY_COMPONENTS[chart.type];
   if (!Component) return null;
-  const fallbackChart = chart.type === "area"
-    ? { ...chart, type: "line" }
-    : chart.type === "horizontalBar"
+  const fallbackChart = chart.type === "horizontalBar"
       ? { ...chart, horizontal: true, type: "bar" }
       : chart;
   return <Component chart={fallbackChart} {...props} />;

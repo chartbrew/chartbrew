@@ -4,14 +4,19 @@ const { chromium } = require("playwright");
 const { buildEChartsOption } = require("../../visualization/compilers/echarts");
 
 const PRESETS = [
-  "line", "area", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
+  "line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
 ];
 const SIZES = [
-  { height: 150, width: 500 },
-  { height: 160, width: 240 },
-  { height: 200, width: 600 },
-  { height: 300, width: 800 },
-  { height: 630, width: 1200 },
+  { height: 80, surface: "dashboard", width: 189 },
+  { height: 104, surface: "editor", width: 189 },
+  { height: 231, surface: "embed", width: 189 },
+  { height: 231, surface: "dashboard", width: 307 },
+  { height: 80, surface: "editor", width: 424 },
+  { height: 104, surface: "embed", width: 424 },
+  { height: 173, surface: "dashboard", width: 424 },
+  { height: 231, surface: "editor", width: 424 },
+  { height: 335, surface: "embed", width: 424 },
+  { height: 630, surface: "export", width: 1200 },
 ];
 const SERIES_ID = "series-1111111111111111";
 
@@ -98,7 +103,7 @@ function buildFixture(preset) {
         name: "Revenue",
         orientation: preset === "horizontalBar" ? "horizontal" : "vertical",
         stack: "none",
-        style: { color: "#048BDE", fill: preset === "area" },
+        style: { color: "#048BDE", fill: false },
         transforms: [],
       }],
       settings: {
@@ -136,12 +141,12 @@ describe("ECharts fixed-size browser rendering", () => {
     await browser?.close();
   });
 
-  it.each(PRESETS)("renders %s at compact, dashboard, and export sizes", async (preset) => {
+  it.each(PRESETS)("renders %s at every required fixed size and surface", async (preset) => {
     for (const size of SIZES) {
-      const page = await browser.newPage({ viewport: size });
+      const page = await browser.newPage({ viewport: { height: size.height, width: size.width } });
       const option = buildEChartsOption({
         ...buildFixture(preset),
-        renderContext: { ...size, surface: size.width === 1200 ? "export" : "dashboard" },
+        renderContext: size,
       });
       await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
       await page.addScriptTag({

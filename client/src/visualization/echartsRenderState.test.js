@@ -25,6 +25,12 @@ test("distinguishes vertical and horizontal bar ECharts options", () => {
   }), "horizontalBar");
 });
 
+test("treats a filled line option as a line chart", () => {
+  assert.equal(getEChartsPreset({
+    series: [{ areaStyle: { opacity: 0.2 }, type: "line" }],
+  }), "line");
+});
+
 test("rejects a stale render after the chart type changes", () => {
   const render = {
     configuration: { series: [{ radius: "70%", type: "pie" }] },

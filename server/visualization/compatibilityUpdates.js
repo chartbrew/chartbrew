@@ -81,14 +81,12 @@ function getStyleForMark(layer, mark, saved = {}) {
     style.fill = true;
   } else if (mark === "line" || mark === "radar") {
     style.fill = false;
-  } else if (mark === "area") {
-    style.fill = true;
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
     style.fillOpacity = saved.fillOpacity;
   } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
-  } else if (mark === "line" || mark === "area") {
+  } else if (mark === "line") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
   } else if (mark === "radar") {
     style.fillOpacity = DEFAULT_RADAR_FILL_OPACITY;
@@ -104,7 +102,7 @@ function updateLayerMark(layer, mark) {
   const savedMark = layer.options?.markState?.[mark] || {};
   if (layer.mark === mark) {
     if (
-      !["area", "bar", "horizontalBar", "line", "radar"].includes(mark)
+      !["bar", "horizontalBar", "line", "radar"].includes(mark)
       || (
         Object.prototype.hasOwnProperty.call(savedMark, "fill")
         && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")

@@ -85,7 +85,7 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - dateFormat: string - optional date format (e.g. YYYY-MM-DD)
 - conditions: array - optional chart-specific filtering conditions
 - formula: string - transform values (e.g. "{val / 100}", "£{val}") (optional)
-- fillColor: string - area/line fill color, fillColor for bar charts (optional)
+- fillColor: string - line or bar fill color (optional)
 - fill: boolean - enable area fill, fill for bar charts (default: false)
 - multiFill: boolean - multiple fill colors, turn on for category charts - pie, dougnnut, bar (default: false)
 - pointRadius: integer - override point size (default: 0)

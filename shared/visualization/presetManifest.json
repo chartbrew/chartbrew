@@ -14,18 +14,6 @@
       "ssr": false
     },
     {
-      "id": "area",
-      "label": "Area",
-      "mark": "area",
-      "releaseState": "ready",
-      "renderer": "echarts",
-      "requiredFieldRoles": ["value"],
-      "requiredOneOf": [["time", "category"]],
-      "capabilities": ["breakdown", "goal", "kpiOverlay", "legend", "responsive", "theme", "timeseries"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
-    },
-    {
       "id": "bar",
       "label": "Vertical bar",
       "mark": "bar",

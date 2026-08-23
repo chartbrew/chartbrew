@@ -20,7 +20,7 @@ const {
   getStableColor,
 } = require("./chartJsCartesian");
 
-const CARTESIAN_PRESETS = new Set(["area", "bar", "horizontalBar", "line"]);
+const CARTESIAN_PRESETS = new Set(["bar", "horizontalBar", "line"]);
 const PIE_PRESETS = new Set(["doughnut", "pie"]);
 const CENTRAL_VALUE_FONT = "Inter Tight, sans-serif";
 const MATRIX_GRID_INSETS = Object.freeze({
@@ -99,7 +99,7 @@ function getLayerSeriesStyle(styles, series, layer) {
   const style = styles.get(series.id) || {};
   const pointRadius = style.pointRadius ?? layer.style?.pointRadius;
   return {
-    areaStyle: layer.mark === "area" || style.fill
+    areaStyle: style.fill
       ? { color: style.fillColor || style.datasetColor, opacity: style.fillOpacity ?? 0.2 }
       : undefined,
     color: style.datasetColor || getStableColor(series.id),
@@ -523,7 +523,6 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
       const layer = getLayer(visualization, series.layerId);
       const style = getLayerSeriesStyle(styles, series, layer);
       let mark = series.mark;
-      if (series.mark === "area") mark = "line";
       if (series.mark === "horizontalBar") mark = "bar";
       const formula = parseValueFormula(layer.encoding?.value?.formula);
       const stacked = Boolean(layer.stack && layer.stack !== "none");

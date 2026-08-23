@@ -23,7 +23,7 @@ function makeVisualization(mark, encoding, options = {}) {
       stack: options.stack || "none",
       style: {
         color: "#048BDE",
-        fill: mark === "area",
+        fill: options.fill ?? false,
         fillOpacity: 0.2,
       },
       transforms: [],
@@ -70,7 +70,7 @@ const defaultSeries = [{
 }];
 
 function buildFixture(mark) {
-  if (["area", "bar", "horizontalBar", "line"].includes(mark)) {
+  if (["bar", "horizontalBar", "line"].includes(mark)) {
     return {
       preparedData: makePrepared(
         mark,
@@ -176,7 +176,7 @@ function buildFixture(mark) {
 }
 
 function getOptionValues(mark, option) {
-  if (["area", "bar", "horizontalBar", "line", "polar"].includes(mark)) {
+  if (["bar", "horizontalBar", "line", "polar"].includes(mark)) {
     return option.dataset.source.map((row) => row.slice(1));
   }
   if (["doughnut", "pie"].includes(mark)) {
@@ -188,7 +188,7 @@ function getOptionValues(mark, option) {
 }
 
 function getEChartsSeriesValues(mark, option) {
-  if (["area", "bar", "horizontalBar", "line", "polar"].includes(mark)) {
+  if (["bar", "horizontalBar", "line", "polar"].includes(mark)) {
     const source = option.dataset.source;
     return option.series.map((series, seriesIndex) => {
       return source.map((row) => row[seriesIndex + 1]);
@@ -211,7 +211,7 @@ function getChartJsSeriesValues(mark, configuration) {
 
 describe("ECharts compiler", () => {
   const graphicalPresets = [
-    "line", "area", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
+    "line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
   ];
 
   it.each(graphicalPresets)("builds deterministic JSON for %s", (mark) => {
@@ -379,8 +379,8 @@ describe("ECharts compiler", () => {
       .toEqual(buildEChartsOption(reordered).series.map((series) => series.id));
   });
 
-  it("contains responsive fixed-size rules and reduced-motion support", () => {
-    const fixture = buildFixture("area");
+  it("contains line responsive rules and reduced-motion support", () => {
+    const fixture = buildFixture("line");
     const option = buildEChartsOption({
       ...fixture,
       renderContext: {
@@ -393,8 +393,8 @@ describe("ECharts compiler", () => {
 
     expect(option.animation).toBe(false);
     expect(option.media).toEqual(expect.arrayContaining([
-      expect.objectContaining({ query: { maxHeight: 220 } }),
-      expect.objectContaining({ query: { maxWidth: 320 } }),
+      expect.objectContaining({ query: { maxHeight: 149, minWidth: 260 } }),
+      expect.objectContaining({ query: { maxWidth: 259 } }),
     ]));
     expect(option.aria.enabled).toBe(true);
     expect(option.aria.decal.show).toBe(false);
@@ -412,6 +412,39 @@ describe("ECharts compiler", () => {
     const narrow = option.media.find((item) => item.query.maxWidth === 259);
     const shallow = option.media.find((item) => item.query.maxHeight === 149);
 
+    expect(limited.query).toEqual({ maxWidth: 519, minHeight: 150, minWidth: 260 });
+    expect(limited.option).toMatchObject({
+      legend: { show: true },
+      series: [{ label: { show: false }, showSymbol: false, symbolSize: 0 }],
+      xAxis: { axisLabel: { interval: 5, showMaxLabel: true, showMinLabel: true } },
+      yAxis: { splitLine: { lineStyle: { opacity: 0.28 }, show: true } },
+    });
+    expect(narrow.option).toMatchObject({
+      grid: { containLabel: false },
+      legend: { show: false },
+      series: [{ label: { show: false }, showSymbol: false, symbolSize: 0 }],
+      xAxis: { show: false },
+      yAxis: { show: false },
+    });
+    expect(shallow.query).toEqual({ maxHeight: 149, minWidth: 260 });
+    expect(shallow.option.xAxis.show).toBe(false);
+    expect(shallow.option.yAxis.show).toBe(false);
+  });
+
+  it("keeps the saved fill treatment in every responsive line composition", () => {
+    const fixture = buildFixture("line");
+    fixture.visualization.layers[0].style.fill = true;
+    fixture.preparedData.results[0].rows = Array.from({ length: 30 }, (_, index) => ({
+      category: `Day ${index + 1}`,
+      seriesId: defaultSeries[0].id,
+      value: index + 1,
+    }));
+    const option = buildEChartsOption(fixture);
+    const limited = option.media.find((item) => item.query.maxWidth === 519);
+    const narrow = option.media.find((item) => item.query.maxWidth === 259);
+    const shallow = option.media.find((item) => item.query.maxHeight === 149);
+
+    expect(option.series[0].areaStyle).toMatchObject({ opacity: 0.2 });
     expect(limited.query).toEqual({ maxWidth: 519, minHeight: 150, minWidth: 260 });
     expect(limited.option).toMatchObject({
       legend: { show: true },
@@ -835,6 +868,6 @@ describe("preset registry contract", () => {
       .filter((preset) => preset.capabilities.includes("kpiOverlay"))
       .map((preset) => preset.id);
 
-    expect(supported).toEqual(["line", "area", "bar"]);
+    expect(supported).toEqual(["line", "bar"]);
   });
 });

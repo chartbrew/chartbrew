@@ -97,8 +97,7 @@ not enable KPI mode by itself.
 
 | Preset | Shallow or dense | Balanced regular | Wide or tall |
 | --- | --- | --- | --- |
-| Line | Sparkline; no Y axis, grid, legend, or point symbols; at most first/latest X context | Limited ticks and subtle grid; keep the legend | Full axes, goals, legend, and user-enabled points |
-| Area | Line sparkline with restrained fill; same KPI rules as line | Limited ticks and low-opacity fill | Full axes, goals, stacking, and legend |
+| Line | Sparkline; no Y axis, grid, legend, or point symbols; preserve the optional fill and at most first/latest X context | Limited ticks and subtle grid; keep the legend and low-opacity fill when enabled | Full axes, goals, legend, user-enabled points, and optional fill |
 | Vertical bar | Hide data labels when bar width is insufficient; reduce ticks and grid | Keep readable category ticks and conditional inside labels | Full axes, stacking, goals, and legend |
 | Horizontal bar | Compact comparison: keep category and value axes, hide legend and direct labels | Clear top value axis, ordered categories, optional end labels, row hover | Full comparison view, stacking, goals, legend, and linked row emphasis |
 | Doughnut | Use `micro`, `side-summary`, or `stacked-summary` from the independent width and height bands | Centered ring with conditional labels and center total | Use `side-breakdown` when wide and `stacked-breakdown` when tall; keep the ring and value list linked on hover and focus |
@@ -169,7 +168,7 @@ persisted visualization field.
 ## Delivery Order
 
 1. Shared geometry, density resolver, chart chrome allocation, and KPI composition.
-2. Line and area, including KPI plus sparkline.
+2. Line with optional fill, including KPI plus sparkline.
 3. Vertical bar, then the separate `horizontalBar` comparison preset.
 4. Doughnut and pie category summaries, then polar area.
 5. Matrix and gauge.
@@ -180,6 +179,7 @@ persisted visualization field.
 
 - [x] Add shared geometry metadata and matching client/server resolvers.
 - [x] Add line `analysis`, `limited`, and `sparkline` compositions.
+- [x] Preserve the saved fill treatment in every responsive line composition.
 - [x] Replace the fixed KPI plot offset with measured flex allocation for KPI plus line charts.
 - [x] Add vertical bar `analysis`, `limited`, and `sparkline` compositions.
 - [x] Add the canonical `horizontalBar` preset with `comparison` and `compact` compositions.
@@ -188,7 +188,7 @@ persisted visualization field.
 - [x] Add matrix `labeled`, `bounded`, and `dense` compositions with square cells in every state.
 - [x] Add gauge `large`, `centered`, `side-summary`, and `compact` compositions with active-range context.
 - [x] Limit KPI overlays to presets with the shared `kpiOverlay` capability.
-- [ ] Apply the contract to area and the remaining presets in the delivery order.
+- [ ] Apply the contract to the remaining presets in the delivery order.
 
 ## Testing And Acceptance
 

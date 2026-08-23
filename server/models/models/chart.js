@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     type: {
       type: DataTypes.STRING,
-      description: "The type of chart: line, area, bar, horizontalBar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, markdown",
+      description: "The type of chart: line, bar, horizontalBar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, markdown",
     },
     subType: {
       type: DataTypes.STRING,

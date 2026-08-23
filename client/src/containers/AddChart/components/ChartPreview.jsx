@@ -5,7 +5,7 @@ import {
   Button, Checkbox, Chip, Separator, Input, Link, Popover, Skeleton, Tooltip,
 } from "@heroui/react";
 import {
-  TbChartBar, TbChartColumn, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash,
+  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash,
   TbMathAvg,
 } from "react-icons/tb";
 import { TiChartPie } from "react-icons/ti";
@@ -217,102 +217,121 @@ function ChartPreview(props) {
 
   return (
     <div className={"bg-surface rounded-3xl mx-auto p-4 w-full"}>
-      {chart && chart.chartData && chart.ChartDatasetConfigs && (
-        <>
-          <div className={"w-full"}>
-            <Row justify="flex-between" align="center">
-              <div className="flex items-center gap-1">
-                <Button
-                  onPress={_onRefreshData}
-                  isPending={chartLoading}
-                  size="sm"
-                  variant="tertiary" >
-                  {chartLoading ? <ButtonSpinner /> : null}
-                  {"Refresh chart"}
-                  {!chartLoading ? <LuRefreshCw size={18} /> : null}
-                </Button>
-                <div className="w-2" />
-                <Checkbox
-                  id="chart-preview-use-cache"
-                  isSelected={useCache}
-                  onChange={changeCache}
-                  variant="secondary"
-                >
-                  <Checkbox.Content>
-                    <Checkbox.Control className="size-4 shrink-0">
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                    Use cached data
-                  </Checkbox.Content>
-                </Checkbox>
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <div><LuInfo /></div>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Chartbrew will use cached data for extra editing speed ⚡️</Tooltip.Content>
-                </Tooltip>
-              </div>
-
-              {_checkIfFilters() && (
-                <Popover>
-                  <Popover.Trigger>
-                    <Link className="text-gray-500">
-                      <LuListFilter />
-                    </Link>
-                  </Popover.Trigger>
-                  <Popover.Content>
-                    <Popover.Dialog>
-                      <ChartFilters
-                        chart={chart}
-                        onAddFilter={_onAddFilter}
-                        onClearFilter={_onClearFilter}
-                        conditions={conditions}
-                      />
-                    </Popover.Dialog>
-                  </Popover.Content>
-                </Popover>
-              )}
-            </Row>
-            {chart.ChartDatasetConfigs && conditions.length > 0 && (
-              <>
-                <div className="h-4" />
-                <div className="flex items-center gap-1">
-                  {chart.ChartDatasetConfigs && conditions.map((c) => (
-                    <Chip
-                      variant="primary"
-                      key={c.id}
-                      size="sm"
-                    >
-                      <Text size="sm">
-                        {c.type !== "date" && `${c.value}`}
-                        {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                      </Text>
-                      <Link onPress={() => _onClearFilter(c)} className="text-default-500 flex items-center">
-                        <LuCircleX size={14} />
-                      </Link>
-                    </Chip>
-                  ))}
-                </div>
-              </>
-            )}
-            <div className="h-4" />
-            <Row>
-              <Separator />
-            </Row>
-            <div className="h-4" />
-            <div className="flex h-[300px] w-full items-center justify-center">
-              <div className="h-full w-full min-h-0">
-                <ChartRenderer
-                  chart={chart}
-                  editMode
-                  height={300}
-                  loading={chartLoading || transitioning}
-                  redraw={redraw}
-                  redrawComplete={_redrawComplete}
-                />
-              </div>
+      {chart && chart.type && (chart.chartData || chartLoading || chart.ChartDatasetConfigs?.length > 0) && (
+        <div className={"w-full"}>
+          <Row justify="flex-between" align="center">
+            <div className="flex items-center gap-1">
+              <Button
+                onPress={_onRefreshData}
+                isPending={chartLoading}
+                size="sm"
+                variant="tertiary"
+              >
+                {chartLoading ? <ButtonSpinner /> : null}
+                {"Refresh chart"}
+                {!chartLoading ? <LuRefreshCw size={18} /> : null}
+              </Button>
+              <div className="w-2" />
+              <Checkbox
+                id="chart-preview-use-cache"
+                isSelected={useCache}
+                onChange={changeCache}
+                variant="secondary"
+              >
+                <Checkbox.Content>
+                  <Checkbox.Control className="size-4 shrink-0">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  Use cached data
+                </Checkbox.Content>
+              </Checkbox>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <div><LuInfo /></div>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Chartbrew will use cached data for extra editing speed ⚡️</Tooltip.Content>
+              </Tooltip>
             </div>
+
+            {_checkIfFilters() && (
+              <Popover>
+                <Popover.Trigger>
+                  <Link className="text-gray-500">
+                    <LuListFilter />
+                  </Link>
+                </Popover.Trigger>
+                <Popover.Content>
+                  <Popover.Dialog>
+                    <ChartFilters
+                      chart={chart}
+                      onAddFilter={_onAddFilter}
+                      onClearFilter={_onClearFilter}
+                      conditions={conditions}
+                    />
+                  </Popover.Dialog>
+                </Popover.Content>
+              </Popover>
+            )}
+          </Row>
+          {chart.ChartDatasetConfigs && conditions.length > 0 && (
+            <>
+              <div className="h-4" />
+              <div className="flex items-center gap-1">
+                {chart.ChartDatasetConfigs && conditions.map((c) => (
+                  <Chip
+                    variant="primary"
+                    key={c.id}
+                    size="sm"
+                  >
+                    <Text size="sm">
+                      {c.type !== "date" && `${c.value}`}
+                      {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                    </Text>
+                    <Link onPress={() => _onClearFilter(c)} className="text-default-500 flex items-center">
+                      <LuCircleX size={14} />
+                    </Link>
+                  </Chip>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="h-4" />
+          <Row>
+            <Separator />
+          </Row>
+          <div className="h-4" />
+        </div>
+      )}
+
+      {chart && chart.chartData && chart.ChartDatasetConfigs && (
+        <div className="flex h-[300px] w-full items-center justify-center">
+          <div className="h-full w-full min-h-0">
+            <ChartRenderer
+              chart={chart}
+              editMode
+              height={300}
+              loading={chartLoading || transitioning}
+              redraw={redraw}
+              redrawComplete={_redrawComplete}
+            />
           </div>
+        </div>
+      )}
+
+      {chart && chart.type && !chart.chartData && (
+        <div className="flex h-[300px] w-full items-center justify-center">
+          {chartLoading ? (
+            <div className="h-full w-full" role="status" aria-label="Loading chart data">
+              <Skeleton className="h-full w-full rounded-3xl" />
+            </div>
+          ) : (
+            <Text className="text-muted text-[20px]">Configure the dataset to get started</Text>
+          )}
+        </div>
+      )}
+
+      {chart && chart.type && (chart.chartData || chartLoading || chart.ChartDatasetConfigs?.length > 0) && (
+        <>
           <div className="h-4" />
           <div className="border-solid border border-divider px-3 py-2 rounded-3xl chart-preview-types">
             <div className="flex flex-row gap-4 justify-around flex-wrap">
@@ -332,7 +351,7 @@ function ChartPreview(props) {
                   <Tooltip.Trigger>
                     <Button
                       variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "outline" : "primary"} onPress={_toggleAccumulation}
-                      isDisabled={chart.type !== "line" && chart.type !== "area" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
+                      isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi" && chart.type !== "gauge"}
                       isIconOnly
                     >
                       <FaChartLine size={20} />
@@ -366,17 +385,6 @@ function ChartPreview(props) {
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Display as line chart</Tooltip.Content>
-                </Tooltip>
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <Button
-                      variant={chart.type !== "area" ? "outline" : "primary"}
-                      onPress={() => _onChangeChartType({ type: "area" })} isIconOnly
-                    >
-                      <FaChartLine size={20} />
-                    </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Display as area chart</Tooltip.Content>
                 </Tooltip>
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -485,18 +493,6 @@ function ChartPreview(props) {
             </div>
           </div>
         </>
-      )}
-
-      {chart && chart.type && !chart.chartData && (
-        <div className="flex h-[300px] w-full items-center justify-center">
-          {chartLoading ? (
-            <div className="h-full w-full" role="status" aria-label="Loading chart data">
-              <Skeleton className="h-full w-full rounded-3xl" />
-            </div>
-          ) : (
-            <Text className="text-muted text-[20px]">Configure the dataset to get started</Text>
-          )}
-        </div>
       )}
 
       {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0

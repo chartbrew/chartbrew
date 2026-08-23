@@ -619,7 +619,7 @@ function ChartDatasetConfig(props) {
   const fillLayer = bindingLayers[0];
   const fillEnabled = fillLayer?.style?.fill
     ?? cdc.fill
-    ?? (["area", "bar", "horizontalBar"].includes(chart.type));
+    ?? (["bar", "horizontalBar"].includes(chart.type));
   const configuredFillOpacity = fillLayer?.style?.fillOpacity;
   const fillOpacity = Number.isFinite(configuredFillOpacity)
     ? Math.min(1, Math.max(0, configuredFillOpacity))

@@ -1,19 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ECharts compiler > builds deterministic JSON for area 1`] = `
-[
-  [
-    10,
-  ],
-  [
-    null,
-  ],
-  [
-    30,
-  ],
-]
-`;
-
 exports[`ECharts compiler > builds deterministic JSON for bar 1`] = `
 [
   [

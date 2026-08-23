@@ -27,7 +27,7 @@ export function getEChartsPreset(option) {
       : "bar";
   }
   if (series.some((item) => item.type === "line")) {
-    return series.some((item) => item.areaStyle) ? "area" : "line";
+    return "line";
   }
   return null;
 }

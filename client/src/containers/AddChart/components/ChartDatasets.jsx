@@ -108,7 +108,7 @@ function ChartDatasets(props) {
         dataset_id: datasetId,
         legend: getDatasetDisplayName(selectedDataset),
         datasetColor: newColor.hex,
-        fill: ["area", "bar", "horizontalBar"].includes(chart.type),
+        fill: ["bar", "horizontalBar"].includes(chart.type),
         order: chart.ChartDatasetConfigs[chart.ChartDatasetConfigs.length - 1]?.order + 1 || 0,
         ...defaultBindings,
       },

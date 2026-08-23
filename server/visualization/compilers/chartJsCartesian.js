@@ -170,8 +170,8 @@ function buildChartJsDatasets(preparedData, spec, domain, missingValue) {
 
 function compileChartJsCartesian({ chart, preparedData, runtimeContext, timezone, visualization }) {
   const marks = [...new Set(preparedData.results.map((result) => result.mark))];
-  if (marks.length !== 1 || !["area", "bar", "horizontalBar", "line"].includes(marks[0])) {
-    throw new Error("Cartesian Chart.js compiler requires uniform area, bar, horizontalBar, or line layers");
+  if (marks.length !== 1 || !["bar", "horizontalBar", "line"].includes(marks[0])) {
+    throw new Error("Cartesian Chart.js compiler requires uniform bar, horizontalBar, or line layers");
   }
 
   const projection = projectPreparedSeries({
@@ -187,13 +187,7 @@ function compileChartJsCartesian({ chart, preparedData, runtimeContext, timezone
   const missingValue = missingPolicy === "zero" ? 0 : null;
   const compiled = buildChartJsDatasets(preparedData, visualization, domain, missingValue);
   const mark = marks[0];
-  if (mark === "area") {
-    compiled.configs.forEach((config) => {
-      config.fill = true;
-    });
-  }
   let chartType = mark;
-  if (mark === "area") chartType = "line";
   if (mark === "horizontalBar") chartType = "bar";
   const chartWithSeries = {
     ...chart,

@@ -283,9 +283,9 @@ or internal cache state.
   the same payload in both fields. This gives old clients and the ECharts error boundary a fallback
   without making either renderer output durable.
 - Add a central React `ChartRenderer` and an ECharts error boundary.
-- First reach parity for line, bar, pie, doughnut, radar, polar, matrix, and gauge. Then add area as
-  the first new polished preset. Keep KPI, average, table, and markdown native unless a measured
-  benefit supports a move.
+- First reach parity for line, bar, pie, doughnut, radar, polar, matrix, and gauge. Keep area fill as
+  a line display option. Keep KPI, average, table, and markdown native unless a measured benefit
+  supports a move.
 - Run Chart.js and ECharts golden comparisons during rollout. Keep Chart.js as an internal fallback.
 - Keep reports and snapshots on the current Playwright browser-capture path during this phase.
 - Complete when supported presets render in the dashboard, editor, embed, current reports and
@@ -297,7 +297,7 @@ or internal cache state.
 - Make controls preset-aware. For example, line exposes smoothing, points, area fill, gaps, axes,
   legend, and reference lines; bar exposes stacking, orientation, width, spacing, and rounding.
 - Add new presets only after data binding, validation, responsive, theme, export, and accessibility
-  checks pass. Scatter and broader heatmap presets are the first candidates after area.
+  checks pass. Scatter and broader heatmap presets are the first candidates.
 - Do not show renderer names, migration state, contract versions, or engine controls in product UI.
 - Complete when ECharts is the default for every ready graphical preset.
 

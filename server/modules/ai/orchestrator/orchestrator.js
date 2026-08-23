@@ -837,7 +837,7 @@ async function availableTools() {
         },
         required: ["question", "result_shape"]
       }
-      // returns: { type:"kpi|line|bar|area|pie", title, encodings:{}, options:{} }
+      // returns: { type:"kpi|line|bar|pie", title, encodings:{}, options:{} }
     },
     {
       name: "create_dataset",
@@ -1002,7 +1002,7 @@ async function availableTools() {
           visualization: AI_VISUALIZATION_SCHEMA,
           layer_id: { type: "string", description: "Canonical value layer ID to update when the chart has multiple values." },
           datasetColor: { type: "string", description: "Color for the dataset in this chart" },
-          fillColor: { type: "string", description: "Fill color for area charts" },
+          fillColor: { type: "string", description: "Fill color below a line" },
           fill: { type: "boolean", description: "Fill area under line" },
           multiFill: { type: "boolean", description: "Multi-color fill" },
           excludedFields: { type: "array", items: { type: "string" }, description: "Fields to exclude from display" },
@@ -2206,7 +2206,7 @@ async function buildSemanticLayer(teamId, options = {}) {
 
   const chartCatalog = [{
     "line": {
-      description: "A line chart can be used to show trends over time, can be used as an area chart by setting the fillColor",
+      description: "A line chart can show trends over time and can fill the area below the line by setting fillColor",
     },
     "bar": {
       description: "A bar chart can be used to compare values across categories, can be used as a stacked bar chart by setting the stacked property to true. Use fillColor for bar charts to make them more visually appealing.",

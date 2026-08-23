@@ -11,16 +11,6 @@ const MARK_DEFINITIONS = Object.freeze({
       breakdown: { kind: "dimension", types: ["nominal", "ordinal"] },
     },
   },
-  area: {
-    label: "Area",
-    requiredOneOf: [["time", "category"]],
-    slots: {
-      time: { kind: "dimension", types: ["temporal"] },
-      category: { kind: "dimension", types: ["nominal", "ordinal", "temporal"] },
-      value: { kind: "measure", required: true, types: ["quantitative"] },
-      breakdown: { kind: "dimension", types: ["nominal", "ordinal"] },
-    },
-  },
   bar: {
     label: "Vertical bar",
     requiredOneOf: [["category", "time"]],
