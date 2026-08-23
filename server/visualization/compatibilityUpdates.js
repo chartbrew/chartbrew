@@ -237,6 +237,12 @@ function replaceTransform(transforms, type, replacement) {
   return nextTransforms;
 }
 
+function normalizeMaxRecords(value) {
+  if (typeof value === "string" && value.trim() === "") return null;
+  const count = typeof value === "string" ? Number(value) : value;
+  return Number.isInteger(count) && count >= 0 ? count : null;
+}
+
 function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
   const next = cloneVisualization(visualization);
   let bindingLayerIndex = 0;
@@ -281,8 +287,9 @@ function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
       } : null);
     }
     if (data.maxRecords !== undefined) {
-      transforms = replaceTransform(transforms, "limit", Number.isInteger(data.maxRecords) ? {
-        count: data.maxRecords,
+      const count = normalizeMaxRecords(data.maxRecords);
+      transforms = replaceTransform(transforms, "limit", count !== null ? {
+        count,
         type: "limit",
       } : null);
     }

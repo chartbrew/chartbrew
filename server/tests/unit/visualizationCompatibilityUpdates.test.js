@@ -41,6 +41,34 @@ describe("native visualization compatibility updates", () => {
     expect(next.layers[0].name).toBe("Income");
   });
 
+  it("normalizes text max-record values into a canonical limit", () => {
+    const next = applyCdcCompatibilityUpdate(nativeVisualization, "cdc-income", {
+      maxRecords: "3",
+    });
+
+    expect(next.layers[0].transforms).toContainEqual({
+      count: 3,
+      type: "limit",
+    });
+  });
+
+  it("clears the canonical limit when max records is cleared", () => {
+    const visualization = {
+      ...nativeVisualization,
+      layers: [{
+        ...nativeVisualization.layers[0],
+        transforms: [{ count: 3, type: "limit" }],
+      }],
+    };
+    const next = applyCdcCompatibilityUpdate(visualization, "cdc-income", {
+      maxRecords: null,
+    });
+
+    expect(next.layers[0].transforms).not.toContainEqual(expect.objectContaining({
+      type: "limit",
+    }));
+  });
+
   it("does not overwrite additional value labels when the dataset label changes", () => {
     const visualization = {
       ...nativeVisualization,

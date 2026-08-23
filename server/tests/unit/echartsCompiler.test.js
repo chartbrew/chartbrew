@@ -348,6 +348,38 @@ describe("ECharts compiler", () => {
     expect(option.series[0].markLine.data[0].yAxis).toBe(25);
   });
 
+  it("draws only the final line segment with a dashed style", () => {
+    const fixture = buildFixture("line");
+    fixture.visualization.settings.dashedLastPoint = true;
+    fixture.preparedData.results[0].rows = [
+      { category: "Jan", seriesId: defaultSeries[0].id, value: 10 },
+      { category: "Feb", seriesId: defaultSeries[0].id, value: 20 },
+      { category: "Mar", seriesId: defaultSeries[0].id, value: 30 },
+      { category: "Apr", seriesId: defaultSeries[0].id, value: 40 },
+    ];
+
+    const option = buildEChartsOption(fixture);
+    const [base, dashed, latestPoint] = option.series;
+
+    expect(option.xAxis.data).toEqual(["Jan", "Feb", "Mar", "Apr"]);
+    expect(base.data).toEqual([10, 20, 30, null]);
+    expect(dashed).toMatchObject({
+      data: [null, null, 30, 40],
+      id: `${defaultSeries[0].id}--dashed-last`,
+      lineStyle: { type: [5, 10] },
+      name: "Revenue",
+      silent: true,
+      tooltip: { show: false },
+      type: "line",
+    });
+    expect(latestPoint).toMatchObject({
+      data: [null, null, null, 40],
+      id: `${defaultSeries[0].id}--latest-point`,
+      name: "Revenue",
+      type: "scatter",
+    });
+  });
+
   it("shows horizontal bar categories in the prepared sort order from top to bottom", () => {
     const fixture = buildFixture("horizontalBar");
     fixture.preparedData.results[0].rows = [

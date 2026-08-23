@@ -23,6 +23,8 @@ const {
 const CARTESIAN_PRESETS = new Set(["bar", "horizontalBar", "line"]);
 const PIE_PRESETS = new Set(["doughnut", "pie"]);
 const CENTRAL_VALUE_FONT = "Inter Tight, sans-serif";
+const DASHED_LAST_SERIES_SUFFIX = "--dashed-last";
+const LATEST_POINT_SERIES_SUFFIX = "--latest-point";
 const MATRIX_GRID_INSETS = Object.freeze({
   bounded: { bottom: 22, left: 6, right: 36, top: 10 },
   dense: { bottom: 6, left: 6, right: 6, top: 6 },
@@ -131,12 +133,19 @@ function buildMarkLine(series, horizontal) {
 }
 
 function getLineSeriesMedia(series, showSymbol) {
-  return series.map((item) => ({
-    label: { show: false },
-    markLine: item.markLine ? { label: { show: false } } : undefined,
-    showSymbol,
-    symbolSize: showSymbol ? item.symbolSize : 0,
-  }));
+  return series.map((item) => {
+    const latestPoint = item.id.endsWith(LATEST_POINT_SERIES_SUFFIX);
+    let symbolSize = 0;
+    if (latestPoint) symbolSize = Math.max(1, item.symbolSize || 0);
+    else if (showSymbol) symbolSize = item.symbolSize;
+    return {
+      itemStyle: latestPoint ? { ...item.itemStyle, opacity: showSymbol ? 1 : 0 } : undefined,
+      label: { show: false },
+      markLine: item.markLine ? { label: { show: false } } : undefined,
+      showSymbol: latestPoint ? undefined : showSymbol,
+      symbolSize,
+    };
+  });
 }
 
 function getBarSeriesMedia(series, showLabel) {
@@ -519,7 +528,7 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
     ...getBaseOption(visualization, renderContext),
     dataset: { dimensions, source },
     grid: { containLabel: true, left: 16, right: 18, top: 42, bottom: 16 },
-    series: projection.series.map((series, seriesIndex) => {
+    series: projection.series.flatMap((series, seriesIndex) => {
       const layer = getLayer(visualization, series.layerId);
       const style = getLayerSeriesStyle(styles, series, layer);
       let mark = series.mark;
@@ -530,7 +539,7 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
       const stackIndex = stackMembers.indexOf(seriesIndex);
       let labelPosition = "top";
       if (mark === "bar") labelPosition = horizontal && !stacked ? "right" : "inside";
-      return {
+      const baseSeries = {
         areaStyle: style.areaStyle,
         connectNulls: visualization.settings?.missingValues?.policy === "zero",
         encode: horizontal
@@ -568,6 +577,60 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
         symbolSize: Number(style.pointRadius) > 0 ? Number(style.pointRadius) * 2 : 6,
         type: mark,
       };
+      const lastIndex = series.values.length - 1;
+      const dashedLastPoint = mark === "line"
+        && visualization.settings?.dashedLastPoint
+        && lastIndex > 0
+        && series.values[lastIndex - 1] !== null
+        && series.values[lastIndex - 1] !== undefined
+        && series.values[lastIndex] !== null
+        && series.values[lastIndex] !== undefined;
+      if (!dashedLastPoint) return [baseSeries];
+
+      const baseData = series.values.map((value, index) => index === lastIndex ? null : value);
+      const dashedData = series.values.map((value, index) => index >= lastIndex - 1 ? value : null);
+      const latestPointData = series.values.map((value, index) => index === lastIndex ? value : null);
+      const showLatestPoint = Number(style.pointRadius) > 0;
+      return [{
+        ...baseSeries,
+        data: baseData,
+        encode: undefined,
+        label: {
+          ...baseSeries.label,
+          formatter: `${formula.prefix}{c}${formula.suffix}`,
+        },
+      }, {
+        ...baseSeries,
+        areaStyle: style.areaStyle,
+        data: dashedData,
+        encode: undefined,
+        id: `${series.id}${DASHED_LAST_SERIES_SUFFIX}`,
+        label: { show: false },
+        lineStyle: { ...baseSeries.lineStyle, type: [5, 10] },
+        markLine: undefined,
+        showSymbol: false,
+        silent: true,
+        stack: undefined,
+        symbol: "none",
+        tooltip: { show: false },
+        z: 3,
+      }, {
+        data: latestPointData,
+        id: `${series.id}${LATEST_POINT_SERIES_SUFFIX}`,
+        itemStyle: {
+          color: style.color,
+          opacity: showLatestPoint ? 1 : 0,
+        },
+        label: {
+          formatter: `${formula.prefix}{c}${formula.suffix}`,
+          position: "top",
+          show: Boolean(visualization.settings?.dataLabels),
+        },
+        name: style.name,
+        symbolSize: showLatestPoint ? Number(style.pointRadius) * 2 : 1,
+        type: "scatter",
+        z: 4,
+      }];
     }),
     xAxis: horizontal
       ? {
@@ -581,6 +644,7 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
       : {
         axisLabel: { fontSize: 10, hideOverlap: true, margin: 8 },
         axisTick: { show: false },
+        data: visualization.settings?.dashedLastPoint ? projection.labels : undefined,
         type: "category",
       },
     yAxis: horizontal

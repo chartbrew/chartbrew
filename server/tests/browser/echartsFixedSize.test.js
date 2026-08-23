@@ -278,6 +278,49 @@ describe("ECharts fixed-size browser rendering", () => {
     await page.close();
   }, 30000);
 
+  it("renders the final line segment with a dashed stroke", async () => {
+    const page = await browser.newPage({ viewport: { height: 300, width: 800 } });
+    const fixture = buildCartesianFixture("line", 4);
+    fixture.visualization.settings.dashedLastPoint = true;
+    const option = buildEChartsOption({
+      ...fixture,
+      renderContext: { height: 300, surface: "dashboard", width: 800 },
+    });
+    await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
+    await page.addScriptTag({
+      path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+    });
+    const rendered = await page.evaluate((chartOption) => {
+      const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
+      chart.setOption(chartOption, { notMerge: true });
+      chart.resize();
+      const current = chart.getOption();
+      const result = current.series.map((series) => ({
+        data: series.data,
+        id: series.id,
+        lineType: series.lineStyle?.type,
+        type: series.type,
+      }));
+      chart.dispose();
+      return result;
+    }, option);
+
+    expect(rendered).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        data: [null, null, 134, 151],
+        id: `${SERIES_ID}--dashed-last`,
+        lineType: [5, 10],
+        type: "line",
+      }),
+      expect.objectContaining({
+        data: [null, null, null, 151],
+        id: `${SERIES_ID}--latest-point`,
+        type: "scatter",
+      }),
+    ]));
+    await page.close();
+  }, 30000);
+
   it.each([
     { composition: "sparkline", height: 104, preset: "line", width: 189 },
     { composition: "sparkline", height: 80, preset: "line", width: 424 },

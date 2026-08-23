@@ -972,7 +972,10 @@ function ChartDatasetConfig(props) {
                     <Label>Max records</Label>
                     <InputGroup variant="secondary" fullWidth>
                       <InputGroup.Input
+                        min="1"
                         placeholder="Max records"
+                        step="1"
+                        type="number"
                         value={maxRecords}
                         onChange={(event) => setMaxRecords(event.target.value)}
                         variant="secondary"
@@ -986,7 +989,10 @@ function ChartDatasetConfig(props) {
                               <>
                                 <Tooltip>
                                   <Tooltip.Trigger className="flex justify-center">
-                                    <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords })}>
+                                    <Link
+                                      className="text-success"
+                                      onPress={() => _onUpdateCdc({ maxRecords: Number(maxRecords) })}
+                                    >
                                       <LuCircleCheck className="text-success" />
                                     </Link>
                                   </Tooltip.Trigger>
