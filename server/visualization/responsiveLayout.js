@@ -113,6 +113,20 @@ function resolveGaugeComposition({ height, width }) {
   return "centered";
 }
 
+function resolvePolarComposition({ height, width }) {
+  const geometry = getResponsiveGeometry(width, height);
+  if (geometry.width === "narrow" || geometry.height === "shallow") return "compact";
+  if (geometry.width === "regular" || geometry.height === "regular") return "limited";
+  return "analysis";
+}
+
+function resolveRadarComposition({ height, width }) {
+  const geometry = getResponsiveGeometry(width, height);
+  if (geometry.width === "narrow" || geometry.height === "shallow") return "compact";
+  if (geometry.width === "regular" || geometry.height === "regular") return "limited";
+  return "analysis";
+}
+
 module.exports = {
   RESPONSIVE_LAYOUT: responsiveLayout,
   getBarLimitedMaxWidth,
@@ -124,4 +138,6 @@ module.exports = {
   resolveHorizontalBarComposition,
   resolveLineComposition,
   resolveMatrixComposition,
+  resolvePolarComposition,
+  resolveRadarComposition,
 };

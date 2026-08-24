@@ -9,7 +9,7 @@
       "renderer": "echarts",
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["time", "category"]],
-      "capabilities": ["breakdown", "goal", "kpiOverlay", "legend", "responsive", "theme", "timeseries"],
+      "capabilities": ["axisRange", "breakdown", "dashedLastPoint", "dataLabels", "fill", "goal", "kpiOverlay", "legend", "logScale", "missingValues", "points", "responsive", "smooth", "theme", "timeseries", "xAxisLabels"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
     },
@@ -21,7 +21,7 @@
       "renderer": "echarts",
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["category", "time"]],
-      "capabilities": ["breakdown", "goal", "kpiOverlay", "legend", "responsive", "stack", "theme"],
+      "capabilities": ["axisRange", "breakdown", "dataLabels", "fill", "goal", "kpiOverlay", "legend", "logScale", "missingValues", "responsive", "stack", "theme", "xAxisLabels"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
     },
@@ -33,7 +33,7 @@
       "renderer": "echarts",
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["category", "time"]],
-      "capabilities": ["breakdown", "goal", "legend", "responsive", "stack", "theme"],
+      "capabilities": ["axisRange", "breakdown", "dataLabels", "fill", "goal", "legend", "logScale", "missingValues", "responsive", "stack", "theme"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
     },
@@ -69,7 +69,7 @@
       "renderer": "echarts",
       "requiredFieldRoles": ["category", "value"],
       "requiredOneOf": [],
-      "capabilities": ["breakdown", "legend", "responsive", "theme"],
+      "capabilities": ["breakdown", "fill", "legend", "responsive", "theme"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
     },
@@ -93,7 +93,7 @@
       "renderer": "echarts",
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["time", "row"], ["time", "column"]],
-      "capabilities": ["dataLabels", "responsive", "theme", "visualMap"],
+      "capabilities": ["responsive", "theme", "visualMap"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
     },

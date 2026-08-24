@@ -65,6 +65,10 @@ import {
   updateLayerSeriesOptions,
   updateSeriesColor,
 } from "../../../modules/visualization";
+import {
+  hasDatasetEditorTab,
+  hasPresetCapability,
+} from "../../../visualization/presetRegistry";
 
 function getFillSliderColor(color, opacity) {
   const { red, green, blue } = getRgbColorChannels(color, chartColors.blue.hex);
@@ -175,6 +179,99 @@ DatasetLabelField.propTypes = {
   onSave: PropTypes.func.isRequired,
 };
 
+function FormulaControl({
+  formula,
+  onAdd,
+  onApply,
+  onChange,
+  onExample,
+  onRemove,
+  savedFormula,
+}) {
+  return (
+    <div>
+      {!formula && (
+        <Link onPress={onAdd} className="flex items-center cursor-pointer chart-cdc-formula">
+          <TbMathFunctionY size={24} />
+          <div className="w-2" />
+          <div className="text-sm text-foreground">Apply formula on metrics</div>
+        </Link>
+      )}
+      {formula && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col">
+            <Popover>
+              <Popover.Trigger>
+                <div className="flex flex-row gap-1 items-center cursor-pointer">
+                  <div className="text-sm">Metric formula</div>
+                  <LuInfo size={16} />
+                </div>
+              </Popover.Trigger>
+              <Popover.Content>
+                <Popover.Dialog>
+                  <FormulaTips />
+                </Popover.Dialog>
+              </Popover.Content>
+            </Popover>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex flex-row gap-3 items-center w-full">
+              <Input
+                labelPlacement="outside"
+                placeholder="Enter your formula here: {val}"
+                value={formula}
+                onChange={(event) => onChange(event.target.value)}
+                variant="secondary"
+                fullWidth
+              />
+              {formula !== savedFormula && (
+                <Tooltip>
+                  <Tooltip.Trigger className="flex justify-center">
+                    <Link onPress={onApply}>
+                      <LuCircleCheck className="text-success" />
+                    </Link>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Apply the formula</Tooltip.Content>
+                </Tooltip>
+              )}
+              <Tooltip>
+                <Tooltip.Trigger className="flex justify-center">
+                  <Link onPress={onRemove}>
+                    <LuCircleX className="text-danger" />
+                  </Link>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Remove formula</Tooltip.Content>
+              </Tooltip>
+              <Tooltip>
+                <Tooltip.Trigger className="flex justify-center">
+                  <Link onPress={onExample}>
+                    <LuWandSparkles className="text-accent" />
+                  </Link>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Click for an example</Tooltip.Content>
+              </Tooltip>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+FormulaControl.propTypes = {
+  formula: PropTypes.string.isRequired,
+  onAdd: PropTypes.func.isRequired,
+  onApply: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onExample: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+  savedFormula: PropTypes.string,
+};
+
+FormulaControl.defaultProps = {
+  savedFormula: "",
+};
+
 function ChartDatasetConfig(props) {
   const { chartId, cdcId, dataRequests, onRemove } = props;
 
@@ -229,6 +326,12 @@ function ChartDatasetConfig(props) {
     setFormula(cdc?.formula || "");
     setMaxRecords(cdc?.maxRecords || "");
   }, [cdc, dataset]);
+
+  useEffect(() => {
+    if (chart?.type === "gauge" && activeTab === "display") {
+      setActiveTab("data-setup");
+    }
+  }, [activeTab, chart?.type]);
 
   useEffect(() => {
     let tempVariables = [];
@@ -631,6 +734,18 @@ function ChartDatasetConfig(props) {
   const visibleColorItems = colorItems.filter((item) => {
     return item.label.toLowerCase().includes(seriesSearch.trim().toLowerCase());
   });
+  const hasDisplayTab = hasDatasetEditorTab(chart.type, "display");
+  const formulaControl = (
+    <FormulaControl
+      formula={formula}
+      onAdd={_onAddFormula}
+      onApply={_onApplyFormula}
+      onChange={setFormula}
+      onExample={_onExampleFormula}
+      onRemove={_onRemoveFormula}
+      savedFormula={cdc.formula}
+    />
+  );
 
   return (
     <div>
@@ -646,10 +761,12 @@ function ChartDatasetConfig(props) {
               <Tabs.Indicator />
               Build
             </Tabs.Tab>
-            <Tabs.Tab id="display">
-              <Tabs.Indicator />
-              Display
-            </Tabs.Tab>
+            {hasDisplayTab && (
+              <Tabs.Tab id="display">
+                <Tabs.Indicator />
+                Display
+              </Tabs.Tab>
+            )}
             <Tabs.Tab id="automation">
               <Tabs.Indicator />
               Automation
@@ -672,10 +789,19 @@ function ChartDatasetConfig(props) {
             onUpdateVisualization={_onUpdateVisualization}
             onEditDataset={_onEditDataset}
           />
+          {chart.type === "gauge" && (
+            <>
+              <div className="h-4" />
+              <Separator />
+              <div className="h-4" />
+              {formulaControl}
+            </>
+          )}
         </Tabs.Panel>
 
-        <Tabs.Panel id="display">
-          <div className="h-2" />
+        {hasDisplayTab && (
+          <Tabs.Panel id="display">
+            <div className="h-2" />
 
           {chart.type !== "table" && (
             <>
@@ -891,7 +1017,7 @@ function ChartDatasetConfig(props) {
                   </>
                 )}
 
-                {["line", "bar", "radar"].includes(chart.type) && (
+                {hasPresetCapability(chart.type, "fill") && (
                   <>
                     <div className="h-4" />
                     <FillOpacityControl
@@ -1038,78 +1164,9 @@ function ChartDatasetConfig(props) {
             />
           )}
 
-          {chart.type !== "table" && (
-            <>
-              <div>
-                {!formula && (
-                  <Link onPress={_onAddFormula} className="flex items-center cursor-pointer chart-cdc-formula">
-                    <TbMathFunctionY size={24} />
-                    <div className="w-2" />
-                    <div className="text-sm text-foreground">Apply formula on metrics</div>
-                  </Link>
-                )}
-                {formula && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-col">
-                      <Popover>
-                        <Popover.Trigger>
-                          <div className="flex flex-row gap-1 items-center cursor-pointer">
-                            <div className="text-sm">{"Metric formula"}</div>
-                            <LuInfo size={16} />
-                          </div>
-                        </Popover.Trigger>
-                        <Popover.Content>
-                          <Popover.Dialog>
-                            <FormulaTips />
-                          </Popover.Dialog>
-                        </Popover.Content>
-                      </Popover>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex flex-row gap-3 items-center w-full">
-                        <Input
-                          labelPlacement="outside"
-                          placeholder="Enter your formula here: {val}"
-                          value={formula}
-                          onChange={(event) => setFormula(event.target.value)}
-                          variant="secondary"
-                          fullWidth
-                        />
-                        {formula !== cdc.formula && (
-                          <Tooltip>
-                            <Tooltip.Trigger className="flex justify-center">
-                              <Link onPress={_onApplyFormula}>
-                                <LuCircleCheck className={"text-success"} />
-                              </Link>
-                            </Tooltip.Trigger>
-                            <Tooltip.Content>Apply the formula</Tooltip.Content>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <Tooltip.Trigger className="flex justify-center">
-                            <Link onPress={_onRemoveFormula}>
-                              <LuCircleX className="text-danger" />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Remove formula</Tooltip.Content>
-                        </Tooltip>
-                        <Tooltip>
-                          <Tooltip.Trigger className="flex justify-center">
-                            <Link onPress={_onExampleFormula}>
-                              <LuWandSparkles className="text-accent" />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Click for an example</Tooltip.Content>
-                        </Tooltip>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-            </>
-          )}
-        </Tabs.Panel>
+            {chart.type !== "table" && formulaControl}
+          </Tabs.Panel>
+        )}
 
         <Tabs.Panel id="automation">
           <div className="h-2" />

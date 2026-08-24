@@ -188,7 +188,9 @@ persisted visualization field.
 - [x] Add matrix `labeled`, `bounded`, and `dense` compositions with square cells in every state.
 - [x] Add gauge `large`, `centered`, `side-summary`, and `compact` compositions with active-range context.
 - [x] Limit KPI overlays to presets with the shared `kpiOverlay` capability.
-- [ ] Apply the contract to the remaining presets in the delivery order.
+- [x] Add explicit compact and limited states for radar and polar area.
+- [ ] Apply the contract to native KPI, average, table, and markdown views as separate responsive
+  follow-up work. This does not block the graphical ECharts builder phase.
 
 ## Testing And Acceptance
 

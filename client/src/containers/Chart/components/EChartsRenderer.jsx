@@ -261,9 +261,11 @@ function applyCategoryLayout(option, width, height, themeColors) {
         ...item,
         center: [centerX, centerY],
         ...(centered ? {} : {
-          label: { ...item.label, show: false },
-          labelLine: { ...item.labelLine, show: false },
           radius: getCategoryRadius(item, composition, width, height),
+          ...((micro || summary) ? {
+            label: { ...item.label, show: false },
+            labelLine: { ...item.labelLine, show: false },
+          } : {}),
           ...(breakdown ? {
             blur: { ...item.blur, itemStyle: { ...item.blur?.itemStyle, opacity: 0.18 } },
             emphasis: { ...item.emphasis, focus: "self", scale: true },
@@ -299,14 +301,18 @@ function applyCategoryLayout(option, width, height, themeColors) {
             color: themeColors?.text,
             fontFamily: "Inter Tight, sans-serif",
             fontWeight: 700,
-            ...(!centered ? { fontSize: 22, lineHeight: 27 } : {}),
+            ...(centered ? {} : composition === "stacked-breakdown"
+              ? { fontSize: 16, lineHeight: 20 }
+              : { fontSize: 22, lineHeight: 27 }),
           },
           percent: {
             ...option.title.textStyle?.rich?.percent,
             color: themeColors?.muted,
             fontFamily: "Inter Tight, sans-serif",
             fontWeight: 400,
-            ...(!centered ? { fontSize: 10, lineHeight: 15 } : {}),
+            ...(centered ? {} : composition === "stacked-breakdown"
+              ? { fontSize: 9, lineHeight: 13 }
+              : { fontSize: 10, lineHeight: 15 }),
           },
         },
       },

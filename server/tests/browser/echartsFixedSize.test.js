@@ -463,10 +463,10 @@ describe("ECharts fixed-size browser rendering", () => {
       }, option);
 
       const expected = composition === "centered"
-        ? { center, title: preset === "doughnut" }
+        ? { center, label: true, title: preset === "doughnut" }
         : {
           center,
-          label: false,
+          label: !["micro", "side-summary", "stacked-summary"].includes(composition),
           legend: false,
           title: title ?? preset === "doughnut",
         };

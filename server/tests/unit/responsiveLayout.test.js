@@ -8,6 +8,8 @@ const {
   resolveHorizontalBarComposition,
   resolveLineComposition,
   resolveMatrixComposition,
+  resolvePolarComposition,
+  resolveRadarComposition,
 } = require("../../visualization/responsiveLayout");
 
 describe("responsive visualization layout", () => {
@@ -72,5 +74,14 @@ describe("responsive visualization layout", () => {
     expect(resolveGaugeComposition({ height: 231, width: 189 })).toBe("compact");
     expect(resolveGaugeComposition({ height: 231, width: 424 })).toBe("centered");
     expect(resolveGaugeComposition({ height: 300, width: 800 })).toBe("large");
+  });
+
+  it("selects polar and radar compositions from width and height", () => {
+    expect(resolvePolarComposition({ height: 104, width: 424 })).toBe("compact");
+    expect(resolvePolarComposition({ height: 231, width: 424 })).toBe("limited");
+    expect(resolvePolarComposition({ height: 400, width: 800 })).toBe("analysis");
+    expect(resolveRadarComposition({ height: 231, width: 189 })).toBe("compact");
+    expect(resolveRadarComposition({ height: 231, width: 424 })).toBe("limited");
+    expect(resolveRadarComposition({ height: 400, width: 800 })).toBe("analysis");
   });
 });

@@ -40,7 +40,7 @@ function ChartPreview(props) {
 
   useEffect(() => {
     setRedraw(true);
-  }, [chart.dataLabels, chart.type, chart.visualization?.settings?.dataLabelsFormat]);
+  }, [chart.dataLabels, chart.type, chart.visualization?.settings?.dataLabels, chart.visualization?.settings?.dataLabelsFormat]);
 
   useEffect(() => {
     setRanges(chart.ranges || [{ 

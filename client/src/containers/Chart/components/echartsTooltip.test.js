@@ -86,6 +86,47 @@ test("formats compact multi-series tooltips without series names", () => {
   assert.doesNotMatch(html, /Tools visits/);
 });
 
+test("ignores empty helper series in cartesian tooltips", () => {
+  const params = [{
+    axisValueLabel: "Aug 9",
+    color: "#4385F5",
+    seriesId: "visits",
+    seriesName: "Visits",
+    seriesType: "line",
+    value: 64,
+  }, {
+    axisValueLabel: "Aug 9",
+    color: "#4385F5",
+    seriesId: "visits--latest-point",
+    seriesName: "Visits",
+    seriesType: "scatter",
+    value: null,
+  }, {
+    axisValueLabel: "Aug 9",
+    color: "#FF9500",
+    seriesId: "tools",
+    seriesName: "Tools visits",
+    seriesType: "line",
+    value: 9,
+  }, {
+    axisValueLabel: "Aug 9",
+    color: "#FF9500",
+    seriesId: "tools--latest-point",
+    seriesName: "Tools visits",
+    seriesType: "scatter",
+    value: undefined,
+  }];
+  const fullHtml = createEChartsTooltipFormatter(colors)(params);
+  const compactHtml = createEChartsTooltipFormatter(colors, { compact: true })(params);
+
+  assert.equal((fullHtml.match(/>Visits</g) || []).length, 1);
+  assert.equal((fullHtml.match(/>Tools visits</g) || []).length, 1);
+  assert.equal((fullHtml.match(/background:/g) || []).length, 2);
+  assert.equal((compactHtml.match(/background:/g) || []).length, 2);
+  assert.doesNotMatch(fullHtml, />undefined</);
+  assert.doesNotMatch(compactHtml, />undefined</);
+});
+
 test("formats matrix tooltips without repeating the date", () => {
   const html = createEChartsTooltipFormatter(colors)({
     color: "#F17041",

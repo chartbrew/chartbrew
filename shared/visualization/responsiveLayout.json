@@ -48,6 +48,12 @@
     "gauge": {
       "compositions": ["large", "centered", "side-summary", "compact", "micro"],
       "sideSummaryMaxHeight": 160
+    },
+    "polar": {
+      "compositions": ["analysis", "limited", "compact"]
+    },
+    "radar": {
+      "compositions": ["analysis", "limited", "compact"]
     }
   }
 }

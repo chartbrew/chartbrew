@@ -294,12 +294,19 @@ or internal cache state.
 ### Phase 4: Move The Builder To ECharts Presets
 
 - Keep the current chart-type toolbar and semantic Build panel.
-- Make controls preset-aware. For example, line exposes smoothing, points, area fill, gaps, axes,
-  legend, and reference lines; bar exposes stacking, orientation, width, spacing, and rounding.
+- Make controls preset-aware through the shared preset capabilities. Line exposes smoothing, points,
+  area fill, missing-value gaps, axes, legend, and reference lines. Vertical bar exposes stacking,
+  data labels, fill, missing-value handling, axes, legend, and reference lines.
+- Keep bar width, spacing, and corner radius as standardized renderer-owned values. Do not expose
+  controls for these details. Keep `horizontalBar` as a separate comparison preset instead of an
+  orientation control on vertical bar.
+- Keep gauge range colors in the range editor. Gauge datasets use Build and Automation without a
+  Display tab. Keep the metric formula available in Build.
 - Add new presets only after data binding, validation, responsive, theme, export, and accessibility
   checks pass. Scatter and broader heatmap presets are the first candidates.
 - Do not show renderer names, migration state, contract versions, or engine controls in product UI.
-- Complete when ECharts is the default for every ready graphical preset.
+- Complete when ECharts is the default for every ready graphical preset and tests cover the
+  preset-aware builder control rules.
 
 ### Phase 5: Release The Data API
 

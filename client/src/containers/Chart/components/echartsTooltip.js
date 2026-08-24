@@ -207,9 +207,16 @@ function compactLine(title, items, textColor, mutedColor) {
     + `white-space:nowrap">${prefix}${values}</div>`;
 }
 
+function hasTooltipValue(param) {
+  const value = getValue(param);
+  return value !== null && value !== undefined && value !== "";
+}
+
 export function createEChartsTooltipFormatter(colors, { category = false, compact = false } = {}) {
   return (input) => {
-    const params = (Array.isArray(input) ? input : [input]).filter(Boolean);
+    const params = (Array.isArray(input) ? input : [input])
+      .filter(Boolean)
+      .filter((param) => param.seriesType === "pie" || hasTooltipValue(param));
     if (params.length === 0) return "";
 
     const first = params[0];

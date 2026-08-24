@@ -365,6 +365,16 @@ export function updateMissingValuePolicy(visualization, policy) {
   return nextVisualization;
 }
 
+export function updateDataLabels(visualization, visible) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.settings = {
+    ...(nextVisualization.settings || {}),
+    dataLabels: Boolean(visible),
+  };
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}
+
 export function updateDataLabelsFormat(visualization, format) {
   const nextVisualization = makeNativeVisualization(visualization);
   nextVisualization.settings = {
@@ -384,6 +394,22 @@ export function updateLegendVisibility(visualization, visible) {
       visible: Boolean(visible),
     },
   };
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}
+
+export function updateMarkStyle(visualization, mark, changes) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.layers = nextVisualization.layers.map((layer) => {
+    if (layer.mark !== mark) return layer;
+    return {
+      ...layer,
+      style: {
+        ...(layer.style || {}),
+        ...changes,
+      },
+    };
+  });
   nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
   return nextVisualization;
 }

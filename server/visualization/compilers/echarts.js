@@ -25,6 +25,10 @@ const PIE_PRESETS = new Set(["doughnut", "pie"]);
 const CENTRAL_VALUE_FONT = "Inter Tight, sans-serif";
 const DASHED_LAST_SERIES_SUFFIX = "--dashed-last";
 const LATEST_POINT_SERIES_SUFFIX = "--latest-point";
+const BAR_APPEARANCE = Object.freeze({
+  horizontal: { borderRadius: 3, categoryGap: 38, maxWidth: 28 },
+  vertical: { borderRadius: 3, categoryGap: 20, maxWidth: 48 },
+});
 const MATRIX_GRID_INSETS = Object.freeze({
   bounded: { bottom: 22, left: 6, right: 36, top: 10 },
   dense: { bottom: 6, left: 6, right: 6, top: 6 },
@@ -105,34 +109,62 @@ function getLayerSeriesStyle(styles, series, layer) {
       ? { color: style.fillColor || style.datasetColor, opacity: style.fillOpacity ?? 0.2 }
       : undefined,
     color: style.datasetColor || getStableColor(series.id),
+    fill: ["bar", "horizontalBar"].includes(layer.mark)
+      ? layer.style?.fill !== false
+      : style.fill,
+    fillOpacity: style.fillOpacity,
     name: style.legend || series.label,
     pointRadius,
   };
 }
 
-function getHorizontalBarRadius(stacked, stackIndex, stackCount) {
-  if (!stacked || stackCount <= 1) return 3;
-  const start = stackIndex === 0 ? 3 : 0;
-  const end = stackIndex === stackCount - 1 ? 3 : 0;
+function getHorizontalBarRadius(stacked, stackIndex, stackCount, radius) {
+  if (!stacked || stackCount <= 1) return radius;
+  const start = stackIndex === 0 ? radius : 0;
+  const end = stackIndex === stackCount - 1 ? radius : 0;
   return [start, end, end, start];
 }
 
-function buildMarkLine(series, horizontal) {
+function getXAxisLabelInterval(value, pointCount) {
+  if (!value || value === "default") return undefined;
+  if (value === "showAll") return 0;
+  if (value === "half") return 1;
+  if (value === "third") return 2;
+  if (value === "fourth") return 3;
+  const labelCount = Number.parseInt(value, 10);
+  if (!Number.isInteger(labelCount) || labelCount < 1) return undefined;
+  return Math.max(0, Math.ceil(pointCount / labelCount) - 1);
+}
+
+function buildMarkLine(series, horizontal, formula = {}, locale = "en") {
   if (series.goal === null || series.goal === undefined || series.goal === "") return undefined;
   const value = Number(series.goal);
   if (!Number.isFinite(value)) return undefined;
+  const formatted = `${formula.prefix || ""}${value.toLocaleString(locale)}${formula.suffix || ""}`;
+  const label = {
+    backgroundColor: "rgba(24, 24, 27, 0.82)",
+    borderColor: "rgba(255, 255, 255, 0.22)",
+    borderRadius: 4,
+    borderWidth: 1,
+    color: "#fafafa",
+    fontSize: 10,
+    fontWeight: 700,
+    formatter: formatted,
+    padding: [2, 5],
+    position: "insideEndTop",
+  };
   return {
     data: [{
       [horizontal ? "xAxis" : "yAxis"]: value,
-      name: "Goal",
+      label,
     }],
-    label: { formatter: "Goal: {c}" },
+    label,
     silent: true,
     symbol: "none",
   };
 }
 
-function getLineSeriesMedia(series, showSymbol) {
+function getLineSeriesMedia(series, showSymbol, hideGoalLabel = true) {
   return series.map((item) => {
     const latestPoint = item.id.endsWith(LATEST_POINT_SERIES_SUFFIX);
     let symbolSize = 0;
@@ -141,17 +173,17 @@ function getLineSeriesMedia(series, showSymbol) {
     return {
       itemStyle: latestPoint ? { ...item.itemStyle, opacity: showSymbol ? 1 : 0 } : undefined,
       label: { show: false },
-      markLine: item.markLine ? { label: { show: false } } : undefined,
+      ...(hideGoalLabel && item.markLine ? { markLine: { label: { show: false } } } : {}),
       showSymbol: latestPoint ? undefined : showSymbol,
       symbolSize,
     };
   });
 }
 
-function getBarSeriesMedia(series, showLabel) {
+function getBarSeriesMedia(series, showLabel, hideGoalLabel = true) {
   return series.map((item) => ({
     label: { show: showLabel },
-    markLine: item.markLine ? { label: { show: false } } : undefined,
+    ...(hideGoalLabel && item.markLine ? { markLine: { label: { show: false } } } : {}),
   }));
 }
 
@@ -164,7 +196,9 @@ function buildCartesianResponsiveMedia(option, pointCount, {
   const seriesCount = option.series.length;
   const limitedMaxWidth = getLimitedMaxWidth(pointCount, seriesCount);
   const limitedLegend = option.legend?.show !== false;
-  const limitedInterval = Math.max(0, Math.ceil(pointCount / limitedTickCount) - 1);
+  const configuredInterval = option.xAxis?.axisLabel?.interval;
+  const limitedInterval = configuredInterval
+    ?? Math.max(0, Math.ceil(pointCount / limitedTickCount) - 1);
   const limited = {
     grid: {
       bottom: 8,
@@ -249,7 +283,7 @@ function buildLineResponsiveMedia(option, pointCount) {
   return buildCartesianResponsiveMedia(option, pointCount, {
     getLimitedMaxWidth: getLineLimitedMaxWidth,
     limitedTickCount: RESPONSIVE_LAYOUT.presets.line.limitedTickCount,
-    seriesMedia: (series) => getLineSeriesMedia(series, false),
+    seriesMedia: (series, composition) => getLineSeriesMedia(series, false, composition === "sparkline"),
   });
 }
 
@@ -257,7 +291,7 @@ function buildVerticalBarResponsiveMedia(option, pointCount) {
   return buildCartesianResponsiveMedia(option, pointCount, {
     getLimitedMaxWidth: getBarLimitedMaxWidth,
     limitedTickCount: RESPONSIVE_LAYOUT.presets.bar.limitedTickCount,
-    seriesMedia: (series) => getBarSeriesMedia(series, false),
+    seriesMedia: (series, composition) => getBarSeriesMedia(series, false, composition === "sparkline"),
   });
 }
 
@@ -296,7 +330,97 @@ function buildHorizontalBarResponsiveMedia(option) {
   }];
 }
 
+function getRadarSeriesMedia(series, compact) {
+  return series.map(() => ({
+    label: { show: false },
+    symbol: compact ? "none" : "circle",
+    symbolSize: compact ? 0 : 3,
+  }));
+}
+
+function buildRadarResponsiveMedia(option) {
+  const { geometry } = RESPONSIVE_LAYOUT;
+  const compact = {
+    legend: { show: false },
+    radar: { axisName: { show: false }, radius: "80%", splitNumber: 3 },
+    series: getRadarSeriesMedia(option.series, true),
+  };
+  const limited = {
+    legend: { show: option.legend?.show !== false },
+    radar: { axisName: { fontSize: 10 }, radius: "62%", splitNumber: 4 },
+    series: getRadarSeriesMedia(option.series, false),
+  };
+  return [{
+    option: limited,
+    query: {
+      maxHeight: geometry.height.regularMax,
+      maxWidth: geometry.width.regularMax,
+      minHeight: geometry.height.shallowMax + 1,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }, {
+    option: compact,
+    query: { maxWidth: geometry.width.narrowMax },
+  }, {
+    option: compact,
+    query: {
+      maxHeight: geometry.height.shallowMax,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }];
+}
+
+function getPolarSeriesMedia(series, showLabels) {
+  return series.map(() => ({ label: { show: showLabels } }));
+}
+
+function buildPolarResponsiveMedia(option) {
+  const { geometry } = RESPONSIVE_LAYOUT;
+  const compact = {
+    angleAxis: {
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+    },
+    legend: { show: false },
+    polar: { radius: "86%" },
+    radiusAxis: {
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false },
+    },
+    series: getPolarSeriesMedia(option.series, false),
+  };
+  const limited = {
+    angleAxis: { axisLabel: { fontSize: 10, hideOverlap: true } },
+    legend: { show: option.legend?.show !== false },
+    polar: { radius: "66%" },
+    radiusAxis: { axisLabel: { fontSize: 9 } },
+    series: getPolarSeriesMedia(option.series, false),
+  };
+  return [{
+    option: limited,
+    query: {
+      maxHeight: geometry.height.regularMax,
+      maxWidth: geometry.width.regularMax,
+      minHeight: geometry.height.shallowMax + 1,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }, {
+    option: compact,
+    query: { maxWidth: geometry.width.narrowMax },
+  }, {
+    option: compact,
+    query: {
+      maxHeight: geometry.height.shallowMax,
+      minWidth: geometry.width.narrowMax + 1,
+    },
+  }];
+}
+
 function getCategorySeriesMedia(series, composition) {
+  const hideLabels = ["micro", "side-summary", "stacked-summary"].includes(composition);
   return series.map((item) => {
     const doughnut = Array.isArray(item.radius);
     let center = ["50%", "50%"];
@@ -316,8 +440,10 @@ function getCategorySeriesMedia(series, composition) {
     }
     return {
       center,
-      label: { show: false },
-      labelLine: { show: false },
+      ...(hideLabels ? {
+        label: { show: false },
+        labelLine: { show: false },
+      } : {}),
       radius,
     };
   });
@@ -403,6 +529,12 @@ function buildCategoryResponsiveMedia(option) {
         show: doughnut,
         textAlign: "center",
         textVerticalAlign: "middle",
+        textStyle: {
+          rich: {
+            value: { fontSize: 16, lineHeight: 20 },
+            percent: { fontSize: 9, lineHeight: 13 },
+          },
+        },
         top: "27%",
       },
     },
@@ -514,6 +646,7 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
     ...projection.series.map((series) => series.values[index] ?? null),
   ]);
   const horizontal = preparedData.results[0]?.mark === "horizontalBar";
+  const barAppearance = horizontal ? BAR_APPEARANCE.horizontal : BAR_APPEARANCE.vertical;
   const dark = renderContext.theme === "dark";
   const axisColor = dark ? "#71717a" : "#a1a1aa";
   const stackGroups = new Map();
@@ -555,10 +688,16 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
           ? {
             borderColor: style.color,
             borderRadius: horizontal
-              ? getHorizontalBarRadius(stacked, stackIndex, stackMembers.length)
-              : 3,
+              ? getHorizontalBarRadius(
+                stacked,
+                stackIndex,
+                stackMembers.length,
+                barAppearance.borderRadius
+              )
+              : barAppearance.borderRadius,
             borderWidth: horizontal && stacked ? 0 : 1.5,
-            color: style.color,
+            color: style.fill === false ? "transparent" : style.color,
+            opacity: style.fill === false ? 1 : style.fillOpacity ?? 1,
           }
           : { color: style.color },
         label: {
@@ -567,12 +706,12 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
           show: Boolean(visualization.settings?.dataLabels),
         },
         lineStyle: { color: style.color, width: 2 },
-        markLine: buildMarkLine(series, horizontal),
+        markLine: buildMarkLine(series, horizontal, formula, renderContext.locale),
         name: style.name,
-        barCategoryGap: horizontal ? "38%" : undefined,
-        barMaxWidth: horizontal ? 28 : undefined,
+        barCategoryGap: `${barAppearance.categoryGap}%`,
+        barMaxWidth: barAppearance.maxWidth,
         showSymbol: Number(style.pointRadius) > 0,
-        smooth: Boolean(layer.style?.smooth),
+        smooth: layer.style?.smooth ? 0.25 : false,
         stack: stacked ? `stack-${layer.stack}` : undefined,
         symbolSize: Number(style.pointRadius) > 0 ? Number(style.pointRadius) * 2 : 6,
         type: mark,
@@ -642,7 +781,15 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
         type: visualization.settings?.isLogarithmic || visualization.settings?.logarithmic ? "log" : "value",
       }
       : {
-        axisLabel: { fontSize: 10, hideOverlap: true, margin: 8 },
+        axisLabel: {
+          fontSize: 10,
+          hideOverlap: true,
+          interval: getXAxisLabelInterval(
+            visualization.settings?.xLabelTicks,
+            projection.labels.length
+          ),
+          margin: 8,
+        },
         axisTick: { show: false },
         data: visualization.settings?.dashedLastPoint ? projection.labels : undefined,
         type: "category",
@@ -766,15 +913,13 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
       },
       id: defaultSeries.id,
       itemStyle: presetId === "doughnut" ? { borderRadius: 6 } : undefined,
+      avoidLabelOverlap: false,
       label: {
         formatter: visualization.settings?.dataLabelsFormat === "value"
           ? `${formula.prefix}{@value}${formula.suffix}`
           : "{d}%",
-        backgroundColor: "rgba(24, 24, 27, 0.28)",
-        borderRadius: 3,
-        color: "#ffffff",
         fontSize: 10,
-        padding: [2, 4],
+        fontWeight: 700,
         position: "inside",
         show: Boolean(visualization.settings?.dataLabels),
       },
@@ -902,11 +1047,18 @@ function buildPolarOption({ preparedData, visualization, renderContext }) {
     series: projection.series.map((series) => {
       const layer = getLayer(visualization, series.layerId);
       const style = getLayerSeriesStyle(styles, series, layer);
+      const formula = parseValueFormula(layer.encoding?.value?.formula);
       return {
         coordinateSystem: "polar",
         encode: { angle: "category", radius: series.id },
         id: series.id,
         itemStyle: { color: style.color },
+        label: {
+          formatter: `${formula.prefix}{@${series.id}}${formula.suffix}`,
+          fontSize: 10,
+          position: "middle",
+          show: Boolean(visualization.settings?.dataLabels),
+        },
         name: style.name,
         roundCap: true,
         type: "bar",
@@ -1401,7 +1553,6 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
     throw new Error(`ECharts compiler is not implemented for: ${presetId}`);
   }
 
-  const compactGrid = { containLabel: true, left: 8, right: 8, top: 12, bottom: 8 };
   if (presetId === "line") {
     option.media = buildLineResponsiveMedia(option, option.dataset.source.length);
   } else if (presetId === "bar" && option.xAxis?.type === "category") {
@@ -1412,20 +1563,10 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
     option.media = buildGaugeResponsiveMedia();
   } else if (PIE_PRESETS.has(presetId)) {
     option.media = buildCategoryResponsiveMedia(option);
-  } else if (presetId !== "matrix") {
-    option.media = [{
-      option: {
-        grid: compactGrid,
-        legend: { show: false },
-      },
-      query: { maxHeight: 220 },
-    }, {
-      option: {
-        grid: compactGrid,
-        legend: { show: false },
-      },
-      query: { maxWidth: 320 },
-    }];
+  } else if (presetId === "radar") {
+    option.media = buildRadarResponsiveMedia(option);
+  } else if (presetId === "polar") {
+    option.media = buildPolarResponsiveMedia(option);
   }
 
   return toJsonValue(option);

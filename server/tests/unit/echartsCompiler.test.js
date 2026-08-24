@@ -242,6 +242,25 @@ describe("ECharts compiler", () => {
     });
   });
 
+  it("shows pie and doughnut slice labels when data labels are enabled", () => {
+    ["pie", "doughnut"].forEach((mark) => {
+      const enabled = buildFixture(mark);
+      const disabled = buildFixture(mark);
+      disabled.visualization.settings.dataLabels = false;
+      const option = buildEChartsOption(enabled);
+
+      expect(option.series[0].label).toMatchObject({
+        fontSize: 10,
+        fontWeight: 700,
+        position: "inside",
+        show: true,
+      });
+      expect(option.series[0].label.backgroundColor).toBeUndefined();
+      expect(option.series[0].label.color).toBeUndefined();
+      expect(buildEChartsOption(disabled).series[0].label.show).toBe(false);
+    });
+  });
+
   it("rounds and separates doughnut segments and centers the total", () => {
     const option = buildEChartsOption(buildFixture("doughnut"));
 
@@ -296,14 +315,25 @@ describe("ECharts compiler", () => {
     });
     expect(sideBreakdown.option).toMatchObject({
       legend: { show: false },
-      series: [{ center: ["75%", "50%"], label: { show: false } }],
+      series: [{ center: ["75%", "50%"] }],
       title: { left: "75%", show: true, textAlign: "center" },
     });
+    expect(sideBreakdown.option.series[0].label).toBeUndefined();
     expect(stackedBreakdown.option).toMatchObject({
       legend: { show: false },
-      series: [{ center: ["50%", "27%"], label: { show: false } }],
-      title: { left: "50%", show: true, textAlign: "center" },
+      series: [{ center: ["50%", "27%"] }],
+      title: {
+        left: "50%",
+        show: true,
+        textAlign: "center",
+        textStyle: {
+          rich: {
+            value: { fontSize: 16, lineHeight: 20 },
+          },
+        },
+      },
     });
+    expect(stackedBreakdown.option.series[0].label).toBeUndefined();
   });
 
   it("includes the category value list in fixed large output", () => {
@@ -346,6 +376,14 @@ describe("ECharts compiler", () => {
     ]);
     expect(option.series[0].id).toBe(defaultSeries[0].id);
     expect(option.series[0].markLine.data[0].yAxis).toBe(25);
+    expect(option.series[0].markLine.label).toMatchObject({
+      backgroundColor: "rgba(24, 24, 27, 0.82)",
+      color: "#fafafa",
+      fontWeight: 700,
+      formatter: "25",
+      position: "insideEndTop",
+    });
+    expect(option.series[0].markLine.label.formatter).not.toMatch(/goal/i);
   });
 
   it("draws only the final line segment with a dashed style", () => {
@@ -451,10 +489,16 @@ describe("ECharts compiler", () => {
       xAxis: { axisLabel: { interval: 5, showMaxLabel: true, showMinLabel: true } },
       yAxis: { splitLine: { lineStyle: { opacity: 0.28 }, show: true } },
     });
+    expect(limited.option.series[0].markLine).toBeUndefined();
     expect(narrow.option).toMatchObject({
       grid: { containLabel: false },
       legend: { show: false },
-      series: [{ label: { show: false }, showSymbol: false, symbolSize: 0 }],
+      series: [{
+        label: { show: false },
+        markLine: { label: { show: false } },
+        showSymbol: false,
+        symbolSize: 0,
+      }],
       xAxis: { show: false },
       yAxis: { show: false },
     });
@@ -496,6 +540,55 @@ describe("ECharts compiler", () => {
     expect(shallow.option.yAxis.show).toBe(false);
   });
 
+  it("applies canonical line points, smoothing, and X-axis label density", () => {
+    const fixture = buildFixture("line");
+    fixture.visualization.layers[0].style.pointRadius = 4;
+    fixture.visualization.layers[0].style.smooth = true;
+    fixture.visualization.settings.xLabelTicks = "third";
+    fixture.preparedData.results[0].rows = Array.from({ length: 30 }, (_, index) => ({
+      category: `Day ${index + 1}`,
+      seriesId: defaultSeries[0].id,
+      value: index + 1,
+    }));
+
+    const option = buildEChartsOption(fixture);
+    const limited = option.media.find((item) => item.query.maxWidth === 519);
+
+    expect(option.series[0]).toMatchObject({
+      showSymbol: true,
+      smooth: 0.25,
+      symbolSize: 8,
+    });
+    expect(option.xAxis.axisLabel.interval).toBe(2);
+    expect(limited.option.xAxis.axisLabel.interval).toBe(2);
+  });
+
+  it("uses standardized bar geometry and fills bars by default", () => {
+    const fixture = buildFixture("bar");
+    delete fixture.visualization.layers[0].style.fill;
+    fixture.visualization.layers[0].style.fillOpacity = 0.55;
+    fixture.visualization.settings.bar = {
+      borderRadius: 7,
+      categoryGap: 32,
+      maxWidth: 36,
+    };
+
+    const option = buildEChartsOption(fixture);
+
+    expect(option.series[0]).toMatchObject({
+      barCategoryGap: "20%",
+      barMaxWidth: 48,
+      itemStyle: {
+        borderRadius: 3,
+        color: "#048BDE",
+        opacity: 0.55,
+      },
+    });
+
+    fixture.visualization.layers[0].style.fill = false;
+    expect(buildEChartsOption(fixture).series[0].itemStyle.color).toBe("transparent");
+  });
+
   it("compiles vertical bar analysis, limited, and sparkline compositions", () => {
     const fixture = buildFixture("bar");
     fixture.preparedData.results[0].rows = Array.from({ length: 30 }, (_, index) => ({
@@ -515,10 +608,11 @@ describe("ECharts compiler", () => {
       xAxis: { axisLabel: { interval: 5, showMaxLabel: true, showMinLabel: true } },
       yAxis: { splitLine: { lineStyle: { opacity: 0.28 }, show: true } },
     });
+    expect(limited.option.series[0].markLine).toBeUndefined();
     expect(narrow.option).toMatchObject({
       grid: { containLabel: false },
       legend: { show: false },
-      series: [{ label: { show: false } }],
+      series: [{ label: { show: false }, markLine: { label: { show: false } } }],
       xAxis: { show: false },
       yAxis: { show: false },
     });
@@ -636,6 +730,34 @@ describe("ECharts compiler", () => {
     expect(dense.query).toEqual({ maxWidth: 1120, minHeight: 150, minWidth: 520 });
     expect(dense.option.series[0].label.show).toBe(false);
     expect(dense.option.xAxis.axisLabel.interval).toBe(15);
+  });
+
+  it("uses explicit compact and limited states for radar and polar charts", () => {
+    const radar = buildEChartsOption(buildFixture("radar"));
+    const polarFixture = buildFixture("polar");
+    polarFixture.visualization.settings.dataLabels = true;
+    const polar = buildEChartsOption(polarFixture);
+    const radarCompact = radar.media.find((item) => item.query.maxWidth === 259);
+    const radarLimited = radar.media.find((item) => item.query.maxWidth === 519);
+    const polarCompact = polar.media.find((item) => item.query.maxWidth === 259);
+    const polarLimited = polar.media.find((item) => item.query.maxWidth === 519);
+
+    expect(radarCompact.option).toMatchObject({
+      legend: { show: false },
+      radar: { axisName: { show: false }, radius: "80%" },
+    });
+    expect(radarCompact.option.series.every((series) => {
+      return series.symbol === "none" && series.symbolSize === 0;
+    })).toBe(true);
+    expect(radarLimited.option.radar.radius).toBe("62%");
+    expect(polar.series[0].label).toMatchObject({ position: "middle", show: true });
+    expect(polarCompact.option).toMatchObject({
+      angleAxis: { axisLabel: { show: false } },
+      legend: { show: false },
+      polar: { radius: "86%" },
+      series: [{ label: { show: false } }],
+    });
+    expect(polarLimited.option.polar.radius).toBe("66%");
   });
 
   it("builds a calendar-style matrix with weekday rows and filled missing dates", () => {
@@ -901,5 +1023,24 @@ describe("preset registry contract", () => {
       .map((preset) => preset.id);
 
     expect(supported).toEqual(["line", "bar"]);
+  });
+
+  it("declares only controls implemented by each ready preset", () => {
+    const capabilities = Object.fromEntries(PRESET_MANIFEST.presets.map((preset) => [
+      preset.id,
+      new Set(preset.capabilities),
+    ]));
+
+    expect([
+      "axisRange", "dashedLastPoint", "points", "smooth", "xAxisLabels",
+    ].every((capability) => capabilities.line.has(capability))).toBe(true);
+    expect(capabilities.bar.has("barAppearance")).toBe(false);
+    expect(capabilities.horizontalBar.has("barAppearance")).toBe(false);
+    expect(capabilities.pie.has("dataLabels")).toBe(true);
+    expect(capabilities.polar.has("dataLabels")).toBe(true);
+    expect(capabilities.radar.has("dataLabels")).toBe(false);
+    expect(capabilities.matrix.has("dataLabels")).toBe(false);
+    expect(capabilities.gauge.has("legend")).toBe(false);
+    expect(capabilities.kpi.has("axisRange")).toBe(false);
   });
 });
