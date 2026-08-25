@@ -24,6 +24,8 @@ const appsRoutes = require("./apps");
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
 const parseQueryParams = require("./middlewares/parseQueryParams");
+const dataApiBodyError = require("./modules/dataApiBodyError");
+const { getDataApiLimits } = require("./modules/dataApiLimits");
 const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
@@ -82,6 +84,7 @@ app.use(urlencoded({
 }));
 app.set("query parser", "simple");
 app.use(json({
+  limit: Math.max(100 * 1024, getDataApiLimits().maxRequestBytes),
   verify: (req, res, buf, encoding) => {
     // Save raw body for Slack signature verification (JSON requests)
     if (req.headers["content-type"]?.includes("application/json")) {
@@ -89,6 +92,7 @@ app.use(json({
     }
   },
 }));
+app.use(dataApiBodyError);
 app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(helmet({
   crossOriginEmbedderPolicy: false,

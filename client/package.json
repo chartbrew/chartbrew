@@ -10,6 +10,7 @@
     "lint": "oxlint",
     "test:ai": "node --test src/containers/Ai/aiMessageUtils.test.js src/containers/Ai/chartPreviewState.test.js src/containers/Ai/chatScroll.test.js src/modules/workspaceAuditFormat.test.js",
     "test:visualization": "node --test src/containers/Chart/components/ChartTooltip.test.js src/containers/Chart/components/barDataLabels.test.js src/containers/Chart/components/cartesianChartPerformance.test.js src/containers/Chart/components/echartsTooltip.test.js src/modules/visualization.test.js src/visualization/echartsRenderState.test.js src/visualization/presetRegistry.test.js src/visualization/responsiveLayout.test.js",
+    "test:data-api": "node --test src/containers/ApiKeys/apiKeyPresentation.test.js",
     "preview": "vite preview",
     "tailwind": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
     "prepareSettings": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js | true"

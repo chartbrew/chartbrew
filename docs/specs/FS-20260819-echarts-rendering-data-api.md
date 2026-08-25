@@ -4,6 +4,8 @@ Status: accepted
 
 Related: [Next-Generation Visualization Engine](FS-20260719-next-generation-visualization-engine.md)
 
+Detailed delivery: [Versioned Data API](FS-20260825-versioned-data-api.md)
+
 > Visualization must be a core Chartbrew power. It must not limit v6.
 
 ## Summary
@@ -309,6 +311,10 @@ or internal cache state.
   preset-aware builder control rules.
 
 ### Phase 5: Release The Data API
+
+The detailed Data API contract and delivery plan are defined in
+[Versioned Data API](FS-20260825-versioned-data-api.md). This phase is a separate feature delivery
+that depends on `PreparedData`; it does not depend on ECharts compilation.
 
 - Add scoped API-key validation and the four dataset/chart routes.
 - Reuse the exact runtime filter, variable, timezone, access, and prepared-cache paths used by charts.
