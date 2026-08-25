@@ -164,6 +164,43 @@ jobs:
         CI: true
         NODE_ENV: test
 
+  test-echarts-browser:
+    name: ECharts Browser Rendering
+    runs-on: ubuntu-latest
+    needs: [security, lint]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Pin npm
+      run: npm install -g npm@${{ env.NPM_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Install Chromium
+      run: |
+        cd server
+        npm run install:playwright
+
+    - name: Run fixed-size browser tests
+      run: |
+        cd server
+        npm run test:echarts-browser
+      env:
+        CI: true
+        NODE_ENV: test
+
   # Frontend tests (if applicable)
   test-frontend:
     name: Frontend Tests
@@ -207,7 +244,7 @@ jobs:
   build:
     name: Build Verification
     runs-on: ubuntu-latest
-    needs: [test-backend-mysql, test-backend-postgres]
+    needs: [test-backend-mysql, test-backend-postgres, test-echarts-browser]
     
     steps:
     - name: Checkout code

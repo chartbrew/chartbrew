@@ -226,6 +226,13 @@ describe("native visualization compatibility updates", () => {
     expect(roundTrip.layers[0].style.fill).toBe(false);
   });
 
+  it("adds default bar fill when a same-type compatibility update runs", () => {
+    const next = applyChartCompatibilityUpdate(nativeVisualization, { type: "bar" });
+
+    expect(next.layers[0].style.fill).toBe(true);
+    expect(next.layers[0].style.fillOpacity).toBe(0.65);
+  });
+
   it("initializes radar charts with an optional same-color fill", () => {
     const radar = applyChartCompatibilityUpdate({
       ...nativeVisualization,

@@ -169,7 +169,9 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     let mark = data.type || layer.mark;
     if (data.horizontal === true && mark === "bar") mark = "horizontalBar";
     if (data.type === undefined && data.horizontal === false && mark === "horizontalBar") mark = "bar";
-    const markedLayer = mark !== layer.mark ? updateLayerMark(layer, mark) : layer;
+    const markedLayer = data.type !== undefined || mark !== layer.mark
+      ? updateLayerMark(layer, mark)
+      : layer;
     let orientation = layer.orientation;
     if (mark === "horizontalBar") orientation = "horizontal";
     if (mark === "bar") orientation = "vertical";
