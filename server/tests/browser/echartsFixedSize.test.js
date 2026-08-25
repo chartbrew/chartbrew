@@ -1,7 +1,8 @@
-const path = require("path");
 const { chromium } = require("playwright");
 
 const { buildEChartsOption } = require("../../visualization/compilers/echarts");
+
+const ECHARTS_BROWSER_BUNDLE = require.resolve("echarts/dist/echarts.min.js");
 
 const PRESETS = [
   "line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
@@ -150,7 +151,7 @@ describe("ECharts fixed-size browser rendering", () => {
       });
       await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
       await page.addScriptTag({
-        path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+        path: ECHARTS_BROWSER_BUNDLE,
       });
       const rendered = await page.evaluate((chartOption) => {
         const element = document.getElementById("chart");
@@ -242,7 +243,7 @@ describe("ECharts fixed-size browser rendering", () => {
     });
     await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
     await page.addScriptTag({
-      path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+      path: ECHARTS_BROWSER_BUNDLE,
     });
     const rendered = await page.evaluate((chartOption) => {
       const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
@@ -288,7 +289,7 @@ describe("ECharts fixed-size browser rendering", () => {
     });
     await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
     await page.addScriptTag({
-      path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+      path: ECHARTS_BROWSER_BUNDLE,
     });
     const rendered = await page.evaluate((chartOption) => {
       const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
@@ -340,7 +341,7 @@ describe("ECharts fixed-size browser rendering", () => {
     });
     await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
     await page.addScriptTag({
-      path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+      path: ECHARTS_BROWSER_BUNDLE,
     });
     const rendered = await page.evaluate((chartOption) => {
       const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
@@ -406,7 +407,7 @@ describe("ECharts fixed-size browser rendering", () => {
     });
     await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
     await page.addScriptTag({
-      path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+      path: ECHARTS_BROWSER_BUNDLE,
     });
     const rendered = await page.evaluate((chartOption) => {
       const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
@@ -445,7 +446,7 @@ describe("ECharts fixed-size browser rendering", () => {
       });
       await page.setContent("<div id=\"chart\" style=\"height:100vh;width:100vw\"></div>");
       await page.addScriptTag({
-        path: path.resolve(__dirname, "../../../client/node_modules/echarts/dist/echarts.min.js"),
+        path: ECHARTS_BROWSER_BUNDLE,
       });
       const rendered = await page.evaluate((chartOption) => {
         const chart = window.echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
