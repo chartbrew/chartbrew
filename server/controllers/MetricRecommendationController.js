@@ -1,6 +1,7 @@
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const { loadPreparedSnapshots } = require("../modules/preparedSnapshot");
 const MonitorController = require("./MonitorController");
 const {
   canEditProject,
@@ -28,8 +29,8 @@ class MetricRecommendationController {
   async generate(access, { includeDismissed = false, limit = LIST_LIMIT } = {}) {
     const charts = await db.Chart.findAll({
       attributes: [
-        "autoUpdate", "chartData", "chartDataUpdated", "currentEndDate", "endDate", "fixedStartDate",
-        "id", "name", "project_id", "startDate", "timeInterval", "visualization",
+        "autoUpdate", "chartDataUpdated", "currentEndDate", "endDate", "fixedStartDate", "id",
+        "name", "preparedDataUpdatedAt", "project_id", "startDate", "timeInterval", "visualization",
       ],
       include: [{
         model: db.Project,
@@ -60,6 +61,11 @@ class MetricRecommendationController {
       where: {
         ...getProjectScope(access),
       },
+    });
+    const snapshots = await loadPreparedSnapshots(charts.map((chart) => chart.id));
+    charts.forEach((chart) => {
+      const snapshot = snapshots.get(Number(chart.id));
+      if (snapshot) chart.setDataValue("preparedData", snapshot.preparedData);
     });
     const editableCharts = charts.filter((chart) => canEditProject(access, chart.project_id));
     if (editableCharts.length === 0) return [];

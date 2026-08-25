@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "presets": [
+    {
+      "id": "line",
+      "label": "Line",
+      "mark": "line",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["value"],
+      "requiredOneOf": [["time", "category"]],
+      "capabilities": ["axisRange", "breakdown", "dashedLastPoint", "dataLabels", "fill", "goal", "kpiOverlay", "legend", "logScale", "missingValues", "points", "responsive", "smooth", "theme", "timeseries", "xAxisLabels"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "bar",
+      "label": "Vertical bar",
+      "mark": "bar",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["value"],
+      "requiredOneOf": [["category", "time"]],
+      "capabilities": ["axisRange", "breakdown", "dataLabels", "fill", "goal", "kpiOverlay", "legend", "logScale", "missingValues", "responsive", "stack", "theme", "xAxisLabels"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "horizontalBar",
+      "label": "Horizontal bar",
+      "mark": "horizontalBar",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["value"],
+      "requiredOneOf": [["category", "time"]],
+      "capabilities": ["axisRange", "breakdown", "dataLabels", "fill", "goal", "legend", "logScale", "missingValues", "responsive", "stack", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "pie",
+      "label": "Pie",
+      "mark": "pie",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["category", "value"],
+      "requiredOneOf": [],
+      "capabilities": ["dataLabels", "legend", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "doughnut",
+      "label": "Doughnut",
+      "mark": "doughnut",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["category", "value"],
+      "requiredOneOf": [],
+      "capabilities": ["dataLabels", "legend", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "radar",
+      "label": "Radar",
+      "mark": "radar",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["category", "value"],
+      "requiredOneOf": [],
+      "capabilities": ["breakdown", "fill", "legend", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "polar",
+      "label": "Polar area",
+      "mark": "polar",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["category", "value"],
+      "requiredOneOf": [],
+      "capabilities": ["dataLabels", "legend", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "matrix",
+      "label": "Matrix",
+      "mark": "matrix",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["value"],
+      "requiredOneOf": [["time", "row"], ["time", "column"]],
+      "capabilities": ["responsive", "theme", "visualMap"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "gauge",
+      "label": "Gauge",
+      "mark": "gauge",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["value"],
+      "requiredOneOf": [],
+      "capabilities": ["ranges", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "kpi",
+      "label": "KPI",
+      "mark": "kpi",
+      "releaseState": "ready",
+      "renderer": "native",
+      "requiredFieldRoles": ["value"],
+      "requiredOneOf": [],
+      "capabilities": ["growth", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "avg",
+      "label": "Average",
+      "mark": "avg",
+      "releaseState": "ready",
+      "renderer": "native",
+      "requiredFieldRoles": ["value"],
+      "requiredOneOf": [],
+      "capabilities": ["growth", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "table",
+      "label": "Table",
+      "mark": "table",
+      "releaseState": "ready",
+      "renderer": "native",
+      "requiredFieldRoles": [],
+      "requiredOneOf": [],
+      "capabilities": ["pagination", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    },
+    {
+      "id": "markdown",
+      "label": "Markdown",
+      "mark": "markdown",
+      "releaseState": "ready",
+      "renderer": "native",
+      "requiredFieldRoles": [],
+      "requiredOneOf": [],
+      "capabilities": ["responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export"],
+      "ssr": false
+    }
+  ]
+}

@@ -147,7 +147,7 @@ const AI_VISUALIZATION_SCHEMA = {
         properties: {
           id: { type: "string" },
           bindingId: { type: ["string", "number"] },
-          mark: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          mark: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
           name: { type: "string" },
           rowPath: { type: "string" },
           encoding: AI_ENCODING_SCHEMA,
@@ -837,7 +837,7 @@ async function availableTools() {
         },
         required: ["question", "result_shape"]
       }
-      // returns: { type:"kpi|line|bar|area|pie", title, encodings:{}, options:{} }
+      // returns: { type:"kpi|line|bar|pie", title, encodings:{}, options:{} }
     },
     {
       name: "create_dataset",
@@ -878,7 +878,7 @@ async function availableTools() {
           dataset_id: { type: "string" },
           name: { type: "string", description: "Chart name/title" },
           legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
-          type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
           pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
@@ -957,7 +957,7 @@ async function availableTools() {
           dataset_id: { type: "string", description: "New dataset ID (if changing the dataset)" },
           name: { type: "string", description: "New chart name/title" },
           legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
-          type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"], description: "Chart type" },
+          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"], description: "Chart type" },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
           pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
@@ -1002,7 +1002,7 @@ async function availableTools() {
           visualization: AI_VISUALIZATION_SCHEMA,
           layer_id: { type: "string", description: "Canonical value layer ID to update when the chart has multiple values." },
           datasetColor: { type: "string", description: "Color for the dataset in this chart" },
-          fillColor: { type: "string", description: "Fill color for area charts" },
+          fillColor: { type: "string", description: "Fill color below a line" },
           fill: { type: "boolean", description: "Fill area under line" },
           multiFill: { type: "boolean", description: "Multi-color fill" },
           excludedFields: { type: "array", items: { type: "string" }, description: "Fields to exclude from display" },
@@ -1027,7 +1027,7 @@ async function availableTools() {
           dataset_id: { type: "string", description: "Existing reusable dataset ID from search_datasets. Prefer this when the user asks to use the same or an existing dataset." },
           name: { type: "string", description: "Chart name/title" },
           legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
-          type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
           pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
@@ -1116,7 +1116,7 @@ async function availableTools() {
           connection_id: { type: "string", description: `Connection ID to use for data fetching (must be one of: ${supportedSourceList})` },
           name: { type: "string", description: "Chart and dataset name/title" },
           legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend" },
-          type: { type: "string", enum: ["line", "bar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
           subType: { type: "string", description: "Chart subtype, for example AddTimeseries for KPI totals" },
           displayLegend: { type: "boolean" },
           pointRadius: { type: "integer" },
@@ -2206,7 +2206,7 @@ async function buildSemanticLayer(teamId, options = {}) {
 
   const chartCatalog = [{
     "line": {
-      description: "A line chart can be used to show trends over time, can be used as an area chart by setting the fillColor",
+      description: "A line chart can show trends over time and can fill the area below the line by setting fillColor",
     },
     "bar": {
       description: "A bar chart can be used to compare values across categories, can be used as a stacked bar chart by setting the stacked property to true. Use fillColor for bar charts to make them more visually appealing.",

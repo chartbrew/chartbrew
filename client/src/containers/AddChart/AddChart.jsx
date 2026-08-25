@@ -25,7 +25,7 @@ import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import getDefaultCdcBindings from "../../modules/getDefaultCdcBindings";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
-import { updateLegendVisibility } from "../../modules/visualization";
+import { updateDataLabels, updateLegendVisibility } from "../../modules/visualization";
 
 const AUTO_NAME_PENDING_STORAGE_KEY = "__cb_pending_chart_dataset_name";
 const AUTO_NAME_PLACEHOLDER = "__cb_auto_name_chart__";
@@ -272,6 +272,9 @@ function AddChart() {
       defaultRowsPerPage: typeof defaultRowsPerPage !== "undefined" ? defaultRowsPerPage : newChart.defaultRowsPerPage,
       ...(typeof displayLegend !== "undefined" && newChart.visualization ? {
         visualization: updateLegendVisibility(newChart.visualization, displayLegend),
+      } : {}),
+      ...(typeof dataLabels !== "undefined" && newChart.visualization ? {
+        visualization: updateDataLabels(newChart.visualization, dataLabels),
       } : {}),
     };
 
@@ -603,6 +606,7 @@ function AddChart() {
           <div className="bg-surface rounded-3xl border border-divider">
             <ChartPreview
               chart={newChart}
+              transitioning={loading}
               onChange={_onChangeChart}
               onRefreshData={_onRefreshData}
               onRefreshPreview={_onRefreshPreview}

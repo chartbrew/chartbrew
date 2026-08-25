@@ -106,11 +106,13 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
   }, dashboardTraceContext);
 
   try {
-    const chartData = await chartController.updateChartData(chart.id, null, {
+    const updateResult = await chartController.updateChartData(chart.id, null, {
       traceContext: chartTraceContext,
       finalizeRun: false,
+      returnPreparedData: true,
     });
-    checkChartForAlerts(chartData);
+    const chartData = updateResult.chart;
+    await checkChartForAlerts(chartData, updateResult.preparedData);
 
     const variantsToPrewarm = await runtimeCache.getTopChartVariants(
       chart.id,
@@ -140,7 +142,7 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
       summary: {
         chartId: chart.id,
         dashboardId: dashboard.id,
-        chartDataUpdatedAt: chartData?.chartDataUpdated || null,
+        preparedDataUpdatedAt: chartData?.preparedDataUpdatedAt || null,
         prewarmedVariants: variantsToPrewarm.length,
       },
     });

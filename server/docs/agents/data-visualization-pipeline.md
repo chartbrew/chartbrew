@@ -13,7 +13,10 @@ flowchart TD
     Dataset -->|bound through| ChartDatasetConfig[ChartDatasetConfig<br/>Data Binding + Compatibility]
     ChartDatasetConfig -->|referenced by bindingId| Visualization[Chart.visualization<br/>Semantic Layers]
     Visualization -->|compiled by| Engine[VisualizationEngine<br/>VizFrame + Output Compiler]
-    Engine --> Chart[Chart.js / Table / Export Payload]
+    Engine --> Prepared[PreparedData snapshot]
+    Prepared --> ECharts[ECharts option]
+    Prepared --> Fallback[Chart.js fallback]
+    Prepared --> Native[Native view / Export payload]
     
     VariableBinding[VariableBinding] -.->|can attach to| DataRequest
     VariableBinding -.->|can attach to| Dataset
@@ -171,7 +174,7 @@ These fields remain on Dataset for older charts and callers during the CDC migra
 
 ChartDatasetConfig maps Datasets to Charts. A canonical visualization layer references it through `bindingId`, allowing one dataset result to power multiple value layers and generated breakdown series without adding CDC rows.
 
-During chart rendering, [`ChartController.updateChartData()`](../../controllers/ChartController.js) runs each CDC's Dataset through `DatasetController.runRequest()`, overlays compatibility options, and passes the bound results to `VisualizationEngine`. The engine filters rows, builds a sparse `VizFrame`, and selects the Chart.js, metric, table, matrix, markdown, or export compiler.
+During chart rendering, [`ChartController.updateChartData()`](../../controllers/ChartController.js) runs each CDC's Dataset through `DatasetController.runRequest()`, overlays compatibility options, and passes the bound results to `VisualizationEngine`. The engine filters rows, builds a sparse `VizFrame`, creates `PreparedData`, and compiles an ephemeral ECharts option for ready graphical presets. It also compiles a Chart.js compatibility payload for old clients and runtime fallback. KPI, average, table, and markdown remain native views.
 
 ### Ownership Rule
 

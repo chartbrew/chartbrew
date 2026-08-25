@@ -63,6 +63,14 @@ describe("Runtime cache integration", () => {
     const after = await runtimeCache.buildChartVersion(chart.id, "UTC");
 
     expect(after).not.toBe(before);
+
+    await chart.update({
+      preparedData: { generatedAt: new Date().toISOString(), results: [], version: 1 },
+      preparedDataFingerprint: "snapshot",
+      preparedDataUpdatedAt: new Date(),
+    });
+    const afterSnapshotWrite = await runtimeCache.buildChartVersion(chart.id, "UTC");
+    expect(afterSnapshotWrite).toBe(after);
   });
 
   it("reuses the chart-result cache for identical runtime filter combinations", async () => {
@@ -107,6 +115,7 @@ describe("Runtime cache integration", () => {
     });
 
     const controller = new ChartController();
+    const preparedCacheWriteSpy = vi.spyOn(runtimeCache, "setPreparedCache");
     const runRequestSpy = vi.spyOn(DatasetController.prototype, "runRequest")
       .mockResolvedValue({
         options: dataset.toJSON(),
@@ -135,9 +144,15 @@ describe("Runtime cache integration", () => {
     runRequestSpy.mockRestore();
 
     expect(firstChart.chartData.data.labels).toEqual(["Jan"]);
+    expect(firstChart.render.renderer).toBe("echarts");
+    expect(firstChart.render.configuration.dataset.source).toEqual([["Jan", 1]]);
     expect(firstChart.cacheStatus).toBe("miss");
     expect(secondChart.chartData.data.labels).toEqual(["Jan"]);
+    expect(secondChart.render.configuration).toEqual(firstChart.render.configuration);
     expect(secondChart.cacheStatus).toBe("hit");
+    expect(preparedCacheWriteSpy).toHaveBeenCalledWith(expect.objectContaining({
+      payload: expect.objectContaining({ version: 1 }),
+    }));
   });
 
   it("reuses source cache across parse-only runtime filter variants", async () => {

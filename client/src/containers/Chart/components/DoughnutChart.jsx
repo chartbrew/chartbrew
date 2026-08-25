@@ -106,10 +106,10 @@ const doughnutCenterTotalPlugin = {
     ctx.save();
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = `600 ${fontSize}px Inter`;
+    ctx.font = `700 ${fontSize}px "Inter Tight", sans-serif`;
     while (fontSize > 10 && ctx.measureText(value).width > maxTextWidth) {
       fontSize -= 1;
-      ctx.font = `600 ${fontSize}px Inter`;
+      ctx.font = `700 ${fontSize}px "Inter Tight", sans-serif`;
     }
 
     const showLabel = innerRadius >= 28;

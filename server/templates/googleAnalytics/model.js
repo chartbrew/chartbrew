@@ -1352,7 +1352,7 @@ const template = (configuration = {}) => ({
     },
     {
       "name": "New users by Country",
-      "type": "bar",
+      "type": "horizontalBar",
       "subType": "lcTimeseries",
       "public": false,
       "shareable": false,
@@ -1376,7 +1376,7 @@ const template = (configuration = {}) => ({
       "onReport": false,
       "xLabelTicks": "showAll",
       "stacked": false,
-      "horizontal": true,
+      "horizontal": false,
       "showGrowth": false,
       "layout": {
         "xxs": [0, 0, 2, 2], "xs": [0, 12, 6, 2], "sm": [0, 4, 4, 3], "md": [0, 4, 4, 3], "lg": [0, 4, 3, 3]
@@ -1420,7 +1420,7 @@ const template = (configuration = {}) => ({
     },
     {
       "name": "Top sources",
-      "type": "bar",
+      "type": "horizontalBar",
       "subType": "lcTimeseries",
       "public": false,
       "shareable": false,
@@ -1444,7 +1444,7 @@ const template = (configuration = {}) => ({
       "onReport": false,
       "xLabelTicks": "default",
       "stacked": false,
-      "horizontal": true,
+      "horizontal": false,
       "showGrowth": false,
       "layout": {
         "xxs": [0, 0, 2, 2], "xs": [0, 14, 6, 2], "sm": [4, 4, 4, 3], "md": [4, 4, 4, 3], "lg": [3, 4, 3, 3]

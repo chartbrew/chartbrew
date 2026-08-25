@@ -52,7 +52,7 @@ import canAccess from "../../../config/canAccess";
 import { selectUser } from "../../../slices/user";
 import { selectTeam } from "../../../slices/team";
 
-const MULTI_VALUE_MARKS = new Set(["bar", "line", "radar"]);
+const MULTI_VALUE_MARKS = new Set(["bar", "horizontalBar", "line", "radar"]);
 const NULL_POLICY_OPTIONS = [{
   id: "exclude",
   label: "Ignore empty rows",
@@ -151,7 +151,7 @@ EmptyValueControl.defaultProps = {
   nullLabel: null,
 };
 
-function LayerGoalField({ initialValue, onSave }) {
+function LayerGoalField({ description, initialValue, onSave }) {
   const [value, setValue] = useState(initialValue ?? undefined);
   const hasGoal = Number.isFinite(value);
   const hasChanges = value !== initialValue;
@@ -171,7 +171,7 @@ function LayerGoalField({ initialValue, onSave }) {
           <NumberField.Input placeholder="Enter a target value" />
           <NumberField.IncrementButton />
         </NumberField.Group>
-        <Description>Used by this value’s KPI progress indicator.</Description>
+        <Description>{description}</Description>
       </NumberField>
       <div className="mt-3 flex gap-2">
         <Button
@@ -200,6 +200,7 @@ function LayerGoalField({ initialValue, onSave }) {
 }
 
 LayerGoalField.propTypes = {
+  description: PropTypes.string.isRequired,
   initialValue: PropTypes.number,
   onSave: PropTypes.func.isRequired,
 };
@@ -595,9 +596,12 @@ function ChartDatasetDataSetup({
                       </Select.Popover>
                     </Select>
 
-                    {["kpi", "avg", "gauge"].includes(selectedLayer.mark) && (
+                    {["line", "bar", "horizontalBar", "kpi", "avg", "gauge"].includes(selectedLayer.mark) && (
                       <LayerGoalField
                         key={`${selectedLayer.id}-${selectedLayer.goal ?? "none"}`}
+                        description={["line", "bar", "horizontalBar"].includes(selectedLayer.mark)
+                          ? "Draw a reference line at this value."
+                          : "Use this value for the KPI progress indicator."}
                         initialValue={selectedLayer.goal}
                         onSave={(goal) => {
                           const nextVisualization = updateLayerGoal(

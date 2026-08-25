@@ -77,14 +77,14 @@ function getStyleForMark(layer, mark, saved = {}) {
   const style = { ...(layer.style || {}) };
   if (Object.prototype.hasOwnProperty.call(saved, "fill")) {
     style.fill = saved.fill;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fill = true;
   } else if (mark === "line" || mark === "radar") {
     style.fill = false;
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
     style.fillOpacity = saved.fillOpacity;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
   } else if (mark === "line") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
@@ -102,7 +102,7 @@ function updateLayerMark(layer, mark) {
   const savedMark = layer.options?.markState?.[mark] || {};
   if (layer.mark === mark) {
     if (
-      !["bar", "line", "radar"].includes(mark)
+      !["bar", "horizontalBar", "line", "radar"].includes(mark)
       || (
         Object.prototype.hasOwnProperty.call(savedMark, "fill")
         && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
@@ -166,11 +166,17 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
   const settings = { ...(next.settings || {}) };
 
   next.layers = next.layers.map((layer) => {
-    const mark = data.type || layer.mark;
-    const markedLayer = data.type ? updateLayerMark(layer, mark) : layer;
+    let mark = data.type || layer.mark;
+    if (data.horizontal === true && mark === "bar") mark = "horizontalBar";
+    if (data.type === undefined && data.horizontal === false && mark === "horizontalBar") mark = "bar";
+    const markedLayer = data.type !== undefined || mark !== layer.mark
+      ? updateLayerMark(layer, mark)
+      : layer;
     let orientation = layer.orientation;
+    if (mark === "horizontalBar") orientation = "horizontal";
+    if (mark === "bar") orientation = "vertical";
     let stack = layer.stack;
-    if (data.horizontal !== undefined) {
+    if (data.horizontal !== undefined && !["bar", "horizontalBar"].includes(mark)) {
       orientation = data.horizontal ? "horizontal" : "vertical";
     }
     if (data.stacked !== undefined) {
@@ -203,6 +209,8 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     "minValue",
     "timeInterval",
     "xLabelTicks",
+    "ranges",
+    "dataLabelsFormat",
   ];
   directSettings.forEach((field) => {
     if (data[field] !== undefined) settings[field] = data[field];
@@ -229,6 +237,12 @@ function replaceTransform(transforms, type, replacement) {
   const nextTransforms = (transforms || []).filter((transform) => transform.type !== type);
   if (replacement) nextTransforms.push(replacement);
   return nextTransforms;
+}
+
+function normalizeMaxRecords(value) {
+  if (typeof value === "string" && value.trim() === "") return null;
+  const count = typeof value === "string" ? Number(value) : value;
+  return Number.isInteger(count) && count >= 0 ? count : null;
 }
 
 function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
@@ -275,8 +289,9 @@ function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
       } : null);
     }
     if (data.maxRecords !== undefined) {
-      transforms = replaceTransform(transforms, "limit", Number.isInteger(data.maxRecords) ? {
-        count: data.maxRecords,
+      const count = normalizeMaxRecords(data.maxRecords);
+      transforms = replaceTransform(transforms, "limit", count !== null ? {
+        count,
         type: "limit",
       } : null);
     }

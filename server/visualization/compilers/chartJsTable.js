@@ -1,15 +1,10 @@
 const TableView = require("../../charts/TableView");
 const { applyLegacyTabularOptions } = require("../tabular");
 
-function getBindingId(dataset) {
-  return dataset?.options?.cdc_id ?? dataset?.options?.id ?? dataset?.bindingId ?? null;
-}
-
 function compileChartJsTable({
   chart,
   conditionsOptions,
-  datasets,
-  frame,
+  preparedData,
   timezone,
   visualization,
 }) {
@@ -17,10 +12,10 @@ function compileChartJsTable({
   const selectedDatasets = [];
   const configs = [];
 
-  frame.layers.forEach((layerFrame, index) => {
-    const layer = visualization.layers.find((item) => item.id === layerFrame.id);
-    const dataset = datasets.find((item) => `${getBindingId(item)}` === `${layer.bindingId}`);
-    const baseName = layer.name || dataset?.options?.legend || `Dataset ${index + 1}`;
+  preparedData.results.forEach((result, index) => {
+    const layer = visualization.layers.find((item) => item.id === result.id);
+    const sourceOptions = result.sourceOptions || {};
+    const baseName = layer.name || sourceOptions.legend || `Dataset ${index + 1}`;
     let name = baseName;
     let suffix = 2;
     while (Object.prototype.hasOwnProperty.call(rawData, name)) {
@@ -28,12 +23,12 @@ function compileChartJsTable({
       suffix += 1;
     }
 
-    rawData[name] = applyLegacyTabularOptions(layerFrame.rows, dataset?.options);
-    selectedDatasets.push(dataset || { options: {} });
+    rawData[name] = applyLegacyTabularOptions(result.rows, sourceOptions);
+    selectedDatasets.push({ options: sourceOptions });
     configs.push({
-      columnsOrder: layer.options?.columnsOrder || dataset?.options?.columnsOrder || [],
-      configuration: layer.options?.configuration || dataset?.options?.configuration || {},
-      excludedFields: layer.options?.excludedFields || dataset?.options?.excludedFields || [],
+      columnsOrder: layer.options?.columnsOrder || sourceOptions.columnsOrder || [],
+      configuration: layer.options?.configuration || sourceOptions.configuration || {},
+      excludedFields: layer.options?.excludedFields || sourceOptions.excludedFields || [],
       id: layer.bindingId,
       legend: name,
     });
@@ -53,7 +48,7 @@ function compileChartJsTable({
 
   return {
     ...compiled,
-    frame,
+    preparedData,
     isTimeseries: false,
   };
 }

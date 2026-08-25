@@ -1,14 +1,22 @@
 const moment = require("moment-timezone");
 const MatrixChart = require("../../charts/MatrixChart");
+const { projectPreparedSeries } = require("../seriesProjection");
 const { buildSeriesStyleMap } = require("./chartJsCartesian");
 
 function compileChartJsMatrix({
-  chart, frame, runtimeContext, timezone, visualization,
+  chart, preparedData, runtimeContext, timezone, visualization,
 }) {
-  const layerFrame = frame.layers[0];
-  const layer = visualization.layers.find((item) => item.id === layerFrame.id);
-  const series = layerFrame.series[0];
-  const style = buildSeriesStyleMap(frame, visualization).get(series.id);
+  const result = preparedData.results[0];
+  const layer = visualization.layers.find((item) => item.id === result.id);
+  const series = result.series[0];
+  const style = buildSeriesStyleMap(preparedData, visualization).get(series.id);
+  const projection = projectPreparedSeries({
+    chart,
+    preparedData,
+    runtimeContext,
+    timezone,
+    visualization,
+  });
   const config = {
     ...style,
     id: series.id,
@@ -18,8 +26,8 @@ function compileChartJsMatrix({
     return timezone ? value.tz(timezone) : value;
   };
   const axisData = {
-    x: layerFrame.rows.map((row) => momentFn(row.time).format("YYYY-MM-DD")),
-    y: [layerFrame.rows.map((row) => row.value)],
+    x: projection.labels,
+    y: [projection.series[0]?.values || []],
   };
   const effectiveDateRange = runtimeContext?.effectiveDateRange;
   let startDate = chart.startDate ? momentFn(chart.startDate) : null;
@@ -45,22 +53,22 @@ function compileChartJsMatrix({
     endDate
   ).getConfiguration();
   configuration.meta = {
-    frameVersion: frame.version,
+    frameVersion: preparedData.frameVersion,
     series: [{
       ...series,
-      bindingId: layerFrame.bindingId,
+      bindingId: result.bindingId,
       color: style.datasetColor,
       fillColor: style.fillColor,
       layerId: layer.id,
       layerName: layer.name || null,
     }],
     visualizationVersion: visualization.version,
-    warnings: frame.warnings,
+    warnings: preparedData.warnings,
   };
 
   return {
     configuration,
-    frame,
+    preparedData,
     isTimeseries: true,
   };
 }

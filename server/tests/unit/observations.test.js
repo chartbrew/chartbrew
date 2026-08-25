@@ -720,13 +720,13 @@ describe("workspace observations", () => {
     expect(getMinimumSamples("timeseries", 7)).toBe(2);
   });
 
-  it("extracts compact timeseries snapshots from the renderer-neutral frame", () => {
+  it("extracts compact timeseries snapshots from PreparedData", () => {
     const extraction = extractMonitorSnapshots(createMonitor(), {
-      layers: [{
-        fields: {
-          time: { field: "date" },
-          value: { field: "amount" },
-        },
+      results: [{
+        fields: [
+          { key: "time", role: "dimension", type: "temporal" },
+          { key: "value", role: "measure", type: "quantitative" },
+        ],
         id: "revenue",
         mark: "line",
         rows: [
@@ -745,11 +745,11 @@ describe("workspace observations", () => {
 
   it("preserves a missing source bucket instead of stretching the previous bucket", () => {
     const extraction = extractMonitorSnapshots(createMonitor(), {
-      layers: [{
-        fields: {
-          time: { field: "date" },
-          value: { field: "amount" },
-        },
+      results: [{
+        fields: [
+          { key: "time", role: "dimension", type: "temporal" },
+          { key: "value", role: "measure", type: "quantitative" },
+        ],
         id: "revenue",
         mark: "line",
         rows: [
@@ -865,8 +865,8 @@ describe("workspace observations", () => {
     const observationSpy = vi.spyOn(db.Observation, "update").mockResolvedValue([0]);
 
     const result = await processMonitor(monitor, {
-      layers: [{
-        fields: { value: "value" },
+      results: [{
+        fields: [{ key: "value", role: "measure", type: "quantitative" }],
         id: "revenue",
         mark: "kpi",
         rows: [{ value: 120 }],

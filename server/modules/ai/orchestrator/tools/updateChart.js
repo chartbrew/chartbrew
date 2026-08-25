@@ -142,6 +142,14 @@ async function updateChart(payload) {
       chartUpdates.ranges = chartSpec.ranges;
     }
 
+    const effectiveType = chartUpdates.type || chart.type;
+    if (effectiveType === "bar" && chartUpdates.horizontal === true) {
+      chartUpdates.type = "horizontalBar";
+      chartUpdates.horizontal = false;
+    } else if (effectiveType === "horizontalBar") {
+      chartUpdates.horizontal = false;
+    }
+
     if (Object.keys(chartUpdates).length > 0) {
       await db.Chart.update(chartUpdates, { where: { id: chart_id } });
     }

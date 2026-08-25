@@ -7,6 +7,7 @@ import {
   getVisualizationTimeField,
   isVisualizationReady,
   updateBindingFill,
+  updateDataLabels,
   updateDataLabelsFormat,
   updateLayerField,
   updateLayerFormula,
@@ -17,6 +18,7 @@ import {
   updateLayerSeriesOptions,
   updateLegendVisibility,
   updateMissingValuePolicy,
+  updateMarkStyle,
   updateSeriesColor,
 } from "./visualization.js";
 import { chartColors, getChartColorForKey } from "../config/colors.js";
@@ -111,6 +113,13 @@ test("missing chart points can be explicitly treated as zero", () => {
   assert.equal(next.metadata.createdBy, "visualization-editor");
 });
 
+test("data labels are stored in canonical chart settings", () => {
+  const next = updateDataLabels(visualization, true);
+
+  assert.equal(next.settings.dataLabels, true);
+  assert.equal(next.metadata.createdBy, "visualization-editor");
+});
+
 test("data label format is stored in canonical chart settings", () => {
   const values = updateDataLabelsFormat(visualization, "value");
   const percentages = updateDataLabelsFormat(values, "invalid");
@@ -124,6 +133,24 @@ test("legend visibility is stored in canonical chart settings", () => {
   const next = updateLegendVisibility(visualization, false);
 
   assert.equal(next.settings.legend.visible, false);
+});
+
+test("mark styles update only matching visualization layers", () => {
+  const lineLayer = { ...visualization.layers[0], id: "line-1", mark: "line" };
+  const mixedVisualization = {
+    ...visualization,
+    metadata: { createdBy: "visualization-editor" },
+    layers: [
+      lineLayer,
+      { ...lineLayer, id: "line-2" },
+      { ...lineLayer, id: "bar-1", mark: "bar" },
+    ],
+  };
+  const next = updateMarkStyle(mixedVisualization, "line", { pointRadius: 3, smooth: true });
+
+  assert.equal(next.layers[0].style.pointRadius, 3);
+  assert.equal(next.layers[1].style.smooth, true);
+  assert.equal(next.layers[2].style?.pointRadius, undefined);
 });
 
 test("value-only marks remove axis encodings", () => {

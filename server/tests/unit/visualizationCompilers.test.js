@@ -303,6 +303,21 @@ describe("visualization output compilers", () => {
     ]);
   });
 
+  it("builds chart-as-shown export from PreparedData without calling render", () => {
+    const engine = buildEngine("bar", {
+      category: { field: "root[].program", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+    }, [{ program: "Ceramics", revenue: 80 }], { name: "Revenue" });
+    engine.render = vi.fn(() => {
+      throw new Error("render must not run");
+    });
+
+    expect(engine.export({ mode: "shown" }).configuration).toEqual({
+      "Chart as shown": [{ Category: "Ceramics", Revenue: 80 }],
+    });
+    expect(engine.render).not.toHaveBeenCalled();
+  });
+
   it("does not repeat one value-layer goal across generated breakdown series", () => {
     const result = buildEngine("bar", {
       category: { field: "root[].month", type: "nominal" },

@@ -257,6 +257,36 @@ describe("visualization frame builder", () => {
     expect(frame.layers[0].rows.map((row) => row.value)).toEqual([10, 30, 60]);
   });
 
+  it("limits the prepared rows before every chart compiler receives them", () => {
+    const frame = buildVisualizationFrame({
+      visualization: {
+        version: 2,
+        layers: [{
+          id: "limited",
+          bindingId: "cdc-limited",
+          mark: "line",
+          encoding: {
+            category: { field: "root[].category", type: "nominal" },
+            value: { aggregate: "sum", field: "root[].value", type: "quantitative" },
+          },
+          transforms: [{ count: 2, type: "limit" }],
+        }],
+      },
+      datasets: [{
+        options: { id: "cdc-limited" },
+        data: [
+          { category: "A", value: 10 },
+          { category: "B", value: 20 },
+          { category: "C", value: 30 },
+          { category: "D", value: 40 },
+        ],
+      }],
+    });
+
+    expect(frame.layers[0].rows.map((row) => row.category)).toEqual(["A", "B"]);
+    expect(frame.layers[0].stats.outputRows).toBe(2);
+  });
+
   it("calculates cumulative values independently for every breakdown series", () => {
     const frame = buildVisualizationFrame({
       visualization: {

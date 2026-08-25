@@ -1,7 +1,20 @@
 const db = require("../models/models");
 const { remapVisualizationBindings } = require("../visualization/remapBindings");
 
-const chartAttributeExcludes = ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"];
+const chartAttributeExcludes = [
+  "id",
+  "project_id",
+  "chartData",
+  "chartDataUpdated",
+  "createdAt",
+  "lastAutoUpdate",
+  "preparedData",
+  "preparedDataFingerprint",
+  "preparedDataSourceFingerprint",
+  "preparedDataUpdatedAt",
+  "preparedDataVisualizationFingerprint",
+  "updatedAt",
+];
 const chartDatasetConfigAttributeExcludes = ["chart_id", "createdAt", "updatedAt"];
 
 const toPlainObject = (record) => {

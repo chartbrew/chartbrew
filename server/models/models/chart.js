@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     type: {
       type: DataTypes.STRING,
-      description: "The type of chart: line, bar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, markdown",
+      description: "The type of chart: line, bar, horizontalBar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, markdown",
     },
     subType: {
       type: DataTypes.STRING,
@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     chartData: {
       type: DataTypes.TEXT("long"),
-      description: "Holds the chart.js configuration",
+      description: "Legacy Chart.js configuration retained only for migration fallback",
       set(val) {
         return this.setDataValue("chartData", JSON.stringify(val));
       },
@@ -53,7 +53,37 @@ module.exports = (sequelize, DataTypes) => {
     },
     chartDataUpdated: {
       type: DataTypes.DATE,
-      description: "When was chartData last updated"
+      description: "Compatibility timestamp for the latest chart render"
+    },
+    preparedData: {
+      type: DataTypes.TEXT("long"),
+      description: "Last successful renderer-neutral prepared snapshot",
+      set(val) {
+        return this.setDataValue("preparedData", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("preparedData"));
+        } catch (e) {
+          return this.getDataValue("preparedData");
+        }
+      }
+    },
+    preparedDataUpdatedAt: {
+      type: DataTypes.DATE,
+      description: "When the prepared snapshot was last updated"
+    },
+    preparedDataFingerprint: {
+      type: DataTypes.STRING(64),
+      description: "Combined prepared snapshot input fingerprint"
+    },
+    preparedDataVisualizationFingerprint: {
+      type: DataTypes.STRING(64),
+      description: "Visualization input fingerprint for the prepared snapshot"
+    },
+    preparedDataSourceFingerprint: {
+      type: DataTypes.STRING(64),
+      description: "Source input fingerprint for the prepared snapshot"
     },
     visualization: {
       type: DataTypes.TEXT("long"),
@@ -171,7 +201,7 @@ module.exports = (sequelize, DataTypes) => {
     horizontal: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      description: "Whether to display the chart horizontally - only works for bar charts"
+      description: "Legacy horizontal bar compatibility flag. Use the horizontalBar chart type."
     },
     showGrowth: {
       type: DataTypes.BOOLEAN,
@@ -266,7 +296,13 @@ module.exports = (sequelize, DataTypes) => {
       description: "This field is deprecated in favor of layout"
     },
   }, {
+    defaultScope: {
+      attributes: { exclude: ["preparedData"] },
+    },
     freezeTableName: true,
+    scopes: {
+      withPreparedData: {},
+    },
   });
 
   Chart.associate = (models) => {
