@@ -348,11 +348,11 @@ function Home() {
       </header>
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
-        <div className="min-w-0 flex-1">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <HomeAsk teamId={team.id} />
         </div>
 
-        <div className="hidden w-90 shrink-0 lg:block">
+        <div className="hidden w-80 shrink-0 self-start lg:block xl:w-90">
           <HomeDiscover />
         </div>
       </div>

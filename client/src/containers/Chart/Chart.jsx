@@ -75,6 +75,7 @@ function Chart(props) {
     onAddChartFilter = null,
     onClearChartFilter = null,
     onRefreshRuntimeChart = null,
+    embedded = false,
   } = props;
 
   const team = useSelector(selectTeam);
@@ -642,9 +643,11 @@ function Chart(props) {
       )}
       {chart && (
         <Card
-          className={`relative h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
+          className={embedded
+            ? "relative h-full border-none bg-transparent shadow-none"
+            : `relative h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
         >
-          {showChartTitle && (
+          {showChartTitle && !embedded && (
             <Card.Header className="min-w-0 pb-0 pr-8 flex flex-row items-center">
               <div className="min-w-0 flex-1" title={chart.name}>
                 <Row align="center" className="min-w-0 flex-nowrap gap-1">
@@ -665,7 +668,7 @@ function Chart(props) {
               </div>
             </Card.Header>
           )}
-          <div className="absolute right-2 top-2 z-10 flex items-center justify-end gap-1">
+          <div className={`absolute right-2 top-2 z-10 flex items-center justify-end gap-1${embedded ? " hidden" : ""}`}>
               {_checkIfFilters() && (
                 <div className="flex items-center gap-1">
                   {chartSize?.[2] > 3 && (
@@ -940,7 +943,7 @@ function Chart(props) {
               )}
             </div>
           <Card.Content
-            className="overflow-y-hidden"
+            className={embedded ? "overflow-hidden p-0" : "overflow-y-hidden"}
           >
             {(chart.chartData || chart.render?.configuration) && (
               <div className="flex h-full w-full items-center justify-center">
@@ -1317,6 +1320,7 @@ Chart.propTypes = {
   onAddChartFilter: PropTypes.func,
   onClearChartFilter: PropTypes.func,
   onRefreshRuntimeChart: PropTypes.func,
+  embedded: PropTypes.bool,
 };
 
 export default Chart;

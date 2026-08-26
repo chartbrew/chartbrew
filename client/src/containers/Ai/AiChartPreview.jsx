@@ -11,26 +11,24 @@ function AiChartPreview({ parsed, chartData, loadError, onRetry }) {
   const isTemporary = parsed.type === "chart_temporary" || parsed.visibility === "temporary";
   const isCreated = parsed.type === "chart_created";
   const title = parsed.chartName || chartData?.name || "Generated chart";
+  const statusLabel = isTemporary ? "Preview" : isCreated ? "Created" : "Updated";
 
   return (
-    <figure className="w-full overflow-hidden rounded-2xl border border-divider bg-content1">
-      <figcaption className="flex flex-col gap-2 border-b border-divider px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <figure className="flex w-full flex-col gap-3 rounded-[2rem] bg-foreground/[0.055] p-3 dark:bg-foreground/[0.08]">
+      <figcaption className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2.5">
           <LuChartNoAxesColumnIncreasing className="shrink-0 text-accent" size={18} aria-hidden />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">{title}</p>
-            <p className="text-xs text-muted">Chartbrew visualization</p>
-          </div>
+          <p className="truncate text-sm font-semibold text-foreground">{title}</p>
         </div>
         <Chip color={isTemporary ? "warning" : "success"} size="sm" variant="soft">
-          <Chip.Label>{isTemporary ? "Preview" : isCreated ? "Created" : "Updated"}</Chip.Label>
+          <Chip.Label>{statusLabel}</Chip.Label>
         </Chip>
       </figcaption>
 
-      <div className="min-h-80 p-3">
+      <div className="min-h-80 overflow-hidden rounded-[1.25rem] bg-surface">
         {chartData ? (
           <div className="h-80 overflow-hidden">
-            <Chart chart={chartData} isPublic={false} showExport={false} />
+            <Chart chart={chartData} embedded isPublic={false} showExport={false} />
           </div>
         ) : loadError ? (
           <div className="flex h-80 flex-col items-center justify-center gap-3 text-center">
@@ -50,7 +48,7 @@ function AiChartPreview({ parsed, chartData, loadError, onRetry }) {
         )}
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-divider px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted">
           {isTemporary
             ? "This preview has not been added to a dashboard."

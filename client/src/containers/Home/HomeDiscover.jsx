@@ -43,9 +43,9 @@ function HomeDiscover() {
   };
 
   return (
-    <aside className="h-[20rem]" aria-label="Discover more">
+    <aside className="flex h-[18rem] max-h-[18rem] flex-col" aria-label="Discover more">
       <Card className="h-full gap-0 rounded-3xl border border-divider shadow-none">
-        <Card.Content className="flex h-full flex-col gap-4 overflow-hidden">
+        <Card.Content className="flex h-full flex-col gap-3 overflow-hidden">
           <div className="flex shrink-0 flex-row items-start justify-between gap-3">
             {Icon ? (
               <div className={cn(
