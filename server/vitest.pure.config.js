@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     include: [
       "tests/unit/chartJsCartesianCompiler.test.js",
+      "tests/unit/chartImageRenderer.test.js",
       "tests/unit/dataApiAccess.test.js",
       "tests/unit/dataApiContracts.test.js",
       "tests/unit/dataApiMigrations.test.js",
