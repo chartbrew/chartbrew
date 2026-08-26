@@ -55,7 +55,7 @@ function buildEngine({
 }
 
 function buildCurrentMarkEngine(mark) {
-  if (["bar", "line", "pie", "doughnut", "radar", "polar"].includes(mark)) {
+  if (["bar", "horizontalBar", "line", "pie", "doughnut", "radar", "polar"].includes(mark)) {
     return buildEngine({
       encoding: {
         category: { field: "root[].category", type: "nominal" },
@@ -387,6 +387,11 @@ describe("current chart type goldens through PreparedData", () => {
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
       values: [[10, 20]],
     },
+    horizontalBar: {
+      labels: ["A", "B"],
+      preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
+      values: [[10, 20]],
+    },
     line: {
       labels: ["A", "B"],
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
@@ -454,5 +459,16 @@ describe("current chart type goldens through PreparedData", () => {
     });
 
     expect(getGoldenOutput(mark, result)).toEqual(expected[mark]);
+  });
+
+  it.each(Object.keys(expected))("keeps prepared-only %s data equal to the normal chart path", (mark) => {
+    const generatedAt = "2026-08-19T00:00:00.000Z";
+    const preparedEngine = buildCurrentMarkEngine(mark);
+    const normalEngine = buildCurrentMarkEngine(mark);
+    const preparedOnly = preparedEngine.prepare({ generatedAt }).preparedData;
+    const normal = normalEngine.render({ generatedAt }).preparedData;
+
+    expect(toPublicPreparedData(preparedOnly)).toEqual(toPublicPreparedData(normal));
+    expect(serializePreparedData(preparedOnly)).toBe(serializePreparedData(normal));
   });
 });

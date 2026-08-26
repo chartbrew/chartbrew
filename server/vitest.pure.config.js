@@ -6,6 +6,10 @@ export default defineConfig({
     globals: true,
     include: [
       "tests/unit/chartJsCartesianCompiler.test.js",
+      "tests/unit/dataApiAccess.test.js",
+      "tests/unit/dataApiContracts.test.js",
+      "tests/unit/dataApiMigrations.test.js",
+      "tests/unit/datasetData.test.js",
       "tests/unit/embeddedChartPayload.test.js",
       "tests/unit/echartsCompiler.test.js",
       "tests/unit/kpiReview.test.js",
@@ -22,6 +26,7 @@ export default defineConfig({
       "tests/unit/scheduleWeekdays.test.js",
       "tests/unit/visualizationCompilers.test.js",
       "tests/unit/visualizationPreparedData.test.js",
+      "tests/unit/verifyDataApiKey.test.js",
     ],
     maxWorkers: 1,
     pool: "forks",

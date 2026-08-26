@@ -269,7 +269,9 @@ function buildChartRuntimeContext(chart, filters = [], variables = {}, timezone 
     dashboardDateRange,
     effectiveDateRange,
     hasRuntimeFilters: normalizedFilters.length > 0 || Object.keys(normalizedVariables).length > 0,
-    needsSourceRefresh: Boolean(dashboardDateRange) || Object.keys(normalizedVariables).length > 0,
+    needsSourceRefresh: Boolean(dashboardDateRange)
+      || Object.keys(normalizedVariables).length > 0
+      || classifiedPayload.sourceAffecting.filters.some((filter) => filter.forceSourceRefresh),
     classifiedPayload,
     sourceAffecting: classifiedPayload.sourceAffecting,
     serverParseAffecting: classifiedPayload.serverParseAffecting,

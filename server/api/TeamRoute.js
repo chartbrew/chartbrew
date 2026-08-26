@@ -262,14 +262,14 @@ module.exports = (app) => {
 
   // route to create a new API key to access the team content
   app.post("/team/:id/apikey", verifyToken, checkPermissions("createAny", "apiKey"), (req, res) => {
-    if (!req.body.name) return res.status(400).send("Missing required fields.");
+    if (!req.body.name) return res.status(400).send({ error: "A key name is required." });
 
     return teamController.createApiKey(req.params.id, req.user, req.body)
       .then((apiKey) => {
         return res.status(200).send(apiKey);
       })
       .catch((err) => {
-        return res.status(400).send(err);
+        return res.status(400).send({ error: err.message || "The key could not be created." });
       });
   });
   // --------------------------------------
