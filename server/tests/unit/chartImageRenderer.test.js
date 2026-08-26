@@ -1,4 +1,5 @@
 const path = require("path");
+const { createHash } = require("crypto");
 const sharp = require("sharp");
 
 const { resolveImageSize } = require("../../../shared/visualization/imageLayout");
@@ -65,8 +66,9 @@ function makePrepared(mark, fields, rows) {
 }
 
 function makeDocument(mark = "line", overrides = {}) {
-  const isMetric = mark === "kpi";
-  const preparedData = isMetric
+  const isMetric = ["avg", "kpi"].includes(mark);
+  const isSingleValue = isMetric || mark === "gauge";
+  let preparedData = isSingleValue
     ? makePrepared(mark, [field("value", "measure", "quantitative")], [{ value: 5755 }])
     : makePrepared(mark, [
       field("category"),
@@ -77,7 +79,7 @@ function makeDocument(mark = "line", overrides = {}) {
       { category: "Mar", value: 19 },
       { category: "Apr", value: 34 },
     ]);
-  const visualization = isMetric
+  let visualization = isSingleValue
     ? makeVisualization(mark, {
       value: { aggregate: "sum", field: "root[].value", type: "quantitative" },
     })
@@ -85,6 +87,19 @@ function makeDocument(mark = "line", overrides = {}) {
       category: { field: "root[].month", type: "nominal" },
       value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
     });
+  if (mark === "matrix") {
+    preparedData = makePrepared(mark, [
+      field("time", "dimension", "temporal"),
+      field("value", "measure", "quantitative"),
+    ], [
+      { time: "2026-08-19T00:00:00.000Z", value: 4 },
+      { time: "2026-08-20T00:00:00.000Z", value: 9 },
+    ]);
+    visualization = makeVisualization(mark, {
+      time: { field: "root[].date", type: "temporal" },
+      value: { aggregate: "sum", field: "root[].count", type: "quantitative" },
+    });
+  }
   return {
     background: { mode: "default" },
     chart: { id: 42, invertGrowth: false, showGrowth: true, type: mark },
@@ -125,6 +140,11 @@ function normalizeGolden(svg) {
 }
 
 describe("chart image rendering", () => {
+  const supportedPresets = [
+    "line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
+    "kpi", "avg",
+  ];
+
   it("normalizes fixed and original image sizes", () => {
     expect(resolveImageSize({ preset: "social" })).toEqual({ height: 630, width: 1200 });
     expect(resolveImageSize({ preset: "square" })).toEqual({ height: 1080, width: 1080 });
@@ -162,6 +182,19 @@ describe("chart image rendering", () => {
     expect(normalizeGolden(svg)).toMatchSnapshot();
     const png = await renderImagePng(document);
     expect((await sharp(png).metadata()).format).toBe("png");
+  });
+
+  it.each(supportedPresets)("renders the %s preset as deterministic SVG and PNG", async (mark) => {
+    const document = makeDocument(mark);
+    const svg = renderImageSvg(document);
+    const png = await renderImagePng(document);
+    const metadata = await sharp(png).metadata();
+    expect({
+      mark,
+      pngSha256: createHash("sha256").update(png).digest("hex"),
+      svg: normalizeGolden(svg),
+    }).toMatchSnapshot();
+    expect(metadata).toEqual(expect.objectContaining({ format: "png", height: 630, width: 1200 }));
   });
 
   it("removes card content in chart-only layout", () => {

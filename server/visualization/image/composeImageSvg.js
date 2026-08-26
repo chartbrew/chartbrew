@@ -1,5 +1,10 @@
 const { resolveImageLayout } = require("../../../shared/visualization/imageLayout");
-const { IMAGE_RENDER_LIMITS, assertImageDimensions, assertPreparedRows } = require("../../modules/chartImage/imageLimits");
+const {
+  IMAGE_RENDER_LIMITS,
+  assertImageDimensions,
+  assertPreparedRows,
+  createImageTooLargeError,
+} = require("../../modules/chartImage/imageLimits");
 const { MAX_LOGO_UPLOAD_SIZE_BYTES, isValidLogoImageBuffer } = require("../../modules/logoUploadSecurity");
 const { renderChartbrewMark } = require("./chartbrewMark");
 const { getEmbeddedFontCss } = require("./fontAsset");
@@ -21,7 +26,6 @@ const GRAPHICAL_PRESETS = new Set([
 ]);
 const METRIC_PRESETS = new Set(["avg", "kpi"]);
 const LOGO_DATA_URI = /^data:(image\/(?:png|jpeg|gif|webp|svg\+xml));base64,([a-z0-9+/=]+)$/i;
-const UNSAFE_IMAGE_SVG = /<!doctype|<!entity|\b(?:href|xlink:href)\s*=\s*["']\s*(?:https?:|\/\/|file:)/i;
 
 function isSafeLogoDataUri(dataUri) {
   if (typeof dataUri !== "string") return false;
@@ -30,8 +34,7 @@ function isSafeLogoDataUri(dataUri) {
   const mimeType = match[1].toLowerCase();
   const buffer = Buffer.from(match[2], "base64");
   if (buffer.length === 0 || buffer.length > MAX_LOGO_UPLOAD_SIZE_BYTES) return false;
-  if (!isValidLogoImageBuffer(buffer, mimeType)) return false;
-  return mimeType !== "image/svg+xml" || !UNSAFE_IMAGE_SVG.test(buffer.toString("utf8"));
+  return isValidLogoImageBuffer(buffer, mimeType);
 }
 
 function getPreset(preparedData) {
@@ -222,7 +225,7 @@ function composeImageSvg(input) {
   ].join("");
 
   if (Buffer.byteLength(svg) > IMAGE_RENDER_LIMITS.maxSvgBytes) {
-    throw new Error("Composed SVG exceeds the image size limit");
+    throw createImageTooLargeError("Composed SVG exceeds the image size limit");
   }
   return svg;
 }

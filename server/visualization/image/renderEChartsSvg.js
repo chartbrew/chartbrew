@@ -1,7 +1,12 @@
 const echarts = require("echarts");
 
 const { buildEChartsOption } = require("../compilers/echarts");
-const { assertImageDimensions, assertPreparedRows, IMAGE_RENDER_LIMITS } = require("../../modules/chartImage/imageLimits");
+const {
+  assertImageDimensions,
+  assertPreparedRows,
+  createImageTooLargeError,
+  IMAGE_RENDER_LIMITS,
+} = require("../../modules/chartImage/imageLimits");
 const { buildEChartsImageTheme } = require("./imageTheme");
 const { canonicalizeSvgIds } = require("./safeSvg");
 const { FONT_FAMILY } = require("./fontAsset");
@@ -37,6 +42,7 @@ function renderEChartsSvg({
   chart,
   colors,
   height,
+  locale,
   preparedData,
   renderContext = {},
   visualization,
@@ -50,6 +56,7 @@ function renderEChartsSvg({
     renderContext: {
       ...renderContext,
       height,
+      locale,
       pixelRatio: 1,
       reducedMotion: true,
       surface: "social",
@@ -69,7 +76,7 @@ function renderEChartsSvg({
     instance.setOption(option, { lazyUpdate: false, notMerge: true });
     const svg = canonicalizeSvgIds(instance.renderToSVGString(), "echarts");
     if (Buffer.byteLength(svg) > IMAGE_RENDER_LIMITS.maxSvgBytes) {
-      throw new Error("Chart SVG exceeds the image size limit");
+      throw createImageTooLargeError("Chart SVG exceeds the image size limit");
     }
     return svg;
   } finally {
