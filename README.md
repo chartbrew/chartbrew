@@ -96,6 +96,17 @@ Chartbrew can be deployed on DigitalOcean using the 1-click droplet from the mar
   </a>
 </p>
 
+## Deploy Chartbrew on RepoCloud
+
+Deploy Chartbrew with one click on RepoCloud for managed cloud hosting of open-source applications.
+
+<!-- RepoCloud Deploy Button -->
+<p>
+  <a href="https://repocloud.io/details/Chartbrew/" target="_blank" rel="noopener noreferrer">
+    <img src="https://d16t0pc4846x52.cloudfront.net/deploylobe.svg" alt="Deploy on RepoCloud" style="height: 40px;" />
+  </a>
+</p>
+
 ## Run with Docker
 
 [Check the full guide in the docs.](https://docs.chartbrew.com/deployment/run-on-docker)
