@@ -230,13 +230,11 @@ jobs:
       run: |
         cd client
         npm run lint
-      continue-on-error: true
 
     - name: Run frontend tests
       run: |
         cd client
         npm test
-      continue-on-error: true
       env:
         CI: true
 

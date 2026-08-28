@@ -6,6 +6,8 @@ const { resolveImageLayout, resolveImageSize } = require("../../../shared/visual
 const { renderImagePng, renderImageSvg } = require("../../modules/chartImage/imageRenderer");
 const { RenderWorkerQueue } = require("../../modules/chartImage/renderWorkerQueue");
 const { scaleEChartsDetails } = require("../../visualization/image/renderEChartsSvg");
+const { renderPng } = require("../../visualization/image/renderPng");
+const { IMAGE_RENDER_LIMITS } = require("../../modules/chartImage/imageLimits");
 
 function field(key, role = "dimension", type = "nominal") {
   return { key, role, sourceField: `root[].${key}`, type };
@@ -435,6 +437,13 @@ describe("chart image rendering", () => {
     }));
     expect(() => renderImageSvg(document)).toThrow("Prepared data exceeds the image row limit");
   });
+
+  it("rejects SVG input above the fixed output limit", async () => {
+    const svg = "x".repeat(IMAGE_RENDER_LIMITS.maxSvgBytes + 1);
+    await expect(renderPng(svg, { height: 720, width: 1280 })).rejects.toMatchObject({
+      code: "IMAGE_TOO_LARGE",
+    });
+  });
 });
 
 describe("render worker queue", () => {
@@ -477,6 +486,27 @@ describe("render worker queue", () => {
       await expect(active).rejects.toMatchObject({ code: "IMAGE_RENDER_TIMEOUT" });
     } finally {
       await queue.close();
+    }
+  });
+
+  it("rejects work when the fixed queue is full", async () => {
+    const queue = new RenderWorkerQueue({
+      queueWaitMs: 1000,
+      renderTimeoutMs: 1000,
+      workerFile: path.join(__dirname, "../fixtures/hangingRenderWorker.js"),
+    });
+    const jobs = [queue.render({ hang: true })];
+    for (let index = 1; index < IMAGE_RENDER_LIMITS.maxQueueLength; index += 1) {
+      jobs.push(queue.render({ hang: false }));
+    }
+    const settledJobs = jobs.map((job) => job.catch((error) => error));
+    try {
+      await expect(queue.render({ hang: false })).rejects.toMatchObject({
+        code: "IMAGE_RENDER_BUSY",
+      });
+    } finally {
+      await queue.close();
+      await Promise.all(settledJobs);
     }
   });
 });

@@ -236,6 +236,24 @@ describe("chart image route", () => {
     expect(response.body.error.code).toBe("RESOURCE_NOT_FOUND");
   });
 
+  it("rejects a project from another team", async () => {
+    const otherTeam = await db.Team.create({ name: "Other image team", showBranding: true });
+    const otherProject = await db.Project.create({
+      brewName: `image-cross-team-${Date.now()}-${Math.random()}`,
+      ghost: false,
+      name: "Other team project",
+      team_id: otherTeam.id,
+      timezone: "UTC",
+    });
+    const response = await request(app)
+      .post(`/project/${otherProject.id}/chart/${fixture.chart.id}/image`)
+      .set("Authorization", `Bearer ${fixture.token}`)
+      .set("Content-Type", "application/json")
+      .send({ version: 1 })
+      .expect(403);
+    expect(response.body.error.code).toBe("IMAGE_EXPORT_FORBIDDEN");
+  });
+
   it("returns stable errors for invalid contracts and unavailable snapshots", async () => {
     const invalid = await post({ unknown: true, version: 1 }).expect(400);
     expect(invalid.body.error).toEqual({

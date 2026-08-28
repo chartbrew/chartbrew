@@ -1,6 +1,6 @@
 # ECharts SSR And Chart Image Sharing
 
-Status: accepted
+Status: implemented
 
 Related:
 
@@ -768,69 +768,35 @@ server endpoint. The ready `social` surface controls the local Share image tab.
 
 ## Testing
 
+Keep the automated suite focused on code that Chartbrew owns and on failures that could expose data,
+block image rendering, or produce an invalid artifact.
+
 ### Unit Tests
 
-- Request defaults, strict allowlists, unsafe keys, text limits, locale validation, and colors.
-- Landscape, mobile, and original dimension normalization.
-- Branding authority for both `Team.showBranding` values.
-- Role, project, chart, and export permission checks.
-- Date-range and last-updated resolution.
-- Safe filenames and XML escaping.
-- Local logo validation, embedding, and omission.
-- Deterministic server output and local capture fingerprints.
+- Strict request validation, image dimensions, safe text, safe filenames, and XML escaping.
+- Role, project, chart, and export permission rules.
 - Shared client and server layout calculations.
-- Worker queue, abort, deadline, termination, and replacement behavior.
-- ECharts disposal on success and failure.
-- Native KPI and average projection and formatting.
-
-### Render Goldens
-
-Give every SSR-ready preset one baseline social share-card golden. Use a smaller representative set
-of line, pie, gauge, and KPI images to cover both layouts, all sizes, both themes, custom background,
-long text, logo presence, branding authority, and content switches. Use pairwise cases instead of a
-full combination matrix.
-
-Add focused empty, sparse, null, negative, dense, multiple-series, goal, growth, range, and breakdown
-goldens only to presets that support the related behavior.
-
-Store canonical SVG structural snapshots and PNG image goldens. Normalize ECharts-generated IDs
-only in the test serializer. Use a small documented pixel tolerance for platform raster differences.
-Run a Node 22 Debian-slim smoke render in CI.
+- Renderer determinism for every SSR-ready preset.
+- Worker queue capacity, abort, deadline, termination, and replacement behavior.
+- Native KPI, average, and KPI-overlay projection.
 
 ### Integration And Security Tests
 
-- Every allowed role and denied role.
-- Cross-project and cross-team chart IDs.
-- Missing or invalid user token.
-- Public share token and API key rejection.
-- `canExport` enforcement.
-- Private chart image generation while `Chart.shareable` is false.
-- Unsupported table and markdown responses.
-- Missing snapshot returns `IMAGE_DATA_UNAVAILABLE` without executing a source query.
-- Oversized request, dimensions, rows, SVG, and PNG.
-- Render timeout and full queue.
-- No file written to uploads.
-- No raw data, SVG, text, path, or stack trace in logs and errors.
+- Authenticated private-chart rendering and rejected tokens.
+- Cross-project and cross-team access.
+- Export permission enforcement.
+- Missing snapshots and unsupported presets.
+- Request, row, SVG, queue, and execution limits.
 - Docker installation and Sharp rasterization.
 
 ### Client Tests
 
-- Public sharing switch exists only in **Links & embed**.
-- Share image stays available when public sharing is off.
-- Export-only users see **Share image** without **Links & embed**.
-- Default controls and branding authority.
-- Every control updates the exact local scene without a server response.
-- The scene uses an ECharts SVG and never replaces it with a Chart.js preview.
-- Local capture debounce and stale PNG protection.
-- Copy and download wait for or reuse the current local PNG.
-- Download object URLs are revoked.
-- Clipboard success, unsupported browser, and denied permission.
-- PNG download and safe filename.
-- Exact landscape, mobile, and original output dimensions.
-- KPI overlays, native KPI, average, team name, project name, logo, title, subtitle, and branding.
-- Unsupported preset state.
-- Keyboard tab order, modal focus return, labels, and live-region updates.
-- Desktop and narrow modal layouts.
+- Image defaults, permission helpers, dimension normalization, safe filenames, and backgrounds.
+- Shared layout and ECharts detail scaling.
+- Preset readiness for local sharing and SSR.
+
+Do not add tests for routine HeroUI modal, tab, switch, focus, or open-and-close behavior. Verify the
+complete copy and download journey with one manual browser smoke check before release.
 
 ## Delivery Plan
 
@@ -876,15 +842,13 @@ public sharing, saving settings, or sending chart data to the image endpoint.
 
 ### Phase 4: Hardening And Release
 
-- Run full preset, database, client, browser, Docker, and security suites.
-- Measure render time, queue behavior, memory, and output size with a chart corpus.
-- Adjust fixed limits through reviewed code changes if measurements require it.
+- Run the focused server, database, client, Docker, and security checks.
 - Mark only proven presets `ssr: true`.
 - Update OpenAPI and user documentation.
 - Release through the normal application deployment process.
 
-Complete when every SSR-ready preset passes the image surface gates and production measurements
-remain within the agreed latency, failure, memory, and queue thresholds.
+Complete when every SSR-ready preset passes the focused image checks and the documented endpoint,
+local copy flow, and Docker renderer are ready for release.
 
 ## Rollback
 

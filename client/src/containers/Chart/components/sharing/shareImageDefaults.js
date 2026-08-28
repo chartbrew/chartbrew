@@ -86,8 +86,6 @@ export function getShareImageDefaults({ chart, project }) {
     branding: "chartbrew",
     companyName: true,
     dashboardName: true,
-    dateRange: false,
-    lastUpdated: false,
     layout: "shareCard",
     logo: Boolean(project?.logo),
     sizePreset: "landscape",
@@ -166,8 +164,6 @@ export function buildShareImageOptions({
       branding: settings.branding,
       companyName: settings.companyName,
       dashboardName: settings.dashboardName,
-      dateRange: settings.dateRange,
-      lastUpdated: settings.lastUpdated,
       logo: settings.logo,
       subtitle: {
         show: settings.subtitleShow,
