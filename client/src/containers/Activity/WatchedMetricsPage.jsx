@@ -15,6 +15,7 @@ import {
   useFilter,
 } from "@heroui/react";
 import {
+  LuActivity,
   LuClock,
   LuEllipsis,
   LuEyeOff,
@@ -24,7 +25,6 @@ import {
   LuPencil,
   LuPlay,
   LuRefreshCw,
-  LuSparkles,
   LuTrash2,
   LuUser,
 } from "react-icons/lu";
@@ -522,7 +522,7 @@ function WatchedMetricsPage() {
                             </Dropdown>
                           </>
                         )}
-                        icon={<LuSparkles className="text-accent" size={18} aria-hidden />}
+                        icon={<LuActivity className="text-accent" size={18} aria-hidden />}
                         key={recommendation.id}
                         meta={(
                           <>

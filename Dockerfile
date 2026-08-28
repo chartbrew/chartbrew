@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y gnupg && \
     true && apt-get update
 
 RUN cd client && npm install && cd ../server && npm install
+RUN cd server && npm run image:smoke
 RUN npm run prepareSettings
 
 RUN echo -e "\nBuilding the UI. This might take a couple of minutes...\n"

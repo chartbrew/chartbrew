@@ -24,6 +24,9 @@ const appsRoutes = require("./apps");
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
 const parseQueryParams = require("./middlewares/parseQueryParams");
+const chartImageBodyError = require("./modules/chartImageBodyError");
+const { isChartImageRequest } = chartImageBodyError;
+const { IMAGE_RENDER_LIMITS } = require("./modules/chartImage/imageLimits");
 const dataApiBodyError = require("./modules/dataApiBodyError");
 const { getDataApiLimits } = require("./modules/dataApiLimits");
 const db = require("./models/models");
@@ -83,15 +86,25 @@ app.use(urlencoded({
   },
 }));
 app.set("query parser", "simple");
-app.use(json({
+const captureJsonBody = (req, res, buf, encoding) => {
+  // Save raw body for Slack signature verification and bounded request checks.
+  if (req.headers["content-type"]?.includes("application/json")) {
+    req.rawBody = buf.toString(encoding || "utf8");
+  }
+};
+const defaultJsonParser = json({
   limit: Math.max(100 * 1024, getDataApiLimits().maxRequestBytes),
-  verify: (req, res, buf, encoding) => {
-    // Save raw body for Slack signature verification (JSON requests)
-    if (req.headers["content-type"]?.includes("application/json")) {
-      req.rawBody = buf.toString(encoding || "utf8");
-    }
-  },
-}));
+  verify: captureJsonBody,
+});
+const chartImageJsonParser = json({
+  limit: IMAGE_RENDER_LIMITS.bodyBytes,
+  verify: captureJsonBody,
+});
+app.use((req, res, next) => {
+  const parser = isChartImageRequest(req) ? chartImageJsonParser : defaultJsonParser;
+  return parser(req, res, next);
+});
+app.use(chartImageBodyError);
 app.use(dataApiBodyError);
 app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(helmet({

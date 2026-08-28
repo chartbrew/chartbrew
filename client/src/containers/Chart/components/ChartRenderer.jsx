@@ -54,7 +54,7 @@ LegacyGraphicalRenderer.propTypes = {
   chart: PropTypes.object.isRequired,
 };
 
-function KpiChartLayout({ chart, children, editMode }) {
+function KpiChartLayout({ chart, children, detailScale, editMode }) {
   const containerRef = useRef(null);
   const [shallow, setShallow] = useState(false);
 
@@ -73,9 +73,18 @@ function KpiChartLayout({ chart, children, editMode }) {
 
   const growth = chart.chartData?.growth;
   return (
-    <div ref={containerRef} className="flex h-full min-h-0 w-full flex-col gap-1">
+    <div
+      ref={containerRef}
+      className="flex h-full min-h-0 w-full flex-col"
+      style={{ gap: Math.round(4 * detailScale) }}
+    >
       {Array.isArray(growth) && growth.length > 0 && (
-        <KpiChartSegment chart={chart} compact={shallow} editMode={editMode} />
+        <KpiChartSegment
+          chart={chart}
+          compact={shallow}
+          detailScale={detailScale}
+          editMode={editMode}
+        />
       )}
       <div className="min-h-0 flex-1">
         {children}
@@ -87,17 +96,22 @@ function KpiChartLayout({ chart, children, editMode }) {
 KpiChartLayout.propTypes = {
   chart: PropTypes.object.isRequired,
   children: PropTypes.node.isRequired,
+  detailScale: PropTypes.number.isRequired,
   editMode: PropTypes.bool.isRequired,
 };
 
 function ChartRenderer({
   chart,
-  editMode,
-  embedded,
-  height,
-  loading,
-  redraw,
-  redrawComplete,
+  compactAxes = false,
+  detailScale = 1,
+  editMode = false,
+  embedded = false,
+  height = 300,
+  loading = false,
+  redraw = false,
+  redrawComplete = () => {},
+  renderer = "canvas",
+  theme = null,
 }) {
   const implementation = getClientPresetImplementation(chart.type);
   const lastEChartsRenderRef = useRef(null);
@@ -172,16 +186,20 @@ function ChartRenderer({
     >
       <EChartsRenderer
         ariaLabel={chart.name || "Chart"}
+        compactAxes={compactAxes}
+        detailScale={detailScale}
         option={effectiveRender.configuration}
         redraw={redraw}
         redrawComplete={redrawComplete}
+        renderer={renderer}
+        theme={theme}
       />
     </EChartsErrorBoundary>
   );
 
   if (chart.mode === "kpichart" && hasPresetCapability(chart.type, "kpiOverlay")) {
     return (
-      <KpiChartLayout chart={chart} editMode={editMode}>
+      <KpiChartLayout chart={chart} detailScale={detailScale} editMode={editMode}>
         {chartBody}
       </KpiChartLayout>
     );
@@ -190,23 +208,18 @@ function ChartRenderer({
   return chartBody;
 }
 
-ChartRenderer.defaultProps = {
-  editMode: false,
-  embedded: false,
-  height: 300,
-  loading: false,
-  redraw: false,
-  redrawComplete: () => {},
-};
-
 ChartRenderer.propTypes = {
   chart: PropTypes.object.isRequired,
+  compactAxes: PropTypes.bool,
+  detailScale: PropTypes.number,
   editMode: PropTypes.bool,
   embedded: PropTypes.bool,
   height: PropTypes.number,
   loading: PropTypes.bool,
   redraw: PropTypes.bool,
   redrawComplete: PropTypes.func,
+  renderer: PropTypes.oneOf(["canvas", "svg"]),
+  theme: PropTypes.oneOf(["light", "dark"]),
 };
 
 export default ChartRenderer;

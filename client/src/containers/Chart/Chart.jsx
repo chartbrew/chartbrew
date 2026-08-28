@@ -42,6 +42,11 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
 import ChartSharing from "./components/ChartSharing";
+import {
+  canExportChartImage,
+  canManageChartLinks,
+  getCurrentTeamRole,
+} from "./components/sharing/shareImageDefaults";
 import { getExposedChartFilters } from "../../modules/getChartDatasetConditions";
 import { buildChartRuntimeRequest, normalizeChartFilterCondition } from "../../modules/chartRuntimeFilters";
 import { createMonitor, getMonitorOptions } from "../../api/observations";
@@ -112,6 +117,10 @@ function Chart(props) {
   const [isCompact, setIsCompact] = useState(false);
   const containerRef = useRef(null);
   const isRuntimeManaged = typeof onRefreshRuntimeChart === "function";
+  const chartContentRef = useRef(null);
+  const currentTeamRole = getCurrentTeamRole(team, user.id);
+  const canManageLinks = canManageChartLinks(currentTeamRole, params.projectId);
+  const canExportImage = canExportChartImage(currentTeamRole, params.projectId);
   const activeDashboardFilters = Array.isArray(externalDashboardFilters)
     ? externalDashboardFilters
     : (dashboardFilters || []);
@@ -738,14 +747,14 @@ function Chart(props) {
                             Edit chart
                           </Dropdown.Item>
                         )}
-                        {_canAccess("projectEditor") && (
+                        {!chart.draft && (canManageLinks || canExportImage) && (
                           <Dropdown.Item
-                            id="watch"
-                            onPress={_openMonitorModal}
-                            textValue="Watch metric"
+                            id="embed"
+                            onPress={_onEmbed}
+                            textValue="Share"
                           >
-                            <LuActivity />
-                            Watch metric
+                            <LuShare />
+                            Share
                           </Dropdown.Item>
                         )}
                         {_canAccess("projectEditor") && chart.draft && (
@@ -780,17 +789,14 @@ function Chart(props) {
                         )}
                         {_canAccess("projectEditor") && (
                           <Dropdown.Item
-                            id="autoupdate"
-                            onPress={_openUpdateModal}
-                            textValue="Auto-update"
+                            id="watch"
+                            onPress={_openMonitorModal}
+                            textValue="Watch metric"
                           >
-                            <LuCalendarClock />
-                            Auto-update
+                            <LuActivity />
+                            Watch metric
                           </Dropdown.Item>
                         )}
-                      </Dropdown.Section>
-                      <Separator />
-                      <Dropdown.Section>
                         {_canAccess("projectEditor") && (
                           <Dropdown.Item
                             id="alerts"
@@ -827,14 +833,14 @@ function Chart(props) {
                             {"Make private"}
                           </Dropdown.Item>
                         )}
-                        {!chart.draft && _canAccess("projectEditor") && (
+                        {_canAccess("projectEditor") && (
                           <Dropdown.Item
-                            id="embed"
-                            onPress={_onEmbed}
-                            textValue="Embed & Share"
+                            id="autoupdate"
+                            onPress={_openUpdateModal}
+                            textValue="Auto-update"
                           >
-                            <LuShare />
-                            {"Embed & Share"}
+                            <LuCalendarClock />
+                            Auto-update
                           </Dropdown.Item>
                         )}
                       </Dropdown.Section>
@@ -947,7 +953,7 @@ function Chart(props) {
           >
             {(chart.chartData || chart.render?.configuration) && (
               <div className="flex h-full w-full items-center justify-center">
-                <div className="h-full w-full min-h-0">
+                <div ref={chartContentRef} className="h-full w-full min-h-0">
                   <ChartRenderer
                     chart={chart}
                     height={height}
@@ -1211,7 +1217,13 @@ function Chart(props) {
       {/* EMBED CHART MODAL */}
       {chart && (
         <ChartSharing
+          canExportImage={canExportImage}
+          canManageLinks={canManageLinks}
           chart={chart}
+          getSourceSize={() => ({
+            height: chartContentRef.current?.clientHeight || height,
+            width: chartContentRef.current?.clientWidth || containerRef.current?.clientWidth || 600,
+          })}
           isOpen={embedModal}
           onClose={() => setEmbedModal(false)}
         />

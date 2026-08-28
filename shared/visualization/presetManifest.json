@@ -10,8 +10,8 @@
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["time", "category"]],
       "capabilities": ["axisRange", "breakdown", "dashedLastPoint", "dataLabels", "fill", "goal", "kpiOverlay", "legend", "logScale", "missingValues", "points", "responsive", "smooth", "theme", "timeseries", "xAxisLabels"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "bar",
@@ -22,8 +22,8 @@
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["category", "time"]],
       "capabilities": ["axisRange", "breakdown", "dataLabels", "fill", "goal", "kpiOverlay", "legend", "logScale", "missingValues", "responsive", "stack", "theme", "xAxisLabels"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "horizontalBar",
@@ -34,8 +34,8 @@
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["category", "time"]],
       "capabilities": ["axisRange", "breakdown", "dataLabels", "fill", "goal", "legend", "logScale", "missingValues", "responsive", "stack", "theme"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "pie",
@@ -46,8 +46,8 @@
       "requiredFieldRoles": ["category", "value"],
       "requiredOneOf": [],
       "capabilities": ["dataLabels", "legend", "responsive", "theme"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "doughnut",
@@ -58,8 +58,8 @@
       "requiredFieldRoles": ["category", "value"],
       "requiredOneOf": [],
       "capabilities": ["dataLabels", "legend", "responsive", "theme"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "radar",
@@ -70,8 +70,8 @@
       "requiredFieldRoles": ["category", "value"],
       "requiredOneOf": [],
       "capabilities": ["breakdown", "fill", "legend", "responsive", "theme"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "polar",
@@ -82,8 +82,8 @@
       "requiredFieldRoles": ["category", "value"],
       "requiredOneOf": [],
       "capabilities": ["dataLabels", "legend", "responsive", "theme"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "matrix",
@@ -94,8 +94,8 @@
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["time", "row"], ["time", "column"]],
       "capabilities": ["responsive", "theme", "visualMap"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "gauge",
@@ -106,8 +106,8 @@
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [],
       "capabilities": ["ranges", "responsive", "theme"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "kpi",
@@ -118,8 +118,8 @@
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [],
       "capabilities": ["growth", "responsive", "theme"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "avg",
@@ -130,8 +130,8 @@
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [],
       "capabilities": ["growth", "responsive", "theme"],
-      "surfaces": ["dashboard", "editor", "embed", "export"],
-      "ssr": false
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     },
     {
       "id": "table",

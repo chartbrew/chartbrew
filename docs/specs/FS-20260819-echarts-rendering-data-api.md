@@ -4,7 +4,10 @@ Status: accepted
 
 Related: [Next-Generation Visualization Engine](FS-20260719-next-generation-visualization-engine.md)
 
-Detailed delivery: [Versioned Data API](FS-20260825-versioned-data-api.md)
+Detailed deliveries:
+
+- [Versioned Data API](FS-20260825-versioned-data-api.md)
+- [ECharts SSR And Chart Image Sharing](FS-20260826-echarts-ssr-image-sharing.md)
 
 > Visualization must be a core Chartbrew power. It must not limit v6.
 
@@ -325,12 +328,18 @@ that depends on `PreparedData`; it does not depend on ECharts compilation.
 
 ### Phase 6: Cut Over, Clean Up, And Add Sharing
 
+- Deliver server-side chart images through
+  [ECharts SSR And Chart Image Sharing](FS-20260826-echarts-ssr-image-sharing.md). This is a
+  separate feature delivery that depends on `PreparedData` and the ECharts compiler.
+- In the first image release, add an immediate local preview with background PNG reconciliation,
+  copy PNG, download PNG, `1200 × 630`, square, and bounded original-size output. Keep public-link
+  actions in the links tab.
+- Produce the server PNG from the final composed SVG. Do not add a second server Canvas rendering
+  path.
+- Keep the Chart.js fallback, `Chart.chartData` reads, and current screenshot systems unchanged
+  during image delivery.
 - Remove `Chart.chartData` writes, Chart.js compilers, client components, dependencies, and obsolete
-  presentation fields after the parity and fallback gates pass.
-- Add the locked ECharts server dependency, fixed `RenderContext` presets, and server-side SVG
-  rendering for social cards and vector export. Add Canvas PNG output only where SVG is not
-  suitable.
-- Add copy image, PNG, SVG, public link, 1200 x 630, and square share actions as product work.
+  presentation fields only in a later cleanup after the parity and fallback gates pass.
 - Keep future AI/custom design on `PreparedData + Chart.visualization + RenderContext`. Do not add a
   separate data model or execute generated JavaScript in the main application.
 

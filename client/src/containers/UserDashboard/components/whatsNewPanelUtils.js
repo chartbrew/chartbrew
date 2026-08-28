@@ -7,7 +7,6 @@ import {
   LuExternalLink,
   LuGauge,
   LuLayoutDashboard,
-  LuWandSparkles,
   LuSlack,
   LuCalendar,
 } from "react-icons/lu";
@@ -67,8 +66,8 @@ export const ICON_REGISTRY = {
   database: LuDatabase,
   external: LuExternalLink,
   gauge: LuGauge,
-  sparkles: LuWandSparkles,
-  wand: LuWandSparkles,
+  sparkles: LuBrainCircuit,
+  wand: LuBrainCircuit,
   slack: LuSlack,
   calendar: LuCalendar,
 };

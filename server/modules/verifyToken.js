@@ -2,22 +2,42 @@ const db = require("../models/models");
 const userResponse = require("./userResponse");
 const verifySessionToken = require("./verifySessionToken");
 
-module.exports = async (req, res, next) => {
+function sendAuthenticationFailure(handler, req, res, statusCode, body) {
+  if (handler) return handler(req, res, statusCode);
+  return res.status(statusCode).send(body);
+}
+
+async function verifyToken(req, res, next, failureHandler = null, options = {}) {
   const token = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : "";
   if (token) {
     try {
       const blacklisted = await db.TokenBlacklist.findOne({ where: { token } });
-      if (blacklisted) return res.status(401).send("Unauthorized access.");
+      if (blacklisted) {
+        return sendAuthenticationFailure(failureHandler, req, res, 401, "Unauthorized access.");
+      }
     } catch (e) { /** */ }
 
     let decoded;
     try {
       decoded = verifySessionToken(token);
     } catch (err) {
-      return res.status(401).send("Unauthorized access.");
+      return sendAuthenticationFailure(failureHandler, req, res, 401, "Unauthorized access.");
     }
 
-    if (!decoded?.id) return res.status(401).send("Unauthorized access.");
+    if (!decoded?.id) {
+      return sendAuthenticationFailure(failureHandler, req, res, 401, "Unauthorized access.");
+    }
+
+    if (options.validateToken) {
+      try {
+        const valid = await options.validateToken(decoded, token);
+        if (!valid) {
+          return sendAuthenticationFailure(failureHandler, req, res, 401, "Unauthorized access.");
+        }
+      } catch (_error) {
+        return sendAuthenticationFailure(failureHandler, req, res, 401, "Unauthorized access.");
+      }
+    }
 
     return db.User.findOne({
       where: { id: decoded.id },
@@ -32,7 +52,15 @@ module.exports = async (req, res, next) => {
       }]
     })
       .then((user) => {
-        if (!user) return res.status(400).send("Could not process the request. Please try again.");
+        if (!user) {
+          return sendAuthenticationFailure(
+            failureHandler,
+            req,
+            res,
+            400,
+            "Could not process the request. Please try again."
+          );
+        }
 
         const userObj = userResponse(user);
         userObj.token = token;
@@ -41,8 +69,16 @@ module.exports = async (req, res, next) => {
         req.user = userObj;
         return next();
       })
-      .catch((error) => { return res.status(400).send(error); });
+      .catch((error) => {
+        return sendAuthenticationFailure(failureHandler, req, res, 400, error);
+      });
   } else {
-    return res.status(401).send("Token is missing.");
+    return sendAuthenticationFailure(failureHandler, req, res, 401, "Token is missing.");
   }
+}
+
+verifyToken.withErrorHandler = (handler, options = {}) => {
+  return (req, res, next) => verifyToken(req, res, next, handler, options);
 };
+
+module.exports = verifyToken;

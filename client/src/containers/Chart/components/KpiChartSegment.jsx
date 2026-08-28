@@ -5,12 +5,13 @@ import {
   Tooltip,
 } from "@heroui/react";
 
-import Text from "../../../components/Text";
 import { getKpiMetricCapacity } from "../../../visualization/responsiveLayout";
 import { LuArrowDownRight, LuArrowUpRight } from "react-icons/lu";
 
 function KpiChartSegment(props) {
-  const { chart, compact, editMode } = props;
+  const {
+    chart, compact = false, detailScale = 1, editMode,
+  } = props;
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const growth = Array.isArray(chart.chartData?.growth) ? chart.chartData.growth : [];
@@ -30,10 +31,14 @@ function KpiChartSegment(props) {
 
   return (
     <div
-      className={`${compact ? "px-1" : "px-unit-sm"} w-full shrink-0 sm:max-w-full`}
+      className="w-full shrink-0 sm:max-w-full"
       ref={containerRef}
+      style={{ paddingInline: Math.round((compact ? 4 : 8) * detailScale) }}
     >
-      <div className={`flex min-w-0 flex-row flex-nowrap items-start ${compact ? "gap-3" : "gap-5"}`}>
+      <div
+        className="flex min-w-0 flex-row flex-nowrap items-start"
+        style={{ gap: Math.round((compact ? 12 : 20) * detailScale) }}
+      >
         {visibleGrowth.map((c) => {
           const formattedComparison = c?.comparison && typeof c.comparison === "number" 
             ? Math.abs(c.comparison % 1 === 0 ? Math.round(c.comparison).toFixed(0) : c.comparison.toFixed(2))
@@ -41,11 +46,18 @@ function KpiChartSegment(props) {
 
           return (
             <div
-              className={`min-w-0 ${compact ? "pb-0" : "pb-2"}`}
+              className="min-w-0"
               key={c.label}
+              style={{ paddingBottom: compact ? 0 : Math.round(8 * detailScale) }}
             >
-              <div className="flex flex-row items-center gap-2 whitespace-nowrap">
-                <div className="font-tight text-2xl font-bold text-default-800">
+              <div
+                className="flex flex-row items-center whitespace-nowrap"
+                style={{ gap: Math.round(8 * detailScale) }}
+              >
+                <div
+                  className="font-tight font-bold text-default-800"
+                  style={{ fontSize: Math.round(24 * detailScale), lineHeight: 1.25 }}
+                >
                   {`${c.value?.toLocaleString()}`}
                 </div>
                 {chart.showGrowth && (
@@ -55,8 +67,13 @@ function KpiChartSegment(props) {
                         size="sm"
                         variant="soft"
                         color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
+                        style={{
+                          borderRadius: 9999,
+                          fontSize: Math.round(12 * detailScale),
+                          minHeight: Math.round(24 * detailScale),
+                        }}
                       >
-                        {c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : null}
+                        {c.status === "positive" ? <LuArrowUpRight size={14 * detailScale} /> : c.status === "negative" ? <LuArrowDownRight size={14 * detailScale} /> : null}
                         <Chip.Label>{`${formattedComparison}%`}</Chip.Label>
                       </Chip>
                     </Tooltip.Trigger>
@@ -67,11 +84,14 @@ function KpiChartSegment(props) {
                 )}
               </div>
               <div className="truncate">
-                <Text size="sm" className={growth.length > 1 ? undefined : "text-muted"}>
+                <span
+                  className={growth.length > 1 ? "text-foreground" : "text-muted"}
+                  style={{ fontSize: Math.round(14 * detailScale), lineHeight: 1.4 }}
+                >
                   <span style={growth.length > 1 && c.color ? { color: c.color } : undefined}>
                     {c.label}
                   </span>
-                </Text>
+                </span>
               </div>
             </div>
           );
@@ -96,11 +116,8 @@ function KpiChartSegment(props) {
 KpiChartSegment.propTypes = {
   chart: PropTypes.object.isRequired,
   compact: PropTypes.bool,
+  detailScale: PropTypes.number,
   editMode: PropTypes.bool.isRequired,
-};
-
-KpiChartSegment.defaultProps = {
-  compact: false,
 };
 
 export default KpiChartSegment;

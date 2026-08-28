@@ -28,7 +28,7 @@ import { useNavigate, useParams } from "react-router";
 import {
   LuArrowDown01, LuArrowDown10, LuCircleCheck, LuInfo,
   LuPlug,
-  LuWandSparkles, LuCircleX,
+  LuBrainCircuit, LuCircleX,
   LuVariable,
   LuChevronDown,
   LuChevronUp,
@@ -245,7 +245,7 @@ function FormulaControl({
               <Tooltip>
                 <Tooltip.Trigger className="flex justify-center">
                   <Link onPress={onExample}>
-                    <LuWandSparkles className="text-accent" />
+                    <LuBrainCircuit className="text-accent" />
                   </Link>
                 </Tooltip.Trigger>
                 <Tooltip.Content>Click for an example</Tooltip.Content>
