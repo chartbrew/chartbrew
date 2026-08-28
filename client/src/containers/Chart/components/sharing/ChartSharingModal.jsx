@@ -8,6 +8,7 @@ import { selectProject } from "../../../../slices/project";
 import { selectTeam } from "../../../../slices/team";
 import LinksEmbedTab from "./LinksEmbedTab";
 import ShareImageTab from "./ShareImageTab";
+import { cn } from "../../../../modules/utils";
 
 function ChartSharingModal({
   canExportImage,
@@ -44,8 +45,8 @@ function ChartSharingModal({
   return (
     <Modal>
       <Modal.Backdrop isOpen={isOpen} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
-        <Modal.Container scroll="outside">
-          <Modal.Dialog className="h-[min(88dvh,820px)] w-[calc(100vw-2rem)] overflow-hidden sm:max-w-6xl">
+        <Modal.Container scroll="inside">
+          <Modal.Dialog className={cn("overflow-hidden", selectedTab === "image" ? "sm:max-w-6xl" : "sm:max-w-5xl")}>
             <Modal.CloseTrigger />
             <Modal.Header className="shrink-0 pb-2">
               <div className="min-w-0">
@@ -109,7 +110,7 @@ function ChartSharingModal({
             </Modal.Body>
 
             <Modal.Footer className="shrink-0 gap-2 pt-3 border-t border-divider">
-              <Button slot="close" variant="secondary" size="sm">Close</Button>
+              <Button slot="close" variant="outline" size="sm">Close</Button>
               {selectedTab === "links" && linkAction?.hasUnsaved && (
                 <Button
                   size="sm"
