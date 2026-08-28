@@ -9,7 +9,7 @@ import {
   PolarComponent, RadarComponent, TitleComponent, TooltipComponent, VisualMapComponent,
 } from "echarts/components";
 import { LabelLayout, UniversalTransition } from "echarts/features";
-import { CanvasRenderer } from "echarts/renderers";
+import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
 
 import { semanticColors } from "../../../lib/themeTokens";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -20,6 +20,10 @@ import {
   resolveHorizontalBarComposition,
   resolveMatrixComposition,
 } from "../../../visualization/responsiveLayout";
+import {
+  compactEChartsAxes,
+  scaleEChartsDetails,
+} from "../../../visualization/scaleEChartsDetails";
 import {
   buildDoughnutHoverTitle,
   buildDoughnutValueTitle,
@@ -46,6 +50,7 @@ echarts.use([
   RadarChart,
   RadarComponent,
   ScatterChart,
+  SVGRenderer,
   TitleComponent,
   TooltipComponent,
   UniversalTransition,
@@ -577,11 +582,15 @@ CategoryBreakdown.defaultProps = {
 };
 
 function EChartsRenderer({
-  ariaLabel,
-  onChartEvent,
+  ariaLabel = "Chart",
+  compactAxes = false,
+  detailScale = 1,
+  onChartEvent = null,
   option,
-  redraw,
-  redrawComplete,
+  redraw = false,
+  redrawComplete = () => {},
+  renderer = "canvas",
+  theme = null,
 }) {
   const containerRef = useRef(null);
   const instanceRef = useRef(null);
@@ -593,7 +602,7 @@ function EChartsRenderer({
   const restoreCategoryRef = useRef(() => {});
   const [renderError, setRenderError] = useState(null);
   const { isDark } = useTheme();
-  const themeMode = isDark ? "dark" : "light";
+  const themeMode = theme || (isDark ? "dark" : "light");
   const themeName = `chartbrew-${themeMode}`;
   const reducedMotion = useMemo(() => {
     return typeof window !== "undefined"
@@ -603,7 +612,7 @@ function EChartsRenderer({
     const colors = semanticColors[themeMode];
     return {
       ...option,
-      ...(reducedMotion ? { animation: false } : {}),
+      ...(renderer === "svg" || reducedMotion ? { animation: false } : {}),
       series: option.series?.map((series) => series.type === "gauge" ? {
         ...series,
         detail: {
@@ -617,7 +626,7 @@ function EChartsRenderer({
       } : series),
       tooltip: getEChartsTooltipOption(option, getTooltipColors(themeMode)),
     };
-  }, [option, reducedMotion, themeMode]);
+  }, [option, reducedMotion, renderer, themeMode]);
   const optionRef = useRef(effectiveOption);
   optionRef.current = effectiveOption;
   const categoryItems = useMemo(() => {
@@ -644,8 +653,12 @@ function EChartsRenderer({
       ...nextOption,
       tooltip: getEChartsTooltipOption(nextOption, themeColors, { compact }),
     }, width, height, themeColors);
+    const finalOption = compactAxes ? compactEChartsAxes(laidOut) : laidOut;
     if (clear) instance.clear();
-    instance.setOption(laidOut, { lazyUpdate: false, notMerge: true });
+    instance.setOption(
+      scaleEChartsDetails(finalOption, detailScale),
+      { lazyUpdate: false, notMerge: true }
+    );
     instance.resize();
   };
 
@@ -653,7 +666,7 @@ function EChartsRenderer({
     if (!containerRef.current) return undefined;
     let resizeObserver;
     try {
-      const instance = echarts.init(containerRef.current, themeName, { renderer: "canvas" });
+      const instance = echarts.init(containerRef.current, themeName, { renderer });
       instanceRef.current = instance;
       resizeObserver = new ResizeObserver(() => {
         const current = optionRef.current;
@@ -687,7 +700,7 @@ function EChartsRenderer({
       instanceRef.current?.dispose();
       instanceRef.current = null;
     };
-  }, [themeName]);
+  }, [renderer, themeName]);
 
   useEffect(() => {
     const instance = instanceRef.current;
@@ -698,7 +711,7 @@ function EChartsRenderer({
     } catch (error) {
       setRenderError(error);
     }
-  }, [effectiveOption, redraw, redrawComplete, themeName]);
+  }, [compactAxes, detailScale, effectiveOption, redraw, redrawComplete, themeName]);
 
   useEffect(() => {
     const instance = instanceRef.current;
@@ -850,7 +863,7 @@ function EChartsRenderer({
   if (renderError) throw renderError;
 
   return (
-    <div className="relative h-full min-h-0 w-full">
+    <div className="relative h-full min-h-0 w-full" data-echarts-renderer={renderer}>
       <div
         ref={containerRef}
         className="absolute inset-0"
@@ -870,19 +883,16 @@ function EChartsRenderer({
   );
 }
 
-EChartsRenderer.defaultProps = {
-  ariaLabel: "Chart",
-  onChartEvent: null,
-  redraw: false,
-  redrawComplete: () => {},
-};
-
 EChartsRenderer.propTypes = {
   ariaLabel: PropTypes.string,
+  compactAxes: PropTypes.bool,
+  detailScale: PropTypes.number,
   onChartEvent: PropTypes.func,
   option: PropTypes.object.isRequired,
   redraw: PropTypes.bool,
   redrawComplete: PropTypes.func,
+  renderer: PropTypes.oneOf(["canvas", "svg"]),
+  theme: PropTypes.oneOf(["light", "dark"]),
 };
 
 export default EChartsRenderer;

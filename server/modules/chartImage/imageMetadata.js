@@ -174,12 +174,8 @@ function getImagePreset(preparedData) {
   return preset;
 }
 
-function resolveBranding(requestedBranding, showBranding) {
-  if (showBranding && requestedBranding === "whiteLabel") {
-    throw new ChartImageError("INVALID_IMAGE_OPTIONS");
-  }
-  if (requestedBranding) return requestedBranding;
-  return showBranding ? "chartbrew" : "whiteLabel";
+function resolveBranding(requestedBranding) {
+  return requestedBranding === "whiteLabel" ? "whiteLabel" : "chartbrew";
 }
 
 async function loadChartImageDocument(access, request, dependencies = {}) {
@@ -221,7 +217,7 @@ async function loadChartImageDocument(access, request, dependencies = {}) {
   const timezone = normalizeTimezone(project.timezone);
   let fingerprints;
   try {
-    fingerprints = await fingerprintLoader(access.chartId, timezone);
+    fingerprints = await fingerprintLoader(access.chartId, project.timezone);
   } catch (error) {
     throw new ChartImageError("IMAGE_DATA_UNAVAILABLE", { cause: error });
   }
@@ -254,7 +250,7 @@ async function loadChartImageDocument(access, request, dependencies = {}) {
     visualization: chart.visualization,
   });
   const updatedAt = snapshot.updatedAt || snapshot.preparedData.generatedAt;
-  const branding = resolveBranding(request.content.branding, team.showBranding !== false);
+  const branding = resolveBranding(request.content.branding);
 
   return {
     document: {

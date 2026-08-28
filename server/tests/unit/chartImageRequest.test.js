@@ -14,28 +14,36 @@ describe("chart image request", () => {
         branding: null,
         companyName: true,
         dashboardName: true,
-        dateRange: true,
-        lastUpdated: true,
+        dateRange: false,
+        lastUpdated: false,
         logo: true,
         subtitle: { show: false, text: "" },
         title: { show: true, text: null },
       },
-      height: 630,
+      height: 720,
       layout: "shareCard",
       locale: "en-US",
-      size: { height: 630, preset: "social", width: 1200 },
+      size: { height: 720, preset: "landscape", width: 1280 },
       theme: "light",
       version: 1,
-      width: 1200,
+      width: 1280,
     });
   });
 
   it("normalizes each size preset", () => {
-    expect(normalizeImageRequest(request({ size: { preset: "square" } })))
-      .toMatchObject({ height: 1080, width: 1080 });
+    expect(normalizeImageRequest(request({ size: { preset: "mobile" } })))
+      .toMatchObject({ height: 2340, width: 1080 });
     expect(normalizeImageRequest(request({
       size: { preset: "original", sourceHeight: 200, sourceWidth: 400 },
     }))).toMatchObject({ height: 480, width: 960 });
+  });
+
+  it("accepts a gradient canvas background", () => {
+    expect(normalizeImageRequest(request({
+      background: { from: "#103751", mode: "gradient", to: "#1A7FA0" },
+    }))).toMatchObject({
+      background: { from: "#103751", mode: "gradient", to: "#1A7FA0" },
+    });
   });
 
   it("accepts bounded options and canonicalizes the locale", () => {
@@ -70,8 +78,9 @@ describe("chart image request", () => {
     request({ theme: "current" }),
     request({ locale: "not a locale" }),
     request({ background: { color: "#fff", mode: "custom" } }),
-    request({ background: { color: "#ffffff", mode: "default" } }),
-    request({ size: { preset: "social", sourceHeight: 100, sourceWidth: 100 } }),
+    request({ background: { from: "#103751", mode: "gradient" } }),
+    request({ background: { color: "#ffffff", mode: "gradient", from: "#103751", to: "#1A7FA0" } }),
+    request({ size: { preset: "landscape", sourceHeight: 100, sourceWidth: 100 } }),
     request({ size: { preset: "original", sourceHeight: 0, sourceWidth: 100 } }),
     request({ size: { preset: "original", sourceHeight: 10_001, sourceWidth: 1 } }),
     request({ size: { preset: "original", sourceHeight: 10_000, sourceWidth: 10_000 } }),

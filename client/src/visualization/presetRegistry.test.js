@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getPresetDefinition,
   hasDatasetEditorTab,
   hasPresetCapability,
 } from "./presetRegistry.js";
@@ -49,4 +50,15 @@ test("pie does not expose line or axis controls", () => {
   ].forEach((control) => {
     assert.equal(hasPresetCapability("pie", control), false, control);
   });
+});
+
+test("supported image presets are released for local sharing and server rendering", () => {
+  ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge", "kpi", "avg"]
+    .forEach((preset) => {
+      const definition = getPresetDefinition(preset);
+      assert.equal(definition.ssr, true, preset);
+      assert.equal(definition.surfaces.includes("social"), true, preset);
+    });
+  assert.equal(getPresetDefinition("table").ssr, false);
+  assert.equal(getPresetDefinition("markdown").ssr, false);
 });

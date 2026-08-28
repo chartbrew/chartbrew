@@ -88,6 +88,26 @@ describe("chart image metadata", () => {
       renderContext: { timezone: "Asia/Bangkok" },
     });
     expect(deps.loadProjectLogoDataUri).toHaveBeenCalledWith("uploads/logo.png");
+    expect(deps.buildChartFingerprints).toHaveBeenCalledWith(7, "Asia/Bangkok");
+  });
+
+  it("uses the stored timezone value for fingerprints and UTC for rendering", async () => {
+    const deps = dependencies();
+    deps.db.Project.findOne = vi.fn().mockResolvedValue(record({
+      dashboardTitle: "Trusted dashboard",
+      id: 5,
+      logo: null,
+      name: "Project",
+      team_id: 3,
+      timezone: null,
+    }));
+    const result = await loadChartImageDocument(
+      access,
+      normalizeImageRequest({ version: 1 }),
+      deps
+    );
+    expect(deps.buildChartFingerprints).toHaveBeenCalledWith(7, null);
+    expect(result.document.renderContext).toEqual({ timezone: "UTC" });
   });
 
   it("omits an unavailable configured logo with a bounded operational code", async () => {
@@ -138,13 +158,10 @@ describe("chart image metadata", () => {
       .toThrow(expect.objectContaining({ code: "IMAGE_PRESET_UNSUPPORTED" }));
   });
 
-  it("enforces the team branding authority", () => {
-    expect(resolveBranding(null, true)).toBe("chartbrew");
-    expect(resolveBranding(null, false)).toBe("whiteLabel");
-    expect(resolveBranding("chartbrew", false)).toBe("chartbrew");
-    expect(() => resolveBranding("whiteLabel", true)).toThrow(expect.objectContaining({
-      code: "INVALID_IMAGE_OPTIONS",
-    }));
+  it("lets the request choose white-label independently of team settings", () => {
+    expect(resolveBranding(null)).toBe("chartbrew");
+    expect(resolveBranding("chartbrew")).toBe("chartbrew");
+    expect(resolveBranding("whiteLabel")).toBe("whiteLabel");
   });
 
   it("accepts only flat local upload names", () => {

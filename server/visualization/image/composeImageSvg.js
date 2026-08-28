@@ -6,11 +6,10 @@ const {
   createImageTooLargeError,
 } = require("../../modules/chartImage/imageLimits");
 const { MAX_LOGO_UPLOAD_SIZE_BYTES, isValidLogoImageBuffer } = require("../../modules/logoUploadSecurity");
-const { renderChartbrewMark } = require("./chartbrewMark");
 const { getEmbeddedFontCss } = require("./fontAsset");
 const { resolveImageTheme } = require("./imageTheme");
 const { renderEChartsSvg } = require("./renderEChartsSvg");
-const { renderMetricSvg } = require("./renderMetricSvg");
+const { getMetricItems, renderKpiOverlaySvg, renderMetricSvg } = require("./renderMetricSvg");
 const { embedServerSvg, escapeXml, renderText, sanitizePlainText } = require("./safeSvg");
 
 const GRAPHICAL_PRESETS = new Set([
@@ -25,6 +24,7 @@ const GRAPHICAL_PRESETS = new Set([
   "radar",
 ]);
 const METRIC_PRESETS = new Set(["avg", "kpi"]);
+const KPI_OVERLAY_PRESETS = new Set(["bar", "line"]);
 const LOGO_DATA_URI = /^data:(image\/(?:png|jpeg|gif|webp|svg\+xml));base64,([a-z0-9+/=]+)$/i;
 
 function isSafeLogoDataUri(dataUri) {
@@ -88,139 +88,255 @@ function normalizeDocument(document) {
   };
 }
 
+function getChartRenderSize(layout) {
+  const renderScale = Math.max(1, layout.scale || 1);
+  return {
+    detailScale: Math.max(1, (layout.detailScale || 1) / renderScale),
+    height: Math.max(1, Math.round(layout.chart.height / renderScale)),
+    width: Math.max(1, Math.round(layout.chart.width / renderScale)),
+  };
+}
+
 function renderChartFragment(document, layout, colors) {
   const preset = getPreset(document.preparedData);
+  const renderSize = getChartRenderSize(layout);
   const input = {
     chart: document.chart || {},
     colors,
-    height: layout.chart.height,
+    detailScale: renderSize.detailScale,
+    height: renderSize.height,
     locale: document.locale,
     preparedData: document.preparedData,
     renderContext: document.renderContext,
     visualization: document.visualization,
-    width: layout.chart.width,
+    width: renderSize.width,
   };
   if (GRAPHICAL_PRESETS.has(preset)) return renderEChartsSvg(input);
   if (METRIC_PRESETS.has(preset)) return renderMetricSvg(input);
   throw new Error(`Image rendering is not supported for preset: ${preset}`);
 }
 
-function renderHeader(document, layout, colors) {
-  if (!layout.header?.height) return "";
-  const scale = layout.scale;
-  const logoSize = Math.round(30 * scale);
-  let textX = layout.header.x;
+function resolveChartComposition(document, layout, colors) {
+  const preset = getPreset(document.preparedData);
+  if (document.chart?.mode !== "kpichart" || !KPI_OVERLAY_PRESETS.has(preset)) {
+    return { chart: layout.chart, overlay: null };
+  }
+
+  const items = getMetricItems({
+    chart: document.chart,
+    preparedData: document.preparedData,
+    renderContext: document.renderContext,
+    visualization: document.visualization,
+  }).filter((item) => item.valueNumber !== null);
+  if (items.length === 0) return { chart: layout.chart, overlay: null };
+
+  const scale = layout.textScales?.content || layout.scale;
+  const overlayHeight = Math.round(76 * scale);
+  const gap = Math.round(8 * scale);
+  const minimumChartHeight = Math.round(120 * layout.scale);
+  if (layout.chart.height < overlayHeight + gap + minimumChartHeight) {
+    return { chart: layout.chart, overlay: null };
+  }
+
+  const overlay = {
+    height: overlayHeight,
+    width: layout.chart.width,
+    x: layout.chart.x,
+    y: layout.chart.y,
+  };
+  const chart = {
+    ...layout.chart,
+    height: layout.chart.height - overlayHeight - gap,
+    y: layout.chart.y + overlayHeight + gap,
+  };
+  return {
+    chart,
+    overlay: {
+      ...overlay,
+      svg: renderKpiOverlaySvg({
+        chart: document.chart,
+        colors,
+        detailScale: layout.detailScale,
+        height: overlay.height,
+        items,
+        scale,
+        width: overlay.width,
+      }),
+    },
+  };
+}
+
+function renderIdentity(document, layout, colors) {
+  if (!layout.identity?.height) return "";
+  const scale = layout.textScales?.identity || layout.scale;
+  const logoClearance = layout.card
+    ? layout.card.y - layout.identity.y - Math.round(4 * layout.scale)
+    : layout.identity.height;
+  const logoSize = Math.max(1, Math.min(Math.round(28 * scale), logoClearance));
+  const ink = canvasInkColor(colors, true);
+  const muted = canvasInkColor(colors);
+  let textX = layout.identity.x;
   let logo = "";
   if (document.content.logo) {
-    logo = `<image x="${layout.header.x}" y="${layout.header.y}" width="${logoSize}" height="${logoSize}" `
-      + `preserveAspectRatio="xMidYMid meet" href="${escapeXml(document.metadata.logoDataUri)}"/>`;
+    logo = `<image x="${layout.identity.x}" y="${layout.identity.y + Math.round((layout.identity.height - logoSize) / 2)}" `
+      + `width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" `
+      + `href="${escapeXml(document.metadata.logoDataUri)}"/>`;
     textX += logoSize + Math.round(12 * scale);
   }
   const company = document.content.companyName ? renderText({
-    color: colors.foreground,
-    fontSize: Math.round(18 * scale),
+    color: ink,
+    fontSize: Math.round(16 * scale),
     fontWeight: 700,
     text: document.metadata.companyName,
-    width: Math.max(80, layout.header.width * 0.55),
+    width: Math.max(80, layout.identity.width * 0.5),
     x: textX,
-    y: layout.header.y + Math.round(23 * scale),
+    y: layout.identity.y + Math.round(16 * scale),
   }) : "";
   const dashboard = document.content.dashboardName ? renderText({
     anchor: "end",
-    color: colors.muted,
+    color: muted,
     fontSize: Math.round(14 * scale),
-    fontWeight: 600,
+    fontWeight: 500,
     text: document.metadata.dashboardName,
-    width: Math.max(80, layout.header.width * 0.36),
-    x: layout.header.x + layout.header.width,
-    y: layout.header.y + Math.round(22 * scale),
+    width: Math.max(80, layout.identity.width * 0.4),
+    x: layout.identity.x + layout.identity.width,
+    y: layout.identity.y + Math.round(16 * scale),
   }) : "";
   return `${logo}${company}${dashboard}`;
 }
 
-function renderFooter(document, layout, colors) {
-  if (!layout.footer?.height) return "";
-  const scale = layout.scale;
-  const dividerY = layout.footer.y - Math.round(10 * scale);
-  const date = document.content.dateRange ? renderText({
-    color: colors.foreground,
-    fontSize: Math.round(13 * scale),
-    fontWeight: 600,
-    text: document.metadata.dateRange,
-    width: layout.footer.width * 0.55,
-    x: layout.footer.x,
-    y: layout.footer.y + Math.round(13 * scale),
-  }) : "";
-  const updated = document.content.lastUpdated ? renderText({
-    color: colors.muted,
-    fontSize: Math.round(12 * scale),
-    text: document.metadata.lastUpdated,
-    width: layout.footer.width * 0.55,
-    x: layout.footer.x,
-    y: layout.footer.y + Math.round(31 * scale),
-  }) : "";
-  let branding = "";
-  if (document.content.branding === "chartbrew") {
-    const markSize = Math.round(19 * scale);
-    const labelX = layout.footer.x + layout.footer.width;
-    const markX = labelX - Math.round(164 * scale);
-    const markY = layout.footer.y + Math.round(6 * scale);
-    branding = renderChartbrewMark({ color: colors.muted, size: markSize, x: markX, y: markY })
-      + renderText({
-        anchor: "end",
-        color: colors.muted,
-        fontSize: Math.round(12 * scale),
-        fontWeight: 600,
-        text: "Made with Chartbrew",
-        width: Math.round(150 * scale),
-        x: labelX,
-        y: layout.footer.y + Math.round(21 * scale),
-      });
-  }
-  return `<line x1="${layout.footer.x}" y1="${dividerY}" x2="${layout.footer.x + layout.footer.width}" `
-    + `y2="${dividerY}" stroke="${colors.divider}"/>${date}${updated}${branding}`;
+function hexLuminance(backgroundHex) {
+  const value = Number.parseInt(`${backgroundHex}`.slice(1), 16);
+  if (!Number.isFinite(value)) return 1;
+  const red = (value >> 16) & 255;
+  const green = (value >> 8) & 255;
+  const blue = value & 255;
+  return ((0.2126 * red) + (0.7152 * green) + (0.0722 * blue)) / 255;
+}
+
+function canvasInkColor(colors, strong = false) {
+  const hexes = colors.backgroundGradient
+    ? [colors.backgroundGradient.from, colors.backgroundGradient.to]
+    : [colors.background];
+  const luminance = hexes.reduce((sum, hex) => sum + hexLuminance(hex), 0) / hexes.length;
+  if (luminance < 0.45) return strong ? "#FAFAFA" : "#E4E4E7";
+  return strong ? "#18181B" : "#52525B";
+}
+
+function renderBranding(document, layout, colors) {
+  if (!layout.branding?.height || document.content.branding !== "chartbrew") return "";
+  const scale = layout.textScales?.branding || layout.scale;
+  const prefixSize = Math.round(11 * scale);
+  const markSize = Math.round(20 * scale);
+  const gap = Math.max(10, Math.round(10 * scale));
+  const prefixWidth = Math.round((64 / 12) * prefixSize);
+  const chartWidth = Math.round((30 / 12) * markSize);
+  const brewWidth = Math.round((26 / 12) * markSize);
+  const endX = layout.branding.x + layout.branding.width;
+  const brewX = endX - brewWidth;
+  const chartX = brewX - chartWidth;
+  const prefixX = chartX - gap - prefixWidth;
+  const baseline = layout.branding.y + Math.round(16 * scale);
+  const prefixColor = canvasInkColor(colors);
+  const markColor = canvasInkColor(colors, true);
+  return renderText({
+    color: prefixColor,
+    fontSize: prefixSize,
+    fontWeight: 400,
+    text: "Powered by",
+    width: 240,
+    x: prefixX,
+    y: baseline,
+  })
+    + renderText({
+      color: markColor,
+      fontSize: markSize,
+      fontWeight: 700,
+      text: "chart",
+      width: 240,
+      x: chartX,
+      y: baseline,
+    })
+    + renderText({
+      color: markColor,
+      fontSize: markSize,
+      fontWeight: 400,
+      text: "brew",
+      width: 240,
+      x: brewX,
+      y: baseline,
+    });
 }
 
 function composeImageSvg(input) {
   const document = normalizeDocument(input);
   const colors = resolveImageTheme({ background: document.background, theme: document.theme });
   const layout = resolveImageLayout(document);
-  const chartSvg = renderChartFragment(document, layout, colors);
+  const composition = resolveChartComposition(document, layout, colors);
+  const chartDetailScale = composition.overlay
+    ? Math.max(1, layout.detailScale * (composition.chart.height / layout.chart.height))
+    : layout.detailScale;
+  const chartLayout = {
+    ...layout,
+    chart: composition.chart,
+    detailScale: chartDetailScale,
+  };
+  const chartSvg = renderChartFragment(document, chartLayout, colors);
   const chart = embedServerSvg(chartSvg, {
-    ...layout.chart,
+    ...composition.chart,
     idPrefix: "chart",
   });
+  const kpiOverlay = composition.overlay ? embedServerSvg(composition.overlay.svg, {
+    ...composition.overlay,
+    idPrefix: "kpi-overlay",
+  }) : "";
   const title = document.content.title?.show ? renderText({
     color: colors.foreground,
-    fontSize: Math.round(28 * layout.scale),
+    fontSize: Math.round(28 * (layout.textScales?.content || layout.scale)),
     fontWeight: 700,
     text: document.content.title.text,
     width: layout.title.width,
     x: layout.title.x,
-    y: layout.title.y + Math.round(28 * layout.scale),
+    y: layout.title.y + Math.round(28 * (layout.textScales?.content || layout.scale)),
   }) : "";
   const subtitle = document.content.subtitle?.show ? renderText({
     color: colors.muted,
-    fontSize: Math.round(16 * layout.scale),
+    fontSize: Math.round(16 * (layout.textScales?.content || layout.scale)),
     text: document.content.subtitle.text,
     width: layout.subtitle.width,
     x: layout.subtitle.x,
-    y: layout.subtitle.y + Math.round(18 * layout.scale),
+    y: layout.subtitle.y + Math.round(18 * (layout.textScales?.content || layout.scale)),
   }) : "";
   const card = layout.card
     ? `<rect x="${layout.card.x}" y="${layout.card.y}" width="${layout.card.width}" `
       + `height="${layout.card.height}" rx="${Math.round(24 * layout.scale)}" fill="${colors.card}"/>`
     : "";
+  const canvasColor = document.layout === "chartOnly" && document.background?.mode !== "custom"
+    && document.background?.mode !== "gradient"
+    ? colors.card
+    : colors.background;
+  const canvasFill = colors.backgroundGradient
+    ? [
+      "<defs>",
+      "<linearGradient id=\"cb-canvas-bg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">",
+      `<stop offset="0%" stop-color="${colors.backgroundGradient.from}"/>`,
+      `<stop offset="100%" stop-color="${colors.backgroundGradient.to}"/>`,
+      "</linearGradient>",
+      "</defs>",
+      `<rect width="${document.width}" height="${document.height}" fill="url(#cb-canvas-bg)"/>`,
+    ].join("")
+    : `<rect width="${document.width}" height="${document.height}" fill="${canvasColor}"/>`;
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${document.width}" height="${document.height}" viewBox="0 0 ${document.width} ${document.height}">`,
     `<style>${getEmbeddedFontCss()}</style>`,
-    `<rect width="${document.width}" height="${document.height}" fill="${colors.background}"/>`,
+    canvasFill,
     card,
-    renderHeader(document, layout, colors),
+    renderIdentity(document, layout, colors),
     title,
     subtitle,
+    kpiOverlay,
     chart,
-    renderFooter(document, layout, colors),
+    renderBranding(document, layout, colors),
     "</svg>",
   ].join("");
 
@@ -232,9 +348,11 @@ function composeImageSvg(input) {
 
 module.exports = {
   GRAPHICAL_PRESETS,
+  KPI_OVERLAY_PRESETS,
   METRIC_PRESETS,
   composeImageSvg,
   getPreset,
   isSafeLogoDataUri,
   normalizeDocument,
+  resolveChartComposition,
 };

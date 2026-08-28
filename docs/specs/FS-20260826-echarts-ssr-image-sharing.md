@@ -8,8 +8,8 @@ Related:
 - [Next-Generation Visualization Engine](FS-20260719-next-generation-visualization-engine.md)
 - [Responsive Visualization Compositions](FS-20260821-responsive-visualization-compositions.md)
 
-> A shared image must be the same chart in a deliberate, portable layout. It must not be a browser
-> screenshot or a second visualization implementation.
+> A shared image must use the same chart renderer, fonts, data, and visual rules as the chart that
+> the user sees. Server rendering remains available for API and automation use.
 
 ## Summary
 
@@ -17,11 +17,12 @@ Add deterministic server-side SVG composition and PNG rendering for Chartbrew ch
 consumes the existing `PreparedData`, `Chart.visualization`, preset registry, and `RenderContext`.
 It does not run a browser and it does not parse Chart.js output.
 
-Add a **Share image** tab to the chart sharing modal. The tab shows an immediate local preview while
-the server prepares the authoritative PNG in the background. An authorized user can change layout,
-size, theme, background, and visible card content without waiting for a network response. Image
-settings are temporary in the first release. Chartbrew does not save the settings or generated
-images.
+Add a **Share image** tab to the chart sharing modal. The tab builds the final image scene in the
+browser with React, the current Chartbrew components, and the ECharts SVG renderer. The scene is
+both the live preview and the source for local PNG copy and download. An authorized user can change
+size, theme, background, and visible card content without a server request. Layout is always share
+card. Image settings are temporary in the first release. Chartbrew does not save the settings or
+generated images.
 
 The current public-sharing switch moves from the modal header into **Links & embed**. Public sharing
 controls links and embeds only. It never controls authenticated image generation. **Share image**
@@ -36,31 +37,34 @@ presets. It does not support table or markdown images.
 - Closing the modal discards every image-setting change.
 - The server does not store generated SVG or PNG files.
 - The render endpoint returns PNG only. SVG remains an internal server format.
-- Preview controls update locally before server rendering completes.
+- Preview controls update the final local scene directly.
+- Copy and download capture the same local scene that appears in the preview.
+- The authenticated server render endpoint remains available for API and automation clients. It is
+  not part of the interactive Share image flow.
 - Safe limits are fixed product constants. There are no image-render environment variables or
   feature flags.
 - **Share image** has no copy-link action.
 - Public sharing remains entirely in **Links & embed**.
-- Social size is `1200 × 630` pixels.
-- Square size is `1080 × 1080` pixels.
+- Landscape size is `1280 × 720` pixels.
+- Mobile size is `1080 × 2340` pixels (9:19.5).
 - Original size preserves the current chart aspect ratio and renders at 2× density within limits.
+- Mobile share cards keep a 4:3 chart card in the center of the 1080 × 2340 canvas.
 - Table and markdown are not supported in the first release.
 - The logo comes from the project dashboard logo.
 - The company name is the team name.
 - The dashboard name is `Project.dashboardTitle`, with `Project.name` as fallback.
 - The date range comes from the resolved chart date range.
 - Last updated comes from the prepared snapshot update time.
-- White-label output follows the existing `Team.showBranding` authority.
+- White-label is always available in chartbrew-os. It does not follow `Team.showBranding`.
 
 ## Goals
 
 - Render ready ECharts presets to SVG without a browser or DOM implementation.
 - Render KPI and average presets with a small native SVG metric renderer.
 - Produce PNG from one deterministic internal SVG document.
-- Keep the local browser preview and server PNG on the same image layout, theme, and content
-  contract.
-- Update the local preview immediately, then replace it with the matching final PNG in the
-  background.
+- Keep the local browser scene and server renderer on the same image layout, theme, and content
+  contract where both support the same option.
+- Render the interactive preview, copy action, and download action from one local scene.
 - Keep image generation independent from chart public-sharing state.
 - Reuse the current chart, project, team, role, export, branding, date, and prepared-snapshot rules.
 - Bound CPU, memory, queue length, request size, image dimensions, output size, and execution time.
@@ -81,10 +85,10 @@ presets. It does not support table or markdown images.
 - Dashboard-level image composition.
 - Replacing the current Playwright report and scheduled-dashboard snapshot paths.
 - Runtime variables, dashboard filters, or a source-refresh control in the first release.
-- Rendering from client-supplied data, Chart.js configuration, HTML, CSS, JavaScript, or ECharts
-  options.
+- Accepting client-supplied data, Chart.js configuration, HTML, CSS, JavaScript, or ECharts options
+  in the server render endpoint.
 - Arbitrary fonts, remote logos, remote images, or user-supplied SVG markup.
-- New white-label entitlements or changes to `Team.showBranding`.
+- Changing `Team.showBranding` team settings. Share image white-label is independent in chartbrew-os.
 - Chart.js fallback removal.
 - Data API key, public share token, or MCP access to the render endpoint.
 
@@ -102,7 +106,7 @@ presets. It does not support table or markdown images.
 | `client/src/containers/Chart/components/ChartSharing.jsx` | Manages links, embeds, and share policies in one large modal | Split the modal shell, links tab, and image tab |
 | `client/src/components/ColorPickerControl.jsx` | Provides the current HeroUI color picker | Reuse for the image background |
 | `Project.logo` | Stores the dashboard logo path | Load as a bounded local image only |
-| `Team.showBranding` | Controls Chartbrew branding | Treat as the maximum white-label authority |
+| `Team.showBranding` | Controls branding in other product surfaces | Do not use it to restrict Share image white-label output |
 | `TeamRole.canExport` | Controls export permission | Require it for image generation for non-team roles |
 
 The server currently lists ECharts as a development dependency for compiler tests. Move the locked
@@ -134,7 +138,8 @@ spacing, colors, radii, shadows, typography, and semantic button variants.
 
 On desktop, the image tab uses a preview column and a scrollable control column. On a narrow
 viewport, the preview appears first and controls follow it. The modal must not create horizontal
-page scrolling. The local preview remains visible while the final PNG loads.
+page scrolling. Scale the exact-size image scene to fit the preview pane without changing its
+internal layout.
 
 The default tab is **Links & embed**. A future direct image action may open the modal with
 **Share image** selected, but it is not required for the first release.
@@ -164,50 +169,49 @@ are unavailable because image generation is independent.
 The image tab contains:
 
 1. A preview heading with the final output dimensions.
-2. An immediate local preview that becomes the final server-rendered PNG when ready.
-3. **Copy image** as the primary action.
-4. **Download PNG** as the secondary action.
-5. Layout, size, theme, background, content, and branding controls.
+2. An exact-size local image scene, scaled down only for display in the preview pane.
+3. Layout, size, theme, background, content, and branding controls.
 
-There is no save action. Closing the modal clears local state, aborts render requests, revokes
-object URLs, and restores defaults the next time the modal opens.
+The modal footer on this tab shows **Close**, **Download image**, and **Copy image**. There is no
+save action. Closing the modal clears local state and restores defaults the next time the modal
+opens.
 
-Render an optimistic preview immediately when the tab opens. Build the card shell from local React
-components and reuse the chart's current compiled render configuration. Use the existing ECharts
-browser renderer in a non-interactive preview mode. Reuse the current native KPI or average view for
-native metric presets.
+Build the final scene from local React components and reuse the chart's current compiled render
+configuration. Initialize the existing ECharts browser renderer with `renderer: "svg"`, the chosen
+image theme, disabled animation, and the resolved detail scale. Reuse the current native KPI,
+average, and KPI-overlay components. The preview must not fall back to Chart.js when a compatible
+ECharts render exists.
 
 Every control updates the local preview synchronously:
 
 - Content switches add or remove local card elements.
 - Title and subtitle changes update local text.
-- Layout and size changes update the preview aspect ratio and resize the chart.
+- Layout and size changes rebuild the exact-size scene and resize the chart.
 - Theme changes reinitialize the preview renderer with the selected image theme.
 - Background changes update shared preview color tokens.
 
-After changes stop for 400 ms, request the authoritative PNG in the background. Cancel an older
-request with `AbortController`. Keep the local preview visible while the request runs. Replace it
-with the returned PNG only when the response matches the current normalized option fingerprint.
-When another control changes, return to the local preview immediately and start reconciliation
-again after the debounce.
+After changes stop for a short debounce, capture the current scene to one in-memory PNG blob. Keep
+only the blob whose option fingerprint matches the current controls. Copy and download can reuse
+that blob or capture the current scene on demand. Do not send chart data or image options to the
+server from this flow.
 
-Share image dimensions, spacing, colors, typography, and content-placement rules through pure
-JavaScript constants and helpers that both the client preview and server compositor use. The local
-preview does not have to reproduce server rasterization. The reconciled PNG is the final output.
+Keep image dimensions, spacing, colors, typography, and content placement in pure JavaScript
+helpers. Test the client layout against the server compositor layout so that later API output does
+not drift without notice. The local scene is authoritative for interactive image sharing.
 
 If the chart type is table or markdown, replace the controls with a concise unavailable state. Do
 not offer copy or download actions.
 
 ### Copy And Download
 
-**Copy image** uses the latest server PNG when its option fingerprint matches the current controls.
-If no matching PNG is ready, reuse the active background request or start one request and show a
-loading state only on the action. Write the blob with the browser Clipboard API. Feature-detect
+**Copy image** uses the latest local PNG when its option fingerprint matches the current controls.
+If no matching PNG is ready, reuse the active capture or start one capture and show a loading state
+only on the action. Write the blob with the browser Clipboard API. Feature-detect
 `navigator.clipboard.write` and `ClipboardItem`. The browser must be in a secure context. If
 clipboard image writes are not available or permission is denied, show a concise error and keep
-**Download PNG** available. Do not silently download instead.
+**Download image** available. Do not silently download instead.
 
-**Download PNG** uses the same matching PNG and downloads it with a safe filename:
+**Download image** uses the same local PNG and downloads it with a safe filename:
 
 ```text
 <sanitized-chart-name>-<width>x<height>.png
@@ -249,58 +253,68 @@ Each modal opening starts from these defaults:
 | Setting | Default |
 | --- | --- |
 | Layout | Share card |
-| Size | 1200 × 630 |
+| Size | Landscape 1280 × 720 |
 | Theme | Current, resolved by the client to light or dark |
-| Background | Theme default |
+| Background | Beige solid `#E8DCC8` |
 | Title | Shown, using `Chart.name` |
 | Subtitle | Hidden, with an empty value |
 | Logo | Shown when a project logo exists |
 | Company name | Shown, using `Team.name` |
 | Dashboard name | Shown, using `Project.dashboardTitle` or `Project.name` |
-| Date range | Shown when a range can be resolved |
-| Last updated | Shown when a prepared update time exists |
-| Branding | Chartbrew when required; white-label when permitted |
+| Branding | Chartbrew |
 
-The client can override only title and subtitle text. Company name, dashboard name, logo, date
-range, last-updated time, and branding authority are loaded by the server. The client can only show
-or hide the permitted values.
+The client can override only title and subtitle text. Company name, dashboard name, logo, and
+branding authority are loaded by the server. The client can only show or hide the permitted values.
 
 ### Layout
 
-`shareCard` includes the selected identity, title, subtitle, chart, date, update time, and branding
-content. The compositor uses responsive wide and square arrangements. It must preserve content
-priority when optional elements are hidden.
+`shareCard` includes the selected identity, title, subtitle, chart, and branding content. The card
+sits on a larger themed, solid, or gradient canvas. Team name, project name, and logo sit on that
+outer canvas above the card. Chartbrew branding is drawn on the outer canvas, below the card, and is
+not part of the card footer. Date range and last-updated time are not shown on the image.
 
-`chartOnly` contains only the chart visualization and its required internal labels, axes, legend,
-goal, ranges, and KPI growth display. It ignores title, subtitle, logo, company, dashboard, date,
-last-updated, and branding settings. Hide or disable those controls while `chartOnly` is selected.
+Landscape and original landscape images fill the canvas with that card. Portrait outputs, including
+mobile `1080 × 2340`, keep a centered **4:3** share card. Identity stays above the card and branding
+stays below it. The compositor must not stretch the chart to fill the tall canvas.
+
+Chart typography, axis labels, symbols, strokes, metric values, identity text, titles, subtitles,
+logos, and branding use scales based on the final output. Identity rows, card padding, title rows,
+and branding rows reserve space from the same scale. Portrait images keep the centered 4:3 card and
+use the extra canvas height for clear separation between identity, card, and branding. Card chrome
+continues to use the layout scale.
+
+The product UI always uses `shareCard`. `chartOnly` remains accepted by the render contract for
+compatibility, but it is not offered as a control.
 
 ### Size
 
 | Preset | Final output |
 | --- | --- |
-| `social` | Exactly 1200 × 630 pixels |
-| `square` | Exactly 1080 × 1080 pixels |
-| `original` | Current chart CSS width and height at 2× density, normalized by the server |
+| `landscape` | Exactly 1280 × 720 pixels |
+| `mobile` | Exactly 1080 × 2340 pixels (9:19.5) |
+| `original` | Current chart CSS width and height at 2× density, normalized by shared fixed rules |
 
-For `original`, the client sends the measured chart content width and height. The server preserves
-the aspect ratio, raises the shorter side to at least 480 pixels when needed, and reduces the longer
-side to at most 2400 pixels. The final image must not exceed 5,760,000 pixels. Reject non-finite,
-zero, negative, or extreme input rather than passing it to ECharts or Sharp.
+For `original`, the client measures the chart content width and height. Shared fixed rules preserve
+the aspect ratio, raise the shorter side to at least 480 pixels when needed, and reduce the longer
+side to at most 2400 pixels. The final image must not exceed 5,760,000 pixels. The server applies the
+same rules to API requests. Reject non-finite, zero, negative, or extreme input before rendering.
 
-Changing size changes composition. It must not scale a previously rendered image.
+Changing size changes composition and the visual scale of the chart. It must not scale a previously rendered image.
 
 ### Theme And Background
 
-The UI has **Current**, **Light**, and **Dark**. `Current` is a UI-only value. Before the request,
-the client resolves it to `light` or `dark`. The server accepts only those two values.
+The UI has **Current**, **Light**, and **Dark**. `Current` is a UI-only value. Before local rendering,
+the client resolves it to `light` or `dark`. The server API also accepts only those two resolved
+values.
 
-The default background comes from the image theme. A custom background accepts one opaque
-`#RRGGBB` color. The server derives readable foreground, divider, axis, and muted colors against the
-custom background. Series colors still come from the visualization and registered ECharts theme.
+The default background is the first beige solid color preset. The UI always shows **Choose background**:
+solid colors with a custom picker last, then gradient presets, then photo backgrounds from
+`client/src/assets/backgrounds`. A custom background accepts one opaque `#RRGGBB` color. A gradient
+accepts two opaque `#RRGGBB` stops. A photo background covers the canvas behind the share card. Light
+and dark keep the card, title, axes, and chart colors. Series colors still come from the visualization
+and registered ECharts theme.
 
-Do not accept CSS color functions, named colors, alpha values, gradients, URLs, or arbitrary style
-strings in v1.
+Do not accept CSS color functions, named colors, alpha values, URLs, or arbitrary style strings.
 
 ### Title And Subtitle
 
@@ -337,30 +351,31 @@ Format the range in `Project.timezone` or UTC. Use the validated request locale 
 The data calculation remains timezone-aware and locale-independent.
 
 Last updated uses `Chart.preparedDataUpdatedAt`, with `PreparedData.generatedAt` as fallback. It is
-an absolute time in the image. Do not render relative text such as "2 hours ago" because the image
-would become incorrect after generation.
+an absolute time. Date range and last updated remain trusted metadata on the resolved document. They
+are not drawn on the share-card image.
 
 ### Branding
 
-`Team.showBranding` is the maximum authority:
+In chartbrew-os, white-label is always available:
 
-- When `showBranding` is true, the request must use `chartbrew`. Reject `whiteLabel`.
-- When `showBranding` is false, the user can choose `chartbrew` or `whiteLabel`.
-- The default is `chartbrew` when required and `whiteLabel` when permitted.
+- The user can choose `chartbrew` or `whiteLabel`.
+- The default is `chartbrew`.
+- `Team.showBranding` does not restrict the image request.
 
-Chartbrew branding uses a server-packaged, versioned Chartbrew logo asset. White-label removes the
-Chartbrew mark. It does not remove the user's project logo, company name, or dashboard name.
-
-Do not expose entitlement or storage terms in normal UI copy. When white-label is not available,
-disable that choice and place concise explanatory text in a tooltip.
+Chartbrew branding is "Powered by chartbrew" on the outer canvas. "Powered by" is smaller and muted.
+The wordmark is larger, with "chart" bold and "brew" regular. White-label removes that label. It does
+not remove the user's project logo, team name, or project name.
 
 ## Render Architecture
 
 ```mermaid
 flowchart TD
-    UI[Share image options] --> Local[Immediate local preview]
-    UI --> Debounce[Debounced background request]
-    Debounce --> Validate[Normalize ImageRenderRequest v1]
+    UI[Share image options] --> Scene[Exact-size React image scene]
+    Scene --> SVG[Existing ECharts SVG renderer]
+    SVG --> Preview[Scaled live preview]
+    Scene --> Capture[Local DOM to PNG capture]
+    Capture --> Actions[Copy or download]
+    API[Authenticated render API] --> Validate[Normalize ImageRenderRequest v1]
     Auth[User + role + project access + export permission] --> Load
     Validate --> Load[Load Chart + Project + Team]
     Load --> Snapshot[Load valid default PreparedData]
@@ -370,7 +385,6 @@ flowchart TD
     Compile --> Compose[Compose final SVG document]
     Compose --> Raster[Sharp SVG to PNG]
     Raster --> Response[PNG response]
-    Response --> Final[Reconciled preview and image actions]
 ```
 
 The renderer has these stages:
@@ -396,7 +410,7 @@ Add an internal versioned request contract:
   "version": 1,
   "layout": "shareCard",
   "size": {
-    "preset": "social"
+    "preset": "landscape"
   },
   "theme": "dark",
   "locale": "en-US",
@@ -415,8 +429,6 @@ Add an internal versioned request contract:
     "logo": true,
     "companyName": true,
     "dashboardName": true,
-    "dateRange": true,
-    "lastUpdated": true,
     "branding": "chartbrew"
   }
 }
@@ -443,15 +455,16 @@ fields in v1.
 | --- | --- |
 | `version` | Integer `1` |
 | `layout` | `shareCard` or `chartOnly` |
-| `size.preset` | `social`, `square`, or `original` |
+| `size.preset` | `landscape`, `mobile`, or `original` |
 | `size.sourceWidth` | Finite positive number, required only for original |
 | `size.sourceHeight` | Finite positive number, required only for original |
 | `theme` | `light` or `dark` |
 | `locale` | Valid bounded BCP 47 locale supported by `Intl.DateTimeFormat` |
-| `background.mode` | `default` or `custom` |
+| `background.mode` | `default`, `custom`, or `gradient` |
 | `background.color` | Opaque `#RRGGBB`, required only for custom |
+| `background.from` / `background.to` | Opaque `#RRGGBB`, required only for gradient |
 | Visibility fields | Boolean |
-| `content.branding` | `chartbrew` or `whiteLabel`, subject to team authority |
+| `content.branding` | `chartbrew` or `whiteLabel` |
 
 Set the route JSON body limit to 16 KiB. Reject `__proto__`, `constructor`, and `prototype` keys at
 every level. The request must contain no data rows, image bytes, URLs, renderer options, callbacks,
@@ -484,10 +497,13 @@ preparation from the image endpoint. Never build `PreparedData` by parsing `Char
 valid snapshot exists, return `IMAGE_DATA_UNAVAILABLE`. The client tells the user to refresh the
 chart and try again.
 
-The local preview uses the chart render state that is already in the client. The background PNG uses
-the latest valid server snapshot. A preview can become stale if an automated chart update finishes
-while the modal is open. The next background render or explicit retry gets the new snapshot. Do not
-add a source-refresh action to this modal.
+The local scene uses the chart render state and data that are already in the client. It therefore
+matches the chart state that the user opened. An automated update that finishes after the modal
+opens does not replace the open scene. Closing and reopening the modal uses the current chart state.
+Do not add a source-refresh action to this modal.
+
+The server endpoint separately uses the latest valid server snapshot. It remains the trusted path
+for API and future automation clients.
 
 ## SVG Rendering
 
@@ -514,6 +530,11 @@ views. It must not compile Chart.js.
 
 The native renderer supports the same output themes, layouts, content slots, sizes, and tests as
 graphical presets. It returns an SVG fragment to the same document compositor.
+
+When a line or bar chart uses KPI mode, the compositor reserves space above the plot and renders
+the visible KPI segment there. The segment uses the projected current values, optional growth,
+status colors, series labels, and series colors. Its visible metric capacity follows the same
+responsive minimum width as the chart UI. Standard chart mode does not render this segment.
 
 ### Document Composition
 
@@ -628,7 +649,7 @@ removes queued work when possible. Once active synchronous work starts, the work
 authoritative.
 
 Do not add a Redis, memory, filesystem, or database artifact cache in v1. The client keeps only the
-latest matching PNG blob while the modal is open and revokes it when it is replaced or closed.
+latest matching PNG blob while the modal is open.
 
 ## Security And Privacy
 
@@ -645,6 +666,8 @@ latest matching PNG blob while the modal is open and revokes it when it is repla
 - Isolate synchronous rendering in a bounded worker.
 - Do not log title, subtitle, names, data rows, SVG, PNG, request bodies, or logo bytes.
 - Do not write image artifacts to local storage.
+- Capture only the local scene that Chartbrew created. Do not accept user HTML, CSS, SVG, scripts,
+  URLs, or renderer options.
 - Clear worker message references and dispose ECharts instances after every render.
 - Use safe ASCII filenames on download.
 - Apply response-size limits after rendering and before sending.
@@ -653,13 +676,13 @@ latest matching PNG blob while the modal is open and revokes it when it is repla
 
 - The sharing modal uses HeroUI focus management and close behavior.
 - Tabs, segmented choices, switches, fields, and buttons have visible labels and keyboard access.
-- The preview image has an accessible name that includes the chart name.
+- The local scene has an accessible image name that includes the chart name.
 - Preview loading and failure state changes use a polite live region.
 - Copy and download success or failure is announced through the current toast system.
 - Disabling a content item also disables its related input without removing its label.
 - Custom background output derives readable foreground colors.
 - Decorative logos use empty alternative text in the local UI preview.
-- Reduced-motion settings do not affect output because server images have animation disabled.
+- Local SVG and server images always disable ECharts animation.
 
 ## Observability
 
@@ -684,17 +707,19 @@ client/src/containers/Chart/components/sharing/
   ChartSharingModal.jsx
   LinksEmbedTab.jsx
   ShareImageTab.jsx
+  ShareImageCanvas.jsx
   ShareImagePreview.jsx
+  shareImageBackgrounds.js
   shareImageDefaults.js
-  shareImageRequest.js
-  useShareImageRender.js
+  useShareImageCapture.js
 ```
 
 Keep share-policy state and mutations in `LinksEmbedTab`. Keep all image option and blob state local
 to `ShareImageTab`. Do not add image blobs or temporary settings to Redux.
 
-The request helper must support `AbortSignal`, binary PNG responses, JSON errors, and request IDs.
-Always revoke replaced and closed blob URLs.
+The capture helper waits for fonts, logos, and the ECharts SVG before it creates the PNG. It must
+ignore stale captures and reuse only a blob with the current option fingerprint. Download blob URLs
+are short-lived and are revoked after use.
 
 Place pure layout, dimension, color, typography, and fingerprint helpers that both runtimes use in
 `shared/visualization/imageLayout.js`. Do not import React, ECharts, Sharp, Express, or browser APIs
@@ -736,22 +761,23 @@ Update the shared preset manifest only after each preset passes SSR tests:
   and average.
 - Keep `ssr: false` for table and markdown.
 - Require each `ssr: true` preset to have a server image implementation and visual goldens.
-- Hide Share image actions when the current preset is not SSR-ready.
+- Hide Share image actions when the current preset is not ready on the `social` surface.
 
-Do not infer SSR readiness only from `renderer: "echarts"`. The manifest remains the release gate.
+Server SSR readiness and interactive image-sharing readiness are separate gates. `ssr` controls the
+server endpoint. The ready `social` surface controls the local Share image tab.
 
 ## Testing
 
 ### Unit Tests
 
 - Request defaults, strict allowlists, unsafe keys, text limits, locale validation, and colors.
-- Social, square, and original dimension normalization.
+- Landscape, mobile, and original dimension normalization.
 - Branding authority for both `Team.showBranding` values.
 - Role, project, chart, and export permission checks.
 - Date-range and last-updated resolution.
 - Safe filenames and XML escaping.
 - Local logo validation, embedding, and omission.
-- Deterministic server output and client option fingerprints.
+- Deterministic server output and local capture fingerprints.
 - Shared client and server layout calculations.
 - Worker queue, abort, deadline, termination, and replacement behavior.
 - ECharts disposal on success and failure.
@@ -793,15 +819,15 @@ Run a Node 22 Debian-slim smoke render in CI.
 - Share image stays available when public sharing is off.
 - Export-only users see **Share image** without **Links & embed**.
 - Default controls and branding authority.
-- Chart-only control disabling.
-- Every control updates the optimistic preview without a server response.
-- Background debounce, cancellation, and stale PNG protection.
-- The local preview remains while server rendering runs.
-- A matching PNG reconciles the preview; a stale PNG never replaces it.
-- Copy and download wait for or reuse the current matching PNG.
-- Object URLs are revoked.
+- Every control updates the exact local scene without a server response.
+- The scene uses an ECharts SVG and never replaces it with a Chart.js preview.
+- Local capture debounce and stale PNG protection.
+- Copy and download wait for or reuse the current local PNG.
+- Download object URLs are revoked.
 - Clipboard success, unsupported browser, and denied permission.
 - PNG download and safe filename.
+- Exact landscape, mobile, and original output dimensions.
+- KPI overlays, native KPI, average, team name, project name, logo, title, subtitle, and branding.
 - Unsupported preset state.
 - Keyboard tab order, modal focus return, labels, and live-region updates.
 - Desktop and narrow modal layouts.
@@ -838,14 +864,15 @@ snapshot, logo, or renderer work.
 - Split the current sharing component.
 - Add HeroUI tabs and move public sharing into **Links & embed**.
 - Add local image defaults and controls.
-- Add the immediate local preview with shared layout rules.
-- Add background PNG reconciliation with debounce and cancellation.
-- Add PNG clipboard and download actions.
+- Add the exact-size local React scene with shared layout rules.
+- Reuse the current ECharts SVG and native metric components.
+- Add local PNG capture with debounce and stale-result protection.
+- Add local PNG clipboard and download actions.
 - Add unsupported, loading, retry, and permission states.
 - Add responsive and accessibility tests.
 
 Complete when a private supported chart can be previewed, copied, and downloaded without enabling
-public sharing or saving settings.
+public sharing, saving settings, or sending chart data to the image endpoint.
 
 ### Phase 4: Hardening And Release
 
@@ -880,7 +907,7 @@ Add a concise user guide that covers:
 - Supported chart types.
 - Layout, size, theme, background, and content options.
 - Copy-image browser requirements.
-- Download PNG.
+- Download image.
 - Private chart behavior.
 - Branding authority.
 - Freshness and unsupported-chart errors.
@@ -891,12 +918,13 @@ links.
 ## Acceptance Gates
 
 - Every control changes the local preview without waiting for a server response.
-- The matching server PNG replaces the optimistic preview without a blank loading state.
+- The preview and exported PNG come from the same exact-size local scene.
+- A compatible ECharts chart uses the SVG renderer and never changes to Chart.js during export.
 - No browser, DOM shim, Playwright page, or Chart.js payload is used for server image rendering.
 - The endpoint never accepts renderer options or chart data from the client.
 - The endpoint returns PNG only; SVG remains inside the render worker.
-- Copy and download use the PNG that matches the current normalized controls.
-- Social and square outputs have exact final dimensions.
+- Copy and download use the local PNG that matches the current normalized controls.
+- Landscape and mobile outputs have exact final dimensions.
 - Original output preserves aspect ratio within hard limits.
 - Every manifest preset with `ssr: true` has implementation, contract, visual, theme, size, and
   accessibility tests.
@@ -904,7 +932,7 @@ links.
 - Image generation works while public sharing is off.
 - Image generation never creates or changes a share policy.
 - Settings and generated images are not persisted.
-- White-label output cannot bypass `Team.showBranding`.
+- White-label output is always available in chartbrew-os.
 - Cross-project, cross-team, share-token, API-key, and export-disabled requests are rejected before
   rendering.
 - Titles, subtitles, logos, and filenames cannot inject XML, URLs, paths, or executable content.

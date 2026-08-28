@@ -7,7 +7,7 @@ const { ChartImageError } = require("./imageResponse");
 const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 const ROOT_KEYS = new Set(["background", "content", "layout", "locale", "size", "theme", "version"]);
 const SIZE_KEYS = new Set(["preset", "sourceHeight", "sourceWidth"]);
-const BACKGROUND_KEYS = new Set(["color", "mode"]);
+const BACKGROUND_KEYS = new Set(["color", "from", "mode", "to"]);
 const CONTENT_KEYS = new Set([
   "branding",
   "companyName",
@@ -20,7 +20,7 @@ const CONTENT_KEYS = new Set([
 ]);
 const TEXT_KEYS = new Set(["show", "text"]);
 const LAYOUTS = new Set(["chartOnly", "shareCard"]);
-const SIZE_PRESETS = new Set(["original", "social", "square"]);
+const SIZE_PRESETS = new Set(["landscape", "mobile", "original"]);
 const THEMES = new Set(["dark", "light"]);
 const BRANDING = new Set(["chartbrew", "whiteLabel"]);
 
@@ -73,9 +73,9 @@ function normalizeLocale(value = "en-US") {
   }
 }
 
-function normalizeSize(value = { preset: "social" }) {
+function normalizeSize(value = { preset: "landscape" }) {
   assertAllowedKeys(value, SIZE_KEYS);
-  const preset = value.preset || "social";
+  const preset = value.preset || "landscape";
   if (!SIZE_PRESETS.has(preset)) throw invalidOptions();
   if (preset !== "original") {
     if (value.sourceWidth !== undefined || value.sourceHeight !== undefined) throw invalidOptions();
@@ -105,12 +105,29 @@ function normalizeBackground(value = { mode: "default" }) {
   assertAllowedKeys(value, BACKGROUND_KEYS);
   const mode = value.mode || "default";
   if (mode === "default") {
-    if (value.color !== undefined) throw invalidOptions();
+    if (value.color !== undefined || value.from !== undefined || value.to !== undefined) {
+      throw invalidOptions();
+    }
     return { mode };
   }
-  if (mode !== "custom" || value.color === undefined) throw invalidOptions();
+  if (mode === "custom") {
+    if (value.color === undefined || value.from !== undefined || value.to !== undefined) {
+      throw invalidOptions();
+    }
+    try {
+      return { color: normalizeHexColor(value.color), mode };
+    } catch (error) {
+      throw invalidOptions(error);
+    }
+  }
+  if (mode !== "gradient" || value.from === undefined || value.to === undefined) throw invalidOptions();
+  if (value.color !== undefined) throw invalidOptions();
   try {
-    return { color: normalizeHexColor(value.color), mode };
+    return {
+      from: normalizeHexColor(value.from),
+      mode,
+      to: normalizeHexColor(value.to),
+    };
   } catch (error) {
     throw invalidOptions(error);
   }
@@ -124,8 +141,8 @@ function normalizeContent(value = {}) {
     branding,
     companyName: normalizeBoolean(value.companyName, true),
     dashboardName: normalizeBoolean(value.dashboardName, true),
-    dateRange: normalizeBoolean(value.dateRange, true),
-    lastUpdated: normalizeBoolean(value.lastUpdated, true),
+    dateRange: normalizeBoolean(value.dateRange, false),
+    lastUpdated: normalizeBoolean(value.lastUpdated, false),
     logo: normalizeBoolean(value.logo, true),
     subtitle: normalizeTextOption(value.subtitle, { show: false, text: "" }, 240),
     title: normalizeTextOption(value.title, { show: true, text: null }, 160),

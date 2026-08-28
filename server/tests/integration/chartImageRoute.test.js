@@ -249,13 +249,10 @@ describe("chart image route", () => {
     expect(unavailable.body.error.code).toBe("IMAGE_DATA_UNAVAILABLE");
   });
 
-  it("enforces team branding authority", async () => {
+  it("lets white-label bypass team branding settings", async () => {
     const body = { content: { branding: "whiteLabel" }, version: 1 };
-    const required = await post(body).expect(400);
-    await fixture.team.update({ showBranding: false });
-    const permitted = await post(body).expect(200);
-    expect(required.body.error.code).toBe("INVALID_IMAGE_OPTIONS");
-    expect(permitted.headers["content-type"]).toMatch(/^image\/png/);
+    const response = await post(body).expect(200);
+    expect(response.headers["content-type"]).toMatch(/^image\/png/);
   });
 
   it("maps malformed and oversized JSON to stable image errors", async () => {

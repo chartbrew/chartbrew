@@ -2,9 +2,10 @@ const path = require("path");
 const { createHash } = require("crypto");
 const sharp = require("sharp");
 
-const { resolveImageSize } = require("../../../shared/visualization/imageLayout");
+const { resolveImageLayout, resolveImageSize } = require("../../../shared/visualization/imageLayout");
 const { renderImagePng, renderImageSvg } = require("../../modules/chartImage/imageRenderer");
 const { RenderWorkerQueue } = require("../../modules/chartImage/renderWorkerQueue");
+const { scaleEChartsDetails } = require("../../visualization/image/renderEChartsSvg");
 
 function field(key, role = "dimension", type = "nominal") {
   return { key, role, sourceField: `root[].${key}`, type };
@@ -113,7 +114,7 @@ function makeDocument(mark = "line", overrides = {}) {
       subtitle: { show: true, text: "Strong upward trend heading into Q4" },
       title: { show: true, text: "Visits in the last 30 days" },
     },
-    height: 630,
+    height: 720,
     layout: "shareCard",
     locale: "en-US",
     metadata: {
@@ -127,9 +128,42 @@ function makeDocument(mark = "line", overrides = {}) {
     renderContext: { timezone: "UTC" },
     theme: "light",
     visualization,
-    width: 1200,
+    width: 1280,
     ...overrides,
   };
+}
+
+function makeKpiOverlayDocument(mark = "line", chartOverrides = {}) {
+  const document = makeDocument(mark);
+  const result = document.preparedData.results[0];
+  const secondSeries = {
+    id: "series-2222222222222222",
+    key: "string:tools",
+    label: "Tools visits",
+    value: "tools",
+  };
+  result.series.push(secondSeries);
+  [5, 9, 12, 8].forEach((value, index) => {
+    result.rows.push({
+      category: ["Jan", "Feb", "Mar", "Apr"][index],
+      seriesId: secondSeries.id,
+      value,
+    });
+  });
+  result.stats.inputRows = result.rows.length;
+  result.stats.outputRows = result.rows.length;
+  document.preparedData.stats.inputRows = result.rows.length;
+  document.preparedData.stats.outputRows = result.rows.length;
+  document.visualization.layers[0].style.series = {
+    "series-1111111111111111": { color: "#048BDE" },
+    "series-2222222222222222": { color: "#F59E0B" },
+  };
+  document.chart = {
+    ...document.chart,
+    mode: "kpichart",
+    ...chartOverrides,
+  };
+  return document;
 }
 
 function normalizeGolden(svg) {
@@ -146,10 +180,89 @@ describe("chart image rendering", () => {
   ];
 
   it("normalizes fixed and original image sizes", () => {
-    expect(resolveImageSize({ preset: "social" })).toEqual({ height: 630, width: 1200 });
-    expect(resolveImageSize({ preset: "square" })).toEqual({ height: 1080, width: 1080 });
+    expect(resolveImageSize({ preset: "landscape" })).toEqual({ height: 720, width: 1280 });
+    expect(resolveImageSize({ preset: "mobile" })).toEqual({ height: 2340, width: 1080 });
     expect(resolveImageSize({ preset: "original", sourceHeight: 200, sourceWidth: 400 }))
       .toEqual({ height: 480, width: 960 });
+  });
+
+  it("keeps a centered 4:3 card on portrait mobile canvases", () => {
+    const layout = resolveImageLayout({
+      content: {
+        branding: "chartbrew",
+        companyName: true,
+        dashboardName: true,
+        title: { show: true, text: "Visits" },
+      },
+      height: 2340,
+      layout: "shareCard",
+      width: 1080,
+    });
+    expect(layout.card.width / layout.card.height).toBeCloseTo(4 / 3, 2);
+    expect(layout.chart.height).toBeLessThan(layout.canvas.height * 0.45);
+    expect(layout.identity.y).toBeLessThan(layout.card.y);
+    expect(layout.branding.y).toBeGreaterThan(layout.card.y + layout.card.height);
+    expect(layout.detailScale).toBe(3);
+    expect(layout.textScales.branding).toBeCloseTo(2.4, 5);
+    expect(layout.textScales.content).toBe(2.1);
+    expect(layout.textScales.identity).toBe(3);
+  });
+
+  it("scales image details without changing chart data or responsive thresholds", () => {
+    const option = {
+      grid: { bottom: 8, left: 8, right: 8, top: 32 },
+      media: [{
+        option: { xAxis: { axisLabel: { fontSize: 10, margin: 6 } } },
+        query: { maxWidth: 520 },
+      }],
+      series: [{ data: [12, 25], lineStyle: { width: 2 }, symbolSize: 6 }],
+    };
+    const scaled = scaleEChartsDetails(option, 3);
+    expect(scaled.grid).toEqual({ bottom: 24, left: 24, right: 24, top: 96 });
+    expect(scaled.media[0].query.maxWidth).toBe(520);
+    expect(scaled.media[0].option.xAxis.axisLabel).toEqual({ fontSize: 30, margin: 18 });
+    expect(scaled.series[0].data).toEqual([12, 25]);
+    expect(scaled.series[0].lineStyle.width).toBe(6);
+    expect(scaled.series[0].symbolSize).toBe(18);
+  });
+
+  it("scales chart details without changing the share-card layout scale", () => {
+    const landscape = resolveImageLayout({
+      content: { title: { show: true, text: "Visits" } },
+      height: 720,
+      layout: "shareCard",
+      width: 1280,
+    });
+    const original = resolveImageLayout({
+      content: { title: { show: true, text: "Visits" } },
+      height: 1200,
+      layout: "shareCard",
+      width: 2400,
+    });
+    expect(landscape.scale).toBe(1);
+    expect(landscape.detailScale).toBeCloseTo(4 / 3, 5);
+    expect(landscape.textScales.identity).toBeCloseTo(4 / 3, 5);
+    expect(landscape.textScales.content).toBeCloseTo(4 / 3, 5);
+    expect(original.scale).toBeCloseTo(1200 / 720, 5);
+    expect(original.detailScale).toBe(2);
+    expect(original.textScales).toEqual({ branding: 2, content: 2, identity: 2 });
+    expect(original.scale).toBeGreaterThan(landscape.scale);
+  });
+
+  it("renders chart vectors at a design size and scales them up with larger output", () => {
+    const svg = renderImageSvg(makeDocument("line", { height: 1200, width: 2400 }));
+    const nested = svg.match(/<svg x="[^"]+" y="[^"]+" width="(\d+)" height="(\d+)" viewBox="0 0 (\d+) (\d+)"/);
+    expect(nested).not.toBeNull();
+    expect(Number(nested[1])).toBeGreaterThan(Number(nested[3]));
+  });
+
+  it("scales mobile image text without changing the card geometry", () => {
+    const svg = renderImageSvg(makeDocument("line", { height: 2340, width: 1080 }));
+    expect(svg).toContain('<rect x="44" y="804" width="992" height="744"');
+    expect(svg).toContain('font-size="48" font-weight="700"');
+    expect(svg).toContain('font-size="42" font-weight="500"');
+    expect(svg).toContain('font-size="59" font-weight="700"');
+    expect(svg).toContain('font-size="48" font-weight="400"');
   });
 
   it("renders a deterministic line share card SVG and PNG", async () => {
@@ -158,7 +271,14 @@ describe("chart image rendering", () => {
     const second = renderImageSvg(document);
     expect(first).toBe(second);
     expect(first).toContain("Visits in the last 30 days");
-    expect(first).toContain("Made with Chartbrew");
+    expect(first).toContain("Powered by");
+    expect(first).toContain(">chart</tspan>");
+    expect(first).toContain(">brew</tspan>");
+    expect(first).toContain('font-size="15"');
+    expect(first).toContain('font-size="27"');
+    expect(first).not.toContain('fill="#F17041"');
+    expect(first).not.toContain("Jul 25 – Aug 24, 2026");
+    expect(first).not.toContain("Updated Aug 24, 2026 at 10:30");
     expect(first).not.toContain("font-family:Inter, sans-serif");
     expect(first).not.toMatch(/<script|<foreignObject/i);
     expect(normalizeGolden(first)).toMatchSnapshot();
@@ -166,7 +286,35 @@ describe("chart image rendering", () => {
     const png = await renderImagePng(document);
     const metadata = await sharp(png).metadata();
     expect([...png.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
-    expect(metadata).toEqual(expect.objectContaining({ format: "png", height: 630, width: 1200 }));
+    expect(metadata).toEqual(expect.objectContaining({ format: "png", height: 720, width: 1280 }));
+  });
+
+  it.each(["line", "bar"])("renders the KPI segment above a %s chart", (mark) => {
+    const svg = renderImageSvg(makeKpiOverlayDocument(mark));
+    const nestedSvgs = [...svg.matchAll(
+      /<svg x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g
+    )];
+    expect(svg).toContain('data-kpi-overlay="true"');
+    expect(svg).toContain('data-kpi-growth="positive"');
+    expect(svg).toContain('data-kpi-growth="negative"');
+    expect(svg).toContain('fill="#048BDE"');
+    expect(svg).toContain('fill="#F59E0B"');
+    expect(svg).toContain("Revenue");
+    expect(svg).toContain("Tools visits");
+    expect(nestedSvgs.length).toBeGreaterThanOrEqual(2);
+    expect(Number(nestedSvgs[1][2])).toBeGreaterThan(Number(nestedSvgs[0][2]));
+  });
+
+  it("renders KPI values without growth when growth is hidden", () => {
+    const svg = renderImageSvg(makeKpiOverlayDocument("line", { showGrowth: false }));
+    expect(svg).toContain('data-kpi-overlay="true"');
+    expect(svg).toContain("Tools visits");
+    expect(svg).not.toContain("data-kpi-growth");
+  });
+
+  it("does not render the KPI segment in standard chart mode", () => {
+    const svg = renderImageSvg(makeKpiOverlayDocument("line", { mode: "chart" }));
+    expect(svg).not.toContain("data-kpi-overlay");
   });
 
   it("renders a native KPI without Chart.js", async () => {
@@ -194,14 +342,64 @@ describe("chart image rendering", () => {
       pngSha256: createHash("sha256").update(png).digest("hex"),
       svg: normalizeGolden(svg),
     }).toMatchSnapshot();
-    expect(metadata).toEqual(expect.objectContaining({ format: "png", height: 630, width: 1200 }));
+    expect(metadata).toEqual(expect.objectContaining({ format: "png", height: 720, width: 1280 }));
   });
 
   it("removes card content in chart-only layout", () => {
     const svg = renderImageSvg(makeDocument("line", { layout: "chartOnly" }));
+    expect(svg).toContain('<rect width="1280" height="720" fill="#FFFFFF"/>');
+    expect(svg).not.toContain('<rect width="1280" height="720" fill="#F4F4F5"/>');
     expect(svg).not.toContain("Visits in the last 30 days");
     expect(svg).not.toContain("IntelliTeam");
-    expect(svg).not.toContain("Made with Chartbrew");
+    expect(svg).not.toContain("Powered by");
+  });
+
+  it("places team and project names on the canvas, not the card", () => {
+    const svg = renderImageSvg(makeDocument("line"));
+    expect(svg).toContain("IntelliTeam");
+    expect(svg).toContain("Chart factory");
+    expect(svg).toContain("Visits in the last 30 days");
+  });
+
+  it("applies a gradient only behind the themed card", () => {
+    const svg = renderImageSvg(makeDocument("line", {
+      background: { from: "#103751", mode: "gradient", to: "#1A7FA0" },
+      theme: "light",
+    }));
+    expect(svg).toContain("url(#cb-canvas-bg)");
+    expect(svg).toContain('stop-color="#103751"');
+    expect(svg).toContain('stop-color="#1A7FA0"');
+    expect(svg).toContain('fill="#FFFFFF"/>');
+  });
+
+  it("applies a custom color only behind the themed card", () => {
+    const svg = renderImageSvg(makeDocument("line", {
+      background: { color: "#E8DCC8", mode: "custom" },
+      theme: "light",
+    }));
+    expect(svg).toContain('<rect width="1280" height="720" fill="#E8DCC8"/>');
+    expect(svg).toContain('fill="#FFFFFF"/>');
+    expect(svg).toContain("fill=\"#18181B\"");
+  });
+
+  it("keeps dark card colors when a light custom background is set", () => {
+    const svg = renderImageSvg(makeDocument("line", {
+      background: { color: "#E8DCC8", mode: "custom" },
+      theme: "dark",
+    }));
+    expect(svg).toContain('<rect width="1280" height="720" fill="#E8DCC8"/>');
+    expect(svg).toContain('fill="#18181B"/>');
+    expect(svg).not.toContain('<rect width="1280" height="720" fill="#09090B"/>');
+  });
+
+  it("keeps a themed chart panel in chart-only layout with a custom background", () => {
+    const svg = renderImageSvg(makeDocument("line", {
+      background: { color: "#E8DCC8", mode: "custom" },
+      layout: "chartOnly",
+    }));
+    expect(svg).toContain('<rect width="1280" height="720" fill="#E8DCC8"/>');
+    expect(svg).toContain('fill="#FFFFFF"/>');
+    expect(svg).not.toContain("Visits in the last 30 days");
   });
 
   it("escapes user text", () => {

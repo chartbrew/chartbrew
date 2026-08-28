@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Card, Chip, Dropdown, Spinner,
@@ -35,6 +35,89 @@ import SummaryScheduleModal from "../Activity/SummaryScheduleModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
 import HomeDiscover from "./HomeDiscover";
 import WatchMetricModal from "../Chart/components/WatchMetricModal";
+import { getLinePause, getTypeDelay } from "./typewriter";
+
+function prefersReducedMotion() {
+  return typeof window !== "undefined"
+    && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
+function Caret({ blink = true }) {
+  const [on, setOn] = useState(true);
+  useEffect(() => {
+    if (!blink) return undefined;
+    const id = setInterval(() => setOn((visible) => !visible), 530);
+    return () => clearInterval(id);
+  }, [blink]);
+  return (
+    <span
+      aria-hidden
+      className={`ml-px inline-block h-[0.85em] w-[0.55ch] translate-y-[0.08em] bg-secondary-400 ${on ? "opacity-100" : "opacity-0"}`}
+    />
+  );
+}
+
+Caret.propTypes = {
+  blink: PropTypes.bool,
+};
+
+function HomeGreeting({ subtitle, title }) {
+  const reducedMotion = useMemo(() => prefersReducedMotion(), []);
+  const [titleLength, setTitleLength] = useState(reducedMotion ? title.length : 0);
+  const [subtitleLength, setSubtitleLength] = useState(reducedMotion ? subtitle.length : 0);
+  const [phase, setPhase] = useState(reducedMotion ? "done" : "title");
+
+  useEffect(() => {
+    if (reducedMotion) return undefined;
+    if (phase === "title") {
+      if (titleLength >= title.length) {
+        const id = setTimeout(() => setPhase("subtitle"), getLinePause());
+        return () => clearTimeout(id);
+      }
+      const id = setTimeout(
+        () => setTitleLength((count) => count + 1),
+        getTypeDelay(title[titleLength] || "")
+      );
+      return () => clearTimeout(id);
+    }
+    if (phase === "subtitle") {
+      if (subtitleLength >= subtitle.length) {
+        setPhase("done");
+        return undefined;
+      }
+      const id = setTimeout(
+        () => setSubtitleLength((count) => count + 1),
+        getTypeDelay(subtitle[subtitleLength] || "")
+      );
+      return () => clearTimeout(id);
+    }
+    return undefined;
+  }, [phase, reducedMotion, subtitle, subtitleLength, title, titleLength]);
+
+  return (
+    <header aria-label={`${title} ${subtitle}`} className="flex flex-col gap-1">
+      <h1 className="font-tw text-2xl font-semibold">
+        <span aria-hidden>
+          {title.slice(0, titleLength)}
+          {phase === "title" ? <Caret /> : null}
+        </span>
+        <span className="sr-only">{title}</span>
+      </h1>
+      <p className="min-h-5 text-sm text-foreground-500">
+        <span aria-hidden>
+          {subtitle.slice(0, subtitleLength)}
+          {phase !== "title" ? <Caret blink={!reducedMotion} /> : null}
+        </span>
+        <span className="sr-only">{subtitle}</span>
+      </p>
+    </header>
+  );
+}
+
+HomeGreeting.propTypes = {
+  subtitle: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+};
 
 function SectionHeading({ action, eyebrow, id, title }) {
   return (
@@ -338,14 +421,10 @@ function Home() {
 
   return (
     <main className="flex w-full flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-tw text-2xl font-semibold">
-          Good to see you, {user?.name?.split(" ")[0] || "there"}.
-        </h1>
-        <p className="text-sm text-foreground-500">
-          Here is what is moving across {team.name}
-        </p>
-      </header>
+      <HomeGreeting
+        subtitle={`Here is what is moving across ${team.name}`}
+        title={`Good to see you, ${user?.name?.split(" ")[0] || "there"}.`}
+      />
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
