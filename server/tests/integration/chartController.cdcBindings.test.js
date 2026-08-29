@@ -1,5 +1,5 @@
 import {
-  beforeAll, beforeEach, describe, expect, it, vi,
+  beforeAll, describe, expect, it, vi,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -19,10 +19,6 @@ describe("ChartController CDC bindings", () => {
 
     models = await getModels();
     ChartController = require("../../controllers/ChartController.js");
-  });
-
-  beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
   });
 
   it("merges CDC binding fields over legacy dataset fields and persists condition options to the CDC", async () => {

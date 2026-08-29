@@ -24,11 +24,12 @@ if (testDbConnection) {
 }
 
 function usesSharedTestDatabase(context) {
-  const testPath = context.task?.file?.filepath || "";
-  return testPath.replaceAll("\\", "/").includes("/tests/integration/");
+  const testPath = (context.task?.file?.filepath || "").replaceAll("\\", "/");
+  return testPath.includes("/tests/integration/")
+    || testPath.endsWith("/tests/unit/updateAudit.test.js");
 }
 
-// Integration tests share one database. Unit tests use mocks or their own isolated database.
+// Database tests share one migrated schema. Clear its rows between tests.
 beforeEach(async (context) => {
   if (!usesSharedTestDatabase(context)) return;
 

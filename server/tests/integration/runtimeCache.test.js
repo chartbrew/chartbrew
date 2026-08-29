@@ -30,7 +30,6 @@ describe("Runtime cache integration", () => {
   });
 
   beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
     await runtimeCache.resetForTests();
   });
 

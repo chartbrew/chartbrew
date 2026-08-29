@@ -25,7 +25,6 @@ describe("Prepared snapshot runtime", () => {
   });
 
   beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
     await runtimeCache.resetForTests();
   });
 

@@ -50,7 +50,7 @@ jobs:
 
   # Code quality checks
   lint:
-    name: Code Quality
+    name: Code Quality & Unit Tests
     runs-on: ubuntu-latest
     
     steps:
@@ -77,6 +77,14 @@ jobs:
         cd server
         npm run lint
 
+    - name: Run fast unit tests
+      run: |
+        cd server
+        npm run test:pure
+      env:
+        CI: true
+        NODE_ENV: test
+
     - name: Check for backend lint warnings
       run: |
         cd server
@@ -85,9 +93,13 @@ jobs:
 
   # Backend tests with MySQL
   test-backend-mysql:
-    name: Backend Tests (MySQL)
+    name: Backend Tests (MySQL ${{ matrix.shard }})
     runs-on: ubuntu-latest
     needs: [security, lint]
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(github.event_name == 'pull_request' && '["1/2", "2/2"]' || '["full"]') }}
     
     steps:
     - name: Checkout code
@@ -108,7 +120,19 @@ jobs:
         cd server
         npm ci
 
+    - name: Run database tests (MySQL)
+      if: github.event_name == 'pull_request'
+      run: |
+        cd server
+        export CB_DB_DIALECT_DEV=mysql
+        export FORCE_CONTAINERS=true
+        npm run test:database -- --shard=${{ matrix.shard }}
+      env:
+        CI: true
+        NODE_ENV: test
+
     - name: Run tests with coverage (MySQL)
+      if: github.event_name == 'push'
       run: |
         cd server
         export CB_DB_DIALECT_DEV=mysql
@@ -119,6 +143,7 @@ jobs:
         NODE_ENV: test
 
     - name: Upload coverage reports
+      if: github.event_name == 'push'
       uses: codecov/codecov-action@v5
       with:
         directory: ./server/coverage

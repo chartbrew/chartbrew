@@ -24,9 +24,7 @@ describe("Data API key security", () => {
     TeamController = require("../../controllers/TeamController.js");
   });
 
-  beforeEach(async () => {
-    await db.sequelize.sync({ force: true });
-
+  beforeEach(() => {
     app = express();
     app.use(express.json());
     const verifyDataApiKey = require("../../modules/verifyDataApiKey.js");
