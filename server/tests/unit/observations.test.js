@@ -119,7 +119,7 @@ describe("workspace observations", () => {
       }],
       Project: { id: projectId, name: `Dashboard ${projectId}` },
       autoUpdate: 3600,
-      chartDataUpdated: "2026-08-05T00:00:00.000Z",
+      preparedDataUpdatedAt: "2026-08-05T00:00:00.000Z",
       id: chartId,
       name: `Revenue ${chartId}`,
       project_id: projectId,

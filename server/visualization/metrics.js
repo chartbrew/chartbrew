@@ -37,53 +37,7 @@ function formatMetricValue(value, formula) {
   return `${parsed.prefix}${numeric.toLocaleString()}${parsed.suffix}`;
 }
 
-function buildChartMetrics(configuration, configs, chart) {
-  const growth = [];
-  const goals = [];
-
-  (configuration.data?.datasets || []).forEach((dataset, index) => {
-    const config = configs[index] || {};
-    const data = Array.isArray(dataset.data) ? dataset.data : [];
-    const numericValues = data.map((value) => toNumericValue(value));
-    const current = numericValues.length > 0 ? numericValues[numericValues.length - 1] : null;
-    const previous = numericValues.length > 1 ? numericValues[numericValues.length - 2] : null;
-
-    if (current !== null) {
-      const comparison = getGrowth(current, previous, Boolean(chart.invertGrowth));
-      growth.push({
-        color: config.datasetColor || null,
-        comparison,
-        datasetIndex: index,
-        label: dataset.label,
-        layerId: config.layerId || dataset.layerId || null,
-        seriesId: config.id || dataset.id || null,
-        status: getStatus(comparison),
-        value: formatMetricValue(current, config.formula),
-      });
-    }
-
-    const goal = toNumericValue(config.goal);
-    if (goal !== null && current !== null) {
-      const parsed = parseValueFormula(config.formula);
-      goals.push({
-        formattedMax: `${parsed.prefix}${formatCompactNumber(goal)}${parsed.suffix}`,
-        formattedValue: formatMetricValue(current, config.formula),
-        goalIndex: index,
-        layerId: config.layerId || dataset.layerId || null,
-        max: goal,
-        seriesId: config.id || dataset.id || null,
-        value: current,
-      });
-    }
-  });
-
-  configuration.goals = goals;
-  configuration.growth = growth;
-  return configuration;
-}
-
 module.exports = {
-  buildChartMetrics,
   formatCompactNumber,
   formatMetricValue,
   getGrowth,

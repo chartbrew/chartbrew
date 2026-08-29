@@ -56,15 +56,20 @@ class ProjectController {
     const hydratedCharts = project.Charts.map((chart, index) => {
       const hydrated = charts[index];
       if (!chart?.setDataValue || !hydrated) return hydrated || chart;
+      ["chartData", "chartDataUpdated", "preparedData"].forEach((field) => {
+        delete chart.dataValues[field];
+      });
       [
-        "chartData",
-        "chartDataUpdated",
         "dateFormat",
         "isTimeseries",
         "preparedDataUpdatedAt",
         "render",
       ].forEach((field) => {
-        if (hydrated[field] !== undefined) chart.setDataValue(field, hydrated[field]);
+        const value = hydrated[field] ?? hydrated.dataValues?.[field];
+        if (value !== undefined) {
+          chart.setDataValue(field, value);
+          if (chart[field] === undefined) chart[field] = value;
+        }
       });
       return chart;
     });
@@ -83,7 +88,7 @@ class ProjectController {
       });
   }
 
-  findById(id) {
+  findById(id, options = {}) {
     return db.Project.findOne({
       where: { id },
       order: [
@@ -116,7 +121,7 @@ class ProjectController {
         }
       ],
     })
-      .then((project) => this.hydrateProjectCharts(project))
+      .then((project) => this.hydrateProjectCharts(project, options))
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });

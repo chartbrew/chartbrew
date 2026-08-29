@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     chartData: {
       type: DataTypes.TEXT("long"),
-      description: "Legacy Chart.js configuration retained only for migration fallback",
+      description: "Legacy renderer configuration retained only for database rollback",
       set(val) {
         return this.setDataValue("chartData", JSON.stringify(val));
       },
@@ -53,7 +53,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     chartDataUpdated: {
       type: DataTypes.DATE,
-      description: "Compatibility timestamp for the latest chart render"
+      description: "Legacy renderer timestamp retained only for database rollback"
     },
     preparedData: {
       type: DataTypes.TEXT("long"),
@@ -103,7 +103,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
-      description: "Whether to display the chart.js legend"
+      description: "Whether to display the chart legend"
     },
     pointRadius: {
       type: DataTypes.INTEGER,
@@ -297,11 +297,13 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     defaultScope: {
-      attributes: { exclude: ["preparedData"] },
+      attributes: { exclude: ["chartData", "chartDataUpdated", "preparedData"] },
     },
     freezeTableName: true,
     scopes: {
-      withPreparedData: {},
+      withPreparedData: {
+        attributes: { exclude: ["chartData", "chartDataUpdated"] },
+      },
     },
   });
 

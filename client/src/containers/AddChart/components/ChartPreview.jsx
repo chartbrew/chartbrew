@@ -217,7 +217,7 @@ function ChartPreview(props) {
 
   return (
     <div className={"bg-surface rounded-3xl mx-auto p-4 w-full"}>
-      {chart && chart.type && (chart.chartData || chartLoading || chart.ChartDatasetConfigs?.length > 0) && (
+      {chart && chart.type && (chart.render?.configuration || chartLoading || chart.ChartDatasetConfigs?.length > 0) && (
         <div className={"w-full"}>
           <Row justify="flex-between" align="center">
             <div className="flex items-center gap-1">
@@ -303,7 +303,7 @@ function ChartPreview(props) {
         </div>
       )}
 
-      {chart && chart.chartData && chart.ChartDatasetConfigs && (
+      {chart && chart.render?.configuration && chart.ChartDatasetConfigs && (
         <div className="flex h-[300px] w-full items-center justify-center">
           <div className="h-full w-full min-h-0">
             <ChartRenderer
@@ -318,7 +318,7 @@ function ChartPreview(props) {
         </div>
       )}
 
-      {chart && chart.type && !chart.chartData && (
+      {chart && chart.type && !chart.render?.configuration && (
         <div className="flex h-[300px] w-full items-center justify-center">
           {chartLoading ? (
             <div className="h-full w-full" role="status" aria-label="Loading chart data">
@@ -330,7 +330,7 @@ function ChartPreview(props) {
         </div>
       )}
 
-      {chart && chart.type && (chart.chartData || chartLoading || chart.ChartDatasetConfigs?.length > 0) && (
+      {chart && chart.type && (chart.render?.configuration || chartLoading || chart.ChartDatasetConfigs?.length > 0) && (
         <>
           <div className="h-4" />
           <div className="border-solid border border-divider px-3 py-2 rounded-3xl chart-preview-types">

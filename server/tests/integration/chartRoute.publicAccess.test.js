@@ -46,11 +46,6 @@ async function seedPublicChart(models, {
     name: "Public Revenue",
     type: "line",
     draft: false,
-    chartData: {
-      labels: ["Jan"],
-      datasets: [{ label: "Revenue", data: [42] }],
-    },
-    chartDataUpdated: new Date(),
     onReport: true,
     ...chartOverrides,
   });
@@ -117,7 +112,8 @@ describe("ChartRoute public access", () => {
       .query({ token: validToken })
       .expect(200);
 
-    expect(validResponse.body.chartData).toEqual(seeded.chart.chartData);
+    expect(validResponse.body).not.toHaveProperty("chartData");
+    expect(validResponse.body.render).toBeNull();
 
     await request(app)
       .get(`/chart/share/${sharePolicy.share_string}`)
@@ -131,7 +127,7 @@ describe("ChartRoute public access", () => {
       .expect(401);
   });
 
-  it("preserves generated series in embedded and snapshot chart payloads", async () => {
+  it("does not expose legacy chart data in embedded and snapshot payloads", async () => {
     const generatedChartData = {
       data: {
         labels: ["Jan", "Feb"],
@@ -156,9 +152,8 @@ describe("ChartRoute public access", () => {
       .query({ isSnapshot: "true" })
       .expect(200);
 
-    expect(response.body.chartData.data.datasets.map((dataset) => dataset.label))
-      .toEqual(["Professional", "Amateur"]);
-    expect(response.body.chartData.meta.series).toHaveLength(2);
+    expect(response.body).not.toHaveProperty("chartData");
+    expect(response.body.render).toBeNull();
   });
 
   it("marks existing share policies secure when generating a replacement token", async () => {
@@ -267,7 +262,7 @@ describe("ChartRoute public access", () => {
     expect(response.body).toEqual(expect.objectContaining({
       id: seeded.chart.id,
       project_id: seeded.project.id,
-      chartData: seeded.chart.chartData,
+      render: null,
     }));
   });
 
@@ -402,10 +397,7 @@ describe("ChartRoute public access", () => {
   it("allows public chart refresh with report password and valid project share token", async () => {
     const refreshedChart = {
       id: 123,
-      chartData: {
-        labels: ["Feb"],
-        datasets: [{ label: "Revenue", data: [84] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: 456,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
@@ -470,10 +462,7 @@ describe("ChartRoute public access", () => {
   it("allows authenticated project members to refresh a password-protected public report without report password", async () => {
     const refreshedChart = {
       id: 123,
-      chartData: {
-        labels: ["Feb"],
-        datasets: [{ label: "Revenue", data: [84] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: 456,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
@@ -529,10 +518,7 @@ describe("ChartRoute public access", () => {
   it("merges share policy and URL parameters when refreshing a public chart", async () => {
     const refreshedChart = {
       id: 123,
-      chartData: {
-        labels: ["Feb"],
-        datasets: [{ label: "Revenue", data: [84] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: 456,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
@@ -599,10 +585,7 @@ describe("ChartRoute public access", () => {
     });
     const refreshedChart = {
       id: seeded.chart.id,
-      chartData: {
-        labels: ["Feb"],
-        datasets: [{ label: "Revenue", data: [84] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: seeded.project.id,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
@@ -655,10 +638,7 @@ describe("ChartRoute public access", () => {
     });
     const cachedChart = {
       id: seeded.chart.id,
-      chartData: {
-        labels: ["Cached"],
-        datasets: [{ label: "Revenue", data: [42] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: seeded.project.id,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")

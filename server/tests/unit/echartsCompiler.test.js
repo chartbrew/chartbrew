@@ -202,13 +202,6 @@ function getEChartsSeriesValues(mark, option) {
   return [[option.series.find((series) => series.type === "gauge").data[0].value]];
 }
 
-function getChartJsSeriesValues(mark, configuration) {
-  if (mark === "matrix") {
-    return configuration.data.datasets.map((dataset) => dataset.data.map((row) => row.v));
-  }
-  return configuration.data.datasets.map((dataset) => dataset.data);
-}
-
 describe("ECharts compiler", () => {
   const graphicalPresets = [
     "line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
@@ -968,7 +961,7 @@ describe("ECharts compiler", () => {
       datasets: [],
       timezone: "UTC",
     }).renderPrepared(fixture.preparedData);
-    const option = compiled.renderConfiguration;
+    const option = compiled.configuration;
     const ranges = option.series.find((series) => series.type === "pie");
     const pointer = option.series.find((series) => series.type === "gauge");
 
@@ -983,7 +976,7 @@ describe("ECharts compiler", () => {
     expect(pointer.max).toBe(15);
   });
 
-  it.each(graphicalPresets)("matches Chart.js semantic values for %s", (mark) => {
+  it.each(graphicalPresets)("keeps semantic values through the runtime for %s", (mark) => {
     const fixture = buildFixture(mark);
     const compiled = new VisualizationEngine({
       chart: {
@@ -998,8 +991,8 @@ describe("ECharts compiler", () => {
     }).renderPrepared(fixture.preparedData);
 
     expect(compiled.renderer).toBe("echarts");
-    expect(getEChartsSeriesValues(mark, compiled.renderConfiguration))
-      .toEqual(getChartJsSeriesValues(mark, compiled.configuration));
+    expect(getEChartsSeriesValues(mark, compiled.configuration))
+      .toEqual(getEChartsSeriesValues(mark, buildEChartsOption(fixture)));
   });
 });
 

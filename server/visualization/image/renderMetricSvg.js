@@ -1,58 +1,12 @@
-const { projectPreparedSeries } = require("../seriesProjection");
-const { formatMetricValue, getGrowth, getStatus } = require("../metrics");
-const { applyValueFormula, toNumericValue } = require("../valueFormula");
-const { buildSeriesStyleMap } = require("../compilers/chartJsCartesian");
+const { buildMetricItems } = require("../metricProjection");
 const { assertImageDimensions, assertPreparedRows } = require("../../modules/chartImage/imageLimits");
 const { escapeXml, renderText } = require("./safeSvg");
-
-const METRIC_COLORS = ["#048BDE", "#F59E0B", "#10B981", "#8B5CF6"];
-
-function getMetricColor(visualization, series, index) {
-  const layer = visualization.layers.find((item) => `${item.id}` === `${series.layerId}`) || {};
-  const overrides = layer.style?.series || {};
-  const override = overrides[series.id] || overrides[series.key] || {};
-  return override.color || layer.style?.color || METRIC_COLORS[index % METRIC_COLORS.length];
-}
 
 function formatValue(value, locale) {
   if (typeof value === "number" && Number.isFinite(value)) {
     return new Intl.NumberFormat(locale || "en-US", { maximumFractionDigits: 2 }).format(value);
   }
   return `${value ?? "—"}`;
-}
-
-function getMetricItems({ chart = {}, preparedData, renderContext, visualization }) {
-  const projection = projectPreparedSeries({
-    chart,
-    preparedData,
-    runtimeContext: renderContext,
-    timezone: preparedData.timezone,
-    visualization,
-  });
-  const styles = buildSeriesStyleMap(preparedData, visualization);
-  return projection.series.map((series, index) => {
-    const values = series.values || [];
-    const current = values.length > 0 ? values[values.length - 1] : null;
-    const previous = values.length > 1 ? values[values.length - 2] : null;
-    const currentNumber = toNumericValue(current);
-    const previousNumber = toNumericValue(previous);
-    const comparison = currentNumber === null
-      ? null
-      : getGrowth(currentNumber, previousNumber, Boolean(chart.invertGrowth));
-    const goalValue = series.goal === null || series.goal === undefined
-      ? null
-      : toNumericValue(applyValueFormula(series.goal, series.formula));
-    return {
-      color: styles.get(series.id)?.datasetColor || getMetricColor(visualization, series, index),
-      comparison,
-      goal: goalValue,
-      id: series.id,
-      label: series.label || series.layerName || "Value",
-      status: comparison === null ? "neutral" : getStatus(comparison),
-      value: typeof current === "string" ? current : formatMetricValue(current, series.formula),
-      valueNumber: currentNumber,
-    };
-  });
 }
 
 function formatComparison(comparison) {
@@ -175,7 +129,12 @@ function renderMetricSvg({
   assertImageDimensions(width, height);
   assertPreparedRows(preparedData);
   const scale = Math.max(1, Number(detailScale) || 1);
-  const items = getMetricItems({ chart, preparedData, renderContext, visualization }).slice(0, 4);
+  const items = buildMetricItems({
+    chart,
+    preparedData,
+    runtimeContext: renderContext,
+    visualization,
+  }).slice(0, 4);
   const columns = Math.max(1, Math.min(items.length, width >= 720 ? 4 : 2));
   const rows = Math.max(1, Math.ceil(items.length / columns));
   const cellWidth = width / columns;
@@ -255,7 +214,7 @@ function renderMetricSvg({
 module.exports = {
   formatComparison,
   formatValue,
-  getMetricItems,
+  getMetricItems: buildMetricItems,
   renderKpiOverlaySvg,
   renderMetricSvg,
 };

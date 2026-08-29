@@ -5,7 +5,6 @@ export default defineConfig({
     environment: "node",
     globals: true,
     include: [
-      "tests/unit/chartJsCartesianCompiler.test.js",
       "tests/unit/chartImageAccess.test.js",
       "tests/unit/chartImageAuthentication.test.js",
       "tests/unit/chartImageController.test.js",
@@ -20,6 +19,7 @@ export default defineConfig({
       "tests/unit/embeddedChartPayload.test.js",
       "tests/unit/echartsCompiler.test.js",
       "tests/unit/kpiReview.test.js",
+      "tests/unit/legacyChartDataPreparedData.test.js",
       "tests/unit/logoUploadSecurity.test.js",
       "tests/unit/migrateHorizontalBars.test.js",
       "tests/unit/nodemail.passwordReset.test.js",

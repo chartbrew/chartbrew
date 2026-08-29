@@ -3,8 +3,6 @@ module.exports = (chart, team = {}) => ({
   name: chart.name,
   type: chart.type,
   subType: chart.subType,
-  chartDataUpdated: chart.chartDataUpdated,
-  chartData: chart.chartData,
   preparedDataUpdatedAt: chart.preparedDataUpdatedAt,
   render: chart.render,
   visualization: chart.visualization,

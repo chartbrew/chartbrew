@@ -29,7 +29,7 @@ class MetricRecommendationController {
   async generate(access, { includeDismissed = false, limit = LIST_LIMIT } = {}) {
     const charts = await db.Chart.findAll({
       attributes: [
-        "autoUpdate", "chartDataUpdated", "currentEndDate", "endDate", "fixedStartDate", "id",
+        "autoUpdate", "currentEndDate", "endDate", "fixedStartDate", "id",
         "name", "preparedDataUpdatedAt", "project_id", "startDate", "timeInterval", "visualization",
       ],
       include: [{
@@ -57,7 +57,7 @@ class MetricRecommendationController {
         }],
       }],
       limit: MAXIMUM_CHARTS,
-      order: [["chartDataUpdated", "DESC"], ["id", "ASC"]],
+      order: [["preparedDataUpdatedAt", "DESC"], ["id", "ASC"]],
       where: {
         ...getProjectScope(access),
       },

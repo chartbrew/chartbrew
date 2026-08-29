@@ -15,44 +15,19 @@ import {
   selectEChartsRender,
 } from "../../../visualization/echartsRenderState";
 import { getResponsiveGeometry } from "../../../visualization/responsiveLayout";
-import BarChart from "./BarChart";
-import DoughnutChart from "./DoughnutChart";
 import EChartsErrorBoundary from "./EChartsErrorBoundary";
 import EChartsRenderer from "./EChartsRenderer";
-import GaugeChart from "./GaugeChart";
 import KpiChartSegment from "./KpiChartSegment";
 import KpiMode from "./KpiMode";
-import LineChart from "./LineChart";
-import MatrixChart from "./MatrixChart";
-import PieChart from "./PieChart";
-import PolarChart from "./PolarChart";
-import RadarChart from "./RadarChart";
 import TableContainer from "./TableView/TableContainer";
 
-const LEGACY_COMPONENTS = {
-  line: LineChart,
-  bar: BarChart,
-  horizontalBar: BarChart,
-  pie: PieChart,
-  doughnut: DoughnutChart,
-  radar: RadarChart,
-  polar: PolarChart,
-  matrix: MatrixChart,
-  gauge: GaugeChart,
-};
-
-function LegacyGraphicalRenderer({ chart, ...props }) {
-  const Component = LEGACY_COMPONENTS[chart.type];
-  if (!Component) return null;
-  const fallbackChart = chart.type === "horizontalBar"
-      ? { ...chart, horizontal: true, type: "bar" }
-      : chart;
-  return <Component chart={fallbackChart} {...props} />;
+function RenderUnavailable() {
+  return (
+    <div className="flex h-full w-full items-center justify-center text-sm text-default-500">
+      Chart data is unavailable
+    </div>
+  );
 }
-
-LegacyGraphicalRenderer.propTypes = {
-  chart: PropTypes.object.isRequired,
-};
 
 function KpiChartLayout({ chart, children, detailScale, editMode }) {
   const containerRef = useRef(null);
@@ -71,14 +46,14 @@ function KpiChartLayout({ chart, children, detailScale, editMode }) {
     return () => observer.disconnect();
   }, []);
 
-  const growth = chart.chartData?.growth;
+  const metrics = chart.render?.metadata?.metrics || chart.render?.configuration?.items || [];
   return (
     <div
       ref={containerRef}
       className="flex h-full min-h-0 w-full flex-col"
       style={{ gap: Math.round(4 * detailScale) }}
     >
-      {Array.isArray(growth) && growth.length > 0 && (
+      {metrics.length > 0 && (
         <KpiChartSegment
           chart={chart}
           compact={shallow}
@@ -115,21 +90,12 @@ function ChartRenderer({
 }) {
   const implementation = getClientPresetImplementation(chart.type);
   const lastEChartsRenderRef = useRef(null);
-  const fallback = useMemo(() => (
-    <LegacyGraphicalRenderer
-      chart={chart}
-      editMode={editMode}
-      embedded={embedded}
-      height={height}
-      redraw={redraw}
-      redrawComplete={redrawComplete}
-    />
-  ), [chart, editMode, embedded, height, redraw, redrawComplete]);
+  const fallback = useMemo(() => <RenderUnavailable />, []);
 
   if (implementation === "native-table") {
     return (
       <TableContainer
-        tabularData={chart.chartData}
+        tabularData={chart.render?.configuration || {}}
         datasets={chart.ChartDatasetConfigs}
         defaultRowsPerPage={chart.defaultRowsPerPage}
         editMode={editMode}

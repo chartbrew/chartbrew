@@ -1,7 +1,7 @@
 const TableView = require("../../charts/TableView");
 const { applyLegacyTabularOptions } = require("../tabular");
 
-function compileChartJsTable({
+function compileNativeTable({
   chart,
   conditionsOptions,
   preparedData,
@@ -13,7 +13,7 @@ function compileChartJsTable({
   const configs = [];
 
   preparedData.results.forEach((result, index) => {
-    const layer = visualization.layers.find((item) => item.id === result.id);
+    const layer = visualization.layers.find((item) => item.id === result.id) || {};
     const sourceOptions = result.sourceOptions || {};
     const baseName = layer.name || sourceOptions.legend || `Dataset ${index + 1}`;
     let name = baseName;
@@ -44,15 +44,14 @@ function compileChartJsTable({
       ChartDatasetConfigs: configs,
     },
     datasets: selectedDatasets,
-  }, timezone);
+  }, timezone, {
+    valuesAreFinal: preparedData.__valuesFinal === true,
+  });
 
   return {
     ...compiled,
     preparedData,
-    isTimeseries: false,
   };
 }
 
-module.exports = {
-  compileChartJsTable,
-};
+module.exports = { compileNativeTable };

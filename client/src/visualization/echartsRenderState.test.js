@@ -47,18 +47,18 @@ test("keeps the previous ECharts frame during a renderer transition", () => {
     renderer: "echarts",
     type: "pie",
   };
-  const legacyResponse = { configuration: {}, renderer: "chartjs" };
+  const incompatibleResponse = { configuration: {}, renderer: "native" };
 
   assert.equal(selectEChartsRender({
     loading: true,
     previous,
-    render: legacyResponse,
+    render: incompatibleResponse,
     type: "doughnut",
   }), previous);
   assert.equal(selectEChartsRender({
     loading: false,
     previous,
-    render: legacyResponse,
+    render: incompatibleResponse,
     type: "doughnut",
   }), null);
 });

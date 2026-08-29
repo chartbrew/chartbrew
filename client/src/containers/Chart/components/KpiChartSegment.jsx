@@ -14,7 +14,7 @@ function KpiChartSegment(props) {
   } = props;
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
-  const growth = Array.isArray(chart.chartData?.growth) ? chart.chartData.growth : [];
+  const growth = chart.render?.metadata?.metrics || chart.render?.configuration?.items || [];
   const visibleCount = getKpiMetricCapacity(containerWidth, editMode);
   const visibleGrowth = growth.slice(0, visibleCount);
   const hiddenGrowth = growth.slice(visibleCount);
@@ -58,7 +58,7 @@ function KpiChartSegment(props) {
                   className="font-tight font-bold text-default-800"
                   style={{ fontSize: Math.round(24 * detailScale), lineHeight: 1.25 }}
                 >
-                  {`${c.value?.toLocaleString()}`}
+                  {`${c.value ?? "—"}`}
                 </div>
                 {chart.showGrowth && (
                   <Tooltip delay={0} placement="bottom">
