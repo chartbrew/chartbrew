@@ -299,6 +299,84 @@ describe("prepared snapshots", () => {
     }));
   });
 
+  it("validates an unresolved live refresh without saving during a dry run", async () => {
+    const findAll = vi.fn()
+      .mockResolvedValueOnce([{ id: 4 }])
+      .mockResolvedValueOnce([]);
+    vi.spyOn(db.Chart, "unscoped").mockReturnValue({ findAll });
+    const controller = {
+      updateChartData: vi.fn().mockResolvedValue({
+        preparedData: buildPreparedData(),
+        snapshot: { saved: false },
+      }),
+    };
+    const onProgress = vi.fn();
+
+    const report = await backfillPreparedSnapshots({
+      controller,
+      dryRun: true,
+      onProgress,
+      refreshUnresolved: true,
+    });
+
+    expect(report).toMatchObject({ failed: 0, processed: 1, wouldSave: 1 });
+    expect(controller.updateChartData).toHaveBeenCalledWith(4, null, expect.objectContaining({
+      runtimeOnly: true,
+      skipSave: true,
+    }));
+    expect(onProgress).toHaveBeenLastCalledWith(expect.objectContaining({
+      status: "would_refresh",
+    }));
+  });
+
+  it("reports an unresolved refresh that does not save a snapshot", async () => {
+    const findAll = vi.fn()
+      .mockResolvedValueOnce([{ id: 4 }])
+      .mockResolvedValueOnce([]);
+    vi.spyOn(db.Chart, "unscoped").mockReturnValue({ findAll });
+    const controller = {
+      updateChartData: vi.fn().mockResolvedValue({
+        snapshot: { reason: "size_limit_exceeded", saved: false },
+      }),
+    };
+
+    const report = await backfillPreparedSnapshots({
+      controller,
+      refreshUnresolved: true,
+    });
+
+    expect(report).toMatchObject({ failed: 1, processed: 1, saved: 0 });
+    expect(report.failures).toEqual([{
+      chartId: 4,
+      message: "size_limit_exceeded",
+    }]);
+  });
+
+  it("reports an inferred snapshot that is not saved", async () => {
+    const findAll = vi.fn()
+      .mockResolvedValueOnce([{ id: 4 }])
+      .mockResolvedValueOnce([]);
+    vi.spyOn(db.Chart, "unscoped").mockReturnValue({ findAll });
+    const controller = {
+      prepareLegacyChartData: vi.fn().mockResolvedValue({
+        snapshot: { reason: "size_limit_exceeded", saved: false, sizeBytes: 200 },
+      }),
+    };
+    const onProgress = vi.fn();
+
+    const report = await backfillPreparedSnapshots({ controller, onProgress });
+
+    expect(report).toMatchObject({ processed: 1, saved: 0, skipped: 1 });
+    expect(report.issues).toEqual([{
+      chartId: 4,
+      reason: "size_limit_exceeded",
+      sizeBytes: 200,
+    }]);
+    expect(onProgress).toHaveBeenLastCalledWith(expect.objectContaining({
+      status: "size_limit_exceeded",
+    }));
+  });
+
   it("reports oversized snapshots during a dry run", async () => {
     process.env.CB_PREPARED_SNAPSHOT_MAX_BYTES = "1";
     const findAll = vi.fn()
