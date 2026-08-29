@@ -33,10 +33,12 @@ export default defineConfig({
       "tests/unit/responsiveLayout.test.js",
       "tests/unit/scheduleWeekdays.test.js",
       "tests/unit/visualizationCompilers.test.js",
+      "tests/unit/visualizationFilters.test.js",
       "tests/unit/visualizationPreparedData.test.js",
+      "tests/unit/visualizationTime.test.js",
       "tests/unit/verifyDataApiKey.test.js",
     ],
-    maxWorkers: 1,
+    maxWorkers: 2,
     pool: "forks",
   },
 });

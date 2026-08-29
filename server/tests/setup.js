@@ -23,8 +23,15 @@ if (testDbConnection) {
   process.env.CB_DB_DIALECT_DEV = testDbConnection.dialect;
 }
 
-// Clean database between each test but don't restart containers
-beforeEach(async () => {
+function usesSharedTestDatabase(context) {
+  const testPath = context.task?.file?.filepath || "";
+  return testPath.replaceAll("\\", "/").includes("/tests/integration/");
+}
+
+// Integration tests share one database. Unit tests use mocks or their own isolated database.
+beforeEach(async (context) => {
+  if (!usesSharedTestDatabase(context)) return;
+
   // Only clean if database is initialized
   if (testDbManager.getSequelize()) {
     await testDbManager.cleanup();

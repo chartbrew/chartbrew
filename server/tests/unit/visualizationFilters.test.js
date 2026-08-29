@@ -44,6 +44,10 @@ function buildInput(options = {}) {
   };
 }
 
+function getPreparedRows(result) {
+  return result.preparedData.results[0].rows;
+}
+
 describe("visualization dataset filtering", () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -60,8 +64,9 @@ describe("visualization dataset filtering", () => {
     });
     const result = new VisualizationEngine(input).render();
 
-    expect(result.configuration.data.labels).toEqual(["Jan"]);
-    expect(result.configuration.data.datasets[0].data).toEqual([100]);
+    expect(getPreparedRows(result)).toEqual([
+      expect.objectContaining({ category: "Jan", value: 100 }),
+    ]);
     expect(result.conditionsOptions).toEqual([{
       dataset_id: "cdc-1",
       conditions: [expect.objectContaining({
@@ -81,8 +86,9 @@ describe("visualization dataset filtering", () => {
       }],
     });
 
-    expect(result.configuration.data.labels).toEqual(["Feb"]);
-    expect(result.configuration.data.datasets[0].data).toEqual([200]);
+    expect(getPreparedRows(result)).toEqual([
+      expect.objectContaining({ category: "Feb", value: 200 }),
+    ]);
   });
 
   it("resolves mustache-backed CDC conditions from runtime variables", () => {
@@ -97,7 +103,9 @@ describe("visualization dataset filtering", () => {
       variables: { status: "paid" },
     });
 
-    expect(result.configuration.data.labels).toEqual(["Jan"]);
+    expect(getPreparedRows(result)).toEqual([
+      expect.objectContaining({ category: "Jan", value: 100 }),
+    ]);
   });
 
   it("uses the semantic time field when a CDC date field is missing", () => {
@@ -126,7 +134,7 @@ describe("visualization dataset filtering", () => {
     const result = engine.render();
 
     expect(frameResult.datasets[0].options.dateField).toBe("root[].createdAt");
-    expect(result.configuration.data.datasets[0].data).toEqual([200]);
+    expect(getPreparedRows(result).map((row) => row.value)).toEqual([200]);
   });
 
   it("falls back to a sampled date field for categorical charts", () => {
@@ -154,7 +162,9 @@ describe("visualization dataset filtering", () => {
     const result = engine.render();
 
     expect(frameResult.datasets[0].options.dateField).toBe("root[].createdAt");
-    expect(result.configuration.data.labels).toEqual(["Feb"]);
+    expect(getPreparedRows(result)).toEqual([
+      expect.objectContaining({ category: "Feb", value: 200 }),
+    ]);
   });
 
   it("filters canonical chart data using the shifted rolling window", () => {
@@ -189,6 +199,6 @@ describe("visualization dataset filtering", () => {
 
     const result = new VisualizationEngine(input).render();
 
-    expect(result.configuration.data.datasets[0].data).toEqual([200, 300]);
+    expect(getPreparedRows(result).map((row) => row.value)).toEqual([200, 300]);
   });
 });
