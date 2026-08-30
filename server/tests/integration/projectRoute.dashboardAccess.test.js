@@ -59,10 +59,6 @@ async function seedDashboardAccessFixtures(models) {
     type: "line",
     draft: false,
     onReport: true,
-    chartData: {
-      labels: ["Jan"],
-      datasets: [{ label: "Allowed", data: [1] }],
-    },
   });
 
   await models.Chart.create({
@@ -71,10 +67,6 @@ async function seedDashboardAccessFixtures(models) {
     type: "line",
     draft: false,
     onReport: true,
-    chartData: {
-      labels: ["Jan"],
-      datasets: [{ label: "Restricted", data: [2] }],
-    },
   });
 
   const token = generateTestToken({
@@ -97,21 +89,6 @@ async function seedReportChart(models, project) {
     type: "line",
     draft: false,
     onReport: true,
-    chartData: {
-      data: {
-        labels: ["Jan"],
-        datasets: [
-          { label: "Professional", data: [1] },
-          { label: "Amateur", data: [2] },
-        ],
-      },
-      meta: {
-        series: [
-          { id: "type:professional", label: "Professional" },
-          { id: "type:amateur", label: "Amateur" },
-        ],
-      },
-    },
   });
 }
 
@@ -219,7 +196,7 @@ describe("ProjectRoute legacy dashboard access", () => {
       .expect(429);
   });
 
-  it("preserves generated series in public report payloads", async () => {
+  it("does not expose legacy chart data in public report payloads", async () => {
     const team = await models.Team.create(teamFactory.build());
     const project = await models.Project.create(projectFactory.build({
       team_id: team.id,
@@ -242,9 +219,8 @@ describe("ProjectRoute legacy dashboard access", () => {
       .expect(200);
 
     const reportChart = response.body.Charts.find((chart) => chart.name === "Public Dashboard Chart");
-    expect(reportChart.chartData.data.datasets.map((dataset) => dataset.label))
-      .toEqual(["Professional", "Amateur"]);
-    expect(reportChart.chartData.meta.series).toHaveLength(2);
+    expect(reportChart).not.toHaveProperty("chartData");
+    expect(reportChart.render).toBeNull();
   });
 
   it("stores public dashboard passwords as bcrypt hashes and accepts the raw password", async () => {

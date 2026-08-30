@@ -129,6 +129,7 @@ function buildProjectionDomain({
 
 function buildProjectedSeries(preparedData, visualization, domain, missingValue) {
   const projected = [];
+  const valuesAreFinal = preparedData.__valuesFinal === true;
 
   preparedData.results.forEach((result) => {
     const layer = getLayer(visualization, result);
@@ -151,11 +152,10 @@ function buildProjectedSeries(preparedData, visualization, domain, missingValue)
       const values = domainKeys.map((key) => {
         if (!valuesByDimension.has(key) && !isCumulative) return missingValue;
         if (valuesByDimension.has(key)) cumulativeValue = valuesByDimension.get(key);
-        return applyValueFormula(
-          cumulativeValue,
-          layer.encoding?.value?.formula,
-          { formatted: METRIC_MARKS.has(result.mark) }
-        );
+        if (valuesAreFinal) return cumulativeValue;
+        return applyValueFormula(cumulativeValue, layer.encoding?.value?.formula, {
+          formatted: METRIC_MARKS.has(result.mark),
+        });
       });
 
       projected.push({

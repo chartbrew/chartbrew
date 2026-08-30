@@ -1,5 +1,5 @@
 import {
-  beforeAll, beforeEach, describe, expect, it,
+  beforeAll, describe, expect, it,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -101,10 +101,6 @@ describe("Update Run audit API", () => {
     listRouteHandlers = routeRegistry.getHandlers("GET", "/team/:team_id/update-runs");
     detailRouteHandlers = routeRegistry.getHandlers("GET", "/team/:team_id/update-runs/:run_id");
     models = await getModels();
-  });
-
-  beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
   });
 
   it("allows team owners and admins to list filtered runs and fetch run detail", async () => {

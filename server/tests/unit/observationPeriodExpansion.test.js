@@ -19,12 +19,12 @@ const {
 } = require("../../modules/observations/periodWindows");
 const {
   buildTimeRange,
-} = require("../../visualization/compilers/chartJsCartesian");
+} = require("../../visualization/seriesProjection");
 
 function chartWithRange(start, end) {
   return {
-    chartData: {
-      meta: {
+    render: {
+      metadata: {
         timeRange: { end, start },
       },
     },

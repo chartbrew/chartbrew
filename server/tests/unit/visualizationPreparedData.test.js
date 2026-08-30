@@ -131,20 +131,11 @@ function getGoldenOutput(mark, result) {
       preparedRows: result.preparedData.results[0].rows,
     };
   }
-  if (mark === "matrix") {
-    return {
-      preparedRows: result.preparedData.results[0].rows.map((row) => {
-        return Object.fromEntries(Object.entries(row).filter(([key]) => key !== "seriesId"));
-      }),
-      renderedPoints: result.configuration.data.datasets[0].data,
-    };
-  }
   return {
-    labels: result.configuration.data.labels,
     preparedRows: result.preparedData.results[0].rows.map((row) => {
       return Object.fromEntries(Object.entries(row).filter(([key]) => key !== "seriesId"));
     }),
-    values: result.configuration.data.datasets.map((dataset) => dataset.data),
+    renderedRows: Object.values(result.tabularData)[0],
   };
 }
 
@@ -375,70 +366,71 @@ describe("PreparedData v1", () => {
     expect(result.preparedData.results[0].rows).toHaveLength(1);
     expect(toPublicPreparedData(result.preparedData).results[0].rows[0].time)
       .toBe("2025-12-31T17:00:00.000Z");
-    expect(result.configuration.data.datasets[0].data).toEqual([12]);
-    expect(result.configuration.goals).toEqual([]);
+    expect(result.configuration.dataset.source[0][1]).toBe(12);
+    expect(result.metadata.metrics[0].goal).toBeNull();
   });
 });
 
 describe("current chart type goldens through PreparedData", () => {
   const expected = {
     bar: {
-      labels: ["A", "B"],
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
-      values: [[10, 20]],
+      renderedRows: [{ Category: "A", Series: 10 }, {
+        Category: "B", Series: 20,
+      }],
     },
     horizontalBar: {
-      labels: ["A", "B"],
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
-      values: [[10, 20]],
+      renderedRows: [{ Category: "A", Series: 10 }, {
+        Category: "B", Series: 20,
+      }],
     },
     line: {
-      labels: ["A", "B"],
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
-      values: [[10, 20]],
+      renderedRows: [{ Category: "A", Series: 10 }, {
+        Category: "B", Series: 20,
+      }],
     },
     pie: {
-      labels: ["A", "B"],
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
-      values: [[10, 20]],
+      renderedRows: [{ Category: "A", Series: 10 }, {
+        Category: "B", Series: 20,
+      }],
     },
     doughnut: {
-      labels: ["A", "B"],
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
-      values: [[10, 20]],
+      renderedRows: [{ Category: "A", Series: 10 }, {
+        Category: "B", Series: 20,
+      }],
     },
     radar: {
-      labels: ["A", "B"],
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
-      values: [[10, 20]],
+      renderedRows: [{ Category: "A", Series: 10 }, {
+        Category: "B", Series: 20,
+      }],
     },
     polar: {
-      labels: ["A", "B"],
       preparedRows: [{ category: "A", value: 10 }, { category: "B", value: 20 }],
-      values: [[10, 20]],
+      renderedRows: [{ Category: "A", Series: 10 }, {
+        Category: "B", Series: 20,
+      }],
     },
     kpi: {
-      labels: ["Value"],
       preparedRows: [{ value: 30 }],
-      values: [[30]],
+      renderedRows: [{ Category: "Value", Series: 30 }],
     },
     avg: {
-      labels: ["Value"],
       preparedRows: [{ value: 15 }],
-      values: [[15]],
+      renderedRows: [{ Category: "Value", Series: 15 }],
     },
     gauge: {
-      labels: ["Value"],
       preparedRows: [{ value: 30 }],
-      values: [[30]],
+      renderedRows: [{ Category: "Value", Series: 30 }],
     },
     matrix: {
       preparedRows: [{ time: 1704067200000, value: 10 }, { time: 1704153600000, value: 20 }],
-      renderedPoints: [{ d: "Jan 1", v: 10, x: "2024-01-01", y: "Mon" }, {
-        d: "Jan 2",
-        v: 20,
-        x: "2024-01-02",
-        y: "Tue",
+      renderedRows: [{ Category: "2024-01-01", Series: 10 }, {
+        Category: "2024-01-02", Series: 20,
       }],
     },
     table: {

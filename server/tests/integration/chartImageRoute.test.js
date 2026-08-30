@@ -99,7 +99,6 @@ describe("chart image route", () => {
 
   beforeEach(async () => {
     if (controller?.queue) await controller.queue.close();
-    await db.sequelize.sync({ force: true });
     await runtimeCache.resetForTests();
 
     const team = await db.Team.create({ name: "Image team", showBranding: true });

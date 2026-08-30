@@ -28,7 +28,6 @@ describe("Data API routes", () => {
   });
 
   beforeEach(async () => {
-    await db.sequelize.sync({ force: true });
     await runtimeCache.resetForTests();
     app = express();
     app.set("trust proxy", 1);

@@ -22,15 +22,21 @@ function getPreparedSnapshotMaxBytes() {
 
 function toPlainChart(chart) {
   if (!chart) return chart;
-  return typeof chart.toJSON === "function" ? chart.toJSON() : { ...chart };
+  const plainChart = typeof chart.toJSON === "function" ? chart.toJSON() : { ...chart };
+  delete plainChart.chartData;
+  delete plainChart.chartDataUpdated;
+  delete plainChart.preparedData;
+  return plainChart;
 }
 
 function buildRenderEnvelope(compiled, preparedData, options = {}) {
   return {
-    configuration: compiled.renderConfiguration || compiled.configuration,
+    configuration: compiled.configuration,
     generatedAt: preparedData.generatedAt || null,
-    renderer: compiled.renderer || "chartjs",
+    renderer: compiled.renderer || "native",
+    metadata: compiled.metadata || {},
     stale: Boolean(options.stale),
+    tabularData: compiled.tabularData || {},
     updatedAt: options.updatedAt || preparedData.generatedAt || null,
     version: 1,
   };
@@ -41,8 +47,6 @@ function attachPreparedRender(chart, compiled, preparedData, options = {}) {
   const render = buildRenderEnvelope(compiled, preparedData, options);
   return {
     ...plainChart,
-    chartData: compiled.configuration,
-    chartDataUpdated: render.updatedAt,
     dateFormat: compiled.dateFormat,
     isTimeseries: compiled.isTimeseries,
     preparedDataUpdatedAt: options.snapshotUpdatedAt
@@ -52,19 +56,12 @@ function attachPreparedRender(chart, compiled, preparedData, options = {}) {
   };
 }
 
-function attachLegacyRender(chart, options = {}) {
+function attachUnavailableRender(chart, options = {}) {
   const plainChart = toPlainChart(chart);
-  if (!plainChart?.chartData) return plainChart;
   return {
     ...plainChart,
-    render: {
-      configuration: plainChart.chartData,
-      generatedAt: plainChart.chartDataUpdated || null,
-      renderer: "chartjs",
-      stale: Boolean(options.stale),
-      updatedAt: plainChart.chartDataUpdated || null,
-      version: 1,
-    },
+    render: null,
+    stale: Boolean(options.stale),
   };
 }
 
@@ -166,7 +163,6 @@ async function persistPreparedSnapshot({
 
   const updatedAt = new Date(preparedData.generatedAt || Date.now());
   await db.Chart.unscoped().update({
-    chartDataUpdated: updatedAt,
     preparedData: JSON.parse(serialized),
     preparedDataFingerprint: fingerprints.combined,
     preparedDataSourceFingerprint: fingerprints.source,
@@ -188,7 +184,7 @@ async function persistPreparedSnapshot({
 
 module.exports = {
   DEFAULT_PREPARED_SNAPSHOT_MAX_BYTES,
-  attachLegacyRender,
+  attachUnavailableRender,
   attachPreparedRender,
   buildRenderEnvelope,
   compilePreparedRender,

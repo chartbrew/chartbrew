@@ -134,7 +134,9 @@ module.exports = (app) => {
   ** Route to get a project by ID
   */
   app.get("/project/:id", verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return projectController.findById(req.params.id)
+    return projectController.findById(req.params.id, {
+      refreshPreparedData: true,
+    })
       .then((project) => {
         return res.status(200).send(project);
       })

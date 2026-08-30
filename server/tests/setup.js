@@ -23,8 +23,16 @@ if (testDbConnection) {
   process.env.CB_DB_DIALECT_DEV = testDbConnection.dialect;
 }
 
-// Clean database between each test but don't restart containers
-beforeEach(async () => {
+function usesSharedTestDatabase(context) {
+  const testPath = (context.task?.file?.filepath || "").replaceAll("\\", "/");
+  return testPath.includes("/tests/integration/")
+    || testPath.endsWith("/tests/unit/updateAudit.test.js");
+}
+
+// Database tests share one migrated schema. Clear its rows between tests.
+beforeEach(async (context) => {
+  if (!usesSharedTestDatabase(context)) return;
+
   // Only clean if database is initialized
   if (testDbManager.getSequelize()) {
     await testDbManager.cleanup();

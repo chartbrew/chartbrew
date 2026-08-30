@@ -15,8 +15,8 @@ flowchart TD
     Visualization -->|compiled by| Engine[VisualizationEngine<br/>VizFrame + Output Compiler]
     Engine --> Prepared[PreparedData snapshot]
     Prepared --> ECharts[ECharts option]
-    Prepared --> Fallback[Chart.js fallback]
-    Prepared --> Native[Native view / Export payload]
+    Prepared --> Native[Native KPI / Table / Markdown]
+    Prepared --> Export[Chart-as-shown export data]
     
     VariableBinding[VariableBinding] -.->|can attach to| DataRequest
     VariableBinding -.->|can attach to| Dataset
@@ -174,7 +174,7 @@ These fields remain on Dataset for older charts and callers during the CDC migra
 
 ChartDatasetConfig maps Datasets to Charts. A canonical visualization layer references it through `bindingId`, allowing one dataset result to power multiple value layers and generated breakdown series without adding CDC rows.
 
-During chart rendering, [`ChartController.updateChartData()`](../../controllers/ChartController.js) runs each CDC's Dataset through `DatasetController.runRequest()`, overlays compatibility options, and passes the bound results to `VisualizationEngine`. The engine filters rows, builds a sparse `VizFrame`, creates `PreparedData`, and compiles an ephemeral ECharts option for ready graphical presets. It also compiles a Chart.js compatibility payload for old clients and runtime fallback. KPI, average, table, and markdown remain native views.
+During chart rendering, [`ChartController.updateChartData()`](../../controllers/ChartController.js) runs each CDC's Dataset through `DatasetController.runRequest()`, overlays compatibility options, and passes the bound results to `VisualizationEngine`. The engine filters rows, builds a sparse `VizFrame`, creates `PreparedData`, and compiles an ephemeral ECharts option for ready graphical presets. KPI, average, table, and markdown compile to native runtime data.
 
 ### Ownership Rule
 
@@ -212,6 +212,8 @@ During chart rendering, [`ChartController.updateChartData()`](../../controllers/
 - Migration `20260321090000-add-dataset-name-and-cdc-viz-fields.js` added the active CDC visualization fields and backfilled them from Dataset with `models/scripts/migrateDatasetVizToCdc.js`.
 - `resolveChartDatasetOptions()` keeps old charts working by merging Dataset options first, then overlaying non-null CDC fields.
 - When chart conditions are updated after parsing, `ChartController.updateChartData()` writes condition value updates back to `ChartDatasetConfig.conditions`, not `Dataset.conditions`.
+- `npm run viz:prepared-backfill -- --dry-run` checks local `chartData` conversion without connection requests or writes. The normal backfill saves these compatibility snapshots. Use `--refresh-unresolved` only when live source requests are intended. This mode selects charts with no prepared snapshot and no stored `chartData`; its limit counts live-refresh candidates only.
+- An authorized read with no prepared snapshot returns the inferred compatibility chart first. It then starts a background source refresh. A failed refresh does not remove the inferred snapshot.
 
 ### Routes
 
@@ -240,7 +242,7 @@ During chart rendering, [`ChartController.updateChartData()`](../../controllers/
 
 **Location**: Lines 297-512 in [`ChartController.js`](../../controllers/ChartController.js)
 
-This is the chart-runtime entry point. `VisualizationEngine` is the presentation boundary; do not add new parsing behavior to `AxisChart`.
+This is the chart-runtime entry point. `VisualizationEngine` is the preparation and presentation boundary.
 
 #### Parameters
 
@@ -260,8 +262,9 @@ This is the chart-runtime entry point. `VisualizationEngine` is the presentation
 2. For each CDC, merge CDC-level variables with chart-level variables (lines 331-341)
 3. Call `datasetController.runRequest()` for each dataset
 4. Check ChartCache if `noSource: true` and user exists
-5. Pass data through AxisChart or TableView (lines 400-413)
-6. Save `chartData` configuration to database (unless `skipSave`)
+5. Build `PreparedData` through `VisualizationEngine`
+6. Save the default prepared snapshot unless the request is runtime-only
+7. Compile ECharts options or native KPI, average, table, and markdown data at runtime
 
 ### API Pattern
 
@@ -442,9 +445,11 @@ GET /chart/share/:share_string?token=JWT&userId=123&period=7d
 - [`controllers/DatasetController.js`](../../controllers/DatasetController.js) - Join logic and orchestration
 - [`controllers/ChartController.js`](../../controllers/ChartController.js) - Main charting pipeline
 - [`sources/applySourceVariables.js`](../../sources/applySourceVariables.js) - Source-owned variable substitution dispatcher
-- `charts/AxisChart.js` - Chart rendering logic (needs study)
-- `charts/TableView.js` - Table rendering logic (needs study)
-- `charts/DataExtractor.js` - Data extraction and formatting (needs study)
+- `visualization/VisualizationEngine.js` - Prepared data and runtime compiler boundary
+- `visualization/compilers/echarts.js` - Graphical chart compiler
+- `visualization/compilers/nativeMetric.js` - KPI and average compiler
+- `visualization/compilers/nativeTable.js` - Table compiler
+- `charts/TableView.js` - Native table formatting
 
 ### Support Modules
 

@@ -41,10 +41,10 @@ function formatValue(value, config, timezone) {
 }
 
 class TableView {
-  getTableData(data, chartData, timezone = "") {
+  getTableData(data, context, timezone = "", options = {}) {
     const rawData = data.configuration;
     const tabularData = {};
-    const datasetConfigs = chartData.chart?.ChartDatasetConfigs;
+    const datasetConfigs = context.chart?.ChartDatasetConfigs;
 
     Object.keys(rawData).forEach((key, datasetIndex) => {
       const tab = { columns: [], data: [] };
@@ -52,7 +52,7 @@ class TableView {
 
       // Pre-compute dataset config and excluded fields
       const datasetConfig = datasetConfigs?.[datasetIndex];
-      const baseExcludedFields = chartData.datasets[datasetIndex].options.excludedFields || [];
+      const baseExcludedFields = context.datasets[datasetIndex].options.excludedFields || [];
       const excludedFields = datasetConfig?.excludedFields?.length > 0
         ? [...baseExcludedFields, ...datasetConfig.excludedFields]
         : baseExcludedFields;
@@ -100,7 +100,9 @@ class TableView {
                 } else if (nestedType === "array") {
                   dataItem[headerKey] = `__cb_array${JSON.stringify(nestedVal)}`;
                 } else {
-                  dataItem[headerKey] = formatValue(nestedVal, columnConfig, timezone);
+                  dataItem[headerKey] = options.valuesAreFinal
+                    ? nestedVal
+                    : formatValue(nestedVal, columnConfig, timezone);
                 }
               });
             } else if (type === "array") {
@@ -112,7 +114,9 @@ class TableView {
               }
             } else {
               const columnConfig = columnsFormatting?.[k];
-              dataItem[k] = formatValue(val, columnConfig, timezone);
+              dataItem[k] = options.valuesAreFinal
+                ? val
+                : formatValue(val, columnConfig, timezone);
 
               if (!columnMap.has(k)) {
                 columnMap.set(k, tab.columns.length);
@@ -128,7 +132,7 @@ class TableView {
       // Column order sorting
       const columnsOrder = datasetConfig?.columnsOrder?.length > 0
         ? datasetConfig.columnsOrder
-        : chartData.datasets[datasetIndex].options.columnsOrder;
+        : context.datasets[datasetIndex].options.columnsOrder;
 
       if (columnsOrder?.length > 0) {
         const columnMapByHeader = new Map(tab.columns.map((col) => [col.Header, col]));

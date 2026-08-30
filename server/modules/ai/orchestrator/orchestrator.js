@@ -2228,7 +2228,7 @@ async function buildSemanticLayer(teamId, options = {}) {
     },
   }, {
     "kpi": {
-      description: "A KPI chart can be used to show a single value. Important to note that the KPI chart shows the last data point from chartData, so if the data comes as an array you can set the subType to AddTimeseries to compound the data so that the last shows the total",
+      description: "A KPI chart shows the last prepared value. If the source returns an array, use the AddTimeseries subtype to compound the values so the last value shows the total.",
     },
     "avg": {
       description: "Similar to a KPI chart, but shows the average value of the data based on the number of data points",

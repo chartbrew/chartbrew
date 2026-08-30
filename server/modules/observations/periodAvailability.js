@@ -18,8 +18,7 @@ function toValidDate(value) {
 }
 
 function getStoredTimeRange(chart = {}) {
-  const timeRange = chart.render?.configuration?.meta?.timeRange
-    || chart.chartData?.meta?.timeRange;
+  const timeRange = chart.render?.metadata?.timeRange;
   const start = toValidDate(timeRange?.start);
   const end = toValidDate(timeRange?.end);
   if (!start || !end || start >= end) return null;

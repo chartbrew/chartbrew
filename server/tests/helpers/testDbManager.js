@@ -317,23 +317,30 @@ class TestDbManager {
 
     console.log("🧹 Cleaning up test database...");
 
-    // Get all table names
-    const tables = await this.sequelize.getQueryInterface().showAllTables();
+    const queryInterface = this.sequelize.getQueryInterface();
+    const tables = (await queryInterface.showAllTables())
+      .filter((table) => table !== "SequelizeMeta");
+    if (tables.length === 0) return;
 
     const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
+
+    if (dbDialect === "postgres") {
+      const quotedTables = tables
+        .map((table) => queryInterface.queryGenerator.quoteTable(table))
+        .join(", ");
+      await this.sequelize.query(
+        `TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`
+      );
+      console.log("✅ Database cleanup completed");
+      return;
+    }
 
     if (dbDialect === "mysql") {
       await this.sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
     }
 
     for (const table of tables) {
-      if (table !== "SequelizeMeta") {
-        if (dbDialect === "postgres") {
-          await this.sequelize.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE`);
-        } else {
-          await this.sequelize.query(`TRUNCATE TABLE \`${table}\``);
-        }
-      }
+      await this.sequelize.query(`TRUNCATE TABLE ${queryInterface.queryGenerator.quoteTable(table)}`);
     }
 
     if (dbDialect === "mysql") {

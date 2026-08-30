@@ -1,8 +1,5 @@
-const { compileChartJsCartesian } = require("./compilers/chartJsCartesian");
-const { CATEGORY_MARKS, compileChartJsCategory } = require("./compilers/chartJsCategory");
-const { compileChartJsMatrix } = require("./compilers/chartJsMatrix");
-const { METRIC_MARKS, compileChartJsMetric } = require("./compilers/chartJsMetric");
-const { compileChartJsTable } = require("./compilers/chartJsTable");
+const { compileNativeMetric } = require("./compilers/nativeMetric");
+const { compileNativeTable } = require("./compilers/nativeTable");
 const { compileTabularExport } = require("./compilers/tabularExport");
 const { compileShownExport } = require("./compilers/shownExport");
 const { recordAdapterUsage } = require("./adapterUsage");
@@ -11,6 +8,7 @@ const { buildVisualizationFrame } = require("./frameBuilder");
 const { legacyChartToVisualization } = require("./legacyChartToVisualization");
 const { assertPreparedData, createPreparedData } = require("./preparedData");
 const { getServerPresetImplementation } = require("./presetImplementations");
+const { buildRenderMetadata } = require("./renderMetadata");
 const { assertVisualizationSpec } = require("./spec");
 
 function parseStoredVisualization(value) {
@@ -101,91 +99,85 @@ class VisualizationEngine {
 
   compilePrepared(preparedData, resolved, options = {}) {
     const marks = [...new Set(preparedData.results.map((result) => result.mark))];
+    if (marks.length !== 1) {
+      throw new Error(`Visualization requires one ready preset, received: ${marks.join(", ")}`);
+    }
 
-    let compiled;
-    if (marks.length === 1 && ["bar", "horizontalBar", "line"].includes(marks[0])) {
-      compiled = compileChartJsCartesian({
+    const presetId = marks[0];
+    const implementation = getServerPresetImplementation(presetId);
+    if (!implementation) {
+      throw new Error(`Visualization compiler is not implemented for: ${presetId}`);
+    }
+    implementation.validate({ preparedData, visualization: resolved.visualization });
+
+    let configuration;
+    if (["avg", "kpi"].includes(presetId)) {
+      configuration = compileNativeMetric({
         chart: this.chart,
         preparedData,
         runtimeContext: resolved.runtimeContext,
         timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
-      });
-    } else if (marks.length === 1 && CATEGORY_MARKS.has(marks[0])) {
-      compiled = compileChartJsCategory({
-        chart: this.chart,
-        preparedData,
-        visualization: resolved.visualization,
-      });
-    } else if (marks.length === 1 && METRIC_MARKS.has(marks[0])) {
-      compiled = compileChartJsMetric({
-        chart: this.chart,
-        preparedData,
-        visualization: resolved.visualization,
-      });
-    } else if (marks.length === 1 && marks[0] === "table") {
-      compiled = compileChartJsTable({
+      }).configuration;
+    } else if (presetId === "table") {
+      configuration = compileNativeTable({
         chart: this.chart,
         conditionsOptions: resolved.conditionsOptions,
         preparedData,
         timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
+      }).configuration;
+    } else if (presetId === "markdown") {
+      configuration = {
+        content: preparedData.results[0]?.rows[0]?.content
+          ?? resolved.visualization.layers[0]?.content
+          ?? this.chart.content
+          ?? "",
+      };
+    } else {
+      configuration = implementation.compile({
+        chart: this.chart,
+        preparedData,
+        renderContext: options.renderContext,
+        visualization: resolved.visualization,
       });
-    } else if (marks.length === 1 && marks[0] === "matrix") {
-      compiled = compileChartJsMatrix({
+    }
+
+    const metadata = buildRenderMetadata({
+      chart: this.chart,
+      preparedData,
+      runtimeContext: resolved.runtimeContext,
+      timezone: options.timezone || this.timezone,
+      visualization: resolved.visualization,
+    });
+    let tabularData;
+    if (presetId === "table") {
+      tabularData = configuration;
+    } else if (presetId === "markdown") {
+      tabularData = {
+        [this.chart.name || "Chart"]: [{ Content: configuration.content }],
+      };
+    } else {
+      tabularData = compileShownExport({
         chart: this.chart,
         preparedData,
         runtimeContext: resolved.runtimeContext,
         timezone: options.timezone || this.timezone,
         visualization: resolved.visualization,
       });
-    } else if (marks.length === 1 && marks[0] === "markdown") {
-      compiled = {
-        configuration: {
-          content: preparedData.results[0]?.rows[0]?.content
-            ?? resolved.visualization.layers[0]?.content
-            ?? this.chart.content
-            ?? "",
-        },
-        preparedData,
-        isTimeseries: false,
-      };
-    } else {
-      throw new Error(`Visualization compiler is not implemented for: ${marks.join(", ")}`);
-    }
-
-    const presetId = marks[0];
-    const presetImplementation = getServerPresetImplementation(presetId);
-    let renderer = "chartjs";
-    let renderConfiguration = compiled.configuration;
-    if (presetImplementation?.renderer === "native") {
-      presetImplementation.validate({
-        preparedData,
-        visualization: resolved.visualization,
-      });
-      renderer = "native";
-    } else if (presetImplementation?.renderer === "echarts") {
-      try {
-        renderConfiguration = presetImplementation.compile({
-          chart: this.chart,
-          preparedData,
-          renderContext: options.renderContext,
-          visualization: resolved.visualization,
-        });
-        renderer = "echarts";
-      } catch (error) {
-        console.error(`[visualization] ECharts fallback for ${presetId}: ${error.message}`); // oxlint-disable-line no-console
-      }
     }
 
     return {
-      ...compiled,
       adapted: resolved.adapted,
       conditionsOptions: resolved.conditionsOptions,
+      configuration,
+      dateFormat: metadata.dateFormat,
       frame: resolved.frame,
+      isTimeseries: metadata.isTimeseries,
+      metadata,
       preparedData,
-      renderConfiguration,
-      renderer,
+      renderer: implementation.renderer,
+      tabularData,
       visualization: resolved.visualization,
     };
   }
@@ -215,7 +207,7 @@ class VisualizationEngine {
       const marks = [...new Set(resolved.preparedData.results.map((result) => result.mark))];
       let configuration;
       if (marks.length === 1 && marks[0] === "table") {
-        configuration = compileChartJsTable({
+        configuration = compileNativeTable({
           chart: this.chart,
           conditionsOptions: resolved.conditionsOptions,
           preparedData: resolved.preparedData,
@@ -229,14 +221,6 @@ class VisualizationEngine {
             ?? this.chart.content
             ?? "",
         };
-      } else if (marks.length === 1 && marks[0] === "matrix") {
-        configuration = compileChartJsMatrix({
-          chart: this.chart,
-          preparedData: resolved.preparedData,
-          runtimeContext: resolved.runtimeContext,
-          timezone: options.timezone || this.timezone,
-          visualization: resolved.visualization,
-        }).configuration;
       } else {
         configuration = compileShownExport({
           chart: this.chart,

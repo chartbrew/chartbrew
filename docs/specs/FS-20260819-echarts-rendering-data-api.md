@@ -1,6 +1,14 @@
 # ECharts Rendering And Data API
 
-Status: accepted
+Status: implemented
+
+Implementation note (2026-08-28): The cleanup phase now removes the Chart.js runtime,
+client components, dependencies, and `chartData` response alias. Graphical presets compile directly
+to ECharts. KPI, average, table, and markdown compile to native runtime data. The prepared snapshot
+backfill first converts stored `chartData` to a renderer-neutral compatibility snapshot without a
+source request. It supports `--dry-run` so release audits can find unresolved or oversized charts
+without writes. An authorized read returns this snapshot immediately and then refreshes it in the
+background through the canonical source path.
 
 Related: [Next-Generation Visualization Engine](FS-20260719-next-generation-visualization-engine.md)
 
@@ -46,7 +54,8 @@ part of this delivery.
 - Arbitrary AI-generated JavaScript, ECharts callbacks, or user code.
 - A universal visualization language that models every ECharts option.
 - Support for D3, Vega, Plotly, or other renderers in this rollout.
-- A forced migration that removes the Chart.js fallback before parity is complete.
+- Removing the legacy database columns in this cleanup. They remain available for rollback until a
+  later schema migration.
 - A rewrite of connections, DataRequests, dataset joins, or runtime filtering.
 
 ## API Documentation Ground Rule
@@ -210,7 +219,22 @@ snapshots within this limit. Move snapshots to a `ChartPreparedSnapshot` table o
 only if production size and query measurements show that the main Chart row remains too costly.
 The Phase 2 implementation uses `CB_PREPARED_SNAPSHOT_MAX_BYTES` with a default of 5 MiB. The
 canonical, resumable backfill runs with `npm run viz:prepared-backfill` from `server/`; reruns skip
-charts that already have a prepared snapshot unless `--force` is set.
+charts that already have a prepared snapshot unless `--force` is set. Use `--dry-run` first to run
+the local conversion, compilation, and size checks without database, queue, or source writes. Print
+progress for each chart. Charts without usable `chartData` are unresolved. Do not contact their
+connections unless the operator adds `--refresh-unresolved`. This mode only selects charts that
+have no prepared snapshot and no stored `chartData`, so it does not repeat the inference tier. Its
+`--limit` applies only to live-refresh candidates. The opt-in source path stops an attempt after two
+minutes by default. The `--timeout-ms` option changes this limit. The backfill is an audit and
+pre-warming tool. It is not required for users to open an old dashboard.
+
+When an authorized dashboard or chart read finds no prepared snapshot, first infer and save a
+compatibility snapshot from stored `chartData`. Return it in the same response and start the
+canonical source refresh in the background. Mark the compatibility snapshot as stale so a
+successful refresh replaces it. Deduplicate concurrent work per chart. If the source is
+unavailable, keep and serve the compatibility snapshot. If no legacy data exists, return that chart
+as unavailable while the background refresh runs. Keep the other dashboard charts working. Retry
+the chart on a later read and include it in dry-run reports.
 
 Runtime variants remain in Redis. Change the cache layers to:
 
@@ -224,11 +248,12 @@ ECharts options are cheap runtime artifacts and are not durable data. A cold pro
 Redis must still render the last successful default chart from `Chart.preparedData` when its
 visualization fingerprint matches. If the source fingerprint is stale, return the last-known
 result with its update time and start the normal refresh path. If the visualization fingerprint
-does not match, refresh before compilation and use the migration fallback if refresh fails.
+does not match, refresh before compilation and return an unavailable render if refresh fails.
 
-Keep `Chart.chartData` during migration. Do not create canonical `PreparedData` by parsing a
-Chart.js payload because it has already lost semantic information. Backfill prepared snapshots by
-running the canonical preparation path.
+Keep the legacy database columns during migration. Read `chartData` only through the compatibility
+migration path. Do not write it. The inferred snapshot preserves the visible legacy output but is
+not canonical because the renderer payload has lost some semantic information. Replace it with the
+canonical preparation result after a successful background source refresh.
 
 ## Data API
 
@@ -261,7 +286,7 @@ or internal cache state.
 - Add `VisualizationEngine.prepare()` and a versioned `PreparedData` serializer around `VizFrame`.
 - Make persisted layer IDs and the current typed, hashed series identity part of the contract.
 - Add byte-equivalent deterministic serialization tests that exclude only `generatedAt`.
-- Make Chart.js, native views, chart-as-shown exports, alerts, and observations consume this
+- Make graphical compilers, native views, chart-as-shown exports, alerts, and observations consume this
   boundary. Keep source-rows export on the filtered dataset contract.
 - Add golden tests for every current chart type, long/wide/nested/scalar data, filters, variables,
   timezones, sparse values, formulas, goals, breakdowns, and multiple bindings.
@@ -272,8 +297,8 @@ or internal cache state.
 
 - Add the prepared snapshot fields and an idempotent backfill.
 - Exclude prepared snapshots from default Chart queries and enforce the configured size limit.
-- Return a runtime `render` envelope while keeping `chartData` as a response alias for old clients.
-- Generate Chart.js options from prepared snapshots at read time for all chart surfaces.
+- Return a runtime `render` envelope without a renderer-specific response alias.
+- Generate ECharts options or native view data from prepared snapshots at read time.
 - Move default and runtime cache writes to `PreparedData`.
 - Complete when dashboard, public, report, snapshot, embed, export, alert, and update workers do not
   require persisted Chart.js options.
@@ -283,15 +308,13 @@ or internal cache state.
 - Add the locked ECharts 6 dependency to the client.
 - Add the shared serializable preset manifest, client/server implementation maps, and a pure-JSON
   ECharts compiler.
-- When `render.renderer` is `echarts`, keep `chartData` as the deprecated Chart.js compatibility
-  payload instead of treating it as an alias for `render.configuration`. Native presets can keep
-  the same payload in both fields. This gives old clients and the ECharts error boundary a fallback
-  without making either renderer output durable.
+- Use `render.configuration` for ECharts or native view data and keep shared series, metric, category,
+  warning, and time-range information in `render.metadata`.
 - Add a central React `ChartRenderer` and an ECharts error boundary.
 - First reach parity for line, bar, pie, doughnut, radar, polar, matrix, and gauge. Keep area fill as
   a line display option. Keep KPI, average, table, and markdown native unless a measured benefit
   supports a move.
-- Run Chart.js and ECharts golden comparisons during rollout. Keep Chart.js as an internal fallback.
+- Run prepared-data and ECharts golden tests for every ready preset.
 - Keep reports and snapshots on the current Playwright browser-capture path during this phase.
 - Complete when supported presets render in the dashboard, editor, embed, current reports and
   snapshots, and fixed-size browser tests.
@@ -336,10 +359,8 @@ that depends on `PreparedData`; it does not depend on ECharts compilation.
   actions in the links tab.
 - Produce the server PNG from the final composed SVG. Do not add a second server Canvas rendering
   path.
-- Keep the Chart.js fallback, `Chart.chartData` reads, and current screenshot systems unchanged
-  during image delivery.
-- Remove `Chart.chartData` writes, Chart.js compilers, client components, dependencies, and obsolete
-  presentation fields only in a later cleanup after the parity and fallback gates pass.
+- Remove `Chart.chartData` reads and writes, Chart.js compilers, client components, and dependencies
+  after the prepared snapshot and ECharts parity gates pass.
 - Keep future AI/custom design on `PreparedData + Chart.visualization + RenderContext`. Do not add a
   separate data model or execute generated JavaScript in the main application.
 
@@ -347,10 +368,13 @@ that depends on `PreparedData`; it does not depend on ECharts compilation.
 
 - Add fields and backfill in a new resumable migration. Do not edit the July visualization
   migrations.
-- Backfill in batches through the same preparation code used at runtime. Report per-chart failures.
+- Backfill in batches by first converting stored legacy output without source requests. Report
+  unresolved charts. Use the canonical source path only when `--refresh-unresolved` is explicit.
+- On an authorized read, serve inferred data first and run the canonical refresh in the background.
+  Keep inferred data when the refresh fails.
 - Use the preset registry release state for rollback. Do not persist a renderer selection per chart.
-- Keep the Chart.js fallback and old `chartData` reads until prepared-snapshot coverage and all
-  dependent-system gates are complete.
+- Audit prepared-snapshot coverage with the dry run before each external release. Fix failed or
+  oversized charts before removing the old database columns in a later schema migration.
 - Remove compatibility fields only in a later contract migration with a corpus audit.
 
 ## Acceptance Gates
@@ -370,16 +394,16 @@ that depends on `PreparedData`; it does not depend on ECharts compilation.
   `../chartbrew-docs/api-reference/openapi.json` document.
 - Existing dashboards, embeds, reports, alerts, observations, exports, snapshots, templates,
   shares, and automated refreshes retain behavior.
-- Chart.js removal occurs only after fallback use is zero in the supported corpus.
+- The dry-run backfill reports no unexplained failures before external release.
 
 ## Repository Validation
 
 - `server/visualization/frameBuilder.js` already provides the renderer-neutral frame to extend.
 - `server/visualization/VisualizationEngine.js` is the correct prepare/render split point.
-- `server/controllers/ChartController.js` persists `chartData` and must move snapshot ownership.
+- `server/controllers/ChartController.js` owns prepared snapshot refresh and runtime compilation.
 - `server/modules/runtimeCache.js` already fingerprints `Chart.visualization` and can add a prepared
   cache without a new runtime filter model.
-- `server/modules/alerts/alertSeries.js` still reads Chart.js data and is a Phase 1 migration gate.
+- `server/modules/alerts/alertSeries.js` consumes prepared series data.
 - `server/modules/observations/processChartResult.js` already reads frames and proves the boundary.
 - `server/modules/snapshots.js` uses Playwright browser capture, so dedicated ECharts SSR can wait
   until the sharing and export phase.

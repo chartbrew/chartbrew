@@ -12,13 +12,11 @@ const {
 const { createSeriesId, serializeTypedValue } = require("../seriesIdentity");
 const { projectPreparedSeries } = require("../seriesProjection");
 const { applyValueFormula, parseValueFormula } = require("../valueFormula");
-const {
-  buildCategoryMetadata,
-} = require("./chartJsCategory");
+const { buildCategoryMetadata } = require("../renderMetadata");
 const {
   buildSeriesStyleMap,
   getStableColor,
-} = require("./chartJsCartesian");
+} = require("../seriesStyles");
 
 const CARTESIAN_PRESETS = new Set(["bar", "horizontalBar", "line"]);
 const PIE_PRESETS = new Set(["doughnut", "pie"]);
@@ -106,14 +104,14 @@ function getLayerSeriesStyle(styles, series, layer) {
   const pointRadius = style.pointRadius ?? layer.style?.pointRadius;
   return {
     areaStyle: style.fill
-      ? { color: style.fillColor || style.datasetColor, opacity: style.fillOpacity ?? 0.2 }
+      ? { color: style.fillColor || style.color, opacity: style.fillOpacity ?? 0.2 }
       : undefined,
-    color: style.datasetColor || getStableColor(series.id),
+    color: style.color || getStableColor(series.id),
     fill: ["bar", "horizontalBar"].includes(layer.mark)
       ? layer.style?.fill !== false
       : style.fill,
     fillOpacity: style.fillOpacity,
-    name: style.legend || series.label,
+    name: style.label || series.label,
     pointRadius,
   };
 }
@@ -872,7 +870,7 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
       if (!domain.has(key)) domain.set(key, row.category);
     });
   });
-  const categoryMetadata = buildCategoryMetadata(preparedData, visualization, domain);
+  const categoryMetadata = buildCategoryMetadata(preparedData, visualization);
   const metadataById = new Map(categoryMetadata.map((category) => [category.id, category]));
   const datasets = [];
   const series = [];
@@ -883,7 +881,9 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
     const defaultSeries = result.series[0] || { id: `series-${result.id}`, label: result.name };
     const sourceValues = result.rows.map((row) => {
       const id = createSeriesId(result.id, row.category);
-      const value = applyValueFormula(row.value, layer.encoding?.value?.formula);
+      const value = preparedData.__valuesFinal
+        ? row.value
+        : applyValueFormula(row.value, layer.encoding?.value?.formula);
       return {
         category: row.category,
         formattedValue: `${formula.prefix}${Number(value).toLocaleString(renderContext.locale)}${formula.suffix}`,
@@ -1088,13 +1088,15 @@ function getMatrixDateRange(rows, visualization, timezone) {
   };
 }
 
-function buildMatrixSource(result, layer, visualization, timezone) {
+function buildMatrixSource(result, layer, visualization, timezone, valuesAreFinal = false) {
   const rows = result.rows || [];
   const valuesByDate = new Map();
   rows.forEach((row) => {
     const date = parseMatrixDate(row.time, timezone);
     if (!date) return;
-    const value = Number(applyValueFormula(row.value, layer.encoding?.value?.formula));
+    const value = Number(valuesAreFinal
+      ? row.value
+      : applyValueFormula(row.value, layer.encoding?.value?.formula));
     valuesByDate.set(date.format("YYYY-MM-DD"), Number.isFinite(value) ? value : 0);
   });
   const range = getMatrixDateRange(rows, visualization, timezone);
@@ -1133,7 +1135,7 @@ function applyColorOpacity(color, opacity) {
   return `#${hex}${alpha}`;
 }
 
-function buildCategoricalMatrixSource(result, layer) {
+function buildCategoricalMatrixSource(result, layer, valuesAreFinal = false) {
   const columns = new Map();
   const rows = new Map();
   let max = 1;
@@ -1144,7 +1146,9 @@ function buildCategoricalMatrixSource(result, layer) {
     const rowKey = serializeTypedValue(rowValue);
     if (!columns.has(columnKey)) columns.set(columnKey, columns.size);
     if (!rows.has(rowKey)) rows.set(rowKey, rows.size);
-    const value = Number(applyValueFormula(row.value, layer.encoding?.value?.formula));
+    const value = Number(valuesAreFinal
+      ? row.value
+      : applyValueFormula(row.value, layer.encoding?.value?.formula));
     if (Number.isFinite(value)) max = Math.max(max, value);
     return {
       column: columns.get(columnKey),
@@ -1179,13 +1183,14 @@ function buildMatrixOption({ preparedData, visualization, renderContext }) {
       result,
       layer,
       visualization,
-      renderContext.timezone || preparedData.timezone
+      renderContext.timezone || preparedData.timezone,
+      preparedData.__valuesFinal
     )
-    : buildCategoricalMatrixSource(result, layer);
+    : buildCategoricalMatrixSource(result, layer, preparedData.__valuesFinal);
   const { source } = matrix;
   const values = source.map((row) => row.value);
   const max = matrix.max || (values.length > 0 ? Math.max(1, ...values) : 1);
-  const color = style.datasetColor || getStableColor(seriesDefinition.id);
+  const color = style.color || getStableColor(seriesDefinition.id);
   const xDimension = isCalendar ? "week" : "column";
   const yDimension = isCalendar ? "day" : "row";
   const tooltipDimensions = isCalendar

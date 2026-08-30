@@ -388,10 +388,10 @@ function ChartDatasetDataSetup({
   const timeField = getVisualizationTimeField(chart.visualization, cdc.id);
   const dateField = cdc.dateField || timeField || getPreferredDateField(dateFieldOptions);
   const canAddValue = MULTI_VALUE_MARKS.has(selectedLayer?.mark || chart.type);
-  const generatedSeries = (chart.chartData?.meta?.series || []).filter((series) => {
+  const generatedSeries = (chart.render?.metadata?.series || []).filter((series) => {
     return series.layerId === selectedLayer?.id;
   });
-  const layerWarnings = (chart.chartData?.meta?.warnings || []).filter((warning) => {
+  const layerWarnings = (chart.render?.metadata?.warnings || []).filter((warning) => {
     return warning.layerId === selectedLayer?.id;
   });
   const filterDataset = useMemo(() => ({

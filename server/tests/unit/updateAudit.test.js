@@ -1,5 +1,5 @@
 import {
-  beforeAll, beforeEach, describe, expect, it,
+  beforeAll, describe, expect, it,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -19,10 +19,6 @@ describe("updateAudit", () => {
 
     models = await getModels();
     updateAudit = require("../../modules/updateAudit.js");
-  });
-
-  beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
   });
 
   it("sanitizes payloads and persists a completed run with ordered events", async () => {

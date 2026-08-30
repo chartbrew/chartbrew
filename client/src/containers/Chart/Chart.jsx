@@ -562,11 +562,12 @@ function Chart(props) {
   };
 
   const _getUpdatedTime = (chart) => {
-    if (moment().diff(moment(chart.chartDataUpdated), "days") > 1) {
-      return moment(chart.chartDataUpdated).calendar();
+    const updatedAt = chart.render?.updatedAt || chart.preparedDataUpdatedAt;
+    if (moment().diff(moment(updatedAt), "days") > 1) {
+      return moment(updatedAt).calendar();
     }
 
-    return moment(chart.chartDataUpdated).fromNow();
+    return moment(updatedAt).fromNow();
   };
 
   const _onAddFilter = (condition) => {
@@ -951,7 +952,7 @@ function Chart(props) {
           <Card.Content
             className={embedded ? "overflow-hidden p-0" : "overflow-y-hidden"}
           >
-            {(chart.chartData || chart.render?.configuration) && (
+            {chart.render?.configuration && (
               <div className="flex h-full w-full items-center justify-center">
                 <div ref={chartContentRef} className="h-full w-full min-h-0">
                   <ChartRenderer

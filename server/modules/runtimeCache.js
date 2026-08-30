@@ -306,6 +306,7 @@ function createMemoryStore(envPrefix = "CB_REDIS") {
   return {
     backend: "memory",
     envPrefix,
+    close: async () => {},
     clear: () => {
       memoryStore.values.clear();
       memoryStore.sortedSets.clear();
@@ -347,6 +348,7 @@ function createRedisStore() {
       return {
         backend: clusterConfig?.cluster?.nodes?.length > 0 ? "redis-cluster" : "redis",
         envPrefix: resolvedEnvPrefix,
+        close: async () => redisClient.disconnect(),
         get: (...args) => redisClient.get(...args),
         set: (key, value, ttlMs = 0) => {
           if (ttlMs > 0) {
@@ -1075,6 +1077,11 @@ class RuntimeCacheService {
     if (typeof this.store.clear === "function") {
       this.store.clear();
     }
+  }
+
+  async close() {
+    this.inFlight.clear();
+    await this.store.close?.();
   }
 }
 

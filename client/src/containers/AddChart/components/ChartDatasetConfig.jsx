@@ -277,7 +277,6 @@ function ChartDatasetConfig(props) {
 
   const [formula, setFormula] = useState("");
   const [maxRecords, setMaxRecords] = useState("");
-  const [dataItems, setDataItems] = useState({});
   const [tableFields, setTableFields] = useState([]);
   const [editConfirmation, setEditConfirmation] = useState(false);
   const [variables, setVariables] = useState([]);
@@ -298,15 +297,16 @@ function ChartDatasetConfig(props) {
   });
   const bindingLayerIds = new Set(bindingLayers.map((layer) => layer.id));
   const runtimeSeries = (
-    chart?.chartData?.meta?.availableSeries
-    || chart?.chartData?.meta?.series
+    chart?.render?.metadata?.availableSeries
+    || chart?.render?.metadata?.series
     || []
   ).filter((series) => {
     return bindingLayerIds.has(series.layerId);
   });
-  const runtimeCategories = (chart?.chartData?.meta?.categories || []).filter((category) => {
+  const runtimeCategories = (chart?.render?.metadata?.categories || []).filter((category) => {
     return bindingLayerIds.has(category.layerId);
   });
+  const dataItems = { labels: runtimeCategories.map((category) => category.label) };
   const usesCategorySliceColors = ["pie", "doughnut", "polar"].includes(chart?.type)
     && runtimeCategories.length > 0;
   const colorItems = usesCategorySliceColors ? runtimeCategories : runtimeSeries;
@@ -366,32 +366,9 @@ function ChartDatasetConfig(props) {
   }, [drs, cdc?.id, cdc?.configuration]);
 
   useEffect(() => {
-    let tempDataItems;
-    if (cdc?.id && chart?.chartData?.data?.datasets) {
-      let foundIndex;
-      for (let i = 0; i < chart.ChartDatasetConfigs.length; i++) {
-        const config = chart.ChartDatasetConfigs[i];
-        if (config.id === cdc.id) {
-          foundIndex = i;
-          break;
-        }
-      }
-
-      if (foundIndex || foundIndex === 0) {
-        tempDataItems = chart.chartData.data.datasets[foundIndex];
-        tempDataItems = {
-          ...tempDataItems,
-          labels: chart.chartData.data.labels,
-        };
-
-        setDataItems(tempDataItems);
-      }
-    }
-  }, [chart, cdc]);
-
-  useEffect(() => {
-    if (cdc?.id && chart?.type === "table" && chart?.chartData && chart.chartData[cdc.legend]) {
-      const datasetData = chart.chartData[cdc.legend];
+    const tableData = chart?.render?.configuration;
+    if (cdc?.id && chart?.type === "table" && tableData?.[cdc.legend]) {
+      const datasetData = tableData[cdc.legend];
       const flatColumns = flatMap(datasetData.columns, (field) => {
         if (field.columns) return [field, ...field.columns];
         return field;
@@ -399,7 +376,7 @@ function ChartDatasetConfig(props) {
 
       setTableFields(flatColumns);
     }
-  }, [chart?.chartData, chart?.type, cdc?.id, cdc?.legend]);
+  }, [chart?.render?.configuration, chart?.type, cdc?.id, cdc?.legend]);
 
   const _onRunQuery = (skipParsing = true) => {
     dispatch(runQuery({
@@ -1157,7 +1134,7 @@ function ChartDatasetConfig(props) {
           {chart.type === "table" && (
             <TableConfiguration
               dataset={cdc}
-              chartData={chart.chartData}
+              tableData={chart.render?.configuration || {}}
               tableFields={tableFields}
               onUpdate={_onUpdateTableConfig}
               loading={false}

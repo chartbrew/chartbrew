@@ -137,7 +137,7 @@ function SharedChart() {
   }, [chart]);
 
   const _getUpdatedTime = (chart) => {
-    const updatedAt = chart.chartDataUpdated || chart.lastAutoUpdate;
+    const updatedAt = chart.render?.updatedAt || chart.preparedDataUpdatedAt || chart.lastAutoUpdate;
     if (moment().diff(moment(updatedAt), "days") > 1) {
       return moment(updatedAt).calendar();
     }
@@ -310,7 +310,7 @@ function SharedChart() {
             </div>
           </div>
 
-          {chart.chartData && !isSnapshot && (
+          {chart.render?.configuration && !isSnapshot && (
             <div>
               {_checkIfFilters() && (
                 <div className="flex items-start gap-1">

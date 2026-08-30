@@ -1,5 +1,5 @@
 const { projectPreparedSeries } = require("../seriesProjection");
-const { buildSeriesStyleMap } = require("./chartJsCartesian");
+const { buildSeriesStyleMap } = require("../seriesStyles");
 
 function getUniqueLabel(label, usedLabels) {
   const base = label || "Value";
@@ -30,7 +30,7 @@ function compileShownExport({
   const styles = buildSeriesStyleMap(preparedData, visualization);
   const usedLabels = new Set();
   const seriesLabels = projection.series.map((series) => {
-    return getUniqueLabel(styles.get(series.id)?.legend || series.label, usedLabels);
+    return getUniqueLabel(styles.get(series.id)?.label || series.label, usedLabels);
   });
   const rows = projection.labels.map((label, index) => {
     return projection.series.reduce((row, series, seriesIndex) => {
