@@ -24,6 +24,9 @@ const {
   isSourceDisabledError,
   serializeSourceDisabledError,
 } = require("../sources/sourceAvailability");
+const settings = process.env.NODE_ENV === "production"
+  ? require("../settings")
+  : require("../settings-dev");
 
 const upload = multer({
   dest: ".connectionFiles/",
@@ -50,13 +53,23 @@ module.exports = (app) => {
     return res.status(400).send(serializeOutboundPolicyError(error));
   };
 
+  const sendMcpError = (res, error) => {
+    if (!String(error?.code || "").startsWith("MCP_")) return false;
+    const payload = {
+      code: error.code,
+      error: error.message || "The MCP request failed.",
+    };
+    if (error.details) payload.details = String(error.details);
+    return res.status(error.statusCode || 400).send(payload);
+  };
+
   const sendSourceDisabledError = (res, error) => {
     if (!isSourceDisabledError(error)) return false;
     return res.status(error.statusCode || 400).send(serializeSourceDisabledError(error));
   };
 
   const redactConnectionSecrets = (connection) => {
-    const redactedConnection = connection?.toJSON ? connection.toJSON() : { ...connection };
+    let redactedConnection = connection?.toJSON ? connection.toJSON() : { ...connection };
 
     redactedConnection.hasSshPassword = Boolean(redactedConnection.sshPassword);
     redactedConnection.hasSshPrivateKey = Boolean(redactedConnection.sshPrivateKey);
@@ -64,6 +77,11 @@ module.exports = (app) => {
     delete redactedConnection.sshPassword;
     delete redactedConnection.sshPrivateKey;
     delete redactedConnection.sshPassphrase;
+
+    const source = findSourceForConnection(redactedConnection);
+    if (source?.backend?.redactConnection) {
+      redactedConnection = source.backend.redactConnection({ connection: redactedConnection });
+    }
 
     return redactedConnection;
   };
@@ -226,8 +244,20 @@ module.exports = (app) => {
         assertSourceServerEnabled(source);
       }
 
+      if (source?.backend?.authorizeConnectionWrite) {
+        await source.backend.authorizeConnectionWrite({
+          connection: requestData,
+          existingConnection: null,
+          user: req.user,
+        });
+      }
+
       const connectionData = source?.backend?.prepareConnectionData
-        ? await source.backend.prepareConnectionData({ connection: requestData })
+        ? await source.backend.prepareConnectionData({
+          connection: requestData,
+          existingConnection: null,
+          user: req.user,
+        })
         : requestData;
       const connection = await connectionController.create({
         ...connectionData,
@@ -243,6 +273,10 @@ module.exports = (app) => {
       }
       const sourceDisabledResponse = sendSourceDisabledError(res, error);
       if (sourceDisabledResponse) return sourceDisabledResponse;
+      const policyResponse = sendPolicyError(res, error);
+      if (policyResponse) return policyResponse;
+      const mcpResponse = sendMcpError(res, error);
+      if (mcpResponse) return mcpResponse;
       return res.status(400).send(error);
     }
   });
@@ -337,19 +371,41 @@ module.exports = (app) => {
   /*
   ** Route to update a connection
   */
-  app.put("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("updateOwn"), ensureConnectionBelongsToTeam, (req, res) => {
-    req.body.team_id = req.params.team_id;
-
-    return connectionController.update(req.params.connection_id, req.body)
-      .then((connection) => {
-        return res.status(200).send(redactConnectionSecrets(connection));
-      })
-      .catch((error) => {
-        if (error.message === "401") {
-          return res.status(401).send({ error: "Not authorized" });
-        }
-        return res.status(400).send(error);
-      });
+  app.put("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("updateOwn"), ensureConnectionBelongsToTeam, async (req, res) => {
+    try {
+      const requestData = { ...req.body, team_id: req.params.team_id };
+      const source = findSourceForConnection(req.connection);
+      if (source?.backend?.prepareConnectionData || source?.backend?.authorizeConnectionWrite) {
+        assertSourceServerEnabled(source);
+      }
+      if (source?.backend?.authorizeConnectionWrite) {
+        await source.backend.authorizeConnectionWrite({
+          connection: requestData,
+          existingConnection: req.connection,
+          user: req.user,
+        });
+      }
+      const connectionData = source?.backend?.prepareConnectionData
+        ? await source.backend.prepareConnectionData({
+          connection: requestData,
+          existingConnection: req.connection,
+          user: req.user,
+        })
+        : requestData;
+      const connection = await connectionController.update(req.params.connection_id, connectionData);
+      return res.status(200).send(redactConnectionSecrets(connection));
+    } catch (error) {
+      if (error.message === "401") {
+        return res.status(401).send({ error: "Not authorized" });
+      }
+      const sourceDisabledResponse = sendSourceDisabledError(res, error);
+      if (sourceDisabledResponse) return sourceDisabledResponse;
+      const policyResponse = sendPolicyError(res, error);
+      if (policyResponse) return policyResponse;
+      const mcpResponse = sendMcpError(res, error);
+      if (mcpResponse) return mcpResponse;
+      return res.status(400).send(error);
+    }
   });
   // -------------------------------------------
 
@@ -480,6 +536,8 @@ module.exports = (app) => {
         if (sourceDisabledResponse) return sourceDisabledResponse;
         const policyResponse = sendPolicyError(res, error);
         if (policyResponse) return policyResponse;
+        const mcpResponse = sendMcpError(res, error);
+        if (mcpResponse) return mcpResponse;
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
@@ -570,6 +628,8 @@ module.exports = (app) => {
         if (sourceDisabledResponse) return sourceDisabledResponse;
         const policyResponse = sendPolicyError(res, err);
         if (policyResponse) return policyResponse;
+        const mcpResponse = sendMcpError(res, err);
+        if (mcpResponse) return mcpResponse;
         return res.status(400).send(err.message || err);
       });
   });
@@ -640,6 +700,8 @@ module.exports = (app) => {
         } catch (err) {
           // do nothing
         }
+        const mcpResponse = sendMcpError(res, err);
+        if (mcpResponse) return mcpResponse;
         return res.status(400).send(err.message || err);
       });
   });
@@ -670,7 +732,65 @@ module.exports = (app) => {
     } catch (err) {
       const sourceDisabledResponse = sendSourceDisabledError(res, err);
       if (sourceDisabledResponse) return sourceDisabledResponse;
+      const policyResponse = sendPolicyError(res, err);
+      if (policyResponse) return policyResponse;
+      const mcpResponse = sendMcpError(res, err);
+      if (mcpResponse) return mcpResponse;
       return res.status(400).send(err);
+    }
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Public metadata for OAuth servers that support URL-based client IDs
+  */
+  app.get("/mcp/oauth/client-metadata", (req, res) => {
+    const teamId = Number(req.query.team_id);
+    const connectionId = Number(req.query.connection_id);
+    if (!Number.isInteger(teamId) || teamId <= 0
+      || !Number.isInteger(connectionId) || connectionId <= 0) {
+      return res.status(400).send({ error: "A valid MCP connection is required." });
+    }
+    const source = getSourceForConnection({ type: "mcp", subType: "mcp" });
+    return res.status(200).send(source.backend.oauthClientMetadata({
+      connection: { id: connectionId, team_id: teamId },
+    }));
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to finish source-owned OAuth for a connection
+  */
+  app.get("/team/:team_id/connections/:connection_id/mcp/oauth/callback", async (req, res) => {
+    const redirectBase = String(settings.client || "").replace(/\/+$/, "");
+    const redirectToConnection = (status) => {
+      if (!redirectBase) return null;
+      return `${redirectBase}/connections/${req.params.connection_id}?mcpOAuth=${status}`;
+    };
+
+    try {
+      const connection = await connectionController.findByIdAndTeam(
+        req.params.connection_id,
+        req.params.team_id
+      );
+      const source = getSourceForConnection(connection);
+      assertSourceServerEnabled(source);
+      if (typeof source.backend?.completeOAuth !== "function") {
+        return res.status(400).send({ error: "This connection does not support OAuth." });
+      }
+      await source.backend.completeOAuth({
+        connection,
+        code: req.query.code,
+        state: req.query.state,
+        iss: req.query.iss,
+      });
+      const successUrl = redirectToConnection("success");
+      return successUrl ? res.redirect(successUrl) : res.status(200).send({ success: true });
+    } catch (error) {
+      const errorUrl = redirectToConnection("error");
+      return errorUrl
+        ? res.redirect(errorUrl)
+        : res.status(error.statusCode || 400).send({ error: error.message || error });
     }
   });
   // -------------------------------------------------

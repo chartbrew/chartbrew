@@ -346,17 +346,21 @@ export const getApiKeys = createAsyncThunk(
 
 export const createApiKey = createAsyncThunk(
   "team/createApiKey",
-  async ({ team_id, keyName }) => {
+  async ({ team_id, key }) => {
     const token = getAuthToken();
     const headers = new Headers({
       "Accept": "application/json",
       "content-type": "application/json",
       "authorization": `Bearer ${token}`,
     });
-    const body = JSON.stringify({ name: keyName });
+    const body = JSON.stringify(key);
 
-    const response = await fetch(`${API_HOST}/team/${team_id}/apikey`, { method: "POST", body, headers })
+    const response = await fetch(`${API_HOST}/team/${team_id}/apikey`, { method: "POST", body, headers });
     const responseJson = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseJson.error || "The API key could not be created.");
+    }
 
     return responseJson;
   }

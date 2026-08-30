@@ -1,48 +1,64 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip,
   Tooltip,
 } from "@heroui/react";
 
-import Row from "../../../components/Row";
-import Text from "../../../components/Text";
-import { getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
+import { getKpiMetricCapacity } from "../../../visualization/responsiveLayout";
 import { LuArrowDownRight, LuArrowUpRight } from "react-icons/lu";
 
 function KpiChartSegment(props) {
-  const { chart, editMode } = props;
-  const containerRef = React.useRef(null);
+  const {
+    chart, compact = false, detailScale = 1, editMode,
+  } = props;
+  const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const growth = chart.render?.metadata?.metrics || chart.render?.configuration?.items || [];
+  const visibleCount = getKpiMetricCapacity(containerWidth, editMode);
+  const visibleGrowth = growth.slice(0, visibleCount);
+  const hiddenGrowth = growth.slice(visibleCount);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    const updateWidth = () => setContainerWidth(container.clientWidth);
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(container);
+    updateWidth();
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
-      className={"pl-unit-sm pr-unit-sm sm:max-w-full"}
+      className="w-full shrink-0 sm:max-w-full"
       ref={containerRef}
+      style={{ paddingInline: Math.round((compact ? 4 : 8) * detailScale) }}
     >
-      <Row wrap="wrap">
-        {chart.chartData.growth.map((c, index) => {
-          if (getWidthBreakpoint(containerRef) === "xxs" && index > 1) return (<span key={c.label} />);
-          else if (editMode && index > 3) return (<span key={c.label} />);
-          else if (getWidthBreakpoint(containerRef) === "xs" && index > 3) return (<span key={c.label} />);
-          else if (getWidthBreakpoint(containerRef) === "sm" && index > 5) return (<span key={c.label} />);
-          else if (index > 7) return (<span key={c.label} />);
-
+      <div
+        className="flex min-w-0 flex-row flex-nowrap items-start"
+        style={{ gap: Math.round((compact ? 12 : 20) * detailScale) }}
+      >
+        {visibleGrowth.map((c) => {
           const formattedComparison = c?.comparison && typeof c.comparison === "number" 
             ? Math.abs(c.comparison % 1 === 0 ? Math.round(c.comparison).toFixed(0) : c.comparison.toFixed(2))
             : "0";
 
           return (
             <div
-              style={{
-                padding: 0,
-                paddingBottom: 10,
-                marginRight: 20 - (chart.chartData.growth.length * 2)
-              }}
+              className="min-w-0"
               key={c.label}
+              style={{ paddingBottom: compact ? 0 : Math.round(8 * detailScale) }}
             >
-              <div className="flex flex-row items-center gap-2">
-                <div className="text-xl text-default-800 font-bold font-tw">
-                  {`${c.value?.toLocaleString()}`}
+              <div
+                className="flex flex-row items-center whitespace-nowrap"
+                style={{ gap: Math.round(8 * detailScale) }}
+              >
+                <div
+                  className="font-tight font-bold text-default-800"
+                  style={{ fontSize: Math.round(24 * detailScale), lineHeight: 1.25 }}
+                >
+                  {`${c.value ?? "—"}`}
                 </div>
                 {chart.showGrowth && (
                   <Tooltip delay={0} placement="bottom">
@@ -51,8 +67,13 @@ function KpiChartSegment(props) {
                         size="sm"
                         variant="soft"
                         color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
+                        style={{
+                          borderRadius: 9999,
+                          fontSize: Math.round(12 * detailScale),
+                          minHeight: Math.round(24 * detailScale),
+                        }}
                       >
-                        {c.status === "positive" ? <LuArrowUpRight size={14} /> : c.status === "negative" ? <LuArrowDownRight size={14} /> : null}
+                        {c.status === "positive" ? <LuArrowUpRight size={14 * detailScale} /> : c.status === "negative" ? <LuArrowDownRight size={14 * detailScale} /> : null}
                         <Chip.Label>{`${formattedComparison}%`}</Chip.Label>
                       </Chip>
                     </Tooltip.Trigger>
@@ -62,34 +83,40 @@ function KpiChartSegment(props) {
                   </Tooltip>
                 )}
               </div>
-              <div>
-                <Text size="sm" className={"text-default-600"}>
-                  <span
-                    style={c.color ? styles.datasetLabelColor(c.color) : undefined}
-                  >
+              <div className="truncate">
+                <span
+                  className={growth.length > 1 ? "text-foreground" : "text-muted"}
+                  style={{ fontSize: Math.round(14 * detailScale), lineHeight: 1.4 }}
+                >
+                  <span style={growth.length > 1 && c.color ? { color: c.color } : undefined}>
                     {c.label}
                   </span>
-                </Text>
+                </span>
               </div>
             </div>
           );
         })}
-      </Row>
+        {hiddenGrowth.length > 0 && (
+          <Tooltip delay={0} placement="bottom">
+            <Tooltip.Trigger className="mt-1 shrink-0">
+              <button type="button" className="text-xs text-default-500">
+                {`+${hiddenGrowth.length}`}
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Content>
+              {hiddenGrowth.map((item) => item.label).join(", ")}
+            </Tooltip.Content>
+          </Tooltip>
+        )}
+      </div>
     </div>
   );
 }
 
-const styles = {
-  growthContainer: {
-    boxShadow: "none", border: "none", marginTop: 0, marginBottom: 10
-  },
-  datasetLabelColor: (color) => ({
-    borderBottom: `solid 3px ${color}`,
-  }),
-};
-
 KpiChartSegment.propTypes = {
   chart: PropTypes.object.isRequired,
+  compact: PropTypes.bool,
+  detailScale: PropTypes.number,
   editMode: PropTypes.bool.isRequired,
 };
 

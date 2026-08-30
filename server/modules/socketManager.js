@@ -15,6 +15,12 @@ const verifySessionToken = require("./verifySessionToken");
  * enabling proper scaling across multiple workers or nodes.
  */
 
+const AI_SESSION_ROOM_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isAiSessionRoomId(conversationId) {
+  return typeof conversationId === "string" && AI_SESSION_ROOM_ID.test(conversationId);
+}
+
 class SocketManager {
   constructor() {
     this.io = null;
@@ -53,17 +59,18 @@ class SocketManager {
       return false;
     }
 
-    const where = {
-      id: conversationId,
-      user_id: userId,
-    };
-
-    if (teamId) {
-      where.team_id = teamId;
+    const conversation = await db.AiConversation.findOne({
+      where: { id: conversationId },
+    });
+    if (conversation) {
+      if (`${conversation.user_id}` !== `${userId}`) return false;
+      if (teamId && `${conversation.team_id}` !== `${teamId}`) return false;
+      return true;
     }
 
-    const conversation = await db.AiConversation.findOne({ where });
-    return Boolean(conversation);
+    // Ephemeral Ask sessions emit progress to conversation:{sessionId} before a
+    // saved conversation exists. Allow the authenticated team member to join.
+    return isAiSessionRoomId(conversationId) && Boolean(teamId);
   }
 
   async initialize(server) {
@@ -280,6 +287,7 @@ class SocketManager {
     if (!this.io) return; // Skip if not initialized
     const room = `conversation:${conversationId}`;
     this.io.to(room).emit("ai-progress", {
+      conversationId,
       event,
       data,
       timestamp: new Date().toISOString()

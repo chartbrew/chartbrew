@@ -286,6 +286,7 @@ function cloneTraceContext(traceContext = {}) {
     datasetId: sourceTraceContext.datasetId || null,
     dataRequestId: sourceTraceContext.dataRequestId || null,
     connectionId: sourceTraceContext.connectionId || null,
+    apiKeyId: sourceTraceContext.apiKeyId || null,
     queueName: sourceTraceContext.queueName || null,
     jobId: sourceTraceContext.jobId || null,
     startedAt: hydrateDate(sourceTraceContext.startedAt),
@@ -342,6 +343,7 @@ async function startRun(payload = {}, parentTraceContext = null) {
     connectionId: payload.connectionId !== undefined
       ? payload.connectionId
       : baseContext.connectionId,
+    apiKeyId: payload.apiKeyId !== undefined ? payload.apiKeyId : baseContext.apiKeyId,
     queueName: payload.queueName !== undefined ? payload.queueName : baseContext.queueName,
     jobId: payload.jobId !== undefined ? payload.jobId : baseContext.jobId,
     nextSequence: 1,
@@ -360,6 +362,7 @@ async function startRun(payload = {}, parentTraceContext = null) {
     datasetId: context.datasetId,
     dataRequestId: context.dataRequestId,
     connectionId: context.connectionId,
+    apiKeyId: context.apiKeyId,
     queueName: context.queueName,
     jobId: context.jobId,
     status: payload.status || "running",
@@ -390,6 +393,7 @@ async function startRun(payload = {}, parentTraceContext = null) {
     datasetId: context.datasetId,
     dataRequestId: context.dataRequestId,
     connectionId: context.connectionId,
+    apiKeyId: context.apiKeyId,
     queueName: context.queueName,
     jobId: context.jobId,
     summary: createValues.summary,

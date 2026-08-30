@@ -153,7 +153,65 @@ function removeCompiledMetricAccumulation({ configuration, type, subType, spec =
   };
 }
 
+async function alignSourceChartBindings(source, payload = {}) {
+  const align = source.backend?.ai?.alignChartBindings;
+  if (typeof align !== "function") {
+    return {
+      xAxis: payload.xAxis,
+      yAxis: payload.yAxis,
+      dateField: payload.dateField,
+    };
+  }
+
+  let rows = payload.rows;
+  const previewConfiguration = source.backend?.ai?.previewConfiguration;
+  if (!Array.isArray(rows) && typeof previewConfiguration === "function" && payload.connection) {
+    try {
+      const preview = await previewConfiguration({
+        connection: payload.connection,
+        configuration: payload.configuration,
+        rowLimit: 25,
+      });
+      if (preview?.status === "ok" && Array.isArray(preview.rows)) {
+        rows = preview.rows;
+      }
+    } catch {
+      rows = null;
+    }
+  }
+
+  if (!Array.isArray(rows) || !rows.length) {
+    return {
+      xAxis: payload.xAxis,
+      yAxis: payload.yAxis,
+      dateField: payload.dateField,
+    };
+  }
+
+  try {
+    const aligned = align({
+      rows,
+      type: payload.type,
+      xAxis: payload.xAxis,
+      yAxis: payload.yAxis,
+      dateField: payload.dateField,
+    });
+    return {
+      xAxis: aligned.xAxis ?? payload.xAxis,
+      yAxis: aligned.yAxis ?? payload.yAxis,
+      dateField: aligned.dateField ?? payload.dateField,
+    };
+  } catch {
+    return {
+      xAxis: payload.xAxis,
+      yAxis: payload.yAxis,
+      dateField: payload.dateField,
+    };
+  }
+}
+
 module.exports = {
+  alignSourceChartBindings,
   isStripeCompiledMetricConfiguration,
   removeCompiledMetricAccumulation,
   repairSourceDatasetIntent,

@@ -2,6 +2,7 @@ const crypto = require("crypto");
 
 const db = require("../models/models");
 const runtimeCache = require("../modules/runtimeCache");
+const { loadPreparedSnapshots } = require("../modules/preparedSnapshot");
 const ChartController = require("./ChartController");
 const DatasetController = require("./DatasetController");
 const {
@@ -130,14 +131,25 @@ function serializeMonitor(monitor) {
   };
 }
 
+async function attachPreparedDataToMonitors(monitors, options = {}) {
+  const charts = (monitors || []).map((monitor) => monitor.Chart).filter(Boolean);
+  const snapshots = await loadPreparedSnapshots(
+    charts.map((chart) => chart.id),
+    options
+  );
+  charts.forEach((chart) => {
+    const snapshot = snapshots.get(Number(chart.id));
+    if (snapshot) chart.setDataValue("preparedData", snapshot.preparedData);
+  });
+}
+
 class MonitorController {
   async list(access) {
     const monitors = await db.MetricMonitor.findAll({
       include: [{
         model: db.Chart,
         attributes: [
-          "chartData", "currentEndDate", "endDate", "fixedStartDate", "id", "name", "startDate",
-          "timeInterval",
+          "currentEndDate", "endDate", "fixedStartDate", "id", "name", "startDate", "timeInterval",
         ],
         required: false,
       }, {
@@ -160,6 +172,7 @@ class MonitorController {
         ...getProjectScope(access),
       },
     });
+    await attachPreparedDataToMonitors(monitors);
     return Promise.all(monitors.map(serializeMonitor));
   }
 
@@ -179,6 +192,9 @@ class MonitorController {
       throw createHttpError("Chart not found", 404);
     }
     assertCanViewProject(access, chart.project_id);
+    const snapshots = await loadPreparedSnapshots([chart.id], options);
+    const snapshot = snapshots.get(Number(chart.id));
+    if (snapshot) chart.setDataValue("preparedData", snapshot.preparedData);
     return chart;
   }
 
@@ -368,8 +384,7 @@ class MonitorController {
       include: [{
         model: db.Chart,
         attributes: [
-          "chartData", "currentEndDate", "endDate", "fixedStartDate", "id", "name", "startDate",
-          "timeInterval",
+          "currentEndDate", "endDate", "fixedStartDate", "id", "name", "startDate", "timeInterval",
         ],
         required: false,
       }, {
@@ -394,6 +409,7 @@ class MonitorController {
       },
     });
     if (!monitor) throw createHttpError("Watched metric not found", 404);
+    await attachPreparedDataToMonitors([monitor], options);
     return monitor;
   }
 

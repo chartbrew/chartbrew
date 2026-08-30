@@ -45,6 +45,39 @@ class ProjectController {
     this.teamController = new TeamController();
   }
 
+  async hydrateProjectCharts(project, options = {}) {
+    if (!project?.Charts?.length) return project;
+    const ChartController = require("./ChartController"); // eslint-disable-line
+    const chartController = new ChartController();
+    const charts = await chartController.hydratePreparedCharts(project.Charts, {
+      refresh: options.refreshPreparedData === true,
+      timezone: project.timezone,
+    });
+    const hydratedCharts = project.Charts.map((chart, index) => {
+      const hydrated = charts[index];
+      if (!chart?.setDataValue || !hydrated) return hydrated || chart;
+      ["chartData", "chartDataUpdated", "preparedData"].forEach((field) => {
+        delete chart.dataValues[field];
+      });
+      [
+        "dateFormat",
+        "isTimeseries",
+        "preparedDataUpdatedAt",
+        "render",
+      ].forEach((field) => {
+        const value = hydrated[field] ?? hydrated.dataValues?.[field];
+        if (value !== undefined) {
+          chart.setDataValue(field, value);
+          if (chart[field] === undefined) chart[field] = value;
+        }
+      });
+      return chart;
+    });
+    project.setDataValue("Charts", hydratedCharts);
+    project.Charts = hydratedCharts;
+    return project;
+  }
+
   findAll() {
     return db.Project.findAll()
       .then((projects) => {
@@ -55,7 +88,7 @@ class ProjectController {
       });
   }
 
-  findById(id) {
+  findById(id, options = {}) {
     return db.Project.findOne({
       where: { id },
       order: [
@@ -88,6 +121,7 @@ class ProjectController {
         }
       ],
     })
+      .then((project) => this.hydrateProjectCharts(project, options))
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
@@ -210,7 +244,7 @@ class ProjectController {
       });
   }
 
-  getPublicDashboard(brewName) {
+  getPublicDashboard(brewName, options = {}) {
     return db.Project.findOne({
       where: { brewName },
       include: [
@@ -245,9 +279,9 @@ class ProjectController {
         [db.DashboardFilter, "createdAt", "ASC"],
       ],
     })
-      .then((dashboard) => {
+      .then(async (dashboard) => {
         if (!dashboard) return new Promise((resolve, reject) => reject(new Error(404)));
-        return dashboard;
+        return this.hydrateProjectCharts(dashboard, options);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -658,7 +692,9 @@ class ProjectController {
       finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
     }
 
-    const report = await this.getPublicDashboard(project.brewName);
+    const report = await this.getPublicDashboard(project.brewName, {
+      refreshPreparedData: true,
+    });
 
     // Process the project for public access
     const processedProject = cloneDeep(report);

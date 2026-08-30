@@ -1,4 +1,3 @@
-const moment = require("moment");
 const { nanoid } = require("nanoid");
 const { v4: uuid } = require("uuid");
 
@@ -8,6 +7,13 @@ const {
   getDatasetRuntimeFilters,
 } = require("../modules/chartRuntimeFilters");
 const runtimeCache = require("../modules/runtimeCache");
+const {
+  attachUnavailableRender,
+  attachPreparedRender,
+  compilePreparedRender,
+  loadPreparedSnapshot,
+  persistPreparedSnapshot,
+} = require("../modules/preparedSnapshot");
 const { getDatasetName, resolveChartDatasetOptions } = require("../modules/resolveChartDatasetOptions");
 const { findSourceForConnection } = require("../sources");
 const { assertSourceServerEnabled } = require("../sources/sourceAvailability");
@@ -22,9 +28,12 @@ const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
-const dataExtractor = require("../charts/DataExtractor");
 const { snapChart } = require("../modules/snapshots");
 const { VisualizationEngine } = require("../visualization/VisualizationEngine");
+const { getPreparedDataFingerprint } = require("../visualization/preparedData");
+const {
+  legacyChartDataToPreparedData,
+} = require("../visualization/legacyChartDataToPreparedData");
 const {
   buildLegacyLayer,
   legacyChartToVisualization,
@@ -56,8 +65,6 @@ const {
   startEvent,
 } = require("../modules/updateAudit");
 
-// charts
-const AxisChart = require("../charts/AxisChart");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -87,6 +94,15 @@ function createRuntimeShortCircuit(chart) {
 
 function isRuntimeShortCircuit(value) {
   return Boolean(value && value.__runtimeCachedChart);
+}
+
+function createPreparedResult(preparedData, options = {}) {
+  return {
+    preparedData,
+    fingerprint: getPreparedDataFingerprint(preparedData),
+    generatedAt: preparedData.generatedAt,
+    stale: Boolean(options.stale),
+  };
 }
 
 function reconcileVisualizationBindings(chart) {
@@ -143,6 +159,46 @@ function attachRuntimeCacheMetadata(chart, metadata = {}) {
   return plainChart;
 }
 
+function removeRuntimeChartFields(data = {}) {
+  const chartData = { ...data };
+  [
+    "chartData",
+    "chartDataUpdated",
+    "preparedData",
+    "preparedDataFingerprint",
+    "preparedDataSourceFingerprint",
+    "preparedDataUpdatedAt",
+    "preparedDataVisualizationFingerprint",
+    "render",
+  ].forEach((field) => delete chartData[field]);
+  if ((chartData.type === "bar" || chartData.type === undefined) && chartData.horizontal === true) {
+    chartData.type = "horizontalBar";
+    chartData.horizontal = false;
+  } else if (chartData.type === "horizontalBar") {
+    chartData.horizontal = false;
+  }
+  return chartData;
+}
+
+function applyRuntimeChartValues(chart, runtimeChart) {
+  if (!chart?.setDataValue || !runtimeChart) return runtimeChart || chart;
+  [
+    "cacheStatus",
+    "dateFormat",
+    "isTimeseries",
+    "preparedDataUpdatedAt",
+    "render",
+    "stale",
+    "variantHash",
+  ].forEach((field) => {
+    if (runtimeChart[field] !== undefined) {
+      chart.setDataValue(field, runtimeChart[field]);
+      if (chart[field] === undefined) chart[field] = runtimeChart[field];
+    }
+  });
+  return chart;
+}
+
 class ChartController {
   constructor() {
     this.connectionController = new ConnectionController();
@@ -151,8 +207,132 @@ class ChartController {
     this.chartCache = new ChartCacheController();
   }
 
+  async prepareLegacyChartData(chartId, options = {}) {
+    const chart = options.chart || await db.Chart.unscoped().findByPk(chartId, {
+      include: [{ model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] }],
+      order: [[db.ChartDatasetConfig, "order", "ASC"]],
+    });
+    const legacyChart = options.chart
+      ? await db.Chart.unscoped().findByPk(chartId, {
+        attributes: ["chartData", "chartDataUpdated"],
+      })
+      : chart;
+    if (!chart) throw new Error("Chart not found");
+
+    const preparedData = legacyChartDataToPreparedData(chart, {
+      chartData: legacyChart?.chartData,
+      generatedAt: legacyChart?.chartDataUpdated,
+      timezone: options.timezone,
+    });
+    const currentFingerprints = await runtimeCache.buildChartFingerprints(
+      chartId,
+      options.timezone
+    );
+    const fingerprints = {
+      combined: getPreparedDataFingerprint(preparedData),
+      source: null,
+      visualization: currentFingerprints.visualization,
+    };
+    const renderedChart = compilePreparedRender(chart, preparedData, {
+      snapshotUpdatedAt: preparedData.generatedAt,
+      stale: true,
+      timezone: options.timezone,
+      updatedAt: preparedData.generatedAt,
+    });
+    const snapshot = options.skipSave
+      ? { reason: "dry_run", saved: false }
+      : await persistPreparedSnapshot({ chartId, fingerprints, preparedData });
+    renderedChart.preparedDataUpdatedAt = snapshot.updatedAt || preparedData.generatedAt;
+
+    return { chart: renderedChart, preparedData, snapshot };
+  }
+
+  async hydratePreparedChart(chart, options = {}) {
+    if (!chart) return chart;
+
+    const snapshot = await loadPreparedSnapshot(chart.id, options);
+    const refreshKey = `prepared-snapshot-refresh:${chart.id}`;
+    const refresh = () => this.updateChartData(chart.id, null, {
+      finalizeRun: false,
+      getCache: false,
+      noSource: false,
+      traceContext: null,
+    });
+
+    if (!snapshot) {
+      if (options.refresh !== false) {
+        try {
+          const inferred = await runtimeCache.runSingleFlight(
+            `prepared-snapshot-infer:${chart.id}`,
+            () => this.prepareLegacyChartData(chart.id, {
+              chart,
+              timezone: options.timezone,
+            })
+          );
+          runtimeCache.triggerBackgroundRefresh(refreshKey, refresh);
+          return applyRuntimeChartValues(chart, inferred.chart);
+        } catch (error) {
+          runtimeCache.triggerBackgroundRefresh(refreshKey, refresh);
+        }
+      }
+      return applyRuntimeChartValues(chart, attachUnavailableRender(chart, { stale: true }));
+    }
+
+    const fingerprints = await runtimeCache.buildChartFingerprints(
+      chart.id,
+      options.timezone
+    );
+    const migratedHorizontalSnapshot = !snapshot.visualizationFingerprint
+      && chart.type === "horizontalBar"
+      && snapshot.preparedData.results.every((result) => result.mark === "horizontalBar");
+    if (snapshot.visualizationFingerprint !== fingerprints.visualization
+      && !migratedHorizontalSnapshot
+    ) {
+      if (options.refresh !== false) {
+        try {
+          return await runtimeCache.runSingleFlight(refreshKey, refresh);
+        } catch (error) {
+          return applyRuntimeChartValues(chart, attachUnavailableRender(chart, { stale: true }));
+        }
+      }
+      return applyRuntimeChartValues(chart, attachUnavailableRender(chart, { stale: true }));
+    }
+
+    if (migratedHorizontalSnapshot && options.refresh !== false) {
+      runtimeCache.triggerBackgroundRefresh(refreshKey, refresh);
+    }
+
+    const stale = migratedHorizontalSnapshot
+      || snapshot.sourceFingerprint !== fingerprints.source;
+    let renderedChart;
+    try {
+      renderedChart = compilePreparedRender(chart, snapshot.preparedData, {
+        snapshotUpdatedAt: snapshot.updatedAt,
+        stale,
+        timezone: options.timezone,
+        updatedAt: snapshot.updatedAt,
+      });
+    } catch (error) {
+      if (options.refresh !== false) {
+        runtimeCache.triggerBackgroundRefresh(refreshKey, refresh);
+      }
+      return applyRuntimeChartValues(chart, attachUnavailableRender(chart, { stale: true }));
+    }
+
+    if (stale && options.refresh !== false) {
+      runtimeCache.triggerBackgroundRefresh(refreshKey, refresh);
+    }
+    return applyRuntimeChartValues(chart, renderedChart);
+  }
+
+  async hydratePreparedCharts(charts, options = {}) {
+    return Promise.all((charts || []).map((chart) => {
+      return this.hydratePreparedChart(chart, options);
+    }));
+  }
+
   create(data, user) {
-    return db.Chart.create({ ...data, chartDataUpdated: moment() })
+    return db.Chart.create(removeRuntimeChartFields(data))
       .then((chart) => {
         // delete chart cache
         if (user) {
@@ -176,23 +356,25 @@ class ChartController {
       });
   }
 
-  findByProject(projectId) {
-    return db.Chart.findAll({
-      where: { project_id: projectId },
-      order: [["dashboardOrder", "ASC"], [db.ChartDatasetConfig, "order", "ASC"]],
-      include: [
-        { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
-        { model: db.Chartshare },
-        { model: db.Alert },
-        { model: db.SharePolicy, scope: { entity_type: "Chart" } },
-      ],
-    })
-      .then((charts) => {
-        return charts;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
+  async findByProject(projectId) {
+    try {
+      const [charts, project] = await Promise.all([db.Chart.findAll({
+        where: { project_id: projectId },
+        order: [["dashboardOrder", "ASC"], [db.ChartDatasetConfig, "order", "ASC"]],
+        include: [
+          { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
+          { model: db.Chartshare },
+          { model: db.Alert },
+          { model: db.SharePolicy, scope: { entity_type: "Chart" } },
+        ],
+      }), db.Project.findByPk(projectId, { attributes: ["timezone"] })]);
+      return this.hydratePreparedCharts(charts, {
+        refresh: true,
+        timezone: project?.timezone,
       });
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 
   findById(id, customQuery, options = {}) {
@@ -209,10 +391,23 @@ class ChartController {
     };
 
     return db.Chart.findOne(customQuery || query)
-      .then((chart) => {
-        return options.reconcileVisualizationBindings === false
+      .then(async (chart) => {
+        const reconciledChart = options.reconcileVisualizationBindings === false
           ? chart
           : reconcileVisualizationBindings(chart);
+        const shouldHydrate = options.hydratePreparedData !== false
+          && !options.transaction
+          && !customQuery
+          && typeof reconciledChart?.toJSON === "function";
+        if (!shouldHydrate || !reconciledChart) return reconciledChart;
+
+        const project = reconciledChart.project_id
+          ? await db.Project.findByPk(reconciledChart.project_id, { attributes: ["timezone"] })
+          : null;
+        return this.hydratePreparedChart(reconciledChart, {
+          refresh: options.refreshPreparedData === true,
+          timezone: project?.timezone,
+        });
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -222,6 +417,7 @@ class ChartController {
   async syncLegacyVisualization(chartId, options = {}, compatibility = {}) {
     const chart = await this.findById(chartId, null, {
       ...options,
+      hydratePreparedData: false,
       reconcileVisualizationBindings: false,
     });
     if (!chart) return chart;
@@ -231,8 +427,8 @@ class ChartController {
         ...(chart.type ? { type: chart.type } : {}),
         ...(chart.subType ? { subType: chart.subType } : {}),
       });
-      if (compatibility.chartData) {
-        visualization = applyChartCompatibilityUpdate(visualization, compatibility.chartData);
+      if (compatibility.chartChanges) {
+        visualization = applyChartCompatibilityUpdate(visualization, compatibility.chartChanges);
       }
       if (compatibility.cdcData) {
         visualization = applyCdcCompatibilityUpdate(
@@ -292,10 +488,11 @@ class ChartController {
   }
 
   update(id, data, user, justUpdates) {
+    const chartUpdates = removeRuntimeChartFields(data);
+
     if (data.autoUpdate || data.autoUpdate === 0) {
-      return db.Chart.update(data, {
+      return db.Chart.update(chartUpdates, {
         where: { id },
-        attributes: { exclude: ["chartData"] },
       })
         .then(() => {
           const updatePromises = [];
@@ -321,7 +518,7 @@ class ChartController {
         })
         .then(async (chart) => {
           const updatedChart = shouldSyncLegacyChart(data)
-            ? await this.syncLegacyVisualization(id, {}, { chartData: data })
+            ? await this.syncLegacyVisualization(id, {}, { chartChanges: data })
             : chart;
           await markChartDatasetIntelligenceStale(id);
           return updatedChart;
@@ -331,7 +528,7 @@ class ChartController {
         });
     }
 
-    return db.Chart.update(data, {
+    return db.Chart.update(chartUpdates, {
       where: { id },
     })
       .then(() => {
@@ -380,7 +577,7 @@ class ChartController {
         } else if (justUpdates) {
           return this.findById(id, {
             where: { id },
-            attributes: ["id"].concat(Object.keys(data)),
+            attributes: ["id"].concat(Object.keys(chartUpdates)),
           });
         } else {
           return this.findById(id);
@@ -388,7 +585,7 @@ class ChartController {
       })
       .then(async (chart) => {
         const updatedChart = shouldSyncLegacyChart(data)
-          ? await this.syncLegacyVisualization(id, {}, { chartData: data })
+          ? await this.syncLegacyVisualization(id, {}, { chartChanges: data })
           : chart;
         await markChartDatasetIntelligenceStale(id);
         return updatedChart;
@@ -515,6 +712,12 @@ class ChartController {
     runtimeOnly = false,
     traceContext,
     finalizeRun = true,
+    returnPreparedData = false,
+    preparedOnly = false,
+    maintainDatasetMetadata = true,
+    viewerScope,
+    signal,
+    deadlineAt,
   }) {
     let gChart;
     let gCache;
@@ -534,9 +737,10 @@ class ChartController {
     let runtimeChartCacheEntry;
     let runtimeChartCacheParams;
     let runtimeChartVersion;
-    let runtimeViewerScope = user ? "authenticated" : "anonymous";
+    let runtimeViewerScope = viewerScope || (user ? "authenticated" : "anonymous");
+    let snapshotPersistResult = null;
 
-    return this.findById(id)
+    return this.findById(id, null, { hydratePreparedData: false })
       .then(async (chart) => {
         gChart = chart;
         if (!chart || !chart.ChartDatasetConfigs || chart.ChartDatasetConfigs.length === 0) {
@@ -578,7 +782,7 @@ class ChartController {
             viewerScope: runtimeViewerScope,
           };
           runtimeChartCacheEntry = shouldReadRuntimeCache
-            ? await runtimeCache.getChartCache(runtimeChartCacheParams)
+            ? await runtimeCache.getPreparedCache(runtimeChartCacheParams)
             : null;
           let chartCacheLookupResult = "skipped";
           if (runtimeChartCacheEntry) {
@@ -593,18 +797,30 @@ class ChartController {
             shouldReadRuntimeCache,
             chartVersion: runtimeChartVersion,
             cacheKey: runtimeChartCacheParams.chartVersion
-              ? runtimeCache.chartCacheKey(runtimeChartCacheParams)
+              ? runtimeCache.preparedCacheKey(runtimeChartCacheParams)
               : null,
             variantHash: runtimeContext.chartVariantHash,
             result: chartCacheLookupResult,
           });
 
           if (runtimeChartCacheEntry?.payload) {
-            const cachedChart = attachRuntimeCacheMetadata(runtimeChartCacheEntry.payload, {
-              cacheStatus: runtimeChartCacheEntry.stale ? "stale" : "hit",
-              variantHash: runtimeContext.chartVariantHash,
-              stale: runtimeChartCacheEntry.stale,
-            });
+            const cachedChart = preparedOnly
+              ? createPreparedResult(runtimeChartCacheEntry.payload, {
+                stale: runtimeChartCacheEntry.stale,
+              })
+              : attachRuntimeCacheMetadata(compilePreparedRender(
+                gChart,
+                runtimeChartCacheEntry.payload,
+                {
+                  stale: runtimeChartCacheEntry.stale,
+                  timezone: project?.timezone,
+                  updatedAt: runtimeChartCacheEntry.payload.generatedAt,
+                }
+              ), {
+                cacheStatus: runtimeChartCacheEntry.stale ? "stale" : "hit",
+                variantHash: runtimeContext.chartVariantHash,
+                stale: runtimeChartCacheEntry.stale,
+              });
 
             await runtimeCache.trackChartVariantUsage({
               chartId: id,
@@ -627,6 +843,8 @@ class ChartController {
                   runtimeOnly: true,
                   traceContext: null,
                   finalizeRun: false,
+                  preparedOnly,
+                  viewerScope: runtimeViewerScope,
                 })
               );
             }
@@ -649,11 +867,30 @@ class ChartController {
             throw cacheMissError;
           }
 
-          return createRuntimeShortCircuit(attachRuntimeCacheMetadata(gChart, {
-            cacheStatus: "stored",
-            variantHash: runtimeContext?.chartVariantHash || null,
-            stale: false,
-          }));
+          const defaultSnapshot = await loadPreparedSnapshot(id);
+          if (preparedOnly && !defaultSnapshot) {
+            const cacheMissError = new Error("Prepared chart snapshot is not available");
+            cacheMissError.code = "PREPARED_SNAPSHOT_MISS";
+            throw cacheMissError;
+          }
+          let storedChart = attachUnavailableRender(gChart, { stale: true });
+          if (defaultSnapshot && preparedOnly) {
+            storedChart = createPreparedResult(defaultSnapshot.preparedData, { stale: false });
+          } else if (defaultSnapshot) {
+            storedChart = compilePreparedRender(gChart, defaultSnapshot.preparedData, {
+              snapshotUpdatedAt: defaultSnapshot.updatedAt,
+              stale: false,
+              timezone: project?.timezone,
+              updatedAt: defaultSnapshot.updatedAt,
+            });
+          }
+          return createRuntimeShortCircuit(preparedOnly
+            ? storedChart
+            : attachRuntimeCacheMetadata(storedChart, {
+              cacheStatus: "stored",
+              variantHash: runtimeContext?.chartVariantHash || null,
+              stale: false,
+            }));
         }
 
         if (runtimeContext.needsSourceRefresh) {
@@ -731,6 +968,9 @@ class ChartController {
                 viewerScope: runtimeViewerScope,
                 readRuntimeSourceCache: shouldReadRuntimeCache,
                 writeRuntimeSourceCache: Boolean(runtimeContext?.cacheableChartPayload?.hasRuntimeFilters),
+                maintainDatasetMetadata,
+                signal,
+                deadlineAt,
               })
             );
           } else {
@@ -750,6 +990,9 @@ class ChartController {
                 viewerScope: runtimeViewerScope,
                 readRuntimeSourceCache: shouldReadRuntimeCache,
                 writeRuntimeSourceCache: Boolean(runtimeContext?.cacheableChartPayload?.hasRuntimeFilters),
+                maintainDatasetMetadata,
+                signal,
+                deadlineAt,
               })
             );
           }
@@ -766,6 +1009,11 @@ class ChartController {
       .then(async (datasets) => {
         if (isRuntimeShortCircuit(datasets)) {
           return datasets;
+        }
+        if (signal?.aborted) {
+          const timeoutError = new Error("The request exceeded the execution time limit.");
+          timeoutError.code = "EXECUTION_TIMEOUT";
+          throw timeoutError;
         }
 
         const resolvedDatasets = datasets.map((dataset, index) => {
@@ -829,6 +1077,8 @@ class ChartController {
             variables: effectiveVariables,
           };
 
+          if (preparedOnly) return visualizationEngine.prepare(engineOptions);
+
           return isExport
             ? visualizationEngine.export({ ...engineOptions, mode: exportMode || "source" })
             : visualizationEngine.render(engineOptions);
@@ -840,6 +1090,11 @@ class ChartController {
         if (isRuntimeShortCircuit(chartData)) {
           return chartData;
         }
+        if (signal?.aborted) {
+          const timeoutError = new Error("The request exceeded the execution time limit.");
+          timeoutError.code = "EXECUTION_TIMEOUT";
+          throw timeoutError;
+        }
 
         gChartData = chartData;
         try {
@@ -847,9 +1102,10 @@ class ChartController {
             await recordInstantEvent(chartTraceContext, "chart_parse_finished", {
               chartId: id,
               chartType: gChart.type,
-              isTimeseries: chartData?.isTimeseries || false,
-              datasetCount: chartData?.configuration?.data?.datasets?.length || 0,
-              labelCount: chartData?.configuration?.data?.labels?.length || 0,
+              isTimeseries: preparedOnly ? false : chartData?.isTimeseries || false,
+              datasetCount: chartData?.preparedData?.results?.length || 0,
+              labelCount: chartData?.preparedData?.results
+                ?.reduce((count, result) => count + result.rows.length, 0) || 0,
               visualizationAdapted: Boolean(chartData?.adapted),
             });
           }
@@ -857,6 +1113,10 @@ class ChartController {
           const hasRuntimeVariables = Boolean(effectiveVariables) && Object.keys(effectiveVariables).length > 0;
           const shouldPersist = !skipSave
             && !runtimeOnly
+            && !(effectiveFilters && effectiveFilters.length > 0)
+            && !hasRuntimeVariables
+            && !isExport;
+          const shouldUpdateConditionOptions = !runtimeOnly
             && !(effectiveFilters && effectiveFilters.length > 0)
             && !hasRuntimeVariables
             && !isExport;
@@ -868,17 +1128,11 @@ class ChartController {
             });
           }
 
-          if (!effectiveGetCache && !effectiveNoSource && !runtimeOnly) {
-            gChart = await this.update(id, { chartDataUpdated: moment() });
-          }
-
-          if ((effectiveFilters && effectiveFilters.length > 0) || hasRuntimeVariables || runtimeOnly || isExport) {
-            return effectiveFilters;
-          }
+          if (isExport) return chartData.configuration;
 
           // update the datasets if needed
           const datasetsPromises = [];
-          if (chartData.conditionsOptions) {
+          if (shouldUpdateConditionOptions && chartData.conditionsOptions) {
             chartData.conditionsOptions.forEach((opt) => {
               if (opt.dataset_id) {
                 const cdc = gChart.ChartDatasetConfigs.find((d) => `${d.id}` === `${opt.dataset_id}`
@@ -909,69 +1163,40 @@ class ChartController {
 
           await Promise.all(datasetsPromises);
 
-          const updateData = { chartData: chartData.configuration };
-          if (!effectiveGetCache) {
-            updateData.chartDataUpdated = moment();
+          let responseChart = gChart;
+          if (shouldPersist) {
+            const fingerprints = await runtimeCache.buildChartFingerprints(id, project?.timezone);
+            snapshotPersistResult = await persistPreparedSnapshot({
+              chartId: id,
+              fingerprints,
+              preparedData: chartData.preparedData,
+            });
+            responseChart = await this.findById(id, null, { hydratePreparedData: false });
           }
 
-          // Skip saving to database if skipSave flag is set
-          if (skipSave || runtimeOnly) {
-            // Return chart with updated data without saving to database
-            const updatedChart = { ...gChart.toJSON() };
-            updatedChart.chartData = gChartData.configuration;
-            if (!effectiveGetCache) {
-              updatedChart.chartDataUpdated = moment();
-            }
-            return Promise.resolve(updatedChart);
+          if (chartTraceContext && chartPersistEvent) {
+            await finishEvent(chartTraceContext, chartPersistEvent, "success", {
+              chartId: id,
+              saved: Boolean(snapshotPersistResult?.saved),
+              sizeBytes: snapshotPersistResult?.sizeBytes || null,
+            });
           }
 
-          return this.update(id, updateData);
+          if (preparedOnly) {
+            return createPreparedResult(chartData.preparedData, { stale: false });
+          }
+
+          return attachPreparedRender(responseChart, chartData, chartData.preparedData, {
+            snapshotUpdatedAt: snapshotPersistResult?.saved
+              ? snapshotPersistResult.updatedAt
+              : responseChart?.preparedDataUpdatedAt,
+            stale: false,
+            timezone: project?.timezone,
+            updatedAt: chartData.preparedData.generatedAt,
+          });
         } catch (error) {
           throw toAuditError(error, "persist");
         }
-      })
-      .then(async (chart) => {
-        if (isRuntimeShortCircuit(chart)) {
-          return chart;
-        }
-
-        if (chartTraceContext && chartPersistEvent) {
-          await finishEvent(chartTraceContext, chartPersistEvent, "success", {
-            chartId: id,
-            saved: !skipSave,
-            chartDataUpdated: !effectiveGetCache,
-          });
-        }
-
-        const hasRuntimePayload = ((effectiveFilters && effectiveFilters.length > 0)
-          || (effectiveVariables && Object.keys(effectiveVariables).length > 0)
-          || runtimeOnly);
-
-        if (hasRuntimePayload && !isExport) {
-          if (skipSave || runtimeOnly) {
-            const runtimeChartDataUpdated = !effectiveGetCache ? moment() : gChart.chartDataUpdated;
-            return {
-              ...(typeof gChart?.toJSON === "function" ? gChart.toJSON() : gChart),
-              chartData: gChartData.configuration,
-              chartDataUpdated: runtimeChartDataUpdated,
-            };
-          }
-
-          const filteredChart = gChart;
-          filteredChart.chartData = gChartData.configuration;
-          return filteredChart;
-        }
-
-        if (skipSave || runtimeOnly) {
-          // Chart is already processed above when skipSave is true
-          return chart;
-        }
-
-        if (isExport) {
-          return gChartData.configuration;
-        }
-
-        return this.findById(id);
       })
       .then(async (chart) => {
         if (isRuntimeShortCircuit(chart)) {
@@ -982,7 +1207,8 @@ class ChartController {
                 chartId: id,
                 chartType: gChart?.type || null,
                 datasetCount: gChart?.ChartDatasetConfigs?.length || 0,
-                labelCount: chart.chart?.chartData?.data?.labels?.length || 0,
+                labelCount: Object.values(chart.chart?.render?.tabularData || {})
+                  .reduce((count, rows) => count + (Array.isArray(rows) ? rows.length : 0), 0),
               },
             });
           }
@@ -992,56 +1218,28 @@ class ChartController {
 
         let finalChart = chart;
 
-        if (!isExport) {
-          if (skipSave || runtimeOnly) {
-            // For skipSave, chart is a plain object, so we create a new object with properties
-            finalChart = {
-              ...chart,
-              isTimeseries: gChartData.isTimeseries,
-              dateFormat: gChartData.dateFormat,
-            };
-            if (runtimeChartCacheParams && runtimeContext?.cacheableChartPayload?.hasRuntimeFilters) {
-              finalChart = attachRuntimeCacheMetadata(finalChart, {
-                cacheStatus: "miss",
-                variantHash: runtimeContext.chartVariantHash,
-                stale: false,
-              });
-
-              await runtimeCache.setChartCache({
-                ...runtimeChartCacheParams,
-                payload: finalChart,
-              });
-              runtimeCache.debugLog("chart_cache_write_complete", {
-                chartId: id,
-                viewerScope: runtimeViewerScope,
-                chartVersion: runtimeChartVersion,
-                variantHash: runtimeContext.chartVariantHash,
-              });
-            }
-          } else {
-            // For normal saves, chart is a Sequelize model
-            finalChart.setDataValue("isTimeseries", gChartData.isTimeseries);
-            finalChart.setDataValue("dateFormat", gChartData.dateFormat);
-
-            if (runtimeChartCacheParams && runtimeContext?.cacheableChartPayload?.hasRuntimeFilters) {
-              finalChart = attachRuntimeCacheMetadata(finalChart, {
-                cacheStatus: "miss",
-                variantHash: runtimeContext.chartVariantHash,
-                stale: false,
-              });
-
-              await runtimeCache.setChartCache({
-                ...runtimeChartCacheParams,
-                payload: finalChart,
-              });
-              runtimeCache.debugLog("chart_cache_write_complete", {
-                chartId: id,
-                viewerScope: runtimeViewerScope,
-                chartVersion: runtimeChartVersion,
-                variantHash: runtimeContext.chartVariantHash,
-              });
-            }
+        if (!isExport
+          && runtimeChartCacheParams
+          && runtimeContext?.cacheableChartPayload?.hasRuntimeFilters
+        ) {
+          if (!preparedOnly) {
+            finalChart = attachRuntimeCacheMetadata(finalChart, {
+              cacheStatus: "miss",
+              variantHash: runtimeContext.chartVariantHash,
+              stale: false,
+            });
           }
+
+          await runtimeCache.setPreparedCache({
+            ...runtimeChartCacheParams,
+            payload: gChartData.preparedData,
+          });
+          runtimeCache.debugLog("prepared_cache_write_complete", {
+            chartId: id,
+            viewerScope: runtimeViewerScope,
+            chartVersion: runtimeChartVersion,
+            variantHash: runtimeContext.chartVariantHash,
+          });
         }
 
         const hasObservationRuntimePayload = ((effectiveFilters && effectiveFilters.length > 0)
@@ -1053,12 +1251,12 @@ class ChartController {
           && !effectiveGetCache
           && !effectiveNoSource
           && !hasObservationRuntimePayload
-          && Boolean(gChartData?.frame);
+          && Boolean(gChartData?.preparedData);
         if (shouldProcessObservations) {
           try {
             await processChartResult({
               chart: gChart,
-              frame: gChartData.frame,
+              preparedData: gChartData.preparedData,
               refreshedAt: new Date(),
               teamId: project?.team_id || chartTraceContext?.teamId || null,
               updateRunId: chartTraceContext?.runId || null,
@@ -1076,9 +1274,20 @@ class ChartController {
               chartId: id,
               chartType: gChart?.type || null,
               datasetCount: gChart?.ChartDatasetConfigs?.length || 0,
-              labelCount: gChartData?.configuration?.data?.labels?.length || 0,
+              labelCount: gChartData?.preparedData?.results
+                ?.reduce((count, result) => count + result.rows.length, 0) || 0,
             },
           });
+        }
+
+        if (preparedOnly) return finalChart;
+
+        if (returnPreparedData) {
+          return {
+            chart: finalChart,
+            preparedData: gChartData?.preparedData || null,
+            snapshot: snapshotPersistResult,
+          };
         }
 
         return finalChart;
@@ -1107,19 +1316,6 @@ class ChartController {
         }
 
         return new Promise((_resolve, reject) => reject(wrappedError));
-      });
-  }
-
-  runRequest(chart) {
-    return this.dataRequestController.sendRequest(chart.id, chart.connection_id)
-      .then((data) => {
-        return this.getChartData(chart.id, data);
-      })
-      .then(() => {
-        return this.findById(chart.id);
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
       });
   }
 
@@ -1190,38 +1386,17 @@ class ChartController {
   previewChart(chart, projectId, user, noSource) {
     return this.getPreviewData(chart, projectId, user, noSource)
       .then((data) => {
-        if (chart.type === "table") {
-          return dataExtractor(chart);
+        if (!data?.chart || !Array.isArray(data.datasets)) {
+          throw new Error("Chart preview data is not available");
         }
-
-        const axisChart = new AxisChart(data);
-        return axisChart.plot();
-      })
-      .then((chartData) => {
-        return new Promise((resolve) => resolve(chartData));
+        const compiled = new VisualizationEngine(data).render();
+        return attachPreparedRender(data.chart, compiled, compiled.preparedData, {
+          stale: false,
+          updatedAt: compiled.preparedData.generatedAt,
+        });
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
-      });
-  }
-
-  getChartData(id) {
-    let gChartData;
-    return this.findById(id)
-      .then((chart) => {
-        if (chart.type === "table") {
-          return dataExtractor(chart);
-        }
-
-        const axisChart = new AxisChart(chart);
-        return axisChart.plot();
-      })
-      .then((chartData) => {
-        gChartData = chartData;
-        return this.update(id, { chartData: gChartData, chartDataUpdated: moment() });
-      })
-      .then(() => {
-        return new Promise((resolve) => resolve(gChartData));
       });
   }
 
@@ -1320,13 +1495,17 @@ class ChartController {
     }
 
     // get the team's branding status
-    const chart = await this.findById(chartShare.chart_id);
+    let chart = await this.findById(chartShare.chart_id);
     const project = await db.Project.findByPk(chart.project_id);
     const team = await db.Team.findByPk(project.team_id);
 
     if (!chart.public && !chart.shareable) {
       return Promise.reject("401");
     }
+    chart = await this.hydratePreparedChart(chart, {
+      refresh: true,
+      timezone: project.timezone,
+    });
 
     // Handle variable filtering based on share policy
     const urlVariables = this._extractVariablesFromQuery(queryParams);
@@ -1380,9 +1559,13 @@ class ChartController {
     const decodedToken = verifyShareToken(queryParams.token);
     validateShareTokenPolicy(decodedToken, sharePolicy, "Chart", sharePolicy.entity_id);
 
-    const chart = await this.findById(sharePolicy.entity_id);
+    let chart = await this.findById(sharePolicy.entity_id);
     const project = await db.Project.findByPk(chart.project_id);
     const team = await db.Team.findByPk(project.team_id);
+    chart = await this.hydratePreparedChart(chart, {
+      refresh: true,
+      timezone: project.timezone,
+    });
 
     // Handle variable filtering based on share policy
     const urlVariables = this._extractVariablesFromQuery(queryParams);
@@ -1661,10 +1844,11 @@ class ChartController {
       chartDatasetConfigs = [],
       ...chartData
     } = data;
+    const canonicalChartData = removeRuntimeChartFields(chartData);
 
     // Filter out legacy fields and auto-populated fields
     const legacyFields = ["dashboardOrder", "chartSize"];
-    const autoPopulatedFields = ["chartData", "chartDataUpdated"];
+    const autoPopulatedFields = [];
 
     const cleanChartData = {};
     const allowedFields = [
@@ -1678,11 +1862,11 @@ class ChartController {
     ];
 
     allowedFields.forEach((field) => {
-      if (chartData[field] !== undefined
+      if (canonicalChartData[field] !== undefined
         && !legacyFields.includes(field)
         && !autoPopulatedFields.includes(field)
       ) {
-        cleanChartData[field] = chartData[field];
+        cleanChartData[field] = canonicalChartData[field];
       }
     });
 
@@ -1709,7 +1893,6 @@ class ChartController {
     const chart = await db.Chart.create({
       ...cleanChartData,
       layout: finalLayout,
-      chartDataUpdated: moment()
     }, { transaction });
 
     // Delete chart cache if user is provided
@@ -1765,7 +1948,7 @@ class ChartController {
 
     await this.syncLegacyVisualization(chart.id, { transaction });
 
-    // Run the chart update in the background to populate chartData
+    // Run the chart update in the background to populate the prepared snapshot.
     if (!skipBackgroundUpdate) {
       this.updateChartData(chart.id, user, {}).catch(() => null);
     }

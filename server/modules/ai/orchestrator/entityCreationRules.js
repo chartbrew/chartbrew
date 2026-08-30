@@ -58,7 +58,7 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - includeZeros: boolean - include zero values (default: true)
 - timeInterval: string - second|minute|hour|day|week|month|year (default: "day")
 - stacked: boolean - stack bars (bar only) (default: false)
-- horizontal: boolean - horizontal bars (bar only) (default: false)
+- horizontal: boolean - legacy compatibility only; use type horizontalBar (default: false)
 - xLabelTicks: string - "default", "half", "third", "fourth", "showAll" (default: "default"). Use showAll when making breakdown charts where categories are not that many.
 - showGrowth: boolean - percentage growth (default: false)
 - invertGrowth: boolean - invert growth calc (default: false)
@@ -85,7 +85,7 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - dateFormat: string - optional date format (e.g. YYYY-MM-DD)
 - conditions: array - optional chart-specific filtering conditions
 - formula: string - transform values (e.g. "{val / 100}", "£{val}") (optional)
-- fillColor: string - area/line fill color, fillColor for bar charts (optional)
+- fillColor: string - line or bar fill color (optional)
 - fill: boolean - enable area fill, fill for bar charts (default: false)
 - multiFill: boolean - multiple fill colors, turn on for category charts - pie, dougnnut, bar (default: false)
 - pointRadius: integer - override point size (default: 0)
@@ -175,7 +175,8 @@ const FIELD_SPECS = {
       legend: null // Short legend for ChartDatasetConfig
     },
     conditionalFields: {
-      bar: ["stacked", "horizontal"],
+      bar: ["stacked"],
+      horizontalBar: ["stacked"],
       kpi: ["subType"] // Use "AddTimeseries" for accumulating totals
     },
     description: "Visual representations of Datasets, placed in Projects (dashboards)"

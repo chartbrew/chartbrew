@@ -1,5 +1,5 @@
 import {
-  beforeAll, beforeEach, describe, expect, it,
+  beforeAll, describe, expect, it,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -21,16 +21,13 @@ describe("updateAudit", () => {
     updateAudit = require("../../modules/updateAudit.js");
   });
 
-  beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
-  });
-
   it("sanitizes payloads and persists a completed run with ordered events", async () => {
     const traceContext = await updateAudit.startRun({
       triggerType: "chart_manual",
       entityType: "chart",
       status: "running",
       teamId: 1,
+      apiKeyId: "5e951c4f-0c79-4f70-b8fb-5993ea20bc12",
       projectId: 10,
       chartId: 100,
       summary: {
@@ -66,6 +63,7 @@ describe("updateAudit", () => {
     });
 
     expect(persistedRun.status).toBe("success");
+    expect(persistedRun.apiKeyId).toBe("5e951c4f-0c79-4f70-b8fb-5993ea20bc12");
     expect(persistedRun.summary).toEqual({
       chartId: 100,
       datasetCount: 2,

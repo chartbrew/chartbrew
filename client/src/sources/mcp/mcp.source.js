@@ -1,0 +1,41 @@
+import mcpLogoLight from "./assets/mcp-light.svg";
+import mcpLogoDark from "./assets/mcp-dark.svg";
+
+const mcpSource = {
+  id: "mcp",
+  type: "mcp",
+  subType: "mcp",
+  name: "MCP server",
+  category: "integrations",
+  showNewBadge: true,
+  capabilities: {
+    ai: {
+      canGenerateDatasets: true,
+      canGenerateQueries: false,
+      hasSourceInstructions: true,
+      hasTools: true,
+    },
+    nextSteps: {
+      connectionAfterCreate: true,
+    },
+  },
+  assets: {
+    lightLogo: mcpLogoLight,
+    darkLogo: mcpLogoDark,
+  },
+  defaults: {
+    dataRequest: {
+      method: "POST",
+      template: "mcp",
+      useGlobalHeaders: true,
+      configuration: {
+        source: "mcp",
+        tool: { name: "", contractFingerprint: "" },
+        arguments: {},
+        output: { mode: "auto", path: [] },
+      },
+    },
+  },
+};
+
+export default mcpSource;

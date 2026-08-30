@@ -21,7 +21,6 @@ import {
   LuPlug,
   LuPlus,
   LuShare,
-  LuSparkles,
 } from "react-icons/lu";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
@@ -154,7 +153,7 @@ function AiRecommendation({
                 variant={disabled ? "outline" : "primary"}
                 isDisabled={disabled}
               >
-                <LuSparkles size={18} />
+                <LuBrainCircuit size={18} />
                 {actionLabel}
               </Button>
               {disabled && (

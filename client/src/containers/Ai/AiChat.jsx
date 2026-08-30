@@ -2,7 +2,7 @@ import React, {
   useCallback, useEffect, useMemo, useRef, useState,
 } from "react";
 import PropTypes from "prop-types";
-import { Button } from "@heroui/react";
+import { Button, ScrollShadow } from "@heroui/react";
 import { LuBookmark } from "react-icons/lu";
 import { useDispatch } from "react-redux";
 
@@ -10,7 +10,8 @@ import { getChart } from "../../slices/chart";
 import AiComposer from "./AiComposer";
 import AiChartPreview from "./AiChartPreview";
 import AiActionPreviewCard from "./AiActionPreviewCard";
-import { AiAnswer, AiLoadingActivity, AiUserPrompt } from "./AiTranscript";
+import AiProgress from "./AiProgress";
+import { AiAnswer, AiUserPrompt } from "./AiTranscript";
 import { getCompletedActionIds, parseAiMessage } from "./aiMessageUtils";
 import useChatAutoScroll from "./hooks/useChatAutoScroll";
 import {
@@ -35,8 +36,12 @@ function AiChat({
   onConfirmAction,
   onSubmit,
   placeholder = "Ask a question about your data",
+  progressEvents = [],
   showSave = false,
   suggestions = [],
+  toolDisplayNames = {},
+  framed = false,
+  fill = false,
 }) {
   const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
@@ -48,7 +53,7 @@ function AiChat({
   const chartPreviewKey = chartPreviews
     .map(getChartPreviewKey)
     .join("|");
-  const scrollVersion = `${messages.length}:${isLoading}:${chartPreviewKey}`;
+  const scrollVersion = `${messages.length}:${isLoading}:${progressEvents.length}:${chartPreviewKey}`;
   const scrollResetKey = `${id}:${messages.length === 0 ? "empty" : "active"}`;
   const { containerRef, contentRef } = useChatAutoScroll(scrollVersion, scrollResetKey);
 
@@ -79,10 +84,19 @@ function AiChat({
   }, [messages.length]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={fill
+      ? "flex h-full min-h-0 min-w-0 flex-1 flex-col gap-3"
+      : "flex min-w-0 flex-col gap-3"}
+    >
       {messages.length > 0 ? (
-        <div aria-live="polite" className="max-h-[34rem] overflow-y-auto pr-1" ref={containerRef}>
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-5" ref={contentRef}>
+        <ScrollShadow
+          aria-live="polite"
+          className="min-w-0 max-h-[34rem] pr-3 [scrollbar-gutter:stable]"
+          orientation="vertical"
+          ref={containerRef}
+          size={28}
+        >
+          <div className="flex min-w-0 w-full flex-col gap-5" ref={contentRef}>
             {messages.map((message, index) => {
               if (message.role === "user") {
                 return (
@@ -161,23 +175,32 @@ function AiChat({
                 </React.Fragment>
               );
             })}
-            {isLoading ? (
-              <AiLoadingActivity />
+            {isLoading || progressEvents.length > 0 ? (
+              <AiProgress
+                className="pl-4"
+                isLoading={isLoading}
+                progressEvents={progressEvents}
+                toolDisplayNames={toolDisplayNames}
+              />
             ) : null}
           </div>
-        </div>
+        </ScrollShadow>
       ) : null}
 
-      <AiComposer
-        id={id}
-        isLoading={isLoading}
-        name={`${id}-question`}
-        onSubmitQuestion={onSubmit}
-        placeholder={placeholder}
-        selectedContext={EMPTY_CONTEXT}
-        showEnterHint={messages.length > 0}
-        suggestions={suggestions}
-      />
+      <div className={fill ? "flex min-h-0 flex-1 flex-col" : undefined}>
+        <AiComposer
+          fill={fill}
+          framed={framed}
+          id={id}
+          isLoading={isLoading}
+          name={`${id}-question`}
+          onSubmitQuestion={onSubmit}
+          placeholder={placeholder}
+          selectedContext={EMPTY_CONTEXT}
+          showEnterHint={messages.length > 0}
+          suggestions={suggestions}
+        />
+      </div>
     </div>
   );
 }
@@ -196,8 +219,12 @@ AiChat.propTypes = {
   onConfirmAction: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
+  progressEvents: PropTypes.arrayOf(PropTypes.object),
   showSave: PropTypes.bool,
   suggestions: PropTypes.arrayOf(PropTypes.string),
+  toolDisplayNames: PropTypes.object,
+  framed: PropTypes.bool,
+  fill: PropTypes.bool,
 };
 
 export default AiChat;

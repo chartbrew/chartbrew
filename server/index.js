@@ -24,6 +24,11 @@ const appsRoutes = require("./apps");
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
 const parseQueryParams = require("./middlewares/parseQueryParams");
+const chartImageBodyError = require("./modules/chartImageBodyError");
+const { isChartImageRequest } = chartImageBodyError;
+const { IMAGE_RENDER_LIMITS } = require("./modules/chartImage/imageLimits");
+const dataApiBodyError = require("./modules/dataApiBodyError");
+const { getDataApiLimits } = require("./modules/dataApiLimits");
 const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
@@ -33,6 +38,7 @@ const periodEvaluationScheduler = require("./modules/observations/periodEvaluati
 const { checkEncryptionKeys } = require("./modules/cbCrypto");
 const { setUpQueues } = require("./setUpQueues");
 const socketManager = require("./modules/socketManager");
+const { shouldMigrateOnStartup } = require("./modules/databaseMigrations");
 const {
   refreshPlatformSettings,
   startPlatformSettingsRefresh,
@@ -80,14 +86,26 @@ app.use(urlencoded({
   },
 }));
 app.set("query parser", "simple");
-app.use(json({
-  verify: (req, res, buf, encoding) => {
-    // Save raw body for Slack signature verification (JSON requests)
-    if (req.headers["content-type"]?.includes("application/json")) {
-      req.rawBody = buf.toString(encoding || "utf8");
-    }
-  },
-}));
+const captureJsonBody = (req, res, buf, encoding) => {
+  // Save raw body for Slack signature verification and bounded request checks.
+  if (req.headers["content-type"]?.includes("application/json")) {
+    req.rawBody = buf.toString(encoding || "utf8");
+  }
+};
+const defaultJsonParser = json({
+  limit: Math.max(100 * 1024, getDataApiLimits().maxRequestBytes),
+  verify: captureJsonBody,
+});
+const chartImageJsonParser = json({
+  limit: IMAGE_RENDER_LIMITS.bodyBytes,
+  verify: captureJsonBody,
+});
+app.use((req, res, next) => {
+  const parser = isChartImageRequest(req) ? chartImageJsonParser : defaultJsonParser;
+  return parser(req, res, next);
+});
+app.use(chartImageBodyError);
+app.use(dataApiBodyError);
 app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
@@ -127,7 +145,14 @@ _.each(appsRoutes, (controller, route) => {
 
 const port = process.env.PORT || app.settings.port || 4019;
 
-db.migrate()
+const migrateOnStartup = shouldMigrateOnStartup();
+if (!migrateOnStartup) {
+  console.info("Skipping automatic database migrations in development. Run npm run db:migrate when needed."); // eslint-disable-line
+}
+
+const databasePreparation = migrateOnStartup ? db.migrate() : Promise.resolve([]);
+
+databasePreparation
   .then(async (data) => {
     if (data && data.length > 0) {
       console.info("Updated database schema to the latest version!"); // eslint-disable-line

@@ -20,12 +20,20 @@ describe("embedded chart payload", () => {
         score: 0.98,
       },
       project_id: 4,
+      render: {
+        configuration: { series: [] },
+        renderer: "echarts",
+      },
       type: "line",
       visualization: { layers: [] },
     });
 
     expect(payload.id).toBe(12);
-    expect(payload.chartData).toEqual({ data: { datasets: [], labels: [] } });
+    expect(payload.render).toEqual({
+      configuration: { series: [] },
+      renderer: "echarts",
+    });
+    expect(payload).not.toHaveProperty("chartData");
     expect(payload).not.toHaveProperty("frame");
     expect(payload).not.toHaveProperty("observation");
   });

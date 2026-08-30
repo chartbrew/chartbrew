@@ -15,6 +15,8 @@ const ai = require("./AiRoute");
 const updateRun = require("./UpdateRunRoute");
 const observation = require("./ObservationRoute");
 const platform = require("./PlatformSettingsRoute");
+const dataApi = require("./DataApiRoute");
+const chartImage = require("./ChartImageRoute");
 
 module.exports = {
   team,
@@ -34,4 +36,6 @@ module.exports = {
   ai,
   observation,
   platform,
+  dataApi,
+  chartImage,
 };

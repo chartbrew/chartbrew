@@ -1,5 +1,5 @@
 import {
-  beforeAll, beforeEach, describe, expect, it,
+  beforeAll, describe, expect, it,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -216,10 +216,6 @@ describe("TemplateRoute security", () => {
     templateRoute(routeRegistry.app);
     generateRouteHandlers = routeRegistry.getHandlers("GET", "/team/:team_id/template/generate/:project_id");
     models = await getModels();
-  });
-
-  beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
   });
 
   it("exports same-team templates without secret-bearing request fields", async () => {

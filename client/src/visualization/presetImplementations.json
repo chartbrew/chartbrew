@@ -1,0 +1,15 @@
+{
+  "line": "echarts",
+  "bar": "echarts",
+  "horizontalBar": "echarts",
+  "pie": "echarts",
+  "doughnut": "echarts",
+  "radar": "echarts",
+  "polar": "echarts",
+  "matrix": "echarts",
+  "gauge": "echarts",
+  "kpi": "native-metric",
+  "avg": "native-metric",
+  "table": "native-table",
+  "markdown": "native-markdown"
+}

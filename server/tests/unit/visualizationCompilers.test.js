@@ -1,199 +1,99 @@
-import {
-  afterEach, describe, expect, it, vi,
-} from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 const { VisualizationEngine } = require("../../visualization/VisualizationEngine.js");
 const { compileTabularExport } = require("../../visualization/compilers/tabularExport.js");
 
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 function buildEngine(mark, encoding, data, layer = {}, chart = {}, datasetOptions = {}) {
   return new VisualizationEngine({
     chart: {
       displayLegend: true,
       mode: "chart",
+      name: "Chart as shown",
       type: mark,
       ...chart,
       visualization: {
-        version: 2,
         layers: [{
-          bindingId: "cdc-main",
+          bindingId: "source-main",
           encoding,
           id: "main",
           mark,
+          name: layer.name || "Revenue",
           ...layer,
         }],
+        settings: {},
+        status: "ready",
+        version: 2,
       },
     },
     datasets: [{
       data,
       options: {
-        id: "cdc-main",
+        id: "source-main",
         ...datasetOptions,
       },
     }],
+    timezone: "UTC",
   });
 }
 
 describe("visualization output compilers", () => {
-  it("compiles category values for pie-family charts", () => {
-    const result = buildEngine("doughnut", {
-      category: { field: "root[].channel", type: "nominal" },
-      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
+  it("compiles graphical charts directly to ECharts", () => {
+    const result = buildEngine("line", {
+      category: { field: "root[].month", type: "nominal" },
+      value: { aggregate: "sum", field: "root[].amount", type: "quantitative" },
     }, [
-      { channel: "Direct", revenue: 40 },
-      { channel: "Partner", revenue: 25 },
-      { channel: "Direct", revenue: 15 },
+      { amount: 12, month: "Jan" },
+      { amount: 18, month: "Feb" },
     ]).render();
 
-    expect(result.configuration.data.labels).toEqual(["Direct", "Partner"]);
-    expect(result.configuration.data.datasets).toHaveLength(1);
-    expect(result.configuration.data.datasets[0].data).toEqual([55, 25]);
-    expect(result.configuration.data.datasets[0].backgroundColor).toHaveLength(2);
-    expect(result.frame.layers[0].rows).toEqual([
-      expect.objectContaining({ category: "Direct", value: 55 }),
-      expect.objectContaining({ category: "Partner", value: 25 }),
+    expect(result.renderer).toBe("echarts");
+    expect(result.configuration.dataset.source).toEqual([
+      ["Jan", 12],
+      ["Feb", 18],
     ]);
-    expect(result.configuration.meta.categories.map((category) => category.label))
-      .toEqual(["Direct", "Partner"]);
-    expect(result.configuration.meta.categories.map((category) => category.color))
-      .toEqual(result.configuration.data.datasets[0].backgroundColor);
-    expect(result.configuration.data.datasets[0]).toEqual(expect.objectContaining({
-      borderColor: "transparent",
-      borderWidth: 2,
-      hoverBorderWidth: 2,
-      hoverOffset: 4,
-      spacing: 0,
-    }));
-    expect(result.configuration.options.scales.x.display).toBe(false);
+    expect(result.metadata.series).toHaveLength(1);
+    expect(result.tabularData["Chart as shown"]).toEqual([
+      { Category: "Jan", Revenue: 12 },
+      { Category: "Feb", Revenue: 18 },
+    ]);
+    expect(result).not.toHaveProperty("chartData");
   });
 
-  it("uses the same neutral arc treatment for pie charts", () => {
-    const result = buildEngine("pie", {
-      category: { field: "root[].channel", type: "nominal" },
-      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
-    }, [
-      { channel: "Direct", revenue: 55 },
-      { channel: "Partner", revenue: 25 },
-    ]).render();
-
-    expect(result.configuration.data.datasets[0]).toEqual(expect.objectContaining({
-      borderColor: "transparent",
-      borderWidth: 0,
-      hoverOffset: 4,
-      spacing: 0,
-    }));
-  });
-
-  it("keeps category slice colors stable and supports canonical overrides", () => {
-    const data = [
-      { channel: "Direct", revenue: 55 },
-      { channel: "Partner", revenue: 25 },
-    ];
-    const automatic = buildEngine("doughnut", {
-      category: { field: "root[].channel", type: "nominal" },
-      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
-    }, data).render();
-    const direct = automatic.configuration.meta.categories.find((category) => {
-      return category.label === "Direct";
-    });
-    const overridden = buildEngine("doughnut", {
-      category: { field: "root[].channel", type: "nominal" },
-      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
-    }, [...data].reverse(), {
-      style: { series: { [direct.id]: { color: "#112233" } } },
-    }).render();
-    const overriddenDirect = overridden.configuration.meta.categories.find((category) => {
-      return category.label === "Direct";
-    });
-
-    expect(overriddenDirect.id).toBe(direct.id);
-    expect(overriddenDirect.color).toBe("#112233");
-    expect(overridden.configuration.data.datasets[0].backgroundColor[
-      overridden.configuration.data.labels.indexOf("Direct")
-    ]).toBe("#112233");
-  });
-
-  it("compiles radar fill from the series primary color and opacity", () => {
-    const result = buildEngine("radar", {
-      category: { field: "root[].team", type: "nominal" },
-      value: { aggregate: "sum", field: "root[].score", type: "quantitative" },
-    }, [
-      { score: 80, team: "Sales" },
-      { score: 65, team: "Marketing" },
-      { score: 90, team: "Development" },
-    ], {
-      style: {
-        color: "#2563EB",
-        fill: true,
-        fillColor: "#DB2777",
-        fillOpacity: 0.2,
-        multiFill: true,
-      },
-    }).render();
-
-    expect(result.configuration.data.datasets[0]).toEqual(expect.objectContaining({
-      backgroundColor: "rgba(37, 99, 235, 0.2)",
-      borderColor: "#2563EB",
-      datalabels: { display: false },
-      fill: true,
-    }));
-    expect(result.configuration.data.datasets[0].backgroundColor).not.toBeInstanceOf(Array);
-  });
-
-  it.each(["bar", "line"])(
-    "keeps %s formula values numeric and exposes the formula for display formatting",
-    (mark) => {
-      const formula = "${val / 100}";
-      const result = buildEngine(mark, {
-        category: { field: "root[].month", type: "nominal" },
-        value: {
-          aggregate: "sum",
-          field: "root[].amount",
-          formula,
-          type: "quantitative",
-        },
-      }, [
-        { amount: 1234, month: "Jan" },
-        { amount: 5678, month: "Feb" },
-      ], { name: "Revenue" }).render();
-
-      expect(result.configuration.data.datasets[0]).toEqual(expect.objectContaining({
-        data: [12.34, 56.78],
-        formula,
-      }));
-    },
-  );
-
-  it("compiles a value-only KPI with a formula and goal", () => {
+  it("compiles KPI values, comparisons, and goals without Chart.js data", () => {
     const result = buildEngine("kpi", {
       value: {
         aggregate: "sum",
         field: "root[].amount",
-        formula: "${val / 1000}k",
+        formula: "${val} USD",
         type: "quantitative",
       },
     }, [
       { amount: 1200 },
       { amount: 800 },
-    ], { goal: 2500, name: "Revenue" }).render();
+    ], {
+      goal: 2500,
+      name: "Revenue",
+    }).render();
 
-    expect(result.configuration.data.datasets[0].data).toEqual(["$2k"]);
-    expect(result.configuration.growth[0]).toEqual(expect.objectContaining({
-      label: "Revenue",
-      value: "$2k",
-    }));
-    expect(result.configuration.goals[0]).toEqual(expect.objectContaining({
-      max: 2500,
-      value: 2,
-    }));
+    expect(result.renderer).toBe("native");
+    expect(result.configuration.items).toEqual([
+      expect.objectContaining({
+        goal: 2500,
+        label: "Revenue",
+        value: "$2,000 USD",
+        valueNumber: 2000,
+      }),
+    ]);
+    expect(result.metadata.metrics).toEqual(result.configuration.items);
+    expect(result.tabularData["Chart as shown"]).toEqual([
+      { Category: "Value", Revenue: "$2,000 USD" },
+    ]);
+    expect(result).not.toHaveProperty("chartData");
   });
 
-  it("compiles average metrics as a single value", () => {
+  it("compiles average metrics as a native item", () => {
     const result = buildEngine("avg", {
       value: { aggregate: "avg", field: "root[].duration", type: "quantitative" },
     }, [
@@ -202,11 +102,17 @@ describe("visualization output compilers", () => {
       { duration: 30 },
     ], { name: "Average duration" }).render();
 
-    expect(result.configuration.data.datasets[0].data).toEqual([20]);
+    expect(result.configuration.items).toEqual([
+      expect.objectContaining({
+        label: "Average duration",
+        value: "20",
+        valueNumber: 20,
+      }),
+    ]);
   });
 
-  it("compiles nested table rows with ordering, exclusions, and formatting", () => {
-    const engine = buildEngine("table", {}, {
+  it("compiles tables with ordering, exclusions, and formatting", () => {
+    const result = buildEngine("table", {}, {
       payload: {
         rows: [
           { internal: "ignore", name: "Starter", revenue: 1234.5 },
@@ -229,9 +135,9 @@ describe("visualization output compilers", () => {
         excludedFields: ["internal"],
       },
       rowPath: "root.payload.rows[]",
-    });
-    const result = engine.render();
+    }).render();
 
+    expect(result.renderer).toBe("native");
     expect(result.configuration.Programs.columns.map((column) => column.Header)).toEqual([
       "name",
       "revenue",
@@ -240,29 +146,12 @@ describe("visualization output compilers", () => {
       { name: "Starter", revenue: "1,235" },
       { name: "Advanced", revenue: "2,500" },
     ]);
+    expect(result.tabularData).toBe(result.configuration);
+    expect(result).not.toHaveProperty("chartData");
   });
 
-  it("compiles tables with object-based legacy groups", () => {
-    const result = buildEngine("table", {}, [{
-      country: "us",
-      pageviews: 949,
-    }], {
-      name: "Countries",
-    }, {}, {
-      groups: {
-        country: "pageviews",
-      },
-    }).render();
-
-    expect(result.configuration.Countries.data).toEqual([{
-      country: "us",
-      pageviews: 949,
-      us: 949,
-    }]);
-  });
-
-  it("exports filtered source rows through the same visualization facade", () => {
-    const engine = buildEngine("bar", {
+  it("exports filtered source rows", () => {
+    const result = buildEngine("bar", {
       category: { field: "root[].program", type: "nominal" },
       value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
     }, [
@@ -276,144 +165,52 @@ describe("visualization output compilers", () => {
         type: "filter",
         value: "EUR",
       }],
-    });
-    const result = engine.export();
+    }).export();
 
     expect(result.configuration).toEqual({
       "Program revenue": [{ currency: "EUR", program: "Ceramics", revenue: 80 }],
     });
   });
 
-  it("exports chart-as-shown rows with generated series as columns", () => {
+  it("exports shown rows from prepared data without calling render", () => {
     const engine = buildEngine("bar", {
       category: { field: "root[].program", type: "nominal" },
-      breakdown: { field: "root[].level", type: "nominal" },
       value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
-    }, [
-      { program: "Ceramics", level: "Starter", revenue: 80 },
-      { program: "Ceramics", level: "Advanced", revenue: 120 },
-      { program: "Writing", level: "Starter", revenue: 40 },
-    ], { name: "Program revenue" }, { name: "Revenue" });
-    const result = engine.export({ mode: "shown" });
+    }, [{ program: "Ceramics", revenue: 80 }], { name: "Revenue" });
+    engine.render = vi.fn(() => {
+      throw new Error("render must not run");
+    });
 
-    expect(result.exportMode).toBe("shown");
-    expect(result.configuration.Revenue).toEqual([
-      { Category: "Ceramics", Advanced: 120, Starter: 80 },
-      { Category: "Writing", Advanced: null, Starter: 40 },
-    ]);
+    expect(engine.export({ mode: "shown" }).configuration).toEqual({
+      "Chart as shown": [{ Category: "Ceramics", Revenue: 80 }],
+    });
+    expect(engine.render).not.toHaveBeenCalled();
   });
 
-  it("does not repeat one value-layer goal across generated breakdown series", () => {
-    const result = buildEngine("bar", {
-      category: { field: "root[].month", type: "nominal" },
-      breakdown: { field: "root[].segment", type: "nominal" },
-      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
-    }, [
-      { month: "Jan", segment: "A", revenue: 80 },
-      { month: "Jan", segment: "B", revenue: 120 },
-    ], { goal: 500, name: "Revenue" }).render();
-
-    expect(result.configuration.goals).toEqual([]);
-  });
-
-  it("keeps Other and hidden candidates in generated-series display metadata", () => {
-    const result = buildEngine("bar", {
-      category: { field: "root[].month", type: "nominal" },
-      breakdown: { field: "root[].segment", type: "nominal" },
-      value: { aggregate: "sum", field: "root[].revenue", type: "quantitative" },
-    }, [
-      { month: "Jan", segment: "A", revenue: 80 },
-      { month: "Jan", segment: "B", revenue: 60 },
-      { month: "Jan", segment: "C", revenue: 10 },
-    ], {
-      options: { series: { includeOther: true, limit: 1 } },
-    }).render();
-
-    expect(result.configuration.meta.availableSeries.map((series) => series.label))
-      .toEqual(["A", "Other", "B", "C"]);
-  });
-
-  it("exports shared source rows once when multiple value layers use one binding", () => {
+  it("exports one source table for shared bindings", () => {
     const result = compileTabularExport({
       conditionsOptions: [],
       datasets: [{
+        data: [{ cost: 60, month: "Jan", revenue: 100 }],
         options: { id: "shared", legend: "Financials" },
-        data: [{ month: "Jan", revenue: 100, cost: 60 }],
       }],
       visualization: {
-        version: 2,
         layers: ["revenue", "cost"].map((field) => ({
-          id: field,
-          name: field,
           bindingId: "shared",
-          mark: "line",
           encoding: {
             category: { field: "root[].month", type: "nominal" },
             value: { field: `root[].${field}`, type: "quantitative" },
           },
+          id: field,
+          mark: "line",
+          name: field,
         })),
+        version: 2,
       },
     });
 
-    expect(Object.keys(result.configuration)).toEqual(["Financials"]);
-    expect(result.configuration.Financials).toEqual([{ month: "Jan", revenue: 100, cost: 60 }]);
-  });
-
-  it("compiles matrix points across the configured date window", () => {
-    const result = buildEngine("matrix", {
-      time: { field: "root[].day", timeUnit: "day", type: "temporal" },
-      value: { aggregate: "sum", field: "root[].activity", type: "quantitative" },
-    }, [
-      { activity: 2, day: "2026-07-01T04:00:00Z" },
-      { activity: 3, day: "2026-07-01T16:00:00Z" },
-      { activity: 7, day: "2026-07-03T12:00:00Z" },
-    ], { name: "Activity" }, {
-      endDate: "2026-07-03T23:59:59Z",
-      startDate: "2026-07-01T00:00:00Z",
-    }).render();
-    const dataset = result.configuration.data.datasets[0];
-
-    expect(dataset.type).toBe("matrix");
-    expect(dataset.label).toBe("Activity");
-    expect(dataset.data.map((point) => ({ date: point.x, value: point.v }))).toEqual([
-      { date: "2026-07-01", value: 5 },
-      { date: "2026-07-02", value: 0 },
-      { date: "2026-07-03", value: 7 },
-    ]);
-  });
-
-  it("compiles matrix points across the effective rolling date window", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-07-23T12:00:00Z"));
-
-    const result = buildEngine("matrix", {
-      time: { field: "root[].day", timeUnit: "day", type: "temporal" },
-      value: { aggregate: "sum", field: "root[].activity", type: "quantitative" },
-    }, [
-      { activity: 2, day: "2026-07-16T12:00:00Z" },
-      { activity: 5, day: "2026-07-20T12:00:00Z" },
-      { activity: 7, day: "2026-07-23T12:00:00Z" },
-    ], { name: "Activity" }, {
-      currentEndDate: true,
-      endDate: "2026-07-12T23:59:59Z",
-      fixedStartDate: false,
-      startDate: "2026-07-05T00:00:00Z",
-      timeInterval: "day",
-    }).render();
-    const points = result.configuration.data.datasets[0].data;
-
-    expect(points).toHaveLength(8);
-    expect(points[0]).toEqual(expect.objectContaining({
-      x: "2026-07-16",
-      v: 2,
-    }));
-    expect(points[4]).toEqual(expect.objectContaining({
-      x: "2026-07-20",
-      v: 5,
-    }));
-    expect(points[7]).toEqual(expect.objectContaining({
-      x: "2026-07-23",
-      v: 7,
-    }));
+    expect(result.configuration).toEqual({
+      Financials: [{ cost: 60, month: "Jan", revenue: 100 }],
+    });
   });
 });

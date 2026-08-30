@@ -20,18 +20,15 @@ const settings = process.env.NODE_ENV === "production" ? require("../../settings
 const fullApiUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_API_HOST : process.env.VITE_APP_API_HOST_DEV;
 
 async function findAnomalyMatches(chart, series) {
-  const dateFormat = getChartValue(chart, "dateFormat");
-  if (!dateFormat) return [];
-
-  const labels = getChartValue(chart, "chartData")?.data?.labels || [];
   const matches = await Promise.all(series.map(async (item) => {
-    const values = Array.isArray(item.dataset?.data) ? item.dataset.data : [];
+    const dateFormat = item.dateFormat || getChartValue(chart, "dateFormat");
+    if (!dateFormat) return [];
     const dataForAnomalies = { series: {} };
 
-    values.forEach((value, index) => {
-      if (!isNumericAlertValue(value) || labels[index] === undefined) return;
-      const formattedLabel = moment(labels[index], dateFormat).format("YYYY-MM-DD");
-      dataForAnomalies.series[formattedLabel] = Number(value);
+    (item.points || []).forEach((point) => {
+      if (!isNumericAlertValue(point.value) || point.label === undefined) return;
+      const formattedLabel = moment(point.label, dateFormat).format("YYYY-MM-DD");
+      dataForAnomalies.series[formattedLabel] = Number(point.value);
     });
 
     if (Object.keys(dataForAnomalies.series).length <= 9) return [];
@@ -152,8 +149,8 @@ async function processAlert(chart, alert, matches) {
   });
 }
 
-async function checkChartForAlerts(chart) {
-  if (chart.type === "table") return null;
+async function checkChartForAlerts(chart, preparedData) {
+  if (chart.type === "table" || !preparedData) return null;
 
   const dbAlerts = await db.Alert.findAll({
     where: {
@@ -179,11 +176,19 @@ async function checkChartForAlerts(chart) {
   const chartDatasetConfigs = chart.ChartDatasetConfigs || [];
   const checks = [];
 
-  chartDatasetConfigs.forEach((cdc, index) => {
+  chartDatasetConfigs.forEach((cdc) => {
     const datasetAlerts = alerts.filter((alert) => alert.cdc_id === cdc.id);
     if (datasetAlerts.length === 0) return;
 
-    const series = getAlertSeries(chart, cdc.id, index);
+    const series = getAlertSeries(
+      preparedData,
+      getChartValue(chart, "visualization"),
+      cdc.id,
+      {
+        chart,
+        timezone: preparedData.timezone,
+      }
+    );
     datasetAlerts.forEach((alert) => {
       checks.push((async () => {
         const matches = alert.type === "anomaly"

@@ -5,6 +5,15 @@ async function createTemplateChart(chart, projectId, datasetMapping) {
   const sourceConfigs = chart.ChartDatasetConfigs || [];
   const chartData = { ...chart, project_id: projectId };
   delete chartData.ChartDatasetConfigs;
+  [
+    "chartData",
+    "chartDataUpdated",
+    "preparedData",
+    "preparedDataFingerprint",
+    "preparedDataSourceFingerprint",
+    "preparedDataUpdatedAt",
+    "preparedDataVisualizationFingerprint",
+  ].forEach((field) => delete chartData[field]);
   const createdChart = await db.Chart.create(chartData);
   const createdConfigs = await Promise.all(sourceConfigs.map((cdc) => {
     const newCdc = {

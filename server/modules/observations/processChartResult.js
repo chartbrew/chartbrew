@@ -53,8 +53,8 @@ async function persistSnapshots(monitor, snapshots, updateRunId, resultAsOf = nu
   return { changed, createdCount };
 }
 
-async function processMonitor(monitor, frame, options, policy) {
-  const extraction = extractMonitorSnapshots(monitor, frame, {
+async function processMonitor(monitor, preparedData, options, policy) {
+  const extraction = extractMonitorSnapshots(monitor, preparedData, {
     maximumSnapshotsPerRefresh: policy.maximumSnapshotsPerRefresh,
     refreshedAt: options.refreshedAt,
   });
@@ -89,7 +89,7 @@ async function processMonitor(monitor, frame, options, policy) {
 
 async function processChartResult(options) {
   const policy = getObservationPolicy();
-  if (!policy.enabled || !options.frame || !options.chart?.id || !options.teamId) {
+  if (!policy.enabled || !options.preparedData || !options.chart?.id || !options.teamId) {
     return { processed: 0, published: 0 };
   }
 
@@ -101,7 +101,7 @@ async function processChartResult(options) {
     },
   });
   const results = await Promise.all(monitors.map((monitor) => {
-    return processMonitor(monitor, options.frame, {
+    return processMonitor(monitor, options.preparedData, {
       refreshedAt: options.refreshedAt || new Date(),
       updateRunId: options.updateRunId,
     }, policy);

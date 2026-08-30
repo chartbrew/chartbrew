@@ -5,7 +5,7 @@ import {
 } from "@heroui/react";
 import {
   LuArrowLeft,
-  LuArrowRight, LuChartNoAxesCombined, LuLayoutDashboard, LuSparkles, LuTrendingUp,
+  LuArrowRight, LuChartNoAxesCombined, LuLayoutDashboard, LuAppWindow, LuTrendingUp,
 } from "react-icons/lu";
 
 import { completeTutorial } from "../../../slices/user";
@@ -21,7 +21,7 @@ const chartbrewV5WelcomeSteps = [{
   eyebrow: "Chartbrew v5",
   title: "A complete UI overhaul",
   description: "Chartbrew v5 refreshes the entire app, especially improving the dashboard, chart editor, and dataset setup so the app feels cleaner, faster, and easier to scan.",
-  icon: LuSparkles,
+  icon: LuAppWindow,
   imageLabel: "UI overhaul image placeholder",
   image: step1Image,
   accentClassName: "from-cyan-500/20 via-emerald-400/10 to-transparent",

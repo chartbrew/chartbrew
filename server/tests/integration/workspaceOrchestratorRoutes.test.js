@@ -65,7 +65,7 @@ async function createUserAccess(models, role = "teamOwner", projects = null) {
 }
 
 async function createObservation(models, { project, team }) {
-  const now = new Date("2026-08-11T00:00:00.000Z");
+  const now = new Date(Date.now() - (60 * 60 * 1000));
   return models.Observation.create({
     absolute_delta: 5,
     baseline_value: 10,

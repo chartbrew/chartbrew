@@ -31,7 +31,11 @@ function AiMessageGroup({
   if (["chart_created", "chart_updated", "chart_temporary"].includes(group.type)) {
     const { parsed } = group.items[0];
     const chartData = createdCharts.find((chart) => `${chart.id}` === `${parsed.chartId}`);
-    return <AiChartPreview chartData={chartData} parsed={parsed} />;
+    return (
+      <div className="mx-auto mb-6 w-full max-w-3xl px-4">
+        <AiChartPreview chartData={chartData} parsed={parsed} />
+      </div>
+    );
   }
 
   const operations = [];

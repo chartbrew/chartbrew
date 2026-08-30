@@ -1,3 +1,5 @@
+const presetManifest = require("../../shared/visualization/presetManifest.json");
+
 const MARK_DEFINITIONS = Object.freeze({
   line: {
     label: "Line",
@@ -10,7 +12,17 @@ const MARK_DEFINITIONS = Object.freeze({
     },
   },
   bar: {
-    label: "Bar",
+    label: "Vertical bar",
+    requiredOneOf: [["category", "time"]],
+    slots: {
+      category: { kind: "dimension", types: ["nominal", "ordinal", "temporal"] },
+      time: { kind: "dimension", types: ["temporal"] },
+      value: { kind: "measure", required: true, types: ["quantitative"] },
+      breakdown: { kind: "dimension", types: ["nominal", "ordinal"] },
+    },
+  },
+  horizontalBar: {
+    label: "Horizontal bar",
     requiredOneOf: [["category", "time"]],
     slots: {
       category: { kind: "dimension", types: ["nominal", "ordinal", "temporal"] },
@@ -161,9 +173,20 @@ function getSlotDefinition(mark, slot) {
   return getMarkDefinition(mark)?.slots?.[slot] || null;
 }
 
+function getPresetDefinition(presetId) {
+  return presetManifest.presets.find((preset) => preset.id === presetId) || null;
+}
+
+function getReadyPresets() {
+  return presetManifest.presets.filter((preset) => preset.releaseState === "ready");
+}
+
 module.exports = {
   MARK_DEFINITIONS,
+  PRESET_MANIFEST: presetManifest,
   getMarkDefinition,
   getMarkNames,
+  getPresetDefinition,
+  getReadyPresets,
   getSlotDefinition,
 };

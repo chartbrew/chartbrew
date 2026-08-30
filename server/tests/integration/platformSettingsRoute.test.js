@@ -72,7 +72,7 @@ describe("Platform settings API", () => {
     expect(response.body.error).toMatch(/do not have access/i);
   });
 
-  it("shows external data controls only when a provider is configured", async () => {
+  it("shows the external feedback control only when a provider is configured", async () => {
     const originalKey = process.env.CB_OPENAI_API_KEY_DEV;
     const session = await createSession(true);
     try {
@@ -85,7 +85,7 @@ describe("Platform settings API", () => {
         group.settings.map((setting) => setting.key)
       ));
       expect(keysWithoutProvider).not.toContain(
-        "workspaceOrchestrator.externalWorkspaceContextEnabled"
+        "workspaceOrchestrator.externalLearningContextEnabled"
       );
 
       process.env.CB_OPENAI_API_KEY_DEV = "test-provider-key";
@@ -97,6 +97,9 @@ describe("Platform settings API", () => {
         group.settings.map((setting) => setting.key)
       ));
       expect(keysWithProvider).toContain(
+        "workspaceOrchestrator.externalLearningContextEnabled"
+      );
+      expect(keysWithProvider).not.toContain(
         "workspaceOrchestrator.externalWorkspaceContextEnabled"
       );
       expect(JSON.stringify(withProvider.body)).not.toContain("test-provider-key");

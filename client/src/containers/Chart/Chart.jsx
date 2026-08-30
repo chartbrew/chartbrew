@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router";
 import {
-  Card, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
+  Card, Dropdown, Button, Modal, Input, Link as LinkNext,
   Popover, Chip, Select,
   Badge,
   Separator,
@@ -30,31 +30,29 @@ import {
   removeChart, runQuery, runQueryWithFilters, getChart, updateChart,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
-import LineChart from "./components/LineChart";
-import BarChart from "./components/BarChart";
-import RadarChart from "./components/RadarChart";
-import PolarChart from "./components/PolarChart";
-import DoughnutChart from "./components/DoughnutChart";
-import PieChart from "./components/PieChart";
-import MatrixChart from "./components/MatrixChart";
-import TableContainer from "./components/TableView/TableContainer";
+import ChartRenderer from "./components/ChartRenderer";
 import ChartFilters from "./components/ChartFilters";
 import useInterval from "../../modules/useInterval";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import KpiMode from "./components/KpiMode";
 import useChartSize from "../../modules/useChartSize";
 import DatasetAlerts from "../AddChart/components/DatasetAlerts";
 import isMac from "../../modules/isMac";
-import GaugeChart from "./components/GaugeChart";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { exportChartToExcel, canExportChart } from "../../modules/exportChart";
 import ChartSharing from "./components/ChartSharing";
+import {
+  canExportChartImage,
+  canManageChartLinks,
+  getCurrentTeamRole,
+} from "./components/sharing/shareImageDefaults";
 import { getExposedChartFilters } from "../../modules/getChartDatasetConditions";
 import { buildChartRuntimeRequest, normalizeChartFilterCondition } from "../../modules/chartRuntimeFilters";
 import { createMonitor, getMonitorOptions } from "../../api/observations";
 import WatchMetricModal from "./components/WatchMetricModal";
+import getChartRefreshInterval from "../../modules/getChartRefreshInterval";
+import { hasPresetCapability } from "../../visualization/presetRegistry";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -82,6 +80,7 @@ function Chart(props) {
     onAddChartFilter = null,
     onClearChartFilter = null,
     onRefreshRuntimeChart = null,
+    embedded = false,
   } = props;
 
   const team = useSelector(selectTeam);
@@ -118,6 +117,10 @@ function Chart(props) {
   const [isCompact, setIsCompact] = useState(false);
   const containerRef = useRef(null);
   const isRuntimeManaged = typeof onRefreshRuntimeChart === "function";
+  const chartContentRef = useRef(null);
+  const currentTeamRole = getCurrentTeamRole(team, user.id);
+  const canManageLinks = canManageChartLinks(currentTeamRole, params.projectId);
+  const canExportImage = canExportChartImage(currentTeamRole, params.projectId);
   const activeDashboardFilters = Array.isArray(externalDashboardFilters)
     ? externalDashboardFilters
     : (dashboardFilters || []);
@@ -160,7 +163,7 @@ function Chart(props) {
         fromInterval: true
       }));
     }
-  }, !isPublic && chart.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
+  }, getChartRefreshInterval(chart.autoUpdate, isPublic));
 
   useEffect(() => {
     if (Array.isArray(externalChartFilters)) {
@@ -559,11 +562,12 @@ function Chart(props) {
   };
 
   const _getUpdatedTime = (chart) => {
-    if (moment().diff(moment(chart.chartDataUpdated), "days") > 1) {
-      return moment(chart.chartDataUpdated).calendar();
+    const updatedAt = chart.render?.updatedAt || chart.preparedDataUpdatedAt;
+    if (moment().diff(moment(updatedAt), "days") > 1) {
+      return moment(updatedAt).calendar();
     }
 
-    return moment(chart.chartDataUpdated).fromNow();
+    return moment(updatedAt).fromNow();
   };
 
   const _onAddFilter = (condition) => {
@@ -631,6 +635,9 @@ function Chart(props) {
   };
 
   const { projectId } = params;
+  const hasKpiSegment = chart.type === "kpi"
+    || (chart.mode === "kpichart" && hasPresetCapability(chart.type, "kpiOverlay"));
+  const showChartTitle = !isCompact || !hasKpiSegment;
 
   return (
     <motion.div
@@ -646,108 +653,32 @@ function Chart(props) {
       )}
       {chart && (
         <Card
-          className={`h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
+          className={embedded
+            ? "relative h-full border-none bg-transparent shadow-none"
+            : `relative h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
         >
-          <Card.Header className={`pb-0 flex flex-row justify-between items-start ${isCompact ? "h-0 p-0 overflow-hidden" : ""}`}>
-            <div className={`flex items-start justify-start ${isCompact ? "hidden" : ""}`}>
-              <div>
-                <Row align="center" className={"flex-wrap gap-1"}>
+          {showChartTitle && !embedded && (
+            <Card.Header className="min-w-0 pb-0 pr-8 flex flex-row items-center">
+              <div className="min-w-0 flex-1" title={chart.name}>
+                <Row align="center" className="min-w-0 flex-nowrap gap-1">
                   {chart.draft && (
-                    <Chip variant="secondary" size="sm" className="rounded-sm">Draft</Chip>
+                    <Chip variant="secondary" size="sm" className="shrink-0 rounded-sm">Draft</Chip>
                   )}
                   <>
                     {_canAccess("projectEditor") && !editingLayout && (
-                      <Link to={`/dashboard/${params.projectId}/chart/${chart.id}/edit`}>
-                        <div className={"text-foreground font-bold text-sm"}>{chart.name}</div>
+                      <Link className="min-w-0" to={`/dashboard/${params.projectId}/chart/${chart.id}/edit`}>
+                        <div className="truncate text-foreground font-medium text-sm">{chart.name}</div>
                       </Link>
                     )}
                     {(!_canAccess("projectEditor") || editingLayout) && (
-                      <Text b>{chart.name}</Text>
+                      <Text className="block min-w-0 truncate text-sm font-medium">{chart.name}</Text>
                     )}
                   </>
                 </Row>
-                {chart.chartData && (
-                  <Row justify="flex-start" align="center" className={"gap-1"}>
-                    {!chartLoading && !chart.loading && (
-                      <>
-                        <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart)}`}</span>
-                      </>
-                    )}
-                    {(chartLoading || chart.loading) && (
-                      <>
-                        <Spinner size="sm" color="default" aria-label="Updating chart" />
-                        <span className="text-[10px] text-default-500">{"Updating..."}</span>
-                      </>
-                    )}
-                    {chart.autoUpdate > 0 && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuCalendarClock size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>
-                          {`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}
-                        </Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {chart.public && !isPublic && !print && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuLockOpen size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>This chart is public</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {(chart.onReport && !isPublic && !print && !chart.draft) && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuMonitor size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Visible on your report and snapshots</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {(!chart.onReport || chart.draft) && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuMonitorX size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>
-                          {chart.draft ? "Drafts are not visible on report and snapshots" : "Hidden on reports and snapshots"}
-                        </Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {chart?.Alerts?.length > 0 && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div className="hover:text-accent cursor-pointer" onClick={_openAlertsModal}>
-                            <LuBell size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>This chart has alerts</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {_onGetVariables()?.length > 0 && (
-                      <Tooltip>
-                        <Tooltip.Trigger>
-                          <div>
-                            <LuVariable size={12} />
-                          </div>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>This chart has variables</Tooltip.Content>
-                      </Tooltip>
-                    )}
-                  </Row>
-                )}
               </div>
-            </div>
-            <div className={`flex items-center justify-end gap-1 ${isCompact ? "absolute right-2 top-2" : ""}`}>
+            </Card.Header>
+          )}
+          <div className={`absolute right-2 top-2 z-10 flex items-center justify-end gap-1${embedded ? " hidden" : ""}`}>
               {_checkIfFilters() && (
                 <div className="flex items-center gap-1">
                   {chartSize?.[2] > 3 && (
@@ -793,7 +724,7 @@ function Chart(props) {
                 <Dropdown aria-label="Select a chart option">
                   <Dropdown.Trigger>
                     <LinkNext className="cursor-pointer chart-settings-tutorial">
-                      <LuEllipsisVertical className="text-default-500" />
+                      <LuEllipsisVertical size={16} className="text-default-500" />
                     </LinkNext>
                   </Dropdown.Trigger>
                   <Dropdown.Popover>
@@ -817,14 +748,14 @@ function Chart(props) {
                             Edit chart
                           </Dropdown.Item>
                         )}
-                        {_canAccess("projectEditor") && (
+                        {!chart.draft && (canManageLinks || canExportImage) && (
                           <Dropdown.Item
-                            id="watch"
-                            onPress={_openMonitorModal}
-                            textValue="Watch metric"
+                            id="embed"
+                            onPress={_onEmbed}
+                            textValue="Share"
                           >
-                            <LuActivity />
-                            Watch metric
+                            <LuShare />
+                            Share
                           </Dropdown.Item>
                         )}
                         {_canAccess("projectEditor") && chart.draft && (
@@ -859,17 +790,14 @@ function Chart(props) {
                         )}
                         {_canAccess("projectEditor") && (
                           <Dropdown.Item
-                            id="autoupdate"
-                            onPress={_openUpdateModal}
-                            textValue="Auto-update"
+                            id="watch"
+                            onPress={_openMonitorModal}
+                            textValue="Watch metric"
                           >
-                            <LuCalendarClock />
-                            Auto-update
+                            <LuActivity />
+                            Watch metric
                           </Dropdown.Item>
                         )}
-                      </Dropdown.Section>
-                      <Separator />
-                      <Dropdown.Section>
                         {_canAccess("projectEditor") && (
                           <Dropdown.Item
                             id="alerts"
@@ -906,14 +834,14 @@ function Chart(props) {
                             {"Make private"}
                           </Dropdown.Item>
                         )}
-                        {!chart.draft && _canAccess("projectEditor") && (
+                        {_canAccess("projectEditor") && (
                           <Dropdown.Item
-                            id="embed"
-                            onPress={_onEmbed}
-                            textValue="Embed & Share"
+                            id="autoupdate"
+                            onPress={_openUpdateModal}
+                            textValue="Auto-update"
                           >
-                            <LuShare />
-                            {"Embed & Share"}
+                            <LuCalendarClock />
+                            Auto-update
                           </Dropdown.Item>
                         )}
                       </Dropdown.Section>
@@ -947,21 +875,29 @@ function Chart(props) {
                         <Dropdown.Item id="status" isReadOnly className="opacity-100" textValue="Chart details">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-default-500">Last updated: {_getUpdatedTime(chart)}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {chart.autoUpdate > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <LuCalendarClock size={12} />
-                                  <span className="text-[10px] text-default-500">Updates every {_getUpdateFreqText(chart.autoUpdate)}</span>
-                                </div>
+                              {(chartLoading || chart.loading) ? (
+                                <span className="text-[10px] text-default-500">Updating...</span>
+                              ) : (
+                                <span className="text-[10px] text-default-500">Last updated: {_getUpdatedTime(chart)}</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
+                            {chart.autoUpdate > 0 && (
+                              <div className="flex items-center gap-1">
+                                <LuCalendarClock size={12} />
+                                <span className="text-[10px] text-default-500">Updates every {_getUpdateFreqText(chart.autoUpdate)}</span>
+                              </div>
+                            )}
+                            <div className="flex flex-wrap items-center gap-2">
                               {chart.public && !isPublic && !print && (
                                 <div className="flex items-center gap-1">
                                   <LuLockOpen size={12} />
                                   <span className="text-[10px] text-default-500">Public chart</span>
+                                </div>
+                              )}
+                              {(chart.onReport && !isPublic && !print && !chart.draft) && (
+                                <div className="flex items-center gap-1">
+                                  <LuMonitor size={12} />
+                                  <span className="text-[10px] text-default-500">On report</span>
                                 </div>
                               )}
                               {(!chart.onReport || chart.draft) && (
@@ -974,6 +910,12 @@ function Chart(props) {
                                 <div className="flex items-center gap-1">
                                   <LuBell size={12} />
                                   <span className="text-[10px] text-default-500">Has alerts</span>
+                                </div>
+                              )}
+                              {_onGetVariables()?.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <LuVariable size={12} />
+                                  <span className="text-[10px] text-default-500">Has variables</span>
                                 </div>
                               )}
                             </div>
@@ -1007,100 +949,20 @@ function Chart(props) {
                 </Dropdown>
               )}
             </div>
-          </Card.Header>
           <Card.Content
-            className="overflow-y-hidden"
+            className={embedded ? "overflow-hidden p-0" : "overflow-y-hidden"}
           >
-            {chart.chartData && (
-              <div className="h-full">
-                {chart.type === "line"
-                  && (
-                    <LineChart
-                      chart={chart}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "bar"
-                  && (
-                    <BarChart
-                      chart={chart}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "pie"
-                  && (
-                  <PieChart
+            {chart.render?.configuration && (
+              <div className="flex h-full w-full items-center justify-center">
+                <div ref={chartContentRef} className="h-full w-full min-h-0">
+                  <ChartRenderer
                     chart={chart}
                     height={height}
+                    loading={chartLoading || chart.loading}
                     redraw={redraw}
                     redrawComplete={() => setRedraw(false)}
                   />
-                  )}
-                {chart.type === "doughnut"
-                  && (
-                    <DoughnutChart
-                      chart={chart}
-                      height={height}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "radar"
-                  && (
-                  <RadarChart
-                    chart={chart}
-                    height={height}
-                    redraw={redraw}
-                    redrawComplete={() => setRedraw(false)}
-                  />
-                  )}
-                {chart.type === "polar"
-                  && (
-                    <PolarChart
-                      chart={chart}
-                      height={height}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "matrix"
-                  && (
-                    <MatrixChart
-                      chart={chart}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "table"
-                  && (
-                    <div className="h-full">
-                      <TableContainer
-                        tabularData={chart.chartData}
-                        datasets={chart.ChartDatasetConfigs}
-                        defaultRowsPerPage={chart.defaultRowsPerPage}
-                      />
-                    </div>
-                  )}
-                {(chart.type === "kpi" || chart.type === "avg")
-                  && (
-                    <KpiMode
-                      chart={chart}
-                      height={height}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
-                {chart.type === "gauge"
-                  && (
-                    <GaugeChart
-                      chart={chart}
-                      height={height}
-                      redraw={redraw}
-                      redrawComplete={() => setRedraw(false)}
-                    />
-                  )}
+                </div>
               </div>
             )}
           </Card.Content>
@@ -1356,7 +1218,13 @@ function Chart(props) {
       {/* EMBED CHART MODAL */}
       {chart && (
         <ChartSharing
+          canExportImage={canExportImage}
+          canManageLinks={canManageLinks}
           chart={chart}
+          getSourceSize={() => ({
+            height: chartContentRef.current?.clientHeight || height,
+            width: chartContentRef.current?.clientWidth || containerRef.current?.clientWidth || 600,
+          })}
           isOpen={embedModal}
           onClose={() => setEmbedModal(false)}
         />
@@ -1465,6 +1333,7 @@ Chart.propTypes = {
   onAddChartFilter: PropTypes.func,
   onClearChartFilter: PropTypes.func,
   onRefreshRuntimeChart: PropTypes.func,
+  embedded: PropTypes.bool,
 };
 
 export default Chart;

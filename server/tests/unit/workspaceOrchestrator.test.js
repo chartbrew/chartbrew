@@ -735,13 +735,11 @@ describe("workspace orchestrator safety", () => {
       CB_OPENAI_ORCHESTRATOR_SYNTHESIS_MODEL: "synthesis-model",
       CB_OPENAI_ORCHESTRATOR_WORKER_MODEL: "worker-model",
       CB_OPENAI_ORCHESTRATOR_WORKER_REASONING_EFFORT: "low",
-      CB_WORKSPACE_EXTERNAL_CONTEXT_ENABLED: "true",
     }).workspaceOrchestrator;
 
     expect(policy).toEqual(expect.objectContaining({
       plannerModel: "planner-model",
       plannerReasoningEffort: "high",
-      externalWorkspaceContextEnabled: true,
       synthesisModel: "synthesis-model",
       workerModel: "worker-model",
       workerReasoningEffort: "low",
@@ -964,6 +962,25 @@ describe("workspace orchestrator safety", () => {
       workspaceWritesEnabled: false,
     }));
     expect(editorEnvelope.editableProjectIds).toEqual([4]);
+  });
+
+  it("uses external workspace context whenever Chartbrew AI is enabled", async () => {
+    vi.spyOn(db.Project, "findAll").mockResolvedValue([{ id: 4 }]);
+    vi.spyOn(db.User, "findByPk").mockResolvedValue({ email: "ren@example.com" });
+    const originalKey = process.env.CB_OPENAI_API_KEY_DEV;
+    process.env.CB_OPENAI_API_KEY_DEV = "test-provider-key";
+    try {
+      setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": true });
+      const enabledEnvelope = await getWorkspaceAccessEnvelope(access);
+      setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": false });
+      const disabledEnvelope = await getWorkspaceAccessEnvelope(access);
+
+      expect(enabledEnvelope.canUseExternalWorkspaceContext).toBe(true);
+      expect(disabledEnvelope.canUseExternalWorkspaceContext).toBe(false);
+    } finally {
+      if (originalKey === undefined) delete process.env.CB_OPENAI_API_KEY_DEV;
+      else process.env.CB_OPENAI_API_KEY_DEV = originalKey;
+    }
   });
 
   it("gives a project viewer only stored reporting tools", () => {

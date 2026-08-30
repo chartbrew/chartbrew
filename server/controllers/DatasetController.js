@@ -117,6 +117,14 @@ function toAuditError(error, stage = "unknown") {
   return wrappedError;
 }
 
+function getRequestAuditError(error, traceContext) {
+  if (traceContext?.triggerType !== "data_api") return error;
+  const safeError = new Error("The data source request failed.");
+  safeError.code = "DATA_UNAVAILABLE";
+  safeError.auditStage = error.auditStage || "connection";
+  return safeError;
+}
+
 class DatasetController {
   constructor() {
     this.dataRequestController = new DataRequestController();
@@ -345,6 +353,9 @@ class DatasetController {
     viewerScope = "shared",
     readRuntimeSourceCache = false,
     writeRuntimeSourceCache = false,
+    maintainDatasetMetadata = true,
+    signal,
+    deadlineAt,
   }) {
     let gDataset;
     let mainDr;
@@ -507,16 +518,18 @@ class DatasetController {
                   } = applySourceVariables(dataRequest, variables);
                   const connection = originalDataRequest.Connection;
 
-                  requestMetadata = {
-                    ...requestMetadata,
-                    queryHash: createHash(processedQuery || originalDataRequest.query),
-                    queryPreview: sanitizeQueryPreview(processedQuery || originalDataRequest.query),
-                    routeHash: createHash(originalDataRequest.route),
-                    routeSnippet: sanitizeRouteSnippet(originalDataRequest.route),
-                    method: originalDataRequest.method || null,
-                    headerNames: sanitizeHeaderNames(originalDataRequest.headers),
-                    bodySnippet: sanitizeSnippet(originalDataRequest.body),
-                  };
+                  if (traceContext?.triggerType !== "data_api") {
+                    requestMetadata = {
+                      ...requestMetadata,
+                      queryHash: createHash(processedQuery || originalDataRequest.query),
+                      queryPreview: sanitizeQueryPreview(processedQuery || originalDataRequest.query),
+                      routeHash: createHash(originalDataRequest.route),
+                      routeSnippet: sanitizeRouteSnippet(originalDataRequest.route),
+                      method: originalDataRequest.method || null,
+                      headerNames: sanitizeHeaderNames(originalDataRequest.headers),
+                      bodySnippet: sanitizeSnippet(originalDataRequest.body),
+                    };
+                  }
 
                   if (requestTraceContext) {
                     requestEvent = await startEvent(requestTraceContext, "dataset_request_started", requestMetadata);
@@ -554,6 +567,7 @@ class DatasetController {
                     traceContext: requestTraceContext,
                     requestEvent,
                     requestMetadata,
+                    redactSensitivePayload: traceContext?.triggerType === "data_api",
                   };
 
                   const sourceResponse = runSourceDataRequest({
@@ -567,6 +581,8 @@ class DatasetController {
                     processedQuery,
                     processedDataRequest,
                     auditContext,
+                    signal,
+                    deadlineAt,
                   });
                   if (sourceResponse) {
                     return sourceResponse;
@@ -576,13 +592,14 @@ class DatasetController {
                 } catch (error) {
                   const wrappedError = toAuditError(error, error.auditStage || "connection");
                   if (requestTraceContext && !wrappedError.auditLogged) {
+                    const auditError = getRequestAuditError(wrappedError, traceContext);
                     if (requestEvent) {
                       await finishEvent(requestTraceContext, requestEvent, "failed", {
                         ...requestMetadata,
-                        errorMessage: wrappedError.message,
+                        errorMessage: auditError.message,
                       });
                     }
-                    await failRun(requestTraceContext, wrappedError, {
+                    await failRun(requestTraceContext, auditError, {
                       stage: wrappedError.auditStage || "connection",
                       payload: requestMetadata,
                       summary: requestMetadata,
@@ -630,16 +647,18 @@ class DatasetController {
             } = applySourceVariables(dataRequest, variables);
             const connection = originalDataRequest.Connection;
 
-            requestMetadata = {
-              ...requestMetadata,
-              queryHash: createHash(processedQuery || originalDataRequest.query),
-              queryPreview: sanitizeQueryPreview(processedQuery || originalDataRequest.query),
-              routeHash: createHash(originalDataRequest.route),
-              routeSnippet: sanitizeRouteSnippet(originalDataRequest.route),
-              method: originalDataRequest.method || null,
-              headerNames: sanitizeHeaderNames(originalDataRequest.headers),
-              bodySnippet: sanitizeSnippet(originalDataRequest.body),
-            };
+            if (traceContext?.triggerType !== "data_api") {
+              requestMetadata = {
+                ...requestMetadata,
+                queryHash: createHash(processedQuery || originalDataRequest.query),
+                queryPreview: sanitizeQueryPreview(processedQuery || originalDataRequest.query),
+                routeHash: createHash(originalDataRequest.route),
+                routeSnippet: sanitizeRouteSnippet(originalDataRequest.route),
+                method: originalDataRequest.method || null,
+                headerNames: sanitizeHeaderNames(originalDataRequest.headers),
+                bodySnippet: sanitizeSnippet(originalDataRequest.body),
+              };
+            }
 
             if (requestTraceContext) {
               requestEvent = await startEvent(requestTraceContext, "dataset_request_started", requestMetadata);
@@ -677,6 +696,7 @@ class DatasetController {
               traceContext: requestTraceContext,
               requestEvent,
               requestMetadata,
+              redactSensitivePayload: traceContext?.triggerType === "data_api",
             };
 
             const sourceResponse = runSourceDataRequest({
@@ -690,6 +710,8 @@ class DatasetController {
               processedQuery,
               processedDataRequest,
               auditContext,
+              signal,
+              deadlineAt,
             });
             if (sourceResponse) {
               return sourceResponse;
@@ -699,13 +721,14 @@ class DatasetController {
           } catch (error) {
             const wrappedError = toAuditError(error, error.auditStage || "connection");
             if (requestTraceContext && !wrappedError.auditLogged) {
+              const auditError = getRequestAuditError(wrappedError, traceContext);
               if (requestEvent) {
                 await finishEvent(requestTraceContext, requestEvent, "failed", {
                   ...requestMetadata,
-                  errorMessage: wrappedError.message,
+                  errorMessage: auditError.message,
                 });
               }
-              await failRun(requestTraceContext, wrappedError, {
+              await failRun(requestTraceContext, auditError, {
                 stage: wrappedError.auditStage || "connection",
                 payload: requestMetadata,
                 summary: requestMetadata,
@@ -720,6 +743,11 @@ class DatasetController {
       })
       .then(async (promisedRequests) => {
         try {
+          if (signal?.aborted) {
+            const timeoutError = new Error("The request exceeded the execution time limit.");
+            timeoutError.code = "EXECUTION_TIMEOUT";
+            throw timeoutError;
+          }
           if (promisedRequests?.__runtimeSourceCache) {
             return Promise.resolve({
               options: gDataset,
@@ -756,7 +784,7 @@ class DatasetController {
             data = applyTransformation(data, mainDr.transform);
           }
 
-          if (noSource !== true && !runtimeContext?.hasRuntimeFilters) {
+          if (maintainDatasetMetadata && noSource !== true && !runtimeContext?.hasRuntimeFilters) {
             const fieldsSchema = discoverDatasetFieldsSchema(data);
             if (!_.isEqual(gDataset.fieldsSchema || {}, fieldsSchema)) {
               await gDataset.update({ fieldsSchema });
@@ -781,11 +809,13 @@ class DatasetController {
             });
           }
 
-          scheduleDatasetProfile({
-            datasetId: gDataset?.id || dataset_id,
-            teamId: gDataset?.team_id || teamId || team_id,
-            sampleData: data,
-          }).catch(() => null);
+          if (maintainDatasetMetadata && !runtimeContext?.hasRuntimeFilters) {
+            scheduleDatasetProfile({
+              datasetId: gDataset?.id || dataset_id,
+              teamId: gDataset?.team_id || teamId || team_id,
+              sampleData: data,
+            }).catch(() => null);
+          }
 
           return Promise.resolve({
             options: gDataset,

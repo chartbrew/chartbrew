@@ -53,6 +53,51 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    scopes: {
+      type: DataTypes.TEXT("long"),
+      allowNull: false,
+      defaultValue: () => "[]",
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("scopes"));
+        } catch (error) {
+          return [];
+        }
+      },
+      set(value) {
+        return this.setDataValue("scopes", JSON.stringify(value || []));
+      },
+    },
+    project_ids: {
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
+      get() {
+        const value = this.getDataValue("project_ids");
+        if (value === null) return null;
+
+        try {
+          return JSON.parse(value);
+        } catch (error) {
+          return [];
+        }
+      },
+      set(value) {
+        return this.setDataValue("project_ids", value === null ? null : JSON.stringify(value));
+      },
+    },
+    all_projects: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    last_used_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE
@@ -67,6 +112,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Apikey.associate = (models) => {
     models.Apikey.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.Apikey.belongsTo(models.User, { foreignKey: "user_id", constraints: false });
     models.Apikey.hasMany(models.Integration, { foreignKey: "apikey_id" });
   };
 

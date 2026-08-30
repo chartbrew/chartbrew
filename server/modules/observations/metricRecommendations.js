@@ -136,8 +136,9 @@ function buildMetricRecommendations({
       const activeAlertCount = (chart.Alerts || []).filter((alert) => alert.active).length;
       const pinCount = Number(pinCounts.get(Number(chart.project_id))) || 0;
       const semanticConfirmed = getSemanticConfirmation(chart, layer, definition, now);
-      const updatedAtValue = chart.chartDataUpdated
-        ? new Date(chart.chartDataUpdated).getTime()
+      const chartUpdatedAt = chart.preparedDataUpdatedAt;
+      const updatedAtValue = chartUpdatedAt
+        ? new Date(chartUpdatedAt).getTime()
         : 0;
       const aggregate = definition.metricSpec.aggregate || "none";
       const aggregateLabel = AGGREGATION_LABELS[aggregate] || "Calculated value";

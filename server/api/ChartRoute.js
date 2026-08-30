@@ -148,7 +148,11 @@ module.exports = (app) => {
       }
     }
 
-    return { chart, project, hasAuthenticatedProjectAccess };
+    const hydratedChart = await chartController.hydratePreparedChart(chart, {
+      refresh: true,
+      timezone: project.timezone,
+    });
+    return { chart: hydratedChart, project, hasAuthenticatedProjectAccess };
   };
 
   const resolveRuntimeVariables = async (req, project, providedVariables = {}) => {
@@ -448,7 +452,9 @@ module.exports = (app) => {
   ** Route to get a chart by id
   */
   app.get("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("readAny"), (req, res) => {
-    return chartController.findById(req.params.chart_id)
+    return chartController.findById(req.params.chart_id, null, {
+      refreshPreparedData: true,
+    })
       .then((chart) => {
         return res.status(200).send(chart);
       })
@@ -834,8 +840,8 @@ module.exports = (app) => {
           name: chart.name,
           type: chart.type,
           subType: chart.subType,
-          chartDataUpdated: chart.chartDataUpdated,
-          chartData: chart.chartData,
+          preparedDataUpdatedAt: chart.preparedDataUpdatedAt,
+          render: chart.render,
           ChartDatasetConfigs: chart.ChartDatasetConfigs,
           mode: chart.mode,
           chartSize: chart.chartSize,

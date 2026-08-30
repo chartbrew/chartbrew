@@ -1,6 +1,8 @@
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcrypt";
 
+const TEST_PASSWORD_HASH = bcrypt.hashSync("password123", 10);
+
 export const userFactory = {
   build: (overrides = {}) => {
     const firstName = faker.person.firstName();
@@ -9,7 +11,7 @@ export const userFactory = {
     return {
       name: `${firstName} ${lastName}`,
       email: faker.internet.email({ firstName, lastName }).toLowerCase(),
-      password: bcrypt.hashSync("password123", 10), // Default test password
+      password: TEST_PASSWORD_HASH,
       active: true,
       admin: false,
       tutorials: JSON.stringify({}),

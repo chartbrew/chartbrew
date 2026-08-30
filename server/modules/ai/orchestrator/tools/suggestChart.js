@@ -16,7 +16,7 @@ async function suggestChart(payload) {
   // Use AI to suggest appropriate chart type
   const prompt = `Based on the question "${question}" and result columns ${JSON.stringify(result_shape.columns)}, suggest the most appropriate Chartbrew chart type and configuration.
 
-Available chart types: line, bar, pie, doughnut, radar, polar, table, kpi, avg, gauge.
+Available chart types: line, bar, horizontalBar, pie, doughnut, radar, polar, table, kpi, avg, gauge.
 
 Respond with JSON only: { "type": "...", "title": "...", "encodings": {}, "options": {} }`;
 

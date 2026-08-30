@@ -1,9 +1,10 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import { resolve } from "path";
 
 export default defineConfig({
   test: {
     environment: "node",
+    exclude: [...configDefaults.exclude, "tests/browser/**"],
     globals: true,
     setupFiles: ["./tests/setup.js"],
     testTimeout: 30000, // 30s timeout for tests (useful for container startup)

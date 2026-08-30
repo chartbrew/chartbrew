@@ -11,6 +11,12 @@ const {
   sanitizeTeamName,
   sanitizeUseCases,
 } = require("../modules/teamOnboarding/businessProfile");
+const {
+  DATA_API_SCOPES,
+  normalizeProjectIds,
+  normalizeScopes,
+  validateKeyProjectIds,
+} = require("../modules/dataApiAccess");
 const UserController = require("./UserController");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -561,31 +567,112 @@ class TeamController {
 
   async createApiKey(teamId, userData, body) {
     try {
-      const token = jwt.sign({
+      const name = typeof body.name === "string" ? body.name.trim() : "";
+      if (!name) throw new Error("A key name is required.");
+
+      const requestedFields = Object.keys(body);
+      const isDataApiKey = requestedFields.some((field) => field !== "name");
+      const allowedFields = new Set(["name", "scopes", "allProjects", "projectIds"]);
+      if (requestedFields.some((field) => !allowedFields.has(field))) {
+        throw new Error("The key settings are not valid.");
+      }
+
+      const apiKeyId = uuidv4();
+      const claims = {
         id: userData.id,
         email: userData.email,
-      }, settings.encryptionKey, { expiresIn: "9999 years" });
+      };
+      const createValues = {
+        id: apiKeyId,
+        name,
+        team_id: Number(teamId),
+      };
 
-      return await db.Apikey.create({
-        name: body.name,
-        team_id: teamId,
+      if (isDataApiKey) {
+        if (!Array.isArray(body.scopes) || body.scopes.some((scope) => !DATA_API_SCOPES.has(scope))) {
+          throw new Error("The key permissions are not valid.");
+        }
+
+        const scopes = normalizeScopes(body.scopes);
+        if (!scopes.includes("data:read")) {
+          throw new Error("Read access is required.");
+        }
+        if (typeof body.allProjects !== "boolean") {
+          throw new Error("Select the projects that this key can access.");
+        }
+
+        const projectIds = normalizeProjectIds(body.projectIds);
+        if (!body.allProjects && projectIds.length === 0) {
+          throw new Error("Select at least one project.");
+        }
+        if (!Array.isArray(body.projectIds) || !await validateKeyProjectIds(db, Number(teamId), body.projectIds)) {
+          throw new Error("The selected projects are not valid.");
+        }
+
+        Object.assign(claims, {
+          apiKeyId,
+          teamId: Number(teamId),
+          tokenType: "api_key",
+        });
+        Object.assign(createValues, {
+          user_id: userData.id,
+          scopes,
+          project_ids: body.allProjects ? [] : projectIds,
+          all_projects: body.allProjects,
+        });
+      }
+
+      const token = jwt.sign(claims, settings.encryptionKey, { expiresIn: "9999 years" });
+      createValues.token = token;
+
+      const apiKey = await db.Apikey.create(createValues);
+
+      return {
+        id: apiKey.id,
+        name: apiKey.name,
         token,
-      });
+        createdAt: apiKey.createdAt,
+        lastUsedAt: apiKey.last_used_at,
+        dataApiAccess: isDataApiKey ? "ready" : "unavailable",
+        permissions: isDataApiKey ? apiKey.scopes : [],
+        projectAccess: isDataApiKey ? {
+          allProjects: apiKey.all_projects,
+          projectIds: apiKey.project_ids,
+        } : null,
+      };
     } catch (e) {
       return Promise.reject(e);
     }
   }
 
   getApiKeys(teamId) {
-    return db.Apikey.findAll({ where: { team_id: teamId } })
+    return db.Apikey.findAll({
+      attributes: [
+        "id", "name", "user_id", "scopes", "project_ids", "all_projects", "last_used_at",
+        "createdAt",
+      ],
+      where: { team_id: teamId },
+    })
       .then((apiKeys) => {
         if (!apiKeys || apiKeys.length < 1) return [];
 
-        return apiKeys.map((key) => ({
-          id: key.id,
-          name: key.name,
-          createdAt: key.createdAt,
-        }));
+        return apiKeys.map((key) => {
+          const permissions = normalizeScopes(key.scopes);
+          const dataApiReady = Boolean(key.user_id) && permissions.includes("data:read");
+
+          return {
+            id: key.id,
+            name: key.name,
+            createdAt: key.createdAt,
+            lastUsedAt: key.last_used_at,
+            dataApiAccess: dataApiReady ? "ready" : "unavailable",
+            permissions: dataApiReady ? permissions : [],
+            projectAccess: dataApiReady ? {
+              allProjects: Boolean(key.all_projects),
+              projectIds: normalizeProjectIds(key.project_ids),
+            } : null,
+          };
+        });
       })
       .catch((err) => {
         return Promise.reject(err);

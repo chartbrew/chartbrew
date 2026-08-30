@@ -12,6 +12,7 @@ const {
   attachContextManifest,
   collectRecentSourceContext,
   getChartPreviewsFromToolResults,
+  getConnectionInspectionToolChoice,
   getVisualizationToolChoice,
   sanitizeToolError,
   buildUsageRecordFromResponse,
@@ -390,6 +391,29 @@ describe("orchestrator Responses API adapters", () => {
       enum: ["preview", "persist"],
       default: "preview",
     });
+    expect(tool.parameters.properties.overrides.properties).toMatchObject({
+      toolName: { type: "string" },
+      arguments: { type: "object" },
+    });
+    expect(tool.description).toContain("For MCP");
+  });
+
+  it("allows connection inspection without a project ID", async () => {
+    const tools = await availableTools();
+    const tool = tools.find((candidate) => candidate.name === "list_connections");
+
+    expect(tool.parameters.required).toEqual([]);
+  });
+
+  it("forces connection inspection when the user names a saved provider", () => {
+    expect(getConnectionInspectionToolChoice(
+      "Check PostHog for visitors",
+      [{ name: "PostHog MCP", type: "mcp" }]
+    )).toEqual({ type: "function", name: "list_connections" });
+    expect(getConnectionInspectionToolChoice(
+      "How many visitors did I get?",
+      [{ name: "PostHog MCP", type: "mcp" }]
+    )).toBeNull();
   });
 
   it("does not advertise source-owned Jira for generic query generation", async () => {

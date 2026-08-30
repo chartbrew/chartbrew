@@ -44,8 +44,7 @@ describe("visualization time handling", () => {
       timezone: "UTC",
     }).render();
 
-    expect(result.configuration.data.labels).toEqual(["Apr", "May"]);
-    expect(result.configuration.data.datasets[0].data).toEqual([4, 2]);
+    expect(result.preparedData.results[0].rows.map((row) => row.value)).toEqual([4, 2]);
     expect(result.dateFormat).toBe("MMM");
     expect(result.isTimeseries).toBe(true);
   });

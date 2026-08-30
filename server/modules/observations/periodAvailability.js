@@ -1,5 +1,6 @@
 const { resolveChartConfiguredDateRange } = require("../chartRuntimeFilters");
 const { getCompletedPeriodWindows } = require("./periodWindows");
+const moment = require("moment-timezone");
 
 const COMPARISON_PERIODS = ["day", "week", "month", "quarter", "year"];
 
@@ -17,11 +18,28 @@ function toValidDate(value) {
 }
 
 function getStoredTimeRange(chart = {}) {
-  const timeRange = chart.chartData?.meta?.timeRange;
+  const timeRange = chart.render?.metadata?.timeRange;
   const start = toValidDate(timeRange?.start);
   const end = toValidDate(timeRange?.end);
   if (!start || !end || start >= end) return null;
   return { end, start };
+}
+
+function getPreparedTimeRange(chart = {}) {
+  const timestamps = (chart.preparedData?.results || []).flatMap((result) => {
+    const temporalFields = (result.fields || [])
+      .filter((field) => field.type === "temporal")
+      .map((field) => field.key);
+    return (result.rows || []).flatMap((row) => {
+      return temporalFields.map((key) => toValidDate(row?.[key])).filter(Boolean);
+    });
+  }).sort((left, right) => left.getTime() - right.getTime());
+  if (timestamps.length === 0) return null;
+
+  const end = moment.utc(timestamps[timestamps.length - 1])
+    .add(1, chart.timeInterval || "day")
+    .toDate();
+  return { end, start: timestamps[0] };
 }
 
 function getConfiguredTimeRange(chart = {}, timezone = "UTC") {
@@ -39,7 +57,9 @@ function getConfiguredTimeRange(chart = {}, timezone = "UTC") {
 }
 
 function getChartTimeRange(chart = {}, timezone = "UTC") {
-  return getStoredTimeRange(chart) || getConfiguredTimeRange(chart, timezone);
+  return getPreparedTimeRange(chart)
+    || getStoredTimeRange(chart)
+    || getConfiguredTimeRange(chart, timezone);
 }
 
 function getUnavailableReason(period) {

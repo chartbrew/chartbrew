@@ -130,8 +130,9 @@ The implementation now includes:
 - Instance-admin AI controls and limits in Platform settings.
 - A recorded-run evaluation gate for the external planner and worker split.
 
-The external context switch is off by default. The local deterministic reports, scoped tools, and
-permission checks do not need an external provider.
+Chartbrew AI is the single control for external workspace context. When Chartbrew AI is on and an
+external provider is configured, Chartbrew can send bounded, authorized task context. The local
+deterministic reports, scoped tools, and permission checks do not need an external provider.
 
 ## Personas
 
@@ -219,9 +220,9 @@ permission checks do not need an external provider.
 6. The server creates a personal subscription only after the confirmation and a current access
    check.
 
-### Priya disables external AI
+### Priya disables Chartbrew AI
 
-1. Priya removes or disables the configured external LLM provider.
+1. Priya turns off Chartbrew AI in Platform settings.
 2. Deterministic Activity, Home, alerts, watches, recommendations, and KPI review delivery continue.
 3. The Ask surface states that AI answers are not configured.
 4. No context is queued for later delivery.
@@ -1818,7 +1819,6 @@ Extend the local intelligence policy:
     kpiReviewWritesEnabled: true,
     learningRetrievalEnabled: true,
     weakAttentionSignalsEnabled: true,
-    externalWorkspaceContextEnabled: false,
     externalLearningContextEnabled: false,
     maximumContextCharacters: 240000,
     maximumModelTokensPerRequest: 80000,
@@ -1865,17 +1865,17 @@ CB_OPENAI_ORCHESTRATOR_WORKER_MODEL=gpt-5.6-luna
 CB_OPENAI_ORCHESTRATOR_WORKER_REASONING_EFFORT=low
 CB_OPENAI_ORCHESTRATOR_SYNTHESIS_MODEL=gpt-5.4-mini
 CB_OPENAI_ORCHESTRATOR_SYNTHESIS_REASONING_EFFORT=high
-CB_WORKSPACE_EXTERNAL_CONTEXT_ENABLED=false
 CB_WORKSPACE_EXTERNAL_LEARNING_CONTEXT_ENABLED=false
 CB_WORKSPACE_MAXIMUM_MODEL_TOKENS=80000
 CB_WORKSPACE_MAXIMUM_REQUEST_TIME_MS=90000
 CB_WORKSPACE_ANALYSIS_DEPTH=thorough
 ```
 
-`CB_WORKSPACE_EXTERNAL_CONTEXT_ENABLED` is a separate owner consent. An API key alone does not
-send the new workspace context to an external provider. Keep this setting off until the owner has
-reviewed the authorized task payload and the provider data policy. Local deterministic summaries
-and recommendations do not require this setting.
+The Chartbrew AI platform setting is the workspace-context consent. When Chartbrew AI is on and an
+API key is configured, an authorized task can send bounded workspace context to the provider.
+Turning Chartbrew AI off prevents this external context. There is no separate workspace-context
+switch in the first release. Local deterministic summaries and recommendations do not require an
+external provider.
 
 Keep the current `CB_OPENAI_MODEL` settings as the compatibility default when the role settings are
 absent. Do not start a split runtime until all required role settings or their documented defaults
@@ -2347,7 +2347,7 @@ data.
   tenant metric values in the audit view.
 - Provider failure cannot stop chart refresh, observation evaluation, alert delivery, or KPI review
   delivery.
-- Disabling the provider sends no data and queues no future request.
+- Disabling Chartbrew AI or removing the provider sends no data and queues no future request.
 
 ### Retention and compatibility gates
 

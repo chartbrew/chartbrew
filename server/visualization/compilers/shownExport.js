@@ -1,3 +1,6 @@
+const { projectPreparedSeries } = require("../seriesProjection");
+const { buildSeriesStyleMap } = require("../seriesStyles");
+
 function getUniqueLabel(label, usedLabels) {
   const base = label || "Value";
   let candidate = base;
@@ -10,18 +13,28 @@ function getUniqueLabel(label, usedLabels) {
   return candidate;
 }
 
-function compileShownExport(configuration, chart = {}) {
-  if (!configuration?.data?.labels || !configuration?.data?.datasets) {
-    return configuration;
-  }
-
-  const usedLabels = new Set();
-  const datasetLabels = configuration.data.datasets.map((dataset) => {
-    return getUniqueLabel(dataset.label, usedLabels);
+function compileShownExport({
+  chart = {},
+  preparedData,
+  runtimeContext,
+  timezone,
+  visualization,
+}) {
+  const projection = projectPreparedSeries({
+    chart,
+    preparedData,
+    runtimeContext,
+    timezone,
+    visualization,
   });
-  const rows = configuration.data.labels.map((label, index) => {
-    return configuration.data.datasets.reduce((row, dataset, datasetIndex) => {
-      row[datasetLabels[datasetIndex]] = dataset.data?.[index] ?? null;
+  const styles = buildSeriesStyleMap(preparedData, visualization);
+  const usedLabels = new Set();
+  const seriesLabels = projection.series.map((series) => {
+    return getUniqueLabel(styles.get(series.id)?.label || series.label, usedLabels);
+  });
+  const rows = projection.labels.map((label, index) => {
+    return projection.series.reduce((row, series, seriesIndex) => {
+      row[seriesLabels[seriesIndex]] = series.values[index] ?? null;
       return row;
     }, { Category: label });
   });

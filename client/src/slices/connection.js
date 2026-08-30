@@ -122,6 +122,19 @@ export const testRequest = createAsyncThunk(
   }
 );
 
+export const testSavedConnection = createAsyncThunk(
+  "connection/testSavedConnection",
+  async ({ team_id, connection_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/connections/${connection_id}/test`;
+    const headers = new Headers({
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    });
+    return fetch(url, { headers, method: "GET" });
+  }
+);
+
 export const testRequestWithFiles = createAsyncThunk(
   "connection/testConnectionWithFiles",
   async ({ team_id, connection, files }) => {

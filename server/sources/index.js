@@ -6,6 +6,7 @@ const customerio = require("./plugins/customerio/customerio.plugin");
 const firestore = require("./plugins/firestore/firestore.plugin");
 const googleAnalytics = require("./plugins/googleAnalytics/googleAnalytics.plugin");
 const jira = require("./plugins/jira/jira.plugin");
+const mcp = require("./plugins/mcp/mcp.plugin");
 const mongodb = require("./plugins/mongodb/mongodb.plugin");
 const mysql = require("./plugins/mysql/mysql.plugin");
 const postgres = require("./plugins/postgres/postgres.plugin");
@@ -25,6 +26,7 @@ const sources = [
   firestore,
   googleAnalytics,
   jira,
+  mcp,
   mongodb,
   mysql,
   postgres,

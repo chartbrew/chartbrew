@@ -306,6 +306,7 @@ function createMemoryStore(envPrefix = "CB_REDIS") {
   return {
     backend: "memory",
     envPrefix,
+    close: async () => {},
     clear: () => {
       memoryStore.values.clear();
       memoryStore.sortedSets.clear();
@@ -347,6 +348,7 @@ function createRedisStore() {
       return {
         backend: clusterConfig?.cluster?.nodes?.length > 0 ? "redis-cluster" : "redis",
         envPrefix: resolvedEnvPrefix,
+        close: async () => redisClient.disconnect(),
         get: (...args) => redisClient.get(...args),
         set: (key, value, ttlMs = 0) => {
           if (ttlMs > 0) {
@@ -426,8 +428,8 @@ class RuntimeCacheService {
       .digest("hex");
   }
 
-  chartCacheKey({ chartId, chartVersion, variantHash, viewerScope = "shared" }) {
-    return `chart-cache:v${RUNTIME_CACHE_CONFIG.cacheSchemaVersion}:${chartId}:${chartVersion}:${viewerScope}:${variantHash}`;
+  preparedCacheKey({ chartId, chartVersion, variantHash, viewerScope = "shared" }) {
+    return `prepared-cache:v${RUNTIME_CACHE_CONFIG.cacheSchemaVersion}:${chartId}:${chartVersion}:${viewerScope}:${variantHash}`;
   }
 
   sourceCacheKey({ datasetId, sourceVersion, variantHash, viewerScope = "shared" }) {
@@ -651,16 +653,16 @@ class RuntimeCacheService {
     return matches.length;
   }
 
-  async getChartCache(params = {}) {
+  async getPreparedCache(params = {}) {
     return this.getCacheEntry({
-      cacheKey: this.chartCacheKey(params),
-      cacheType: "chart",
+      cacheKey: this.preparedCacheKey(params),
+      cacheType: "prepared",
     });
   }
 
-  async setChartCache(params = {}) {
+  async setPreparedCache(params = {}) {
     return this.setCacheEntry({
-      cacheKey: this.chartCacheKey(params),
+      cacheKey: this.preparedCacheKey(params),
       payload: params.payload,
       ttlMs: RUNTIME_CACHE_CONFIG.chartCacheTtlMs,
       staleTtlMs: RUNTIME_CACHE_CONFIG.chartCacheStaleTtlMs,
@@ -807,7 +809,7 @@ class RuntimeCacheService {
     })).then((variants) => variants.filter(Boolean));
   }
 
-  async buildChartVersion(chartId, timezone = "") {
+  async buildChartFingerprints(chartId, timezone = "") {
     const chartFingerprint = await db.Chart.findOne({
       where: { id: chartId },
       attributes: [
@@ -839,7 +841,6 @@ class RuntimeCacheService {
         "isLogarithmic",
         "ranges",
         "visualization",
-        "updatedAt",
       ],
       include: [{
         model: db.ChartDatasetConfig,
@@ -892,6 +893,25 @@ class RuntimeCacheService {
           include: [
             {
               model: db.DataRequest,
+              attributes: [
+                "id",
+                "dataset_id",
+                "connection_id",
+                "method",
+                "route",
+                "useGlobalHeaders",
+                "query",
+                "pagination",
+                "items",
+                "itemsLimit",
+                "offset",
+                "paginationField",
+                "template",
+                "conditions",
+                "configuration",
+                "transform",
+                "updatedAt",
+              ],
               include: [
                 {
                   model: db.Connection,
@@ -994,10 +1014,29 @@ class RuntimeCacheService {
       });
     }
 
-    return this.hash({
+    const sourceInput = plainChartFingerprint?.ChartDatasetConfigs || [];
+    const visualizationInput = plainChartFingerprint
+      ? { ...plainChartFingerprint, ChartDatasetConfigs: undefined }
+      : null;
+    const visualization = this.hash({
       timezone,
-      chart: plainChartFingerprint,
+      chart: visualizationInput,
     });
+    const source = this.hash({
+      timezone,
+      sources: sourceInput,
+    });
+
+    return {
+      combined: this.hash({ source, visualization }),
+      source,
+      visualization,
+    };
+  }
+
+  async buildChartVersion(chartId, timezone = "") {
+    const fingerprints = await this.buildChartFingerprints(chartId, timezone);
+    return fingerprints.combined;
   }
 
   buildDatasetVersion(dataset, timezone = "") {
@@ -1038,6 +1077,11 @@ class RuntimeCacheService {
     if (typeof this.store.clear === "function") {
       this.store.clear();
     }
+  }
+
+  async close() {
+    this.inFlight.clear();
+    await this.store.close?.();
   }
 }
 

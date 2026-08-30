@@ -1,24 +1,21 @@
 import { defineConfig } from "vitest/config";
 
+import { databaseUnitTests } from "./vitest.test-groups.js";
+
 export default defineConfig({
   test: {
     environment: "node",
+    env: {
+      CB_ENCRYPTION_KEY_DEV: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      CB_RESTRICT_SIGNUP_DEV: "0",
+      CB_RESTRICT_TEAMS_DEV: "0",
+      CB_SECRET_DEV: "test-secret-dev",
+      VITE_APP_CLIENT_HOST_DEV: "http://localhost:3000",
+    },
+    exclude: databaseUnitTests,
     globals: true,
-    include: [
-      "tests/unit/chartJsCartesianCompiler.test.js",
-      "tests/unit/embeddedChartPayload.test.js",
-      "tests/unit/kpiReview.test.js",
-      "tests/unit/nodemail.passwordReset.test.js",
-      "tests/unit/observationPeriodCorpus.test.js",
-      "tests/unit/observations.test.js",
-      "tests/unit/periodEvaluator.test.js",
-      "tests/unit/periodObservationPersistence.test.js",
-      "tests/unit/platformSettings.test.js",
-      "tests/unit/replaySynthbrewPeriods.test.js",
-      "tests/unit/scheduleWeekdays.test.js",
-      "tests/unit/visualizationCompilers.test.js",
-    ],
-    maxWorkers: 1,
+    include: ["tests/unit/**/*.test.js"],
+    maxWorkers: 4,
     pool: "forks",
   },
 });

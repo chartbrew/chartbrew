@@ -16,8 +16,8 @@ function addPeriod(date, granularity, timezone = "UTC") {
     .toJSDate();
 }
 
-function getLayer(frame, layerId) {
-  return frame?.layers?.find((layer) => `${layer.id}` === `${layerId}`) || null;
+function getLayer(preparedData, layerId) {
+  return preparedData?.results?.find((result) => `${result.id}` === `${layerId}`) || null;
 }
 
 function normalizeValue(value) {
@@ -25,8 +25,13 @@ function normalizeValue(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function hasField(result, key) {
+  return Array.isArray(result.fields)
+    && result.fields.some((field) => field.key === key);
+}
+
 function extractTimeseries(monitor, layer, options) {
-  if (!layer.fields?.time || layer.fields?.breakdown) {
+  if (!hasField(layer, "time") || hasField(layer, "breakdown")) {
     return { reason: "unsupported_metric", snapshots: [], status: "ineligible" };
   }
 
@@ -68,7 +73,9 @@ function extractTimeseries(monitor, layer, options) {
 }
 
 function extractScalar(monitor, layer, refreshedAt) {
-  if (!["avg", "gauge", "kpi"].includes(layer.mark) || layer.fields?.time || layer.fields?.breakdown) {
+  if (!["avg", "gauge", "kpi"].includes(layer.mark)
+    || hasField(layer, "time")
+    || hasField(layer, "breakdown")) {
     return { reason: "unsupported_metric", snapshots: [], status: "ineligible" };
   }
 
@@ -100,8 +107,8 @@ function extractScalar(monitor, layer, refreshedAt) {
   };
 }
 
-function extractMonitorSnapshots(monitor, frame, options = {}) {
-  const layer = getLayer(frame, monitor.metric_spec?.layerId);
+function extractMonitorSnapshots(monitor, preparedData, options = {}) {
+  const layer = getLayer(preparedData, monitor.metric_spec?.layerId);
   if (!layer) {
     return { reason: "metric_not_found", snapshots: [], status: "ineligible" };
   }
@@ -123,5 +130,6 @@ function extractMonitorSnapshots(monitor, frame, options = {}) {
 module.exports = {
   addPeriod,
   extractMonitorSnapshots,
+  hasField,
   normalizeValue,
 };

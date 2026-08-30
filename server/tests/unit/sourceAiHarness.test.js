@@ -9,6 +9,8 @@ const googleAnalyticsConnection = require("../../sources/plugins/googleAnalytics
 const googleAnalyticsProtocol = require("../../sources/plugins/googleAnalytics/googleAnalytics.protocol");
 const jiraConnection = require("../../sources/plugins/jira/jira.connection");
 const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
+const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
+const { sanitizeTool } = require("../../sources/plugins/mcp/mcp.policy");
 const stripeOfficialProtocol = require("../../sources/plugins/stripeOfficial/stripeOfficial.protocol");
 const apiProtocol = require("../../sources/shared/protocols/api.protocol");
 const db = require("../../models/models");
@@ -48,6 +50,7 @@ const SOURCE_OWNED_IDS = [
   "firestore",
   "googleAnalytics",
   "jira",
+  "mcp",
   "realtimedb",
   "stripeOfficial",
 ];
@@ -99,7 +102,7 @@ function expectDataRequestContract(sourceId, plan) {
   expect(sourceId !== "firestore" || hasQuery).toBe(true);
   expect(!["api", "customerio", "realtimedb"].includes(sourceId) || hasRoute).toBe(true);
   expect(!["api", "customerio"].includes(sourceId) || hasMethod).toBe(true);
-  expect(!["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
+  expect(!["googleAnalytics", "jira", "mcp", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
 }
 
 function expectChartPlanContract(plan) {
@@ -142,6 +145,12 @@ async function planFixture(fixture) {
 async function validateFixturePlan({ source, sourceId, payload, plan }) {
   if (["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId)) {
     return source.backend.ai.validateConfiguration(plan.configuration);
+  }
+
+  if (sourceId === "mcp") {
+    return source.backend.ai.validateConfiguration(plan.configuration, {
+      connection: payload.connection,
+    });
   }
 
   const dataRequest = {
@@ -239,6 +248,59 @@ const plannerContractFixtures = [{
   payload: {
     question: "Show open Jira issues by status",
   },
+}, {
+  name: "PostHog MCP approved SQL tool",
+  sourceId: "mcp",
+  payload: (() => {
+    const tool = sanitizeTool({
+      name: "execute-sql",
+      title: "Execute SQL",
+      description: "Run a read-only SQL query in PostHog",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string" },
+          context: { type: "string" },
+        },
+        required: ["query"],
+      },
+      outputSchema: {
+        type: "array",
+        items: { type: "object", properties: { content: { type: "string" } } },
+      },
+      annotations: { readOnlyHint: true },
+    });
+    return {
+      connection: {
+        id: 108,
+        team_id: TOOL_TEAM_ID,
+        type: "mcp",
+        subType: "mcp",
+        schema: {
+          mcp: {
+            tools: [tool],
+            allowedTools: {
+              [tool.name]: {
+                datasets: true,
+                ask: true,
+                confirmedReadOnly: true,
+                contractFingerprint: tool.contractFingerprint,
+                riskFingerprint: tool.riskFingerprint,
+              },
+            },
+          },
+        },
+      },
+      question: "How many visitors used the free tools in the last 30 days?",
+      overrides: {
+        toolName: tool.name,
+        arguments: {
+          query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+          context: "Count visitors to free tools in the last 30 days",
+        },
+      },
+    };
+  })(),
 }];
 
 const toolHarnessConnections = {
@@ -302,6 +364,7 @@ const toolHarnessConnections = {
       },
     },
   },
+  mcp: plannerContractFixtures.find((fixture) => fixture.sourceId === "mcp").payload.connection,
   realtimedb: {
     id: 105,
     team_id: TOOL_TEAM_ID,
@@ -443,6 +506,13 @@ function setupRealtimeDbToolRuntime() {
   });
 }
 
+function setupMcpToolRuntime() {
+  vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+    data: [{ content: "visitors\n42" }],
+    tool: { name: "execute-sql" },
+  });
+}
+
 function setupStripeOfficialToolRuntime() {
   vi.spyOn(stripeOfficialProtocol, "previewDataRequest").mockResolvedValue({
     responseData: {
@@ -527,6 +597,32 @@ const compactToolFixtures = [{
   },
   setup: setupRealtimeDbToolRuntime,
 }, {
+  sourceId: "mcp",
+  question: "How many visitors used the free tools in the last 30 days?",
+  resource: "execute-sql",
+  overrides: {
+    toolName: "execute-sql",
+    arguments: {
+      query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+      context: "Count visitors to free tools in the last 30 days",
+    },
+  },
+  previewConfiguration: {
+    source: "mcp",
+    tool: {
+      name: "execute-sql",
+      contractFingerprint: plannerContractFixtures
+        .find((fixture) => fixture.sourceId === "mcp")
+        .payload.connection.schema.mcp.tools[0].contractFingerprint,
+    },
+    arguments: {
+      query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+      context: "Count visitors to free tools in the last 30 days",
+    },
+    output: { mode: "auto", path: [] },
+  },
+  setup: setupMcpToolRuntime,
+}, {
   sourceId: "stripeOfficial",
   question: "Show latest balance transactions",
   resource: "balance_transactions",
@@ -552,6 +648,12 @@ const toolRoutingReplays = [{
   steps: ["source_get_capabilities", "source_plan_dataset"],
   finalStatus: "needs_more_context",
   forbidden: ["create_temporary_chart", "create_chart"],
+}, {
+  name: "answer-first PostHog MCP query",
+  sourceId: "mcp",
+  steps: ["source_get_capabilities", "source_plan_dataset", "source_preview_configuration"],
+  finalStatus: "ok",
+  forbidden: ["run_query", "source_run_action"],
 }, {
   name: "query-generation database chart",
   sourceId: "postgres",
@@ -781,9 +883,9 @@ describe("Source AI harness", () => {
     const plan = await sourcePlanDataset({
       ...basePayload,
       question: fixture.question,
-      overrides: fixture.sourceId === "googleAnalytics"
+      overrides: fixture.overrides || (fixture.sourceId === "googleAnalytics"
         ? { propertyId: "properties/123" }
-        : {},
+        : {}),
     });
     const validation = await sourceValidateConfiguration({
       ...basePayload,

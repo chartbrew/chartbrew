@@ -11,6 +11,7 @@ import reducer from "./reducers";
 import { ThemeProvider } from "./modules/ThemeContext";
 
 const store = configureStore({
+  devTools: import.meta.env.DEV ? { maxAge: 30, trace: false } : false,
   reducer,
 });
 

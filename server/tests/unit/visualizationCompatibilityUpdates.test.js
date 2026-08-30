@@ -41,6 +41,34 @@ describe("native visualization compatibility updates", () => {
     expect(next.layers[0].name).toBe("Income");
   });
 
+  it("normalizes text max-record values into a canonical limit", () => {
+    const next = applyCdcCompatibilityUpdate(nativeVisualization, "cdc-income", {
+      maxRecords: "3",
+    });
+
+    expect(next.layers[0].transforms).toContainEqual({
+      count: 3,
+      type: "limit",
+    });
+  });
+
+  it("clears the canonical limit when max records is cleared", () => {
+    const visualization = {
+      ...nativeVisualization,
+      layers: [{
+        ...nativeVisualization.layers[0],
+        transforms: [{ count: 3, type: "limit" }],
+      }],
+    };
+    const next = applyCdcCompatibilityUpdate(visualization, "cdc-income", {
+      maxRecords: null,
+    });
+
+    expect(next.layers[0].transforms).not.toContainEqual(expect.objectContaining({
+      type: "limit",
+    }));
+  });
+
   it("does not overwrite additional value labels when the dataset label changes", () => {
     const visualization = {
       ...nativeVisualization,
@@ -196,6 +224,13 @@ describe("native visualization compatibility updates", () => {
     expect(bar.layers[0].style.fill).toBe(true);
     expect(bar.layers[0].style.fillOpacity).toBe(0.65);
     expect(roundTrip.layers[0].style.fill).toBe(false);
+  });
+
+  it("adds default bar fill when a same-type compatibility update runs", () => {
+    const next = applyChartCompatibilityUpdate(nativeVisualization, { type: "bar" });
+
+    expect(next.layers[0].style.fill).toBe(true);
+    expect(next.layers[0].style.fillOpacity).toBe(0.65);
   });
 
   it("initializes radar charts with an optional same-color fill", () => {

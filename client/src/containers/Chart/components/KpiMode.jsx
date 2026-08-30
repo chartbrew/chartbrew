@@ -6,7 +6,6 @@ import {
 } from "@heroui/react";
 import { LuArrowUpRight, LuArrowDownRight } from "react-icons/lu";
 
-import determineType from "../../../modules/determineType";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
@@ -52,30 +51,6 @@ function KpiMode(props) {
     }
   }, [containerRef.current]);
 
-  const _getKpi = (data) => {
-    let finalData;
-    if (data && Array.isArray(data)) {
-      for (let i = data.length - 1; i >= 0; i--) {
-        if (data[i]
-          && (determineType(data[i]) !== "array" || determineType(data[i]) !== "object")
-        ) {
-          finalData = data[i];
-          break;
-        }
-      }
-
-      if (!finalData) {
-        finalData = `${data[data.length - 1]}`;
-      }
-    }
-
-    if (`${parseFloat(finalData)}` === `${finalData}`) {
-      return parseFloat(finalData)?.toLocaleString();
-    }
-
-    return `${finalData}`;
-  };
-
   const _renderGrowth = (c) => {
     if (!c) return (<span />);
     const { status, comparison } = c;
@@ -103,96 +78,71 @@ function KpiMode(props) {
     );
   };
 
-  const _getMetric = (items, dataset, index) => {
-    return items?.find((item) => item.seriesId && dataset.id && item.seriesId === dataset.id)
-      || items?.find((item) => item.datasetIndex === index || item.goalIndex === index);
-  };
-
-  const _renderGoal = (goal, index) => {
-    const series = chart.chartData?.meta?.series?.find((item) => item.id === goal?.seriesId);
-    const color = series?.color
-      || chart.ChartDatasetConfigs[index]?.datasetColor;
-    if (!goal) return (<span />);
-    const {
-      max, value, formattedMax,
-    } = goal;
-    if ((!max && max !== 0) || (!value && value !== 0)) return (<span />);
+  const _renderGoal = (item) => {
+    if (item.goal === null || item.valueNumber === null) return (<span />);
 
     return (
       <div className="pt-2 w-full">
         <div className="flex justify-between mb-1">
-          <div className="text-xs text-default-500">{`${((value / max) * 100).toFixed()}%`}</div>
-          <div className="text-xs text-default-500">{formattedMax}</div>
+          <div className="text-xs text-default-500">{`${((item.valueNumber / item.goal) * 100).toFixed()}%`}</div>
+          <div className="text-xs text-default-500">{item.formattedGoal}</div>
         </div>
         <ProgressBar
-          value={Number.isFinite(Number(value)) ? Number(value) : 0}
-          maxValue={max}
+          value={Number.isFinite(Number(item.valueNumber)) ? Number(item.valueNumber) : 0}
+          maxValue={item.goal}
           minValue={0}
           size="sm"
           aria-label="Goal progress"
         >
           <ProgressBar.Track>
-            <ProgressBar.Fill style={color ? { backgroundColor: color } : undefined} />
+            <ProgressBar.Fill style={item.color ? { backgroundColor: item.color } : undefined} />
           </ProgressBar.Track>
         </ProgressBar>
       </div>
     );
   };
 
+  const items = chart.render?.configuration?.items || [];
+
   return (
     <div ref={containerRef} className={"flex h-full w-full gap-2 items-center justify-center align-middle flex-wrap"}>
-      {!chart?.chartData?.data?.datasets && (
-        <div className={`${isCompact ? "p-0" : "p-3"}`}>
-          <Row justify="center" align="center">
-            <Text
-              b
-              className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800`}
-            >
-              {chart.chartData && chart.chartData.data && _getKpi(chart.chartData.data)}
-            </Text>
-          </Row>
-        </div>
-      )}
-      {chart?.chartData?.data?.datasets.map((dataset, index) => {
+      {items.map((item, index) => {
         if (isCompact && index > 0) return null;
-        const goal = _getMetric(chart.chartData.goals, dataset, index);
-        const growth = _getMetric(chart.chartData.growth, dataset, index);
+        const hasGoal = item.goal !== null && item.goal !== undefined;
 
         return (
-          <div key={dataset.id || dataset.label} className={`p-2 ${goal && isCompact ? "w-full" : ""} gap-4`}>
-            {chart.ChartDatasetConfigs[index] && (
-              <div className={`flex items-center ${goal ? "justify-start" : "justify-center"}`}>
-                <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
-                  <span>
-                    {dataset.label}
-                  </span>
+          <div key={item.id} className={`${isCompact ? "p-0" : "p-2"} ${hasGoal && isCompact ? "w-full" : ""} gap-4`}>
+            {item.label && (
+              <div className={`flex items-center ${hasGoal ? "justify-start" : "justify-center"}`}>
+                <Text className={`${chart.showGrowth ? "-mt-[5px]" : "mt-0"} text-center text-muted`}>
+                  <span>{item.label}</span>
                 </Text>
               </div>
             )}
 
-            <div className={`flex items-center ${goal ? "justify-between" : "justify-center"} gap-4`}>
+            <div className={`flex items-center ${hasGoal ? "justify-between" : "justify-center"} gap-4`}>
               <div
-                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-bold font-tw`}
-                key={dataset.label}
+                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-bold font-tight`}
+                key={item.id}
               >
-                {dataset.data && _getKpi(dataset.data)}
+                {item.value ?? "—"}
               </div>
-              {goal && chart.showGrowth && growth && (
+              {hasGoal && chart.showGrowth && item.comparison !== null && (
                 <div>
-                  {_renderGrowth(growth)}
+                  {_renderGrowth(item)}
                 </div>
               )}
             </div>
             
-            {!goal && chart.showGrowth && growth && (
+            {!hasGoal && chart.showGrowth && item.comparison !== null && (
               <Row justify="center" align="center">
-                {_renderGrowth(growth)}
+                {_renderGrowth(item)}
               </Row>
             )}
 
-            {goal && (
+            {hasGoal && (
               <Row justify="center" align="center">
-                {_renderGoal(goal, index)}
+                {_renderGoal(item)}
               </Row>
             )}
           </div>
