@@ -655,7 +655,7 @@ function ApiBuilder(props) {
             </InputGroup>
           </Row>
           {apiRequest.route && _hasVariables(apiRequest.route) && (
-            <div className="mt-2 bg-content2 rounded-lg p-2">
+            <div className="mt-2 bg-surface-secondary rounded-lg p-2">
               <div className="text-sm font-bold">URL Preview:</div>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-default-600">

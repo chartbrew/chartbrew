@@ -109,7 +109,7 @@ function CustomTemplates(props) {
                 setSelectedTemplate(template);
               }
             }}
-            className="h-full w-full cursor-pointer border border-divider shadow-none transition-colors hover:bg-content2/40"
+            className="h-full w-full cursor-pointer border border-divider shadow-none transition-colors hover:bg-surface-secondary/40"
           >
             <Card.Header>
               <Card.Title>{template.name}</Card.Title>

@@ -153,7 +153,7 @@ function KpiReviewsPage() {
                       aria-label={testDigestPendingId === subscription.id
                         ? "Sending test email"
                         : "Open KPI review options"}
-                      className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+                      className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
                       isDisabled={Boolean(testDigestPendingId)}
                     >
                       {testDigestPendingId === subscription.id

@@ -64,7 +64,7 @@ const markdownComponents = {
   ),
   hr: () => <hr className="my-4 border-divider" />,
   pre: ({ children }) => (
-    <pre className="my-3 overflow-x-auto rounded-xl bg-content2 p-3 text-foreground">
+    <pre className="my-3 overflow-x-auto rounded-xl bg-surface-secondary p-3 text-foreground">
       {children}
     </pre>
   ),
@@ -74,7 +74,7 @@ const markdownComponents = {
       return <code className={`${className || ""} text-[0.9em]`.trim()}>{children}</code>;
     }
     return (
-      <code className="rounded bg-content2 px-1 py-0.5 text-[0.9em] text-foreground">
+      <code className="rounded bg-surface-secondary px-1 py-0.5 text-[0.9em] text-foreground">
         {children}
       </code>
     );

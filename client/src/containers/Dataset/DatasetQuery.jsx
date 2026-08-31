@@ -575,7 +575,7 @@ function DatasetQuery(props) {
                           _onCreateNewRequest(c);
                         }
                       }}
-                      className="h-full w-full cursor-pointer border border-content3 shadow-none transition-colors hover:bg-content2/40"
+                      className="h-full w-full cursor-pointer border border-content3 shadow-none transition-colors hover:bg-surface-secondary/40"
                     >
                       <Card.Content className="p-4 pl-unit-8">
                         <div className="flex flex-row items-center justify-between">

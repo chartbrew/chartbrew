@@ -171,7 +171,7 @@ function ApiKeys() {
         <Table.ScrollContainer>
           <Table.Content
             aria-label="API keys"
-            className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+            className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
           >
             <Table.Header>
               <Table.Column id="token" isRowHeader>

@@ -141,7 +141,7 @@ function ChartbrewV5WelcomeModal() {
               </div>
             </Modal.Header>
             <Modal.Body className="relative flex flex-col gap-5 px-6 pb-3">
-              <div className="relative flex min-h-64 items-center justify-center overflow-hidden rounded-3xl shadow-lg bg-content1/70">
+              <div className="relative flex min-h-64 items-center justify-center overflow-hidden rounded-3xl shadow-lg bg-surface/70">
                 <div className={`pointer-events-none absolute inset-0 bg-linear-to-br ${activeStep.accentClassName}`} />
                 <div className="relative flex flex-col items-center gap-3 text-center text-foreground-500">
                   <img src={activeStep.image} alt={activeStep.imageLabel} className="w-full h-full object-contain" />

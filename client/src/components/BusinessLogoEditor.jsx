@@ -94,7 +94,7 @@ function BusinessLogoEditor({
       <button
         aria-label={logoUrl ? "Replace team logo. You can also drop an image here." : "Upload team logo. You can also drop an image here."}
         className={cn(
-          "relative flex size-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-divider bg-content2 p-2 transition-colors hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
+          "relative flex size-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-divider bg-surface-secondary p-2 transition-colors hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
           isDragging && "border-accent ring-2 ring-accent/35"
         )}
         onClick={() => inputRef.current?.click()}
@@ -120,7 +120,7 @@ function BusinessLogoEditor({
       {logoUrl ? (
         <button
           aria-label="Remove team logo"
-          className="absolute -right-2 -top-2 z-10 flex size-7 items-center justify-center rounded-full border border-divider bg-content1 text-muted opacity-0 shadow-sm transition-[opacity,color,background-color] hover:bg-danger hover:text-danger-foreground focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40 group-hover:opacity-100 group-focus-within:opacity-100"
+          className="absolute -right-2 -top-2 z-10 flex size-7 items-center justify-center rounded-full border border-divider bg-surface text-muted opacity-0 shadow-sm transition-[opacity,color,background-color] hover:bg-danger hover:text-danger-foreground focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40 group-hover:opacity-100 group-focus-within:opacity-100"
           onClick={() => {
             setError("");
             onChange(null);

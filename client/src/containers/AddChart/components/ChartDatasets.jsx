@@ -242,7 +242,7 @@ function ChartDatasets(props) {
                 <Card
                   role="button"
                   tabIndex={0}
-                  className={`w-full cursor-pointer border border-divider shadow-none transition-colors hover:bg-content2/40 ${index === 0 ? "chart-empty-select-tutorial" : ""}`}
+                  className={`w-full cursor-pointer border border-divider shadow-none transition-colors hover:bg-surface-secondary/40 ${index === 0 ? "chart-empty-select-tutorial" : ""}`}
                   onClick={() => _onCreateCdc(dataset.id)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {

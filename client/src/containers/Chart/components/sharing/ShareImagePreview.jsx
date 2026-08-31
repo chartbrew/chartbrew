@@ -24,7 +24,7 @@ function ShareImagePreview({ children, dimensions }) {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-content2/70"
+      className="relative flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-surface-secondary/70"
     >
       <div style={{ height: dimensions.height * scale, width: dimensions.width * scale }}>
         <div

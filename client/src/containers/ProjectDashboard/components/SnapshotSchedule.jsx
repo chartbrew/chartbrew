@@ -593,7 +593,7 @@ function SnapshotSchedule({ isOpen, onClose }) {
             </div>
 
             {snapshotPath && (
-              <div className="w-full bg-content3 rounded-lg p-2">
+              <div className="w-full bg-surface-tertiary rounded-lg p-2">
                 <div
                   className="flex flex-col items-center cursor-pointer"
                   onClick={() => {

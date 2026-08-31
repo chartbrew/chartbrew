@@ -97,7 +97,7 @@ function McpAiBuilder({ configuration, dataRequest, onApply, teamId }) {
               </p>
             </div>
           </div>
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors group-hover:bg-content2 group-hover:text-foreground">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors group-hover:bg-surface-secondary group-hover:text-foreground">
             <LuChevronDown
               aria-hidden
               className={`transition-transform ${expanded ? "rotate-180" : ""}`}
@@ -157,7 +157,7 @@ function McpAiBuilder({ configuration, dataRequest, onApply, teamId }) {
                   </span>
                   <p className="font-medium text-foreground">Suggested setup</p>
                 </div>
-                <div className="overflow-hidden rounded-xl border border-divider bg-content2">
+                <div className="overflow-hidden rounded-xl border border-divider bg-surface-secondary">
                   <div className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3">
                     <p className="min-w-0 truncate font-semibold text-foreground">
                       {proposal.tool?.title || proposal.tool?.name}

@@ -181,7 +181,7 @@ function ConnectionList() {
         {_getFilteredConnections()?.map((connection) => (
           <div key={connection.id}>
             <Card
-              className="h-full w-full border border-solid border-content3 p-4 shadow-none transition-colors hover:bg-content2/40"
+              className="h-full w-full border border-solid border-content3 p-4 shadow-none transition-colors hover:bg-surface-secondary/40"
             >
               <Card.Content>
                 <div className="flex flex-row items-center justify-between">
@@ -438,7 +438,7 @@ function ConnectionList() {
               ))}
             </div>
                 <div className="h-1" />
-                <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
+                <div className="flex gap-1 bg-surface-secondary p-2 mb-2 rounded-lg text-foreground-500 text-sm">
                   <div>
                     <LuInfo />
                   </div>

@@ -311,18 +311,18 @@ function McpToolRow({ tool, approval, needsReview, onChangeApproval }) {
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <p className="text-xs font-semibold text-muted">Input</p>
-                  <pre className="max-h-64 overflow-auto rounded-xl bg-content2 p-3 text-xs">
+                  <pre className="max-h-64 overflow-auto rounded-xl bg-surface-secondary p-3 text-xs">
                     {JSON.stringify(tool.inputSchema, null, 2)}
                   </pre>
                 </div>
                 <div className="flex flex-col gap-2">
                   <p className="text-xs font-semibold text-muted">Output</p>
                   {hasOutputSchema ? (
-                    <pre className="max-h-64 overflow-auto rounded-xl bg-content2 p-3 text-xs">
+                    <pre className="max-h-64 overflow-auto rounded-xl bg-surface-secondary p-3 text-xs">
                       {JSON.stringify(tool.outputSchema, null, 2)}
                     </pre>
                   ) : (
-                    <p className="rounded-xl bg-content2 p-3 text-sm text-muted">
+                    <p className="rounded-xl bg-surface-secondary p-3 text-sm text-muted">
                       No output shape provided
                     </p>
                   )}

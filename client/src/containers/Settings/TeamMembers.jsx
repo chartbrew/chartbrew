@@ -204,7 +204,7 @@ function TeamMembers(props) {
             <Table.ScrollContainer>
               <Table.Content
                 aria-label="Team members"
-                className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+                className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
               >
                 <Table.Header>
                   <Table.Column id="member" isRowHeader>

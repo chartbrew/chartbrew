@@ -35,7 +35,7 @@ function shuffleUseCases(useCases) {
 }
 const radioContentClassName = cn(
   "group flex w-full flex-row items-center gap-3 rounded-xl border px-3.5 py-3 text-left text-foreground transition-colors duration-150",
-  "border-divider bg-content2",
+  "border-divider bg-surface-secondary",
   "data-[hovered=true]:border-accent/40 data-[hovered=true]:bg-accent/5",
   "data-[selected=true]:border-accent data-[selected=true]:bg-accent/15 data-[selected=true]:text-accent",
   "data-[focus-visible=true]:ring-2 data-[focus-visible=true]:ring-accent/35",

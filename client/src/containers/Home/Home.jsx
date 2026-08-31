@@ -9,11 +9,10 @@ import {
   LuChartNoAxesColumnIncreasing,
   LuChevronRight,
   LuCircleCheck,
-  LuDatabase,
   LuRefreshCw,
 } from "react-icons/lu";
-import { Link, useNavigate } from "react-router";
-import { useSelector } from "react-redux";
+import { useNavigate } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 import {
@@ -22,12 +21,15 @@ import {
   getObservationDigests,
 } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
-import { selectUser } from "../../slices/user";
+import { completeTutorial, selectUser } from "../../slices/user";
 import HomeAsk from "../Ai/HomeAsk";
 import ObservationCard from "../Activity/ObservationCard";
 import SummaryScheduleModal from "../Activity/SummaryScheduleModal";
 import { formatTimeAgo } from "../../modules/observationFormat";
+import canAccess from "../../config/canAccess";
 import HomeDiscover from "./HomeDiscover";
+import HomeOnboarding from "./HomeOnboarding";
+import { shouldShowNeedsAttention } from "./homeAttentionState";
 import { getLinePause, getTypeDelay } from "./typewriter";
 
 function prefersReducedMotion() {
@@ -135,85 +137,6 @@ SectionHeading.propTypes = {
   title: PropTypes.string.isRequired,
 };
 
-function SetupState({ state }) {
-  const navigate = useNavigate();
-  const content = {
-    collecting_baseline: {
-      action: "View watched metrics",
-      description: "Chartbrew needs two complete periods or values near two period boundaries.",
-      icon: <LuRefreshCw aria-hidden />,
-      onPress: () => navigate("/activity?tab=monitors"),
-      title: "Waiting for a complete comparison",
-    },
-    connect_data: {
-      action: "Connect data",
-      description: "Connect a data source to start building dashboards and watching metrics.",
-      icon: <LuDatabase aria-hidden />,
-      onPress: () => navigate("/connections/new"),
-      title: "Connect your first data source",
-    },
-    create_dataset: {
-      action: "Create dataset",
-      description: "Create a dataset before choosing what Chartbrew should monitor.",
-      icon: <LuDatabase aria-hidden />,
-      onPress: () => navigate("/datasets/new"),
-      title: "Create your first dataset",
-    },
-    metrics_need_review: {
-      action: "Review watched metrics",
-      description: "A watched chart changed and its metric can no longer be evaluated.",
-      icon: <LuActivity aria-hidden />,
-      onPress: () => navigate("/activity?tab=monitors"),
-      title: "A watched metric needs review",
-    },
-    watch_metric: {
-      action: "Browse dashboards",
-      description: "Choose a chart metric and how Chartbrew should compare it.",
-      icon: <LuActivity aria-hidden />,
-      onPress: () => navigate("/dashboards"),
-      title: "Watch a metric to get started",
-    },
-    waiting_for_metrics: {
-      action: "Browse dashboards",
-      description: "A workspace editor can choose a metric for Chartbrew to monitor.",
-      icon: <LuActivity aria-hidden />,
-      onPress: () => navigate("/dashboards"),
-      title: "No watched metrics yet",
-    },
-    waiting_for_setup: {
-      description: "A workspace owner needs to connect data before metrics can be watched.",
-      icon: <LuDatabase aria-hidden />,
-      title: "Waiting for workspace data",
-    },
-    waiting_for_data: {
-      action: "View watched metrics",
-      description: "The latest refresh did not return enough data to evaluate your watched metrics.",
-      icon: <LuRefreshCw aria-hidden />,
-      onPress: () => navigate("/activity?tab=monitors"),
-      title: "Waiting for data",
-    },
-  }[state];
-  if (!content) return null;
-  return (
-    <div className="flex flex-row items-start gap-3 rounded-3xl border border-divider bg-content1 px-4 py-4">
-      <div className="mt-0.5 text-primary">{content.icon}</div>
-      <div className="min-w-0 flex-1">
-        <p className="font-medium">{content.title}</p>
-        <p className="mt-1 text-sm text-foreground-500">{content.description}</p>
-      </div>
-      {content.action && (
-        <Button onPress={content.onPress} size="sm" variant="secondary">
-          {content.action}
-        </Button>
-      )}
-    </div>
-  );
-}
-
-SetupState.propTypes = {
-  state: PropTypes.string.isRequired,
-};
-
 function DataHealthAttention({ count, onPress }) {
   return (
     <Card className="h-full gap-0 rounded-3xl border border-divider shadow-none">
@@ -248,7 +171,83 @@ DataHealthAttention.propTypes = {
   onPress: PropTypes.func.isRequired,
 };
 
+function MetricAttentionStatus({ recommendationCount, setupState, onPress }) {
+  const status = recommendationCount > 0 ? {
+    action: "Review metrics",
+    description: "Review the suggested metrics and choose the ones that matter to your team.",
+    icon: LuActivity,
+    iconClassName: "text-accent",
+    title: `${recommendationCount} ${recommendationCount === 1 ? "metric is" : "metrics are"} ready to watch`,
+  } : {
+    collecting_baseline: {
+      action: "View progress",
+      description: "Your metric needs more data before Chartbrew can compare changes.",
+      icon: LuRefreshCw,
+      iconClassName: "text-foreground-400",
+      title: "Chartbrew is collecting a baseline",
+    },
+    metrics_need_review: {
+      action: "Review metric",
+      description: "Review its setup so Chartbrew can continue to evaluate it.",
+      icon: LuActivity,
+      iconClassName: "text-warning",
+      title: "A watched metric needs review",
+    },
+    no_important_changes: {
+      action: "View watched metrics",
+      description: "Chartbrew is watching your metrics and will show important changes here.",
+      icon: LuCircleCheck,
+      iconClassName: "text-success",
+      title: "Everything looks good",
+    },
+    waiting_for_data: {
+      action: "View watched metrics",
+      description: "The latest refresh did not return enough data to evaluate your metric.",
+      icon: LuRefreshCw,
+      iconClassName: "text-warning",
+      title: "Waiting for metric data",
+    },
+  }[setupState] || {
+    action: "View watched metrics",
+    description: "Chartbrew is tracking your metrics and will show important changes here.",
+    icon: LuCircleCheck,
+    iconClassName: "text-success",
+    title: "Watching for important changes",
+  };
+  const StatusIcon = status.icon;
+
+  return (
+    <Card className="h-full gap-0 rounded-3xl border border-divider shadow-none">
+      <Card.Header className="flex flex-row items-center gap-2 pb-2">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-divider bg-surface-secondary/40">
+          <StatusIcon className={status.iconClassName} size={16} aria-hidden />
+        </div>
+        <p className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wide text-muted">
+          Watched metrics
+        </p>
+      </Card.Header>
+      <Card.Content className="flex-1 gap-1">
+        <Card.Title className="text-base font-semibold">{status.title}</Card.Title>
+        <p className="text-sm text-muted">{status.description}</p>
+      </Card.Content>
+      <Card.Footer className="pt-3">
+        <Button onPress={onPress} size="sm" variant="tertiary">
+          {status.action}
+          <LuArrowRight aria-hidden />
+        </Button>
+      </Card.Footer>
+    </Card>
+  );
+}
+
+MetricAttentionStatus.propTypes = {
+  onPress: PropTypes.func.isRequired,
+  recommendationCount: PropTypes.number.isRequired,
+  setupState: PropTypes.string.isRequired,
+};
+
 function Home() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -256,6 +255,7 @@ function Home() {
   const [digests, setDigests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recommendationCount, setRecommendationCount] = useState(0);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   useEffect(() => {
@@ -282,6 +282,10 @@ function Home() {
       .finally(() => setLoading(false));
   }, [team?.id]);
 
+  useEffect(() => {
+    setOnboardingDismissed(false);
+  }, [team?.id]);
+
   const saveSummary = (subscription) => {
     setDigests((current) => {
       const exists = current.some((item) => item.id === subscription.id);
@@ -303,6 +307,27 @@ function Home() {
     || data.observations.filter((observation) => observation.impact !== "positive");
   const notableChanges = data.notableChanges
     || data.observations.filter((observation) => observation.impact === "positive");
+  const onboardingDismissedKey = `homeOnboarding:${team.id}`;
+  const showOnboarding = canAccess("teamAdmin", user?.id, team.TeamRoles)
+    && data.onboarding
+    && Object.values(data.onboarding.milestones).some((complete) => !complete)
+    && !onboardingDismissed
+    && !user.tutorials?.[onboardingDismissedKey];
+  const showNeedsAttention = shouldShowNeedsAttention({
+    hasWatchedMetric: data.hasWatchedMetric,
+    recommendationCount,
+  });
+
+  const dismissOnboarding = () => {
+    setOnboardingDismissed(true);
+    dispatch(completeTutorial({
+      tutorial: { [onboardingDismissedKey]: true },
+      user_id: user.id,
+    })).unwrap().catch(() => {
+      setOnboardingDismissed(false);
+      toast.error("Could not dismiss Get started");
+    });
+  };
 
   return (
     <main className="flex w-full flex-col gap-6">
@@ -321,70 +346,44 @@ function Home() {
         </div>
       </div>
 
-      <section aria-labelledby="attention-heading">
-        {needsAttention.length > 0 || data.dataHealth.showOnHome ? (
-          <>
-            <SectionHeading
-              action={(
-                <Button onPress={() => navigate("/activity")} size="sm" variant="ghost">
-                  View all
-                  <LuArrowRight aria-hidden />
-                </Button>
-              )}
-              id="attention-heading"
-              title="Needs attention"
-            />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {data.dataHealth.showOnHome ? (
-                <DataHealthAttention
-                  count={data.dataHealth.count}
-                  onPress={() => navigate("/activity?tab=health")}
-                />
-              ) : null}
-              {needsAttention.map((observation) => (
-                <ObservationCard key={observation.id} observation={observation} />
-              ))}
-            </div>
-          </>
-        ) : data.setupState === "no_important_changes" ? (
-          <div className="flex flex-col gap-1">
-            <div className="flex flex-row items-center gap-2">
-              <LuCircleCheck className="shrink-0 text-success" fill="currentColor" fillOpacity={0.2} size={20} aria-hidden />
-              <h2 className="text-lg font-semibold" id="attention-heading">
-                Nothing needs attention
-              </h2>
-            </div>
-            {recommendationCount > 0 ? (
-              <Link
-                className="ml-7 flex w-fit flex-row items-center gap-1 text-sm font-medium text-foreground hover:underline"
-                to="/activity?tab=monitors"
-              >
-                {recommendationCount === 1
-                  ? "Explore a metric you could watch"
-                  : `Explore ${recommendationCount} metrics you could watch`}
+      {showOnboarding ? (
+        <section aria-label="Get started">
+          <HomeOnboarding onboarding={data.onboarding} onDismiss={dismissOnboarding} />
+        </section>
+      ) : null}
 
-                <LuArrowRight size={16} aria-hidden />
-              </Link>
+      {showNeedsAttention ? (
+        <section aria-labelledby="attention-heading">
+          <SectionHeading
+            action={(
+              <Button onPress={() => navigate("/activity")} size="sm" variant="tertiary">
+                View all
+                <LuArrowRight aria-hidden />
+              </Button>
+            )}
+            id="attention-heading"
+            title="Metric activity"
+          />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {data.dataHealth.showOnHome ? (
+              <DataHealthAttention
+                count={data.dataHealth.count}
+                onPress={() => navigate("/activity?tab=health")}
+              />
+            ) : null}
+            {needsAttention.map((observation) => (
+              <ObservationCard key={observation.id} observation={observation} />
+            ))}
+            {needsAttention.length === 0 && !data.dataHealth.showOnHome ? (
+              <MetricAttentionStatus
+                onPress={() => navigate("/activity?tab=monitors")}
+                recommendationCount={recommendationCount}
+                setupState={data.setupState}
+              />
             ) : null}
           </div>
-        ) : (
-          <>
-            <SectionHeading
-              action={(
-                <Button onPress={() => navigate("/activity")} size="sm" variant="ghost">
-                  View all
-                  <LuArrowRight aria-hidden />
-                </Button>
-              )}
-              id="attention-heading"
-              title="Needs attention"
-            />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <SetupState state={data.setupState} />
-            </div>
-          </>
-        )}
-      </section>
+        </section>
+      ) : null}
 
       {notableChanges.length > 0 ? (
         <section aria-labelledby="notable-heading">
@@ -403,7 +402,7 @@ function Home() {
       <section aria-labelledby="dashboards-heading">
         <SectionHeading
           action={(
-            <Button onPress={() => navigate("/dashboards")} size="sm" variant="ghost">
+            <Button onPress={() => navigate("/dashboards")} size="sm" variant="tertiary">
               All dashboards
               <LuArrowRight aria-hidden />
             </Button>
@@ -412,10 +411,10 @@ function Home() {
           title="Continue working"
         />
         {data.dashboards.length > 0 ? (
-          <div className="divide-y divide-divider overflow-hidden rounded-3xl border border-divider bg-content1">
+          <div className="divide-y divide-divider overflow-hidden rounded-3xl border border-divider bg-surface">
             {data.dashboards.map((dashboard) => (
               <div
-                className="flex cursor-pointer flex-row items-center gap-3 px-4 py-3.5 hover:bg-content2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-soft-hover"
+                className="flex cursor-pointer flex-row items-center gap-3 px-4 py-3.5 hover:bg-background-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-soft-hover"
                 key={dashboard.id}
                 onClick={() => navigate(`/dashboard/${dashboard.id}`)}
                 onKeyDown={(event) => {
@@ -450,7 +449,7 @@ function Home() {
             ))}
           </div>
         ) : (
-          <div className="rounded-3xl border border-divider bg-content1 px-4 py-5">
+          <div className="rounded-3xl border border-divider bg-surface px-4 py-5">
             <p className="font-medium">No dashboards available</p>
             <p className="mt-1 text-sm text-foreground-500">
               Dashboards you create or can access will appear here.
@@ -470,7 +469,7 @@ function Home() {
           "waiting_for_setup",
           "watch_metric",
         ].includes(data.setupState) ? (
-        <div className="flex flex-col items-start gap-3 rounded-3xl border border-divider bg-content1 px-4 py-4 md:flex-row md:items-center">
+        <div className="flex flex-col items-start gap-3 rounded-3xl border border-divider bg-surface px-4 py-4 md:flex-row md:items-center">
           <div className="min-w-0 flex-1">
             <p className="font-medium">Get a KPI review</p>
             <p className="text-sm text-foreground-500">

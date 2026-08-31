@@ -36,7 +36,7 @@ function AiProgress({
           return (
             <li className="flex min-w-0 items-start gap-2.5" key={activity}>
               <span className="flex w-3 shrink-0 flex-col items-center self-stretch">
-                <span className="mt-0.5 flex size-3 items-center justify-center rounded-full bg-content1 text-foreground">
+                <span className="mt-0.5 flex size-3 items-center justify-center rounded-full bg-surface text-foreground">
                   {isCurrent
                     ? <LuLoader className="animate-spin" size={11} aria-hidden />
                     : <LuCheck size={10} aria-hidden />}

@@ -8,8 +8,8 @@ function Badge({ children, type = "neutral" }) {
     warning: "bg-warning/15 text-warning",
     primary: "bg-primary/15 text-accent",
     secondary: "bg-secondary/15 text-secondary",
-    neutral: "bg-content3 text-default-800",
-  }[type] || "bg-content3 text-default-800";
+    neutral: "bg-surface-tertiary text-default-800",
+  }[type] || "bg-surface-tertiary text-default-800";
 
   return (
     <span className={`mx-0.5 inline-flex items-center self-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.6px] shadow-sm ${typeClass}`}>

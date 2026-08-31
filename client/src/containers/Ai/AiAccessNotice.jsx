@@ -20,7 +20,7 @@ function AiAccessNotice({
     return (
       <div
         aria-live="polite"
-        className="flex items-center gap-3 rounded-2xl border border-divider bg-content2/50 p-4 text-sm text-muted"
+        className="flex items-center gap-3 rounded-2xl border border-divider bg-surface-secondary/50 p-4 text-sm text-muted"
         role="status"
       >
         <ProgressCircle aria-label="Checking Chartbrew AI availability" size="sm" />
@@ -32,7 +32,7 @@ function AiAccessNotice({
   if (error) {
     return (
       <div
-        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-divider bg-content2/50 p-4"
+        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-divider bg-surface-secondary/50 p-4"
         role="alert"
       >
         <div className="flex flex-col gap-1">

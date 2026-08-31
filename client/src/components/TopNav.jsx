@@ -250,7 +250,7 @@ function TopNav() {
           ) : null}
 
           <Dropdown aria-label="Select a help option">
-            <Dropdown.Trigger className="flex h-8 items-center gap-2 rounded-lg px-3 text-sm hover:bg-content2">
+            <Dropdown.Trigger className="flex h-8 items-center gap-2 rounded-lg px-3 text-sm hover:bg-surface-secondary">
               <LuHeartHandshake size={18} />
               Resources
             </Dropdown.Trigger>
@@ -340,7 +340,7 @@ function TopNav() {
                         {newsItems.map((item) => (
                           <article
                             key={item.id}
-                            className="overflow-hidden rounded-3xl border border-divider bg-content1"
+                            className="overflow-hidden rounded-3xl border border-divider bg-surface"
                           >
                             {item.coverImage ? (
                               <a
@@ -350,7 +350,7 @@ function TopNav() {
                               >
                                 <img
                                   alt={item.coverImageAlt}
-                                  className="aspect-video w-full bg-content2 object-cover transition-opacity hover:opacity-90"
+                                  className="aspect-video w-full bg-surface-secondary object-cover transition-opacity hover:opacity-90"
                                   loading="lazy"
                                   src={item.coverImage}
                                 />

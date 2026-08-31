@@ -857,7 +857,7 @@ function AiModal({ isOpen, onClose }) {
                       {conversations.map((conv) => (
                         <div
                           key={conv.id}
-                          className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-content2 transition-colors group"
+                          className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-surface-secondary transition-colors group"
                           onClick={() => _onSelectConversation(conv.id)}
                         >
                           <div className="pt-1">
@@ -935,7 +935,7 @@ function AiModal({ isOpen, onClose }) {
                         {conversations.map((c) => (
                           <div
                             key={c.id}
-                            className={`group relative flex cursor-pointer flex-row gap-2 rounded-lg px-2 py-2.5 transition-colors ${c.id === conversation.id ? "bg-content2" : "hover:bg-content2/60"}`}
+                            className={`group relative flex cursor-pointer flex-row gap-2 rounded-lg px-2 py-2.5 transition-colors ${c.id === conversation.id ? "bg-surface-secondary" : "hover:bg-surface-secondary/60"}`}
                             onClick={() => _onSelectConversation(c.id)}
                           >
                             <div className="pt-1">
@@ -1085,7 +1085,7 @@ function AiModal({ isOpen, onClose }) {
                         )}
                       </div>
                     </div>
-                    <div className="shrink-0 border-t border-divider bg-content1 px-4 py-3">
+                    <div className="shrink-0 border-t border-divider bg-surface px-4 py-3">
                       <div className="w-full">
                         <AiAccessNotice
                           availability={availability}

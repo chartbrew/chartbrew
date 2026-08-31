@@ -327,7 +327,7 @@ function JiraChartCard(props) {
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         isSelected
           ? "border-primary bg-primary/5"
-          : "border-divider bg-surface hover:border-primary/50 hover:bg-content2/30",
+          : "border-divider bg-surface hover:border-primary/50 hover:bg-surface-secondary/30",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-3">

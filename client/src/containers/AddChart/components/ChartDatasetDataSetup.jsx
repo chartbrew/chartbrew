@@ -157,7 +157,7 @@ function LayerGoalField({ description, initialValue, onSave }) {
   const hasChanges = value !== initialValue;
 
   return (
-    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+    <div className="rounded-xl border border-divider bg-surface-secondary/30 p-3">
       <NumberField
         fullWidth
         name="value-goal"
@@ -496,7 +496,7 @@ function ChartDatasetDataSetup({
             </div>
 
             {bindingLayers.length > 1 && (
-              <div className="mb-4 rounded-xl bg-content2/40 p-2">
+              <div className="mb-4 rounded-xl bg-surface-secondary/40 p-2">
                 <div className="mb-2 px-1 text-xs font-medium text-foreground-500">
                   Choose a value to edit
                 </div>

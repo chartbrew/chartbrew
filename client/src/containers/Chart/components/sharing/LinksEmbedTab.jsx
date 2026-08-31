@@ -382,7 +382,7 @@ function LinksEmbedTab({ chart, isOpen, onActionChange }) {
         </div>
 
         {sharePolicies.length === 0 ? (
-          <div className="rounded-xl bg-content2/60 px-4 py-8 text-center text-foreground-500">
+          <div className="rounded-xl bg-surface-secondary/60 px-4 py-8 text-center text-foreground-500">
             <LuShare2 className="mx-auto mb-2" size={22} />
             <div className="text-sm font-medium text-foreground">No share links yet</div>
             <div className="mt-1 text-xs">Create a link to get started</div>
@@ -411,7 +411,7 @@ function LinksEmbedTab({ chart, isOpen, onActionChange }) {
                 textValue={`Link ${index + 1}`}
                 className={`rounded-xl border px-3 py-2.5 ${selectedPolicy?.id === policy.id
                   ? "border-primary bg-primary/10"
-                  : "border-transparent bg-content2/70"}`}
+                  : "border-transparent bg-surface-secondary/70"}`}
               >
                 <div className="flex w-full items-start justify-between gap-2">
                   <div className="flex min-w-0 flex-1 items-start gap-2.5">
@@ -607,7 +607,7 @@ function LinksEmbedTab({ chart, isOpen, onActionChange }) {
           </div>
         )}
 
-        <Accordion className="bg-content2/50" variant="surface">
+        <Accordion className="bg-surface-secondary/50" variant="surface">
           <Accordion.Item id="chart-sharing-advanced" textValue="Advanced options">
             <Accordion.Heading>
               <Accordion.Trigger>
@@ -746,9 +746,9 @@ function LinksEmbedTab({ chart, isOpen, onActionChange }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5">
-      <div className={`flex items-center justify-between gap-4 rounded-xl px-4 py-3 ${linksEnabled ? "bg-primary/10" : "bg-content2"}`}>
+      <div className={`flex items-center justify-between gap-4 rounded-xl px-4 py-3 ${linksEnabled ? "bg-primary/10" : "bg-surface-secondary"}`}>
         <div className="flex min-w-0 items-center gap-3">
-          <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${linksEnabled ? "bg-primary text-white" : "bg-content3 text-foreground-500"}`}>
+          <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${linksEnabled ? "bg-primary text-white" : "bg-surface-tertiary text-foreground-500"}`}>
             <LuGlobe size={18} aria-hidden />
           </div>
           <div className="min-w-0">
@@ -780,7 +780,7 @@ function LinksEmbedTab({ chart, isOpen, onActionChange }) {
       )}
 
       {!shareLoading && !linksEnabled && (
-        <div className="flex flex-1 items-center justify-center rounded-xl bg-content2/50 px-6 py-10 text-center">
+        <div className="flex flex-1 items-center justify-center rounded-xl bg-surface-secondary/50 px-6 py-10 text-center">
           <div className="max-w-sm">
             <LuShare2 className="mx-auto mb-3 text-foreground-400" size={26} aria-hidden />
             <div className="text-sm font-semibold text-foreground">Public sharing is off</div>
@@ -792,7 +792,7 @@ function LinksEmbedTab({ chart, isOpen, onActionChange }) {
       )}
 
       {!shareLoading && linksEnabled && !hasSharingCode && (
-        <div className="flex flex-1 items-center justify-center rounded-xl bg-content2/50 px-6 py-10 text-center">
+        <div className="flex flex-1 items-center justify-center rounded-xl bg-surface-secondary/50 px-6 py-10 text-center">
           <div>
             <LuShare2 className="mx-auto mb-3 text-foreground-400" size={26} aria-hidden />
             <div className="text-sm font-semibold text-foreground">Create a sharing link</div>
