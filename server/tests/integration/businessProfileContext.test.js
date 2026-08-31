@@ -20,10 +20,9 @@ describe("business profile AI context", () => {
     models = await getModels();
   });
 
-  it("excludes the profile until the owner allows AI context", async () => {
+  it("uses the profile when the general AI policy allows workspace context", async () => {
     const team = await models.Team.create({ name: "Acme", useCases: "internal" });
-    const profile = await models.TeamBusinessProfile.create({
-      aiContextAllowed: false,
+    await models.TeamBusinessProfile.create({
       businessName: "Acme Analytics",
       description: "Reporting for growing companies",
       domain: "acme.example",
@@ -37,14 +36,6 @@ describe("business profile AI context", () => {
       workspaceOrchestratorEnabled: true,
     };
 
-    const denied = await readWorkspaceContext(access, envelope, {
-      externalProvider: true,
-      sections: ["business_profile"],
-    });
-    expect(denied).not.toHaveProperty("business_profile");
-    expect(denied.coverage.businessProfileUnavailable).toBe(true);
-
-    await profile.update({ aiContextAllowed: true });
     const approved = await readWorkspaceContext(access, envelope, {
       externalProvider: true,
       sections: ["business_profile"],
@@ -81,11 +72,5 @@ describe("business profile AI context", () => {
     });
     expect(platformDenied).not.toHaveProperty("business_profile");
 
-    await profile.update({ aiContextAllowed: false });
-    const revoked = await readWorkspaceContext(access, envelope, {
-      externalProvider: true,
-      sections: ["business_profile"],
-    });
-    expect(revoked).not.toHaveProperty("business_profile");
   });
 });

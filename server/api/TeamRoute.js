@@ -46,6 +46,25 @@ module.exports = (app) => {
   const teamController = new TeamController();
   const userController = new UserController();
 
+  const handleOnboardingDiscovery = (requiresTeamAccess) => {
+    return async (req, res) => {
+      try {
+        if (requiresTeamAccess) {
+          const teamRole = await teamController.getTeamRole(req.params.id, req.user.id);
+          if (!teamRole || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+            return res.status(403).send({ error: "Access denied" });
+          }
+        }
+        const profile = await discoverBusinessProfile(req.body?.websiteUrl);
+        return res.status(200).send(profile);
+      } catch (error) {
+        return res.status(400).send({
+          error: "We could not read that website. Check the address or add the details yourself.",
+        });
+      }
+    };
+  };
+
   const checkPermissions = (actionType = "readOwn", entity = "team") => {
     return async (req, res, next) => {
       const { id } = req.params;
@@ -129,24 +148,20 @@ module.exports = (app) => {
   // --------------------------------------
 
   app.post(
+    "/team/onboarding/discover",
+    verifyToken,
+    onboardingDiscoveryUserLimiter,
+    onboardingDiscoveryDomainLimiter,
+    handleOnboardingDiscovery(false)
+  );
+  // --------------------------------------
+
+  app.post(
     "/team/:id/onboarding/discover",
     verifyToken,
     onboardingDiscoveryUserLimiter,
     onboardingDiscoveryDomainLimiter,
-    async (req, res) => {
-      try {
-        const teamRole = await teamController.getTeamRole(req.params.id, req.user.id);
-        if (!teamRole || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
-          return res.status(403).send({ error: "Access denied" });
-        }
-        const profile = await discoverBusinessProfile(req.body?.websiteUrl);
-        return res.status(200).send(profile);
-      } catch (error) {
-        return res.status(400).send({
-          error: "We could not read that website. Check the address or add the details yourself.",
-        });
-      }
-    }
+    handleOnboardingDiscovery(true)
   );
   // --------------------------------------
 

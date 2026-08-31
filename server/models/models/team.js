@@ -11,6 +11,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     useCases: DataTypes.TEXT,
     onboardingCompletedAt: DataTypes.DATE,
+    aiEnabled: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     showBranding: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

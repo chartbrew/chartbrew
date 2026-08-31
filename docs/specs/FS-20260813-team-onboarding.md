@@ -19,8 +19,8 @@ Do not copy plan selection, trial, Stripe, or other billing behavior into Chartb
 
 The flow asks for the team name, the primary Chartbrew use case, and a public business website.
 Chartbrew reads a small set of public website pages and proposes a business profile. The owner can
-review and edit the proposal before Chartbrew saves it. Chartbrew can use the approved profile as AI
-context only after a separate, optional owner consent.
+review and edit the proposal before Chartbrew saves it. Chartbrew AI can use the approved profile
+when the general Chartbrew AI controls allow it.
 
 ## Goals
 
@@ -29,7 +29,7 @@ context only after a separate, optional owner consent.
 - Reuse the cloud component names, layout, use-case values, and `/start` route where possible.
 - Save an owner-approved business name, description, logo, domain, and small metadata set.
 - Keep website discovery safe, bounded, optional, and recoverable.
-- Let the owner control if the approved profile can enter an AI request.
+- Let the owner upload, replace, or remove the team logo.
 - Send both completed flows to `/connections/new` with the new team active.
 
 ## Non-Goals
@@ -37,7 +37,7 @@ context only after a separate, optional owner consent.
 - Plans, trials, payments, entitlements, or feature flags.
 - A general-purpose web crawler, search index, or copy of the website.
 - JavaScript page rendering, authenticated pages, forms, or files other than safe logo images.
-- Automatic changes to a dashboard theme, report logo, connection, or dataset.
+- Automatic changes to a dashboard theme, connection, or dataset.
 - Product analytics or outbound Chartbrew OS telemetry.
 
 ## Entry Rules And Flow
@@ -48,7 +48,7 @@ Onboarding belongs to a team, not to a user.
 | --- | --- |
 | Normal signup | Create the initial owned team with onboarding incomplete. Go to `/start` and show a short welcome heading before team setup. |
 | Invited signup | Create the user without a personal team, accept the invitation, and go to the invited team. Do not show this onboarding. |
-| Create team | Replace the current name modal with `/start?new=1`. Start with team setup and do not show welcome text. Create the team after the first step is valid. |
+| Create team | Replace the current name modal with `/start?new=1`. Start with website discovery and do not show welcome text. Create the team after the final setup step is valid. |
 | Incomplete owned team | Selecting it resumes `/start?team=<id>` at the first incomplete step. |
 | Existing team | A migration marks it complete. Existing users must not get a new interruption. |
 
@@ -57,19 +57,22 @@ continue to control team creation. A user without an owned team must not be sent
 
 The steps are:
 
-1. **Team setup**: Ask for team name and the same primary use-case choices as cloud: `client`,
-   `internal`, `embedded`, `explore`, or a non-empty `other` value.
-2. **Business profile**: Ask for a business website, for example `example.com`. Let the user skip
-   this step or enter the profile manually. A discovery failure must not block onboarding.
-3. **Review**: Show the proposed logo, business name, and description as editable values. Show a
-   concise optional control: `Allow Chartbrew AI to use this business profile when it is relevant`.
-   It is off by default and it is not required to finish.
-4. **Finish**: Save the approved values and completion time in one transaction. Refresh the team
+1. **Business website**: Ask for a business website, for example `example.com`. The primary action
+   is `Continue`; discovery is an implementation detail, not the user's task. Let the user skip the
+   website. A discovery failure must not block onboarding.
+2. **Team and profile review**: Use the discovered business name as the editable team-name default.
+   Ask for the primary use case: `client`, `internal`, `embedded`, `explore`, or a non-empty `other`
+   value. Do not preselect a use case. If the user tries to finish without one, mark the group as
+   required and ask the user to choose one. Put the editable website and description inside a
+   `Business profile` accordion. Open it by default after successful discovery and keep it closed
+   after the user skips. Let the user upload, replace, or remove the team logo near the team name.
+3. **Finish**: Save the approved values and completion time in one transaction. Refresh the team
    state, make the team active, and go to `/connections/new`.
 
 Do not show crawl status, job names, source fields, model names, or other implementation details.
 For a read failure, use: `We could not read that website. Check the address or add the details
-yourself.` Provide retry, manual entry, and skip actions.
+yourself.` Provide retry and skip actions. The business-profile accordion remains available for
+manual edits on the next step.
 
 ## Website Discovery
 
@@ -84,7 +87,8 @@ query, and fragment values, and keeps a canonical public start URL. It fetches s
   Respect `robots.txt` for extra pages. Do not discover more links from those pages.
 - Limit the operation to 10 seconds, three HTML pages, 1 MB per page, three redirects, and one logo
   image of at most 512 KB. Accept HTML for pages and raster PNG, JPEG, WebP, or ICO images for the
-  saved logo. Do not accept SVG in the first release.
+  saved logo. A bounded remote SVG logo can be used only after the server rasterizes it to PNG. Do
+  not store or return remote SVG markup.
 - Do not send cookies, authorization headers, source credentials, or user headers. Do not run page
   scripts. Discard raw HTML after extraction.
 - Apply a per-user and per-domain rate limit. Log bounded security outcomes without website content.
@@ -92,13 +96,20 @@ query, and fragment values, and keeps a canonical public start URL. It fetches s
 Use this extraction priority:
 
 1. JSON-LD `Organization` or `WebSite` name, description, and logo.
-2. Open Graph site name, title, description, and image.
-3. Standard title, meta description, favicon links, and `/favicon.ico`.
+2. Page images that are explicitly identified as a logo or brand image.
+3. Apple touch icons, favicon links, and `/favicon.ico`.
+4. Open Graph site name, title, and description. Use the Open Graph image only as the last image
+   fallback because it is often a social preview instead of a logo.
+
+Inspect candidate dimensions before selection. Prefer a clear icon or logo with a useful intrinsic
+size over a tiny image. Reject large images with common social-card proportions. Compare several
+bounded candidates instead of saving the first image with a valid file signature.
 
 The proposed metadata can contain the HTML language, declared locale, theme color, public social
 profile links, and declared keywords or industry. Use an allowlist and size limits. Do not collect
 contact people, email addresses, phone numbers, page text, analytics identifiers, or script URLs.
-Never silently replace a team name with a discovered business name.
+Fill the editable team-name field from the discovered business name. Never replace it after the user
+edits the value.
 
 ## Data And API Contract
 
@@ -110,38 +121,47 @@ Add these team fields:
 
 Add a one-to-one `TeamBusinessProfile` record with `team_id`, canonical `websiteUrl`, `domain`,
 `businessName`, `description`, `logoMimeType`, bounded `logoData`, allowlisted `metadata`,
-`aiContextAllowed`, and normal timestamps. Keep logo bytes out of normal team list responses and
-serve them through an authorized image route. Delete the profile with the team.
+and normal timestamps. Keep logo bytes out of normal team list responses and serve them through an
+authorized image route. Delete the profile with the team.
 
 Add or change these authenticated contracts:
 
+- `POST /team/onboarding/discover` accepts `{ websiteUrl }` and returns a preview before a new team
+  exists. It uses the same user and domain limits as team-scoped discovery.
 - `POST /team` accepts only validated team creation fields. It can accept `name` and `useCases` for
   the new-team onboarding entry and returns the incomplete team.
 - `POST /team/:id/onboarding/discover` accepts `{ websiteUrl }` and returns a preview. It does not
   save or approve raw website content.
 - `PATCH /team/:id/onboarding` accepts the allowlisted step values. The final call saves the profile,
-  owner consent, and `onboardingCompletedAt` atomically.
+  team values, and `onboardingCompletedAt` atomically.
 - `GET /team/:id/business-profile/logo` returns the stored image with a correct type,
   `X-Content-Type-Options: nosniff`, and a cache policy.
 - The Team settings profile editor reuses discovery and review so an owner or team admin can change
-  the saved profile later. Only the owner can change AI consent.
+  the saved profile and team logo later.
 
 Do not pass request bodies directly to `Team.update()`. Use explicit field allowlists. Team creation
 must create the team, owner role, and default projects in one database transaction.
 
 ## AI Context Rules
 
-The saved profile is ordinary team data. Saving it does not grant AI access. Add a bounded
-`business_profile` section to the workspace context service only when all these conditions are true:
+The saved profile is ordinary team data. Add a bounded `business_profile` section to the workspace
+context service only when all these conditions are true:
 
-- The team owner enabled `aiContextAllowed`.
 - Chartbrew AI and the applicable platform controls are enabled.
 - The current request can access the team and needs this profile.
 
 The section can include only the approved name, domain, description, use case, and allowlisted
 metadata. It must not include logo bytes, raw HTML, source page text, or rejected draft values. When
 an external provider receives the section, add `business_profile` to the existing egress manifest.
-Turning consent off must stop future use at once. Existing audit and retention rules still apply.
+Existing audit and retention rules still apply.
+
+## Dashboard Brand Defaults
+
+When a team profile has a logo or website, use them as defaults for new dashboards. The logo becomes
+the dashboard logo and the website becomes the company website URL. Apply the same defaults to the
+initial dashboard when onboarding saves the profile. Do not replace a dashboard logo or website that
+the user customized. Keep the existing dashboard controls so each dashboard can use its own logo and
+website later.
 
 ## Cloud Merge Alignment
 
@@ -164,12 +184,12 @@ Turning consent off must stop future use at once. Existing audit and retention r
 - Invalid, private, redirected-private, oversized, slow, non-HTML, and unsafe image targets fail
   closed while manual setup and skip remain available.
 - The database stores the approved logo and profile, but not raw HTML.
-- AI context excludes the profile by default and after consent is removed. With consent, it includes
-  only the approved bounded fields and records external sharing in the manifest.
+- AI context includes only the approved bounded fields when the general Chartbrew AI controls allow
+  it, and records external sharing in the manifest.
 - Owner checks exist on every onboarding write. Direct route access cannot change another team.
 - Client tests cover both entry variants, resume, skip, retry, review edits, and completion. Server
   tests cover migration backfill, invitation behavior, transactions, extraction, SSRF controls,
-  field allowlists, consent, and AI context gating.
+  field allowlists, dashboard brand defaults, and general AI context gating.
 
 ## Important Product Ideas
 

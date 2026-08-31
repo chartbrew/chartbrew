@@ -188,10 +188,7 @@ async function readBusinessProfile(access) {
       model: db.Team,
       attributes: ["useCases"],
     }],
-    where: {
-      aiContextAllowed: true,
-      team_id: access.teamId,
-    },
+    where: { team_id: access.teamId },
   });
   if (!profile) return null;
   return {

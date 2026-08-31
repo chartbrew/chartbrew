@@ -26,11 +26,12 @@ describe("team onboarding migration", () => {
     expect(queryInterface.createTable).toHaveBeenCalledWith(
       "TeamBusinessProfile",
       expect.objectContaining({
-        aiContextAllowed: expect.any(Object),
         logoData: expect.any(Object),
         team_id: expect.objectContaining({ unique: true }),
       })
     );
+    const columns = queryInterface.createTable.mock.calls[0][1];
+    expect(columns).not.toHaveProperty("aiContextAllowed");
   });
 
   it("does not replace fields or tables that already exist", async () => {

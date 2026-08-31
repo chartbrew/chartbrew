@@ -1,5 +1,6 @@
 const rateLimit = require("express-rate-limit");
 
+const db = require("../models/models");
 const {
   getOrchestration,
   respond,
@@ -16,7 +17,10 @@ const {
   routeWorkspaceRequest,
 } = require("../modules/ai/orchestrator/runtime/deterministicRouter");
 const { getRoleBoundaryMessage } = require("../modules/ai/orchestrator/rolePolicy");
-const { getWorkspaceOrchestratorPolicy } = require("../modules/workspaceContext/policy");
+const {
+  TEAM_AI_DISABLED_MESSAGE,
+  getWorkspaceOrchestratorPolicy,
+} = require("../modules/workspaceContext/policy");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -44,19 +48,30 @@ const checkAccess = async (req, res, next) => {
     }
 
     const teamController = new TeamController();
-    const teamRole = await teamController.getTeamRole(teamId, req.user.id);
+    const [teamRole, team] = await Promise.all([
+      teamController.getTeamRole(teamId, req.user.id),
+      db.Team.findByPk(teamId, { attributes: ["aiEnabled"] }),
+    ]);
 
-    if (!teamRole?.role) {
+    if (!teamRole?.role || !team) {
       return res.status(403).json({ error: "Access denied" });
     }
 
     req.aiTeamRole = teamRole;
+    req.aiTeamEnabled = team.aiEnabled !== false;
     return next();
   } catch (_error) {
     return res.status(500).json({
       error: "Chartbrew could not check workspace access. Try again.",
     });
   }
+};
+
+const requireTeamAiEnabled = (req, res, next) => {
+  if (!req.aiTeamEnabled) {
+    return res.status(403).json({ error: TEAM_AI_DISABLED_MESSAGE });
+  }
+  return next();
 };
 
 const checkAdminAccess = (req, res, next) => {
@@ -75,7 +90,18 @@ const isOpenAiApiKeySet = () => {
 };
 
 module.exports = (app) => {
-  app.post("/ai/respond", apiLimiter(3), verifyToken, checkAccess, async (req, res) => {
+  app.get("/ai/availability", apiLimiter(20), verifyToken, checkAccess, (req, res) => {
+    const platformEnabled = getWorkspaceOrchestratorPolicy().enabled;
+    const enabled = platformEnabled && req.aiTeamEnabled;
+    let disabledBy = null;
+    if (!enabled) disabledBy = platformEnabled ? "team" : "platform";
+    return res.json({
+      disabledBy,
+      enabled,
+    });
+  });
+
+  app.post("/ai/respond", apiLimiter(3), verifyToken, checkAccess, requireTeamAiEnabled, async (req, res) => {
     const {
       action,
       aiConversationId,
@@ -137,7 +163,7 @@ module.exports = (app) => {
   );
 
   // Main orchestration endpoint - handles conversation creation/loading automatically
-  app.post("/ai/orchestrate", apiLimiter(3), verifyToken, checkAccess, async (req, res) => {
+  app.post("/ai/orchestrate", apiLimiter(3), verifyToken, checkAccess, requireTeamAiEnabled, async (req, res) => {
     const {
       question,
       conversationHistory = [],

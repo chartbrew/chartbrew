@@ -983,6 +983,26 @@ describe("workspace orchestrator safety", () => {
     }
   });
 
+  it("does not use Chartbrew AI when it is disabled for the team", async () => {
+    vi.spyOn(db.Project, "findAll").mockResolvedValue([{ id: 4 }]);
+    vi.spyOn(db.User, "findByPk").mockResolvedValue({ email: "ren@example.com" });
+    const originalKey = process.env.CB_OPENAI_API_KEY_DEV;
+    process.env.CB_OPENAI_API_KEY_DEV = "test-provider-key";
+    try {
+      setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": true });
+      const envelope = await getWorkspaceAccessEnvelope({
+        ...access,
+        teamAiEnabled: false,
+      });
+
+      expect(envelope.workspaceOrchestratorEnabled).toBe(false);
+      expect(envelope.canUseExternalWorkspaceContext).toBe(false);
+    } finally {
+      if (originalKey === undefined) delete process.env.CB_OPENAI_API_KEY_DEV;
+      else process.env.CB_OPENAI_API_KEY_DEV = originalKey;
+    }
+  });
+
   it("gives a project viewer only stored reporting tools", () => {
     const scope = getAiRoleScope({
       ...access,

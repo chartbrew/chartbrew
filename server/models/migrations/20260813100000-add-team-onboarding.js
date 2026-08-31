@@ -52,11 +52,6 @@ module.exports = {
         logoMimeType: { type: Sequelize.STRING(100), allowNull: true },
         logoData: { type: Sequelize.BLOB("medium"), allowNull: true },
         metadata: { type: Sequelize.TEXT, allowNull: true },
-        aiContextAllowed: {
-          type: Sequelize.BOOLEAN,
-          allowNull: false,
-          defaultValue: false,
-        },
         createdAt: { type: Sequelize.DATE, allowNull: false },
         updatedAt: { type: Sequelize.DATE, allowNull: false },
       });

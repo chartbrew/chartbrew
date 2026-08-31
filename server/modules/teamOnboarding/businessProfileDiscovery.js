@@ -1,4 +1,5 @@
 const { DomUtils, parseDocument } = require("htmlparser2");
+const sharp = require("sharp");
 
 const safeRequest = require("../safeRequest");
 const {
@@ -13,6 +14,8 @@ const MAX_HTML_BYTES = 1024 * 1024;
 const MAX_ROBOTS_BYTES = 100 * 1024;
 const TOTAL_TIMEOUT_MS = 10000;
 const USER_AGENT = "ChartbrewBusinessProfileBot/1.0";
+const MAX_LOGO_PIXELS = 16 * 1024 * 1024;
+const MAX_NORMALIZED_LOGO_SIZE = 256;
 const SOCIAL_HOSTS = [
   "linkedin.com", "twitter.com", "x.com", "facebook.com", "instagram.com", "github.com",
 ];
@@ -72,6 +75,33 @@ function getJsonLdLogo(entity) {
   return null;
 }
 
+function getLogoImageScore(node) {
+  const src = getAttribute(node, "src");
+  const identity = [
+    getAttribute(node, "alt"),
+    getAttribute(node, "aria-label"),
+    getAttribute(node, "class"),
+    getAttribute(node, "id"),
+    getAttribute(node, "title"),
+    src,
+  ].join(" ").toLowerCase();
+  if (!/(^|[^a-z])(logo|brand)([^a-z]|$)/.test(identity)) return 0;
+  if (/(banner|hero|og-image|social|screenshot)/.test(identity)) return 0;
+  let score = 1;
+  if (/(^|[^a-z])logo([^a-z]|$)/.test(getAttribute(node, "alt").toLowerCase())) score += 4;
+  if (/(logo|brand)/.test(`${getAttribute(node, "class")} ${getAttribute(node, "id")}`)) score += 3;
+  if (/(logo|brand)/.test(src)) score += 2;
+  let parent = node.parent;
+  while (parent) {
+    if (["header", "nav"].includes(String(parent.name || "").toLowerCase())) {
+      score += 1;
+      break;
+    }
+    parent = parent.parent;
+  }
+  return score;
+}
+
 function toAbsoluteHttpUrl(value, baseUrl) {
   if (!value) return null;
   try {
@@ -109,13 +139,23 @@ function extractPageProfile(html, pageUrl) {
     if (url && !logoCandidates.includes(url)) logoCandidates.push(url);
   };
   addLogoCandidate(getJsonLdLogo(jsonLdEntity));
-  addLogoCandidate(openGraphImage);
-  findElements(document, "link").forEach((node) => {
-    const rel = getAttribute(node, "rel").toLowerCase().split(/\s+/);
-    if (rel.includes("icon") || rel.includes("apple-touch-icon")) {
-      addLogoCandidate(getAttribute(node, "href"));
-    }
+  findElements(document, "img")
+    .map((node) => ({ node, score: getLogoImageScore(node) }))
+    .filter(({ score }) => score >= 4)
+    .sort((left, right) => right.score - left.score)
+    .forEach(({ node }) => addLogoCandidate(getAttribute(node, "src")));
+  const iconLinks = findElements(document, "link").map((node) => ({
+    href: getAttribute(node, "href"),
+    rel: getAttribute(node, "rel").toLowerCase().split(/\s+/),
+  }));
+  iconLinks.forEach(({ href, rel }) => {
+    if (rel.includes("apple-touch-icon")) addLogoCandidate(href);
   });
+  iconLinks.forEach(({ href, rel }) => {
+    if (rel.includes("icon") && !rel.includes("apple-touch-icon")) addLogoCandidate(href);
+  });
+  addLogoCandidate(new URL("/favicon.ico", pageUrl).toString());
+  addLogoCandidate(openGraphImage);
   const socialLinks = [];
   findElements(document, "a").forEach((node) => {
     const url = toAbsoluteHttpUrl(getAttribute(node, "href"), pageUrl);
@@ -312,30 +352,104 @@ function mergePageProfiles(pageProfiles) {
   return merged;
 }
 
+function isSvgImage(resource, declaredMimeType) {
+  if (declaredMimeType !== "image/svg+xml") return false;
+  return /^\s*(?:<\?xml[^>]*>\s*)?<svg[\s>]/i.test(resource.body.toString("utf8", 0, 1024));
+}
+
+function isSocialCardSize(width, height) {
+  if (!width || !height || width < 600 || height < 300) return false;
+  const ratio = width / height;
+  return ratio >= 1.6 && ratio <= 2.2;
+}
+
+function getLogoSizeScore(width, height) {
+  if (!width || !height) return 0;
+  const shortestSide = Math.min(width, height);
+  if (shortestSide >= 128) return 24;
+  if (shortestSide >= 64) return 18;
+  if (shortestSide >= 32) return 12;
+  if (shortestSide >= 16) return 4;
+  return -24;
+}
+
+async function normalizeDownloadedLogo(resource) {
+  const declaredMimeType = resource.contentType.split(";")[0].trim();
+  if (isSvgImage(resource, declaredMimeType)) {
+    const pipeline = sharp(resource.body, {
+      density: 192,
+      limitInputPixels: MAX_LOGO_PIXELS,
+    });
+    const metadata = await pipeline.metadata();
+    const normalized = await pipeline
+      .resize({
+        width: MAX_NORMALIZED_LOGO_SIZE,
+        height: MAX_NORMALIZED_LOGO_SIZE,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .png()
+      .toBuffer();
+    if (!normalized.length || normalized.length > MAX_LOGO_BYTES) return null;
+    return {
+      body: normalized,
+      height: metadata.height,
+      mimeType: "image/png",
+      width: metadata.width,
+    };
+  }
+
+  const detectedMimeType = detectImageMimeType(resource.body);
+  const declaredIsIcon = declaredMimeType === "image/x-icon"
+    || declaredMimeType === "image/vnd.microsoft.icon";
+  const declaredTypeMatches = declaredMimeType === detectedMimeType
+    || (declaredIsIcon && detectedMimeType === "image/x-icon");
+  if (!detectedMimeType || !ALLOWED_IMAGE_MIME_TYPES.has(declaredMimeType)
+    || !declaredTypeMatches) return null;
+
+  let metadata = {};
+  try {
+    metadata = await sharp(resource.body, { limitInputPixels: MAX_LOGO_PIXELS }).metadata();
+  } catch (error) {
+    // The signature checks still protect supported icon formats that Sharp cannot inspect.
+  }
+  return {
+    body: resource.body,
+    height: metadata.height,
+    mimeType: detectedMimeType,
+    width: metadata.width,
+  };
+}
+
 async function downloadLogo(candidates, options) {
-  for (const candidate of candidates.slice(0, 6)) {
+  let bestLogo = null;
+  for (const [index, candidate] of candidates.slice(0, 8).entries()) {
     try {
       // oxlint-disable-next-line no-await-in-loop
       const resource = await fetchResource(candidate, {
         ...options,
-        accept: "image/png,image/jpeg,image/webp,image/x-icon,image/vnd.microsoft.icon",
+        accept: "image/png,image/jpeg,image/webp,image/x-icon,image/vnd.microsoft.icon,image/svg+xml",
         maximumBytes: MAX_LOGO_BYTES,
       });
-      const declaredMimeType = resource.contentType.split(";")[0].trim();
-      const detectedMimeType = detectImageMimeType(resource.body);
-      const declaredIsIcon = declaredMimeType === "image/x-icon"
-        || declaredMimeType === "image/vnd.microsoft.icon";
-      const declaredTypeMatches = declaredMimeType === detectedMimeType
-        || (declaredIsIcon && detectedMimeType === "image/x-icon");
-      if (detectedMimeType && ALLOWED_IMAGE_MIME_TYPES.has(declaredMimeType)
-        && declaredTypeMatches) {
-        return { mimeType: detectedMimeType, data: resource.body.toString("base64") };
+      // oxlint-disable-next-line no-await-in-loop
+      const normalized = await normalizeDownloadedLogo(resource);
+      if (normalized && !isSocialCardSize(normalized.width, normalized.height)) {
+        const score = 100 - (index * 10)
+          + getLogoSizeScore(normalized.width, normalized.height);
+        if (!bestLogo || score > bestLogo.score) {
+          bestLogo = {
+            data: normalized.body.toString("base64"),
+            mimeType: normalized.mimeType,
+            score,
+          };
+        }
       }
     } catch (error) {
       // Try the next logo.
     }
   }
-  return null;
+  if (!bestLogo) return null;
+  return { data: bestLogo.data, mimeType: bestLogo.mimeType };
 }
 
 async function discoverBusinessProfile(websiteUrl, options = {}) {
@@ -362,7 +476,6 @@ async function discoverBusinessProfile(websiteUrl, options = {}) {
     }
   }
   const merged = mergePageProfiles(pageProfiles);
-  merged.logoCandidates.push(new URL("/favicon.ico", origin).toString());
   const logo = await downloadLogo(merged.logoCandidates, requestOptions);
   return {
     websiteUrl: canonicalUrl,

@@ -39,12 +39,14 @@ async function getWorkspaceAccessEnvelope(access) {
   });
   const reportingOnly = access.role === "projectViewer";
   const orchestratorPolicy = getWorkspaceOrchestratorPolicy();
+  const workspaceOrchestratorEnabled = orchestratorPolicy.enabled
+    && access.teamAiEnabled !== false;
   const policy = {
     externalAiEnabled: Boolean(getOpenAiKey()),
     kpiReviewWritesEnabled: orchestratorPolicy.kpiReviewWritesEnabled,
     learningRetrievalEnabled: orchestratorPolicy.learningRetrievalEnabled,
     metricMonitorWritesEnabled: orchestratorPolicy.metricMonitorWritesEnabled,
-    workspaceOrchestratorEnabled: orchestratorPolicy.enabled,
+    workspaceOrchestratorEnabled,
   };
   const accessVersion = buildAccessVersion({
     editableProjectIds,

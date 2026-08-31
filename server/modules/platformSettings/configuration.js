@@ -12,7 +12,7 @@ const PLATFORM_SETTING_DEFINITIONS = Object.freeze([
     group: "aiControls",
     label: "Enable Chartbrew AI",
     description: "Let permitted users ask Chartbrew about existing workspace data and metrics.",
-    help: "When an external AI provider is configured, Chartbrew sends only the permitted information needed for each question. User and project permissions still apply.",
+    help: "Chartbrew AI can send a user's question and relevant data they can access to external AI services. Team and project permissions still apply.",
     type: "boolean",
   },
   {

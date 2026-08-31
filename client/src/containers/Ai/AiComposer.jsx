@@ -16,6 +16,7 @@ function AiComposer({
   onAtTyped,
   leadingContent,
   leadingControl,
+  status,
   suggestions = [],
   showEnterHint = false,
   rows = 4,
@@ -34,8 +35,8 @@ function AiComposer({
   const submit = () => {
     if (!hasContent || isLoading) return;
     const submittedQuestion = draftQuestion;
-    setDraftQuestion("");
-    onSubmitQuestion(submittedQuestion);
+    const accepted = onSubmitQuestion(submittedQuestion);
+    if (accepted !== false) setDraftQuestion("");
   };
 
   const handleSubmit = (event) => {
@@ -100,7 +101,7 @@ function AiComposer({
             onPress={() => fillSuggestion(suggestion)}
             size="sm"
             type="button"
-            variant="ghost"
+            variant="outline"
           >
             {suggestion}
           </Button>
@@ -155,7 +156,8 @@ function AiComposer({
               ref={composerRef}
               value={draftQuestion}
             />
-            <InputGroup.Suffix className="shrink-0 pe-1.5 ps-0">
+            <InputGroup.Suffix className="shrink-0 gap-1.5 pe-1.5 ps-0">
+              {status}
               {sendButton}
             </InputGroup.Suffix>
           </InputGroup>
@@ -185,13 +187,17 @@ function AiComposer({
               value={draftQuestion}
             />
             {framed ? (
-              <div className="absolute bottom-2 right-3 z-10">
+              <div className="absolute bottom-2 right-3 z-10 flex items-center gap-1.5">
+                {status}
                 {sendButton}
               </div>
             ) : (
               <InputGroup.Suffix className="flex w-full items-center gap-2 px-3 py-0">
                 <div className="ms-auto">
-                  {sendButton}
+                  <div className="flex items-center gap-1.5">
+                    {status}
+                    {sendButton}
+                  </div>
                 </div>
               </InputGroup.Suffix>
             )}
@@ -230,6 +236,7 @@ AiComposer.propTypes = {
   onAtTyped: PropTypes.func,
   leadingContent: PropTypes.node,
   leadingControl: PropTypes.node,
+  status: PropTypes.node,
   suggestions: PropTypes.arrayOf(PropTypes.string),
   showEnterHint: PropTypes.bool,
   rows: PropTypes.number,

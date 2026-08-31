@@ -1,6 +1,7 @@
 import {
   describe, expect, it, vi,
 } from "vitest";
+const sharp = require("sharp");
 
 const {
   discoverBusinessProfile,
@@ -69,7 +70,7 @@ describe("business profile discovery", () => {
       websiteUrl: "https://example.com/",
     });
     expect(JSON.stringify(profile)).not.toContain("Raw page text");
-    expect(requestFn).toHaveBeenCalledTimes(4);
+    expect(requestFn).toHaveBeenCalledTimes(5);
   });
 
   it("does not read profile pages that robots.txt disallows", async () => {
@@ -88,6 +89,89 @@ describe("business profile discovery", () => {
     await discoverBusinessProfile("https://example.com", { requestFn });
     expect(requestFn.mock.calls.map(([options]) => options.url))
       .not.toContain("https://example.com/about");
+  });
+
+  it("uses page logos and icons instead of social preview images", async () => {
+    const brandPng = await sharp({
+      create: { width: 128, height: 128, channels: 4, background: "#1455d9" },
+    }).png().toBuffer();
+    const socialPng = await sharp({
+      create: { width: 1200, height: 630, channels: 4, background: "#1455d9" },
+    }).png().toBuffer();
+    const homeHtml = `<html><head>
+      <meta property="og:image" content="/social-card.png">
+      <link rel="icon" href="/favicon.png">
+      </head><body><header><img alt="Example logo" src="/brand.png"></header></body></html>`;
+    const requestFn = vi.fn(async (options) => {
+      if (options.url === "https://example.com/") return response(options.url, homeHtml);
+      if (options.url === "https://example.com/robots.txt") {
+        return response(options.url, "User-agent: *\nDisallow:", "text/plain");
+      }
+      if (options.url === "https://example.com/brand.png") {
+        return response(options.url, brandPng, "image/png");
+      }
+      if (options.url === "https://example.com/social-card.png") {
+        return response(options.url, socialPng, "image/png");
+      }
+      throw new Error(`Unexpected request: ${options.url}`);
+    });
+
+    const profile = await discoverBusinessProfile("example.com", { requestFn });
+
+    expect(profile.logo).toEqual({ data: brandPng.toString("base64"), mimeType: "image/png" });
+  });
+
+  it("uses image dimensions to avoid tiny logo candidates", async () => {
+    const tinyPng = await sharp({
+      create: { width: 8, height: 8, channels: 4, background: "#1455d9" },
+    }).png().toBuffer();
+    const iconPng = await sharp({
+      create: { width: 128, height: 128, channels: 4, background: "#1455d9" },
+    }).png().toBuffer();
+    const homeHtml = `<html><head><link rel="apple-touch-icon" href="/touch.png"></head>
+      <body><header><img alt="Example logo" src="/tiny.png"></header></body></html>`;
+    const requestFn = vi.fn(async (options) => {
+      if (options.url === "https://example.com/") return response(options.url, homeHtml);
+      if (options.url === "https://example.com/robots.txt") {
+        return response(options.url, "User-agent: *\nDisallow:", "text/plain");
+      }
+      if (options.url === "https://example.com/tiny.png") {
+        return response(options.url, tinyPng, "image/png");
+      }
+      if (options.url === "https://example.com/touch.png") {
+        return response(options.url, iconPng, "image/png");
+      }
+      throw new Error(`Unexpected request: ${options.url}`);
+    });
+
+    const profile = await discoverBusinessProfile("example.com", { requestFn });
+
+    expect(profile.logo).toEqual({ data: iconPng.toString("base64"), mimeType: "image/png" });
+  });
+
+  it("rasterizes a bounded structured SVG logo", async () => {
+    const svg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="80">
+      <rect width="160" height="80" fill="#1455d9"/></svg>`);
+    const homeHtml = `<html><head><script type="application/ld+json">{
+      "@type":"Organization","logo":"/brand.svg"
+      }</script></head></html>`;
+    const requestFn = vi.fn(async (options) => {
+      if (options.url === "https://example.com/") return response(options.url, homeHtml);
+      if (options.url === "https://example.com/robots.txt") {
+        return response(options.url, "User-agent: *\nDisallow:", "text/plain");
+      }
+      if (options.url === "https://example.com/brand.svg") {
+        return response(options.url, svg, "image/svg+xml");
+      }
+      throw new Error(`Unexpected request: ${options.url}`);
+    });
+
+    const profile = await discoverBusinessProfile("example.com", { requestFn });
+    const logoBuffer = Buffer.from(profile.logo.data, "base64");
+    const metadata = await sharp(logoBuffer).metadata();
+
+    expect(profile.logo.mimeType).toBe("image/png");
+    expect(metadata).toMatchObject({ format: "png", height: 128, width: 256 });
   });
 
   it("rejects credentials, unsafe ports, oversized HTML, and non-HTML pages", async () => {
@@ -142,5 +226,29 @@ describe("business profile discovery", () => {
       metadata: { language: "fr", siteTitle: "Example" },
     });
     expect(robotsAllows("User-agent: *\nDisallow: /private", "/private/about")).toBe(false);
+  });
+
+  it("ranks declared logos, image logos, icons, and social images in that order", () => {
+    const profile = extractPageProfile(`
+      <html><head>
+      <meta property="og:image" content="/social.png">
+      <link rel="icon" href="/favicon.png">
+      <link rel="apple-touch-icon" href="/touch.png">
+      <script type="application/ld+json">{
+        "@type":"Organization","logo":"/structured.png"
+      }</script></head><body>
+      <nav><img class="site-logo" src="/wordmark.png" alt="Example logo"></nav>
+      <img src="/customer-logo.png" alt="Customer mark">
+      </body></html>
+    `, "https://example.com/");
+
+    expect(profile.logoCandidates).toEqual([
+      "https://example.com/structured.png",
+      "https://example.com/wordmark.png",
+      "https://example.com/touch.png",
+      "https://example.com/favicon.png",
+      "https://example.com/favicon.ico",
+      "https://example.com/social.png",
+    ]);
   });
 });

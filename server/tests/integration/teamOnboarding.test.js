@@ -53,6 +53,18 @@ describe("Team onboarding API", () => {
     return response.body;
   }
 
+  it("allows an authenticated user to start website discovery before team creation", async () => {
+    const response = await request(app)
+      .post("/team/onboarding/discover")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ websiteUrl: "" })
+      .expect(400);
+
+    expect(response.body.error).toBe(
+      "We could not read that website. Check the address or add the details yourself."
+    );
+  });
+
   it("creates the owner team and default projects in an incomplete state", async () => {
     const team = await createIncompleteTeam();
     expect(team.name).toBe("New Team");
@@ -72,7 +84,6 @@ describe("Team onboarding API", () => {
       .patch(`/team/${team.id}/onboarding`)
       .set("Authorization", `Bearer ${ownerToken}`)
       .send({
-        aiContextAllowed: true,
         businessProfile: {
           businessName: "Acme",
           description: "Analytics for growing teams",
@@ -86,7 +97,6 @@ describe("Team onboarding API", () => {
       .expect(200);
     expect(response.body.onboardingCompletedAt).toBeTruthy();
     expect(response.body.TeamBusinessProfile).toMatchObject({
-      aiContextAllowed: true,
       businessName: "Acme",
       domain: "acme.example",
       metadata: { industry: "Analytics" },
@@ -101,10 +111,9 @@ describe("Team onboarding API", () => {
     expect(Buffer.compare(logoResponse.body, PNG)).toBe(0);
   });
 
-  it("does not let a team admin complete onboarding or change owner AI consent", async () => {
+  it("does not let a team admin complete onboarding and preserves an existing logo", async () => {
     const team = await createIncompleteTeam();
     await models.TeamBusinessProfile.create({
-      aiContextAllowed: true,
       businessName: "Original",
       logoData: PNG,
       logoMimeType: "image/png",
@@ -127,13 +136,11 @@ describe("Team onboarding API", () => {
       .put(`/team/${team.id}/business-profile`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({
-        aiContextAllowed: false,
         businessProfile: { businessName: "Updated by admin" },
       })
       .expect(200);
     const profile = await models.TeamBusinessProfile.findOne({ where: { team_id: team.id } });
     expect(profile.businessName).toBe("Updated by admin");
-    expect(profile.aiContextAllowed).toBe(true);
     expect(profile.logoMimeType).toBe("image/png");
     expect(Buffer.compare(profile.logoData, PNG)).toBe(0);
   });
@@ -144,12 +151,14 @@ describe("Team onboarding API", () => {
       .put(`/team/${team.id}`)
       .set("Authorization", `Bearer ${ownerToken}`)
       .send({
+        aiEnabled: false,
         name: "Renamed Team",
         onboardingCompletedAt: "2020-01-01T00:00:00.000Z",
       })
       .expect(200);
     const savedTeam = await models.Team.findByPk(team.id);
     expect(savedTeam.name).toBe("Renamed Team");
+    expect(savedTeam.aiEnabled).toBe(false);
     expect(savedTeam.onboardingCompletedAt).toBeNull();
   });
 });

@@ -16,8 +16,17 @@ export function shouldResumeOnboarding(team, userId) {
   return isTeamOwner(team, userId) && !team.onboardingCompletedAt;
 }
 
-export function getInitialOnboardingStep(team) {
-  return team?.useCases ? 2 : 1;
+export function getSuggestedTeamName(businessProfile, team) {
+  return String(businessProfile?.businessName || team?.name || "").trim();
+}
+
+export function hasBusinessProfileDetails(businessProfile) {
+  return Boolean(
+    businessProfile?.businessName
+    || businessProfile?.description
+    || businessProfile?.logo
+    || businessProfile?.websiteUrl
+  );
 }
 
 export function getOnboardingEntry(search = "") {
@@ -55,7 +64,7 @@ export function buildBusinessProfile({
     description: description.trim() || null,
     metadata: metadata || {},
   };
-  if (logo) profile.logo = logo;
+  if (logo !== undefined) profile.logo = logo;
   return profile;
 }
 
@@ -70,8 +79,28 @@ export function getBusinessProfileReview(discoveredProfile, fallbackWebsiteUrl =
   };
 }
 
-export function buildOnboardingCompletion(businessProfile, aiContextAllowed = false) {
-  const completion = { complete: true, aiContextAllowed: aiContextAllowed === true };
+export function buildOnboardingCompletion(businessProfile) {
+  const completion = { complete: true };
   if (businessProfile) completion.businessProfile = businessProfile;
   return completion;
+}
+
+export const MAX_BUSINESS_LOGO_BYTES = 512 * 1024;
+
+const BUSINESS_LOGO_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/vnd.microsoft.icon",
+  "image/webp",
+  "image/x-icon",
+]);
+
+export function getBusinessLogoFileError(file) {
+  if (!file || !BUSINESS_LOGO_MIME_TYPES.has(String(file.type || "").toLowerCase())) {
+    return "Choose a PNG, JPG, WebP, or ICO image.";
+  }
+  if (!file.size || file.size > MAX_BUSINESS_LOGO_BYTES) {
+    return "Choose an image smaller than 512 KB.";
+  }
+  return "";
 }

@@ -131,7 +131,10 @@ export const discoverBusinessProfile = createAsyncThunk(
       "Accept": "application/json", "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
-    const response = await fetch(`${API_HOST}/team/${team_id}/onboarding/discover`, {
+    const endpoint = team_id
+      ? `${API_HOST}/team/${team_id}/onboarding/discover`
+      : `${API_HOST}/team/onboarding/discover`;
+    const response = await fetch(endpoint, {
       method: "POST", headers, body: JSON.stringify({ websiteUrl }),
     });
     const responseJson = await response.json();

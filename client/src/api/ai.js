@@ -1,6 +1,23 @@
 import { API_HOST } from "../config/settings";
 import { getAuthToken } from "../modules/auth";
 
+export async function getAiAvailability(teamId) {
+  const token = getAuthToken();
+  const params = new URLSearchParams({ teamId: String(teamId) });
+  const response = await fetch(`${API_HOST}/ai/availability?${params.toString()}`, {
+    headers: new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    }),
+    method: "GET",
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Chartbrew AI availability could not be checked");
+  }
+  return data;
+}
+
 export async function getAiConversations(teamId, options = {}) {
   const token = getAuthToken();
   const params = new URLSearchParams({ teamId: String(teamId) });

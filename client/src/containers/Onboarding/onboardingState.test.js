@@ -6,8 +6,10 @@ import {
   buildOnboardingCompletion,
   findOwnedOnboardingTeam,
   getBusinessProfileReview,
-  getInitialOnboardingStep,
+  getBusinessLogoFileError,
   getOnboardingEntry,
+  getSuggestedTeamName,
+  hasBusinessProfileDetails,
   isTeamOwner,
   normalizeBusinessWebsite,
   shouldResumeOnboarding,
@@ -40,9 +42,15 @@ test("team selection respects an explicit owned target and ignores invited teams
   assert.equal(findOwnedOnboardingTeam(teams, 10, 3), null);
 });
 
-test("saved use cases resume at the business profile step", () => {
-  assert.equal(getInitialOnboardingStep(incompleteOwnedTeam), 1);
-  assert.equal(getInitialOnboardingStep({ ...incompleteOwnedTeam, useCases: "internal" }), 2);
+test("a discovered business name becomes the team name default", () => {
+  assert.equal(getSuggestedTeamName({ businessName: " Chartbrew " }, { name: "My team" }), "Chartbrew");
+  assert.equal(getSuggestedTeamName(null, { name: " My team " }), "My team");
+});
+
+test("business details open the optional profile section", () => {
+  assert.equal(hasBusinessProfileDetails(null), false);
+  assert.equal(hasBusinessProfileDetails({}), false);
+  assert.equal(hasBusinessProfileDetails({ websiteUrl: "https://example.com/" }), true);
 });
 
 test("welcome and new-team entries stay separate", () => {
@@ -63,7 +71,7 @@ test("business profile input gets a canonical website and reviewed fields", () =
     metadata: { language: "en" }, websiteUrl: "acme.example",
   }), {
     businessName: "Acme", description: "Reporting", domain: "acme.example",
-    metadata: { language: "en" }, websiteUrl: "https://acme.example/",
+    logo: null, metadata: { language: "en" }, websiteUrl: "https://acme.example/",
   });
 });
 
@@ -77,13 +85,22 @@ test("a failed discovery stays retryable and a result becomes an editable review
   });
 });
 
-test("skip and reviewed completion payloads keep AI consent off by default", () => {
-  assert.deepEqual(buildOnboardingCompletion(null), {
-    aiContextAllowed: false, complete: true,
-  });
-  assert.deepEqual(buildOnboardingCompletion({ businessName: "Edited name" }, true), {
-    aiContextAllowed: true,
+test("skip and reviewed completion payloads do not add a profile consent field", () => {
+  assert.deepEqual(buildOnboardingCompletion(null), { complete: true });
+  assert.deepEqual(buildOnboardingCompletion({ businessName: "Edited name" }), {
     businessProfile: { businessName: "Edited name" },
     complete: true,
   });
+});
+
+test("team logo uploads use safe image types and a small size limit", () => {
+  assert.equal(getBusinessLogoFileError({ size: 1024, type: "image/png" }), "");
+  assert.equal(
+    getBusinessLogoFileError({ size: 1024, type: "image/svg+xml" }),
+    "Choose a PNG, JPG, WebP, or ICO image."
+  );
+  assert.equal(
+    getBusinessLogoFileError({ size: 600 * 1024, type: "image/png" }),
+    "Choose an image smaller than 512 KB."
+  );
 });

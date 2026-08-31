@@ -29,11 +29,6 @@ module.exports = (sequelize, DataTypes) => {
         this.setDataValue("metadata", JSON.stringify(value || {}));
       },
     },
-    aiContextAllowed: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    },
   }, {
     freezeTableName: true,
   });

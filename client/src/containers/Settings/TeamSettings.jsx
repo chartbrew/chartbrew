@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "react-router";
 import {
   Button,
   Description,
@@ -20,9 +21,11 @@ import { ButtonSpinner } from "../../components/ButtonSpinner";
 import { deleteTeam, selectTeam, selectTeams, updateTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
+import { TEAM_AI_TOOLTIP } from "../Ai/aiEnablementCopy";
 import TeamAiDataControls from "./TeamAiDataControls";
 import TeamMembers from "./TeamMembers";
 import BusinessProfileSettings from "./BusinessProfileSettings";
+import EnableAiPromptModal from "./EnableAiPromptModal";
 
 /*
   Contains team update functionality
@@ -35,6 +38,8 @@ function TeamSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmChecked, setDeleteConfirmChecked] = useState("");
+  const [enablingAi, setEnablingAi] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const dispatch = useDispatch();
   const team = useSelector(selectTeam);
@@ -64,6 +69,29 @@ function TeamSettings() {
     } else {
       toast.success("Branding settings updated");
     }
+  };
+
+  const _onToggleAi = async (selected) => {
+    const response = await dispatch(updateTeam({ team_id: team.id, data: { aiEnabled: selected } }));
+    if (response?.error) {
+      toast.error("Chartbrew AI settings could not be updated");
+      return false;
+    }
+    toast.success(selected ? "Chartbrew AI enabled" : "Chartbrew AI disabled");
+    return true;
+  };
+
+  const _closeEnableAiPrompt = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("enableAi");
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const _onConfirmEnableAi = async () => {
+    setEnablingAi(true);
+    const enabled = await _onToggleAi(true);
+    setEnablingAi(false);
+    if (enabled) _closeEnableAiPrompt();
   };
 
   const _onToggleReportExport = async (selected) => {
@@ -113,6 +141,13 @@ function TeamSettings() {
 
   return (
     <div className="flex flex-col gap-4">
+      <EnableAiPromptModal
+        isOpen={searchParams.get("enableAi") === "team" && team.aiEnabled === false}
+        isPending={enablingAi}
+        onCancel={_closeEnableAiPrompt}
+        onConfirm={_onConfirmEnableAi}
+        scope="team"
+      />
       <section className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
         <div className="text-lg font-semibold font-tw">Team settings</div>
         <div className="h-4" />
@@ -148,7 +183,39 @@ function TeamSettings() {
         <Separator />
         <div className="h-4" />
 
+        {canAccess("teamAdmin", user.id, team.TeamRoles) ? (
+          <>
+            <BusinessProfileSettings />
+            <div className="h-6" />
+            <Separator />
+            <div className="h-4" />
+          </>
+        ) : null}
+
         <div className="flex flex-col gap-4">
+        <div className="flex flex-row items-center gap-2">
+          <Switch
+            id="team-settings-ai-enabled"
+            isSelected={team.aiEnabled !== false}
+            onChange={(selected) => _onToggleAi(selected)}
+          >
+            <Switch.Content>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              Enable Chartbrew AI
+            </Switch.Content>
+          </Switch>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <div><LuInfo size={18} className="text-foreground" /></div>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="max-w-sm">
+              {TEAM_AI_TOOLTIP}
+            </Tooltip.Content>
+          </Tooltip>
+        </div>
+
         <div className="flex flex-row items-center gap-2">
           <Switch
             id="team-settings-allow-report-export"
@@ -295,7 +362,6 @@ function TeamSettings() {
       </section>
 
       <TeamMembers />
-      {canAccess("teamAdmin", user.id, team.TeamRoles) ? <BusinessProfileSettings /> : null}
       {canAccess("teamAdmin", user.id, team.TeamRoles) ? <TeamAiDataControls /> : null}
     </div>
   );

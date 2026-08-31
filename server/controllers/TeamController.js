@@ -7,6 +7,9 @@ const db = require("../models/models");
 const runtimeCache = require("../modules/runtimeCache");
 const createOwnedTeam = require("../modules/teamOnboarding/createOwnedTeam");
 const {
+  applyTeamBrandDefaultsToExistingProjects,
+} = require("../modules/teamOnboarding/projectBrandDefaults");
+const {
   sanitizeBusinessProfile,
   sanitizeTeamName,
   sanitizeUseCases,
@@ -31,6 +34,7 @@ const TEAM_ROLES = new Set([
 const TEAM_ROLE_UPDATE_FIELDS = new Set(["role", "projects", "canExport"]);
 const TEAM_UPDATE_FIELDS = new Set([
   "name",
+  "aiEnabled",
   "showBranding",
   "useCases",
   "allowReportRefresh",
@@ -454,17 +458,14 @@ class TeamController {
         await db.Team.update(teamUpdate, { where: { id: teamId }, transaction });
       }
       if (data.businessProfile !== undefined) {
-        const profile = sanitizeBusinessProfile(data.businessProfile);
+        const profile = sanitizeBusinessProfile(data.businessProfile, {
+          includeLogo: data.businessProfile.logo !== undefined,
+        });
         await db.TeamBusinessProfile.upsert({
           team_id: parseInt(teamId, 10),
           ...profile,
-          aiContextAllowed: data.aiContextAllowed === true,
         }, { transaction });
-      } else if (data.aiContextAllowed !== undefined) {
-        await db.TeamBusinessProfile.update(
-          { aiContextAllowed: data.aiContextAllowed === true },
-          { where: { team_id: teamId }, transaction }
-        );
+        await applyTeamBrandDefaultsToExistingProjects(teamId, { transaction });
       }
       await transaction.commit();
       return this.findById(teamId);
@@ -477,18 +478,15 @@ class TeamController {
   async updateBusinessProfile(teamId, userId, data = {}) {
     const teamRole = await this.getTeamRole(teamId, userId);
     if (!teamRole || !["teamOwner", "teamAdmin"].includes(teamRole.role)) throw new Error(401);
-    const currentProfile = await db.TeamBusinessProfile.findOne({ where: { team_id: teamId } });
     const profileInput = data.businessProfile || data;
     const sanitized = sanitizeBusinessProfile(profileInput, {
       includeLogo: profileInput.logo !== undefined,
     });
-    const aiContextAllowed = teamRole.role === "teamOwner" && data.aiContextAllowed !== undefined
-      ? data.aiContextAllowed === true : currentProfile?.aiContextAllowed === true;
     await db.TeamBusinessProfile.upsert({
       team_id: parseInt(teamId, 10),
       ...sanitized,
-      aiContextAllowed,
     });
+    await applyTeamBrandDefaultsToExistingProjects(teamId);
     return db.TeamBusinessProfile.findOne({
       where: { team_id: teamId },
       attributes: { exclude: ["logoData"] },

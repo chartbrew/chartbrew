@@ -17,7 +17,6 @@ import OnboardingTeam from "./components/OnboardingTeam";
 import {
   buildOnboardingCompletion,
   findOwnedOnboardingTeam,
-  getInitialOnboardingStep,
   getOnboardingEntry,
   isTeamOwner,
 } from "./onboardingState";
@@ -28,9 +27,11 @@ function Onboarding() {
   const navigate = useNavigate();
   const user = useSelector(selectUser);
   const initialized = useRef(false);
-  const { isNewTeam, requestedTeamId, welcome } = getOnboardingEntry(location.search);
+  const { isNewTeam, requestedTeamId } = getOnboardingEntry(location.search);
   const [currentStep, setCurrentStep] = useState(1);
   const [owningTeam, setOwningTeam] = useState(null);
+  const [businessProfile, setBusinessProfile] = useState(null);
+  const [teamDraft, setTeamDraft] = useState(null);
   const [loading, setLoading] = useState(!isNewTeam);
   const [pending, setPending] = useState(false);
   const [discovering, setDiscovering] = useState(false);
@@ -51,37 +52,25 @@ function Onboarding() {
         return;
       }
       setOwningTeam(nextTeam);
-      setCurrentStep(getInitialOnboardingStep(nextTeam));
+      if (nextTeam.TeamBusinessProfile) {
+        setBusinessProfile({
+          businessName: nextTeam.TeamBusinessProfile.businessName || "",
+          description: nextTeam.TeamBusinessProfile.description || "",
+          logoMimeType: nextTeam.TeamBusinessProfile.logoMimeType || null,
+          metadata: nextTeam.TeamBusinessProfile.metadata || {},
+          websiteUrl: nextTeam.TeamBusinessProfile.websiteUrl || "",
+        });
+      }
       dispatch(saveActiveTeam(nextTeam));
       setLoading(false);
     });
   }, [dispatch, isNewTeam, navigate, requestedTeamId, user?.id]);
 
-  const handleTeamStep = async ({ teamName, useCases }) => {
-    setPending(true);
-    setError("");
-    const action = isNewTeam && !owningTeam
-      ? await dispatch(createTeam({ name: teamName, useCases }))
-      : await dispatch(saveTeamOnboarding({
-        team_id: owningTeam.id,
-        data: { name: teamName, useCases },
-      }));
-    setPending(false);
-    if (action.error || !action.payload?.id) {
-      setError(action.error?.message || "Unable to save team setup");
-      return;
-    }
-    setOwningTeam(action.payload);
-    dispatch(saveActiveTeam(action.payload));
-    navigate(`/start?team=${action.payload.id}`, { replace: true });
-    setCurrentStep(2);
-  };
-
   const handleDiscover = async (websiteUrl) => {
     setDiscovering(true);
     setError("");
     const action = await dispatch(discoverBusinessProfile({
-      team_id: owningTeam.id, websiteUrl,
+      team_id: owningTeam?.id, websiteUrl,
     }));
     setDiscovering(false);
     if (action.error) {
@@ -91,18 +80,41 @@ function Onboarding() {
     return action.payload;
   };
 
-  const handleFinish = async ({ businessProfile, aiContextAllowed }) => {
+  const handleBusinessStep = (profile) => {
+    setBusinessProfile(profile);
+    setError("");
+    setCurrentStep(2);
+  };
+
+  const handleFinish = async ({ businessProfile: approvedProfile, teamName, useCases }) => {
     setPending(true);
     setError("");
-    const data = buildOnboardingCompletion(businessProfile, aiContextAllowed);
-    const action = await dispatch(saveTeamOnboarding({ team_id: owningTeam.id, data }));
+    let targetTeam = owningTeam;
+    if (isNewTeam && !targetTeam) {
+      const createAction = await dispatch(createTeam({ name: teamName, useCases }));
+      if (createAction.error || !createAction.payload?.id) {
+        setPending(false);
+        setError(createAction.error?.message || "Unable to create the team");
+        return;
+      }
+      targetTeam = createAction.payload;
+      setOwningTeam(targetTeam);
+      dispatch(saveActiveTeam(targetTeam));
+      navigate(`/start?team=${targetTeam.id}`, { replace: true });
+    }
+    const data = {
+      ...buildOnboardingCompletion(approvedProfile),
+      name: teamName,
+      useCases,
+    };
+    const action = await dispatch(saveTeamOnboarding({ team_id: targetTeam.id, data }));
     if (action.error) {
       setPending(false);
       setError(action.error.message);
       return;
     }
     const teamsAction = await dispatch(getTeams());
-    const refreshedTeam = teamsAction.payload?.find((team) => team.id === owningTeam.id)
+    const refreshedTeam = teamsAction.payload?.find((team) => team.id === targetTeam.id)
       || action.payload;
     dispatch(saveActiveTeam(refreshedTeam));
     window.location.href = "/connections/new";
@@ -121,26 +133,33 @@ function Onboarding() {
       <SimpleNavbar />
       <main className="mx-auto flex max-w-5xl flex-col items-center px-4 py-8 md:py-14">
         {currentStep === 1 ? (
-          <OnboardingTeam
-            isNewTeam={isNewTeam}
-            isPending={pending}
-            onCancel={() => navigate("/")}
-            onContinue={handleTeamStep}
-            team={owningTeam}
-            welcome={welcome}
-          />
-        ) : (
           <OnboardingBusiness
             error={error}
+            initialProfile={businessProfile}
             isDiscovering={discovering}
-            isPending={pending}
+            onCancel={isNewTeam ? () => navigate("/") : undefined}
+            onContinue={handleBusinessStep}
             onDiscover={handleDiscover}
-            onFinish={handleFinish}
+          />
+        ) : (
+          <OnboardingTeam
+            businessProfile={businessProfile}
+            error={error}
+            initialTeamDraft={teamDraft}
+            isPending={pending}
+            onBack={(draft) => {
+              setBusinessProfile(draft.businessProfile);
+              setTeamDraft({
+                teamName: draft.teamName,
+                useCases: draft.useCases,
+              });
+              setError("");
+              setCurrentStep(1);
+            }}
+            onContinue={handleFinish}
+            team={owningTeam}
           />
         )}
-        {currentStep === 1 && error ? (
-          <p className="mt-3 text-sm text-danger">{error}</p>
-        ) : null}
       </main>
     </div>
   );

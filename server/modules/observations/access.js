@@ -19,6 +19,10 @@ function normalizeProjectIds(projects) {
 
 async function getObservationAccess(teamId, userId) {
   const teamRole = await db.TeamRole.findOne({
+    include: [{
+      model: db.Team,
+      attributes: ["aiEnabled"],
+    }],
     where: {
       team_id: teamId,
       user_id: userId,
@@ -29,6 +33,7 @@ async function getObservationAccess(teamId, userId) {
   return {
     allProjects: TEAM_ADMIN_ROLES.has(teamRole.role),
     canConfigureTeam: TEAM_ADMIN_ROLES.has(teamRole.role),
+    teamAiEnabled: teamRole.Team?.aiEnabled !== false,
     projectIds: normalizeProjectIds(teamRole.projects),
     role: teamRole.role,
     teamId: Number(teamId),

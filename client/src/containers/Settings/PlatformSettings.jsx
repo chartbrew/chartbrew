@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import {
   Button,
   Chip,
@@ -30,6 +31,7 @@ import {
 import cbLogoDark from "../../assets/cb_logo_dark.svg";
 import cbLogoLight from "../../assets/cb_logo_light.svg";
 import { useTheme } from "../../modules/ThemeContext";
+import EnableAiPromptModal from "./EnableAiPromptModal";
 
 const LINK_ICONS = {
   website: LuGlobe,
@@ -60,6 +62,8 @@ function PlatformSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resettingTarget, setResettingTarget] = useState(null);
+  const [enablingAi, setEnablingAi] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const load = async () => {
     try {
@@ -76,6 +80,41 @@ function PlatformSettings() {
   useEffect(() => {
     load();
   }, []);
+
+  const aiEnabled = data?.groups
+    ?.flatMap((group) => group.settings)
+    .find((setting) => setting.key === "workspaceOrchestrator.enabled")?.value;
+  const enableAiIntent = searchParams.get("enableAi") === "platform";
+
+  useEffect(() => {
+    if (!enableAiIntent || aiEnabled !== true) return;
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("enableAi");
+    setSearchParams(nextParams, { replace: true });
+  }, [aiEnabled, enableAiIntent, searchParams, setSearchParams]);
+
+  const closeEnableAiPrompt = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("enableAi");
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const confirmEnableAi = async () => {
+    setEnablingAi(true);
+    try {
+      const platformData = await updatePlatformSettings({
+        "workspaceOrchestrator.enabled": true,
+      });
+      setData(platformData);
+      setDraft(buildDraft(platformData.groups));
+      toast.success("Chartbrew AI enabled");
+      closeEnableAiPrompt();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setEnablingAi(false);
+    }
+  };
 
   const changedSettings = useMemo(() => {
     if (!data) return {};
@@ -312,6 +351,13 @@ function PlatformSettings() {
 
   return (
     <div className="flex max-w-5xl flex-col gap-4">
+      <EnableAiPromptModal
+        isOpen={enableAiIntent && aiEnabled === false}
+        isPending={enablingAi}
+        onCancel={closeEnableAiPrompt}
+        onConfirm={confirmEnableAi}
+        scope="platform"
+      />
       <section className="overflow-hidden rounded-3xl border border-divider bg-surface">
         <div className="grid md:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]">
           <div className="flex min-h-64 flex-col justify-between gap-10 p-6 sm:p-8">
