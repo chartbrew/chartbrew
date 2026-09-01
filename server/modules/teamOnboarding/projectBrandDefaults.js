@@ -32,6 +32,7 @@ async function getTeamBrandDefaults(teamId, options = {}) {
   const uploadPath = path.resolve(uploadDirectory, fileName);
   if (!uploadPath.startsWith(`${path.resolve(uploadDirectory)}${path.sep}`)) return defaults;
 
+  await fs.promises.mkdir(uploadDirectory, { recursive: true });
   try {
     await fs.promises.writeFile(uploadPath, logoData, { flag: "wx" });
   } catch (error) {

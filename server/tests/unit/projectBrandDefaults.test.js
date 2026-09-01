@@ -16,12 +16,13 @@ describe("team project brand defaults", () => {
   let uploadDirectory;
 
   beforeEach(async () => {
-    uploadDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "chartbrew-team-logo-"));
+    const tempDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "chartbrew-team-logo-"));
+    uploadDirectory = path.join(tempDirectory, "uploads");
   });
 
   afterEach(async () => {
     vi.restoreAllMocks();
-    await fs.promises.rm(uploadDirectory, { force: true, recursive: true });
+    await fs.promises.rm(path.dirname(uploadDirectory), { force: true, recursive: true });
   });
 
   it("creates a safe shared logo path and website default", async () => {
