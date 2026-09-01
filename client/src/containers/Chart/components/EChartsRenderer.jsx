@@ -533,7 +533,7 @@ function CategoryBreakdown({ activeKey, composition, items, onActivate, onDeacti
               key={item.key}
               type="button"
               aria-label={`${item.name}: ${item.formattedValue}, ${item.formattedPercent}`}
-              className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 rounded-md px-1.5 py-1 text-left text-xs font-normal text-foreground outline-none transition-opacity duration-150 focus-visible:bg-content2"
+              className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 rounded-md px-1.5 py-1 text-left text-xs font-normal text-foreground outline-none transition-opacity duration-150 focus-visible:bg-surface-secondary"
               style={{ opacity: active ? 1 : 0.24 }}
               onBlur={onDeactivate}
               onFocus={() => onActivate(item)}

@@ -43,6 +43,7 @@ const {
 } = require("../../modules/observations/metricRecommendations");
 const { buildCalibrationReport } = require("../../modules/observations/calibrationReport");
 const {
+  buildHomeOnboarding,
   getHealthRunType,
   partitionRunHealth,
   prioritizeHomeAttention,
@@ -381,6 +382,32 @@ describe("workspace observations", () => {
 
     expect(attention.needsAttention.map((item) => item.id)).toEqual(["regression"]);
     expect(attention.notableChanges.map((item) => item.id)).toEqual(["healthy-growth"]);
+  });
+
+  it("builds Home onboarding progress from team activity", () => {
+    expect(buildHomeOnboarding({
+      connectionCount: 1,
+      datasetCount: 1,
+      memberCount: 2,
+      monitorCount: 1,
+      projects: [{
+        Charts: [{ autoUpdate: 0, id: 7 }],
+        id: 4,
+        public: true,
+        updateSchedule: { frequency: "day" },
+      }],
+    })).toEqual({
+      dashboardId: 4,
+      milestones: {
+        automaticUpdates: true,
+        chart: true,
+        connection: true,
+        dataset: true,
+        sharedDashboard: true,
+        teammate: true,
+        watchedMetric: true,
+      },
+    });
   });
 
   it("separates current data-health failures from recovered history", () => {

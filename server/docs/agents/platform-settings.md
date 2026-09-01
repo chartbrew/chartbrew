@@ -2,6 +2,10 @@
 
 Platform settings are instance-wide controls for Chartbrew OS.
 
+The platform `Enable Chartbrew AI` control is the upper limit for the installation. Each team also
+has an `aiEnabled` control. Chartbrew AI is available only when both controls are enabled. A team
+control cannot override a disabled platform control.
+
 ## Access
 
 - Only a user with `User.admin = true` can use the API.

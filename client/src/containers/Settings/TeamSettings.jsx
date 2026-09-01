@@ -20,8 +20,6 @@ import { ButtonSpinner } from "../../components/ButtonSpinner";
 import { deleteTeam, selectTeam, selectTeams, updateTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
-import TeamAiDataControls from "./TeamAiDataControls";
-import TeamMembers from "./TeamMembers";
 
 /*
   Contains team update functionality
@@ -111,10 +109,7 @@ function TeamSettings() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <section className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
-        <div className="text-lg font-semibold font-tw">Team settings</div>
-        <div className="h-4" />
+    <section className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
         <div className="flex flex-col gap-2">
           <TextField name="team-name" className="w-full gap-2">
             <Label>Team name</Label>
@@ -291,11 +286,7 @@ function TeamSettings() {
           </Modal.Container>
         </Modal.Backdrop>
         </Modal>
-      </section>
-
-      <TeamMembers />
-      {canAccess("teamAdmin", user.id, team.TeamRoles) ? <TeamAiDataControls /> : null}
-    </div>
+    </section>
   );
 }
 

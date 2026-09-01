@@ -13,6 +13,7 @@ const { getWorkspaceOrchestratorPolicy } = require("./policy");
 
 const ALLOWED_SECTIONS = new Set([
   "account",
+  "business_profile",
   "dashboards",
   "datasets",
   "kpiReviews",
@@ -180,6 +181,25 @@ function readAccount(envelope) {
   };
 }
 
+async function readBusinessProfile(access) {
+  const profile = await db.TeamBusinessProfile.findOne({
+    attributes: ["businessName", "description", "domain", "metadata"],
+    include: [{
+      model: db.Team,
+      attributes: ["useCases"],
+    }],
+    where: { team_id: access.teamId },
+  });
+  if (!profile) return null;
+  return {
+    businessName: profile.businessName,
+    description: profile.description,
+    domain: profile.domain,
+    metadata: profile.metadata || {},
+    useCases: profile.Team?.useCases || null,
+  };
+}
+
 async function readWorkspaceContext(access, envelope, input = {}) {
   const policy = getWorkspaceOrchestratorPolicy();
   const sections = normalizeSections(input.sections);
@@ -196,6 +216,16 @@ async function readWorkspaceContext(access, envelope, input = {}) {
 
   await Promise.all(sections.map(async (section) => {
     if (section === "account") context.account = readAccount(envelope);
+    if (section === "business_profile") {
+      if (envelope.workspaceOrchestratorEnabled === false
+        || (input.externalProvider && !envelope.canUseExternalWorkspaceContext)) {
+        coverage.businessProfileUnavailable = true;
+        return;
+      }
+      const profile = await readBusinessProfile(access);
+      if (profile) context.business_profile = profile;
+      else coverage.businessProfileUnavailable = true;
+    }
     if (section === "watches") {
       context.watches = await readWatches(access, envelope, projectId, limits.watches);
     }
@@ -252,5 +282,6 @@ module.exports = {
   getDatasetProfileSummary,
   isDatasetVisible,
   normalizeSections,
+  readBusinessProfile,
   readWorkspaceContext,
 };

@@ -6,6 +6,10 @@ const TeamController = require("../controllers/TeamController");
 const UserController = require("../controllers/UserController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const {
+  discoverBusinessProfile,
+  normalizeWebsiteUrl,
+} = require("../modules/teamOnboarding/businessProfileDiscovery");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -14,6 +18,26 @@ const apiLimiter = (max = 10) => {
   });
 };
 
+const onboardingDiscoveryUserLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => `user:${req.user?.id || "unknown"}`,
+  message: { error: "Please wait before reading another website." },
+});
+
+const onboardingDiscoveryDomainLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  keyGenerator: (req) => {
+    try {
+      return `domain:${new URL(normalizeWebsiteUrl(req.body?.websiteUrl)).hostname}`;
+    } catch (error) {
+      return "domain:invalid";
+    }
+  },
+  message: { error: "Please wait before reading this website again." },
+});
+
 function filterProjects(projects, teamRole) {
   return projects.filter((p) => _.indexOf(teamRole.projects, p.id) > -1);
 }
@@ -21,6 +45,25 @@ function filterProjects(projects, teamRole) {
 module.exports = (app) => {
   const teamController = new TeamController();
   const userController = new UserController();
+
+  const handleOnboardingDiscovery = (requiresTeamAccess) => {
+    return async (req, res) => {
+      try {
+        if (requiresTeamAccess) {
+          const teamRole = await teamController.getTeamRole(req.params.id, req.user.id);
+          if (!teamRole || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+            return res.status(403).send({ error: "Access denied" });
+          }
+        }
+        const profile = await discoverBusinessProfile(req.body?.websiteUrl);
+        return res.status(200).send(profile);
+      } catch (error) {
+        return res.status(400).send({
+          error: "We could not read that website. Check the address or add the details yourself.",
+        });
+      }
+    };
+  };
 
   const checkPermissions = (actionType = "readOwn", entity = "team") => {
     return async (req, res, next) => {
@@ -99,7 +142,65 @@ module.exports = (app) => {
       const team = await teamController.createTeam(req.body, req.user.id);
       return res.status(200).send(team);
     } catch (error) {
-      return res.status(400).send({ error: "Error creating team" });
+      return res.status(400).send({ error: error.message || "Error creating team" });
+    }
+  });
+  // --------------------------------------
+
+  app.post(
+    "/team/onboarding/discover",
+    verifyToken,
+    onboardingDiscoveryUserLimiter,
+    onboardingDiscoveryDomainLimiter,
+    handleOnboardingDiscovery(false)
+  );
+  // --------------------------------------
+
+  app.post(
+    "/team/:id/onboarding/discover",
+    verifyToken,
+    onboardingDiscoveryUserLimiter,
+    onboardingDiscoveryDomainLimiter,
+    handleOnboardingDiscovery(true)
+  );
+  // --------------------------------------
+
+  app.patch("/team/:id/onboarding", verifyToken, apiLimiter(20), async (req, res) => {
+    try {
+      const team = await teamController.saveOnboarding(req.params.id, req.user.id, req.body);
+      return res.status(200).send(team);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: error.message || "Unable to save team setup" });
+    }
+  });
+  // --------------------------------------
+
+  app.put("/team/:id/business-profile", verifyToken, apiLimiter(20), async (req, res) => {
+    try {
+      const profile = await teamController.updateBusinessProfile(req.params.id, req.user.id, req.body);
+      return res.status(200).send(profile);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: error.message || "Unable to save business profile" });
+    }
+  });
+  // --------------------------------------
+
+  app.get("/team/:id/business-profile/logo", verifyToken, async (req, res) => {
+    try {
+      const profile = await teamController.getBusinessProfileLogo(req.params.id, req.user.id);
+      if (!profile?.logoData || !profile?.logoMimeType) {
+        return res.status(404).send({ error: "Business logo not found" });
+      }
+      res.set("Content-Type", profile.logoMimeType);
+      res.set("Cache-Control", "private, max-age=3600");
+      res.set("X-Content-Type-Options", "nosniff");
+      if (profile.updatedAt) res.set("Last-Modified", profile.updatedAt.toUTCString());
+      return res.status(200).send(profile.logoData);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: "Unable to load business logo" });
     }
   });
   // --------------------------------------

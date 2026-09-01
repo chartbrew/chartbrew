@@ -54,6 +54,7 @@ const SECTION_TYPES = Object.freeze({
   account_capability: "account",
   action_preview: "prepared_change",
   alert: "recent_alerts",
+  business_profile: "business_profile",
   coverage: "coverage",
   dashboard: "dashboards",
   data_health: "needs_attention",

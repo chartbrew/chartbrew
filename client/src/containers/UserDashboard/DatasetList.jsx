@@ -886,7 +886,7 @@ function DatasetList() {
               ))}
             </div>
             <div className="h-1" />
-            <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
+            <div className="flex gap-1 bg-surface-secondary p-2 mb-2 rounded-lg text-foreground-500 text-sm">
               <div>
                 <LuInfo />
               </div>

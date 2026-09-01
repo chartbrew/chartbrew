@@ -347,7 +347,7 @@ function ShareImageTab({
     return (
       <div className="flex min-h-96 flex-1 items-center justify-center p-6 text-center">
         <div className="max-w-sm">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-content2 text-foreground-500">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-surface-secondary text-foreground-500">
             <LuImage size={22} aria-hidden />
           </div>
           <div className="mt-4 text-sm font-semibold text-foreground">Image sharing is not available for this chart</div>

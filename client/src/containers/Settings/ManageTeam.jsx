@@ -1,135 +1,139 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { useSelector } from "react-redux";
-import { Navigate, Route, Routes, useNavigate } from "react-router";
-import {
-  ProgressCircle,
-  Tabs
-} from "@heroui/react";
-import { LuCode, LuSettings, LuShieldCheck, LuUser } from "react-icons/lu";
+import { Navigate, Route, Routes, useLocation } from "react-router";
+import { ProgressCircle } from "@heroui/react";
 
 import { selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
-import Container from "../../components/Container";
-import Row from "../../components/Row";
 import { selectUser } from "../../slices/user";
+import { cn } from "../../modules/utils";
 import ManageUser from "./ManageUser";
 import TeamSettings from "./TeamSettings";
 import ApiKeys from "../ApiKeys/ApiKeys";
 import PlatformSettings from "./PlatformSettings";
+import BusinessProfileSettings from "./BusinessProfileSettings";
+import TeamMembers from "./TeamMembers";
+import TeamAiSettings from "./TeamAiSettings";
 
-/*
-  Manage team settings and members
-*/
-function ManageTeam() {
-  const [activeMenu, setActiveMenu] = useState("profile");
+function SettingsPage({ children, title, wide = false }) {
+  return (
+    <div className={cn("mx-auto flex w-full flex-col gap-6", wide ? "max-w-5xl" : "max-w-3xl")}>
+      <h1 className="font-tw text-3xl font-semibold tracking-tight">{title}</h1>
+      {children}
+    </div>
+  );
+}
 
-  const team = useSelector(selectTeam);
-  const user = useSelector(selectUser);
-  const navigate = useNavigate();
+SettingsPage.propTypes = {
+  children: PropTypes.node.isRequired,
+  title: PropTypes.string.isRequired,
+  wide: PropTypes.bool,
+};
 
-  const _canAccess = (role) => {
-    return canAccess(role, user.id, team.TeamRoles);
-  };
+function RedirectWithSearch({ to }) {
+  const location = useLocation();
+  return <Navigate replace to={`${to}${location.search}`} />;
+}
 
-  useEffect(() => {
-    setActiveMenu(window.location.pathname.split("/").pop());
-  }, [window.location.pathname]);
+RedirectWithSearch.propTypes = {
+  to: PropTypes.string.isRequired,
+};
 
-  const _onMenuChange = (key) => {
-    navigate(`/settings/${key}`);
-  };
+function TeamSettingsRoute() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
 
-  if (!team.id) {
-    return (
-      <Container size="sm" justify="center" style={{ paddingTop: 100 }}>
-        <Row justify="center" align="center">
-          <ProgressCircle aria-label="Loading your team" size="lg">Loading your team</ProgressCircle>
-        </Row>
-      </Container>
-    );
+  if (params.get("enableAi") === "team") {
+    return <Navigate replace to={`/settings/team/ai${location.search}`} />;
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="flex flex-col gap-1">
-        <div className="text-2xl font-semibold font-tw">
-          Settings
-        </div>
-        <div className="text-sm text-gray-500">
-          Manage your account and team settings
-        </div>
-      </div>
-      <div className="h-8" />
-      <Tabs
-        className="w-fit self-start"
-        onSelectionChange={_onMenuChange}
-        selectedKey={activeMenu}
-      >
-        <Tabs.ListContainer className="w-fit">
-          <Tabs.List
-            aria-label="Settings sections"
-            className="w-fit flex-nowrap *:w-fit *:shrink-0 *:whitespace-nowrap"
-          >
-            <Tabs.Tab id="profile">
-              <Tabs.Indicator />
-              <div className="flex flex-row items-center gap-2">
-                <LuUser />
-                <div>Profile</div>
-              </div>
-            </Tabs.Tab>
-            {_canAccess("teamAdmin") && (
-              <Tabs.Tab id="team">
-                <Tabs.Indicator />
-                <div className="flex flex-row items-center gap-2">
-                  <LuSettings />
-                  <div>Team</div>
-                </div>
-              </Tabs.Tab>
-            )}
-            {_canAccess("teamAdmin") && (
-              <Tabs.Tab id="api-keys">
-                <Tabs.Indicator />
-                <div className="flex flex-row items-center gap-2">
-                  <LuCode />
-                  <div>API Keys</div>
-                </div>
-              </Tabs.Tab>
-            )}
-            {user.admin === true && (
-              <Tabs.Tab id="platform">
-                <Tabs.Indicator />
-                <div className="flex flex-row items-center gap-2">
-                  <LuShieldCheck />
-                  <div>Platform</div>
-                </div>
-              </Tabs.Tab>
-            )}
-          </Tabs.List>
-        </Tabs.ListContainer>
-      </Tabs>
+    <SettingsPage title="Team settings">
+      <TeamSettings />
+    </SettingsPage>
+  );
+}
 
-      <div className="mt-4">
-        <Routes>
-          <Route path="profile" element={<ManageUser />} />
-          <Route
-            path="team"
-            element={_canAccess("teamAdmin")
-              ? <TeamSettings />
-              : <Navigate replace to="/settings/profile" />}
-          />
-          <Route
-            path="members"
-            element={<Navigate replace to={_canAccess("teamAdmin")
-              ? "/settings/team"
-              : "/settings/profile"} />}
-          />
-          <Route path="api-keys" element={<ApiKeys />} />
-          {user.admin === true && (
-            <Route path="platform" element={<PlatformSettings />} />
-          )}
-        </Routes>
+function ManageTeam() {
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
+
+  if (!team.id) {
+    return (
+      <div className="flex min-h-64 items-center justify-center">
+        <ProgressCircle aria-label="Loading your team" size="lg" />
       </div>
-    </div>
+    );
+  }
+
+  const canManageTeam = canAccess("teamAdmin", user.id, team.TeamRoles);
+  const defaultPath = canManageTeam ? "/settings/team" : "/settings/profile";
+
+  return (
+    <Routes>
+      <Route index element={<Navigate replace to={defaultPath} />} />
+      <Route
+        path="profile"
+        element={(
+          <SettingsPage title="Profile">
+            <ManageUser />
+          </SettingsPage>
+        )}
+      />
+
+      <Route
+        path="team"
+        element={canManageTeam ? <TeamSettingsRoute /> : <Navigate replace to="/settings/profile" />}
+      />
+      <Route
+        path="team/business-profile"
+        element={canManageTeam ? (
+          <SettingsPage title="Business profile">
+            <section className="rounded-3xl border border-divider bg-surface p-4">
+              <BusinessProfileSettings />
+            </section>
+          </SettingsPage>
+        ) : <Navigate replace to="/settings/profile" />}
+      />
+      <Route
+        path="team/members"
+        element={canManageTeam ? (
+          <SettingsPage title="Team members" wide>
+            <TeamMembers />
+          </SettingsPage>
+        ) : <Navigate replace to="/settings/profile" />}
+      />
+      <Route
+        path="team/ai"
+        element={canManageTeam ? (
+          <SettingsPage title="AI settings">
+            <TeamAiSettings />
+          </SettingsPage>
+        ) : <Navigate replace to="/settings/profile" />}
+      />
+      <Route
+        path="team/api-keys"
+        element={canManageTeam ? (
+          <SettingsPage title="API keys" wide>
+            <ApiKeys />
+          </SettingsPage>
+        ) : <Navigate replace to="/settings/profile" />}
+      />
+
+      <Route path="members" element={<RedirectWithSearch to="/settings/team/members" />} />
+      <Route path="api-keys" element={<RedirectWithSearch to="/settings/team/api-keys" />} />
+
+      <Route
+        path="platform"
+        element={user.admin === true ? (
+          <SettingsPage title="Platform settings" wide>
+            <PlatformSettings />
+          </SettingsPage>
+        ) : <Navigate replace to={defaultPath} />}
+      />
+      <Route path="*" element={<Navigate replace to={defaultPath} />} />
+    </Routes>
   );
 }
 

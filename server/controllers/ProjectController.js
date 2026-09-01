@@ -8,6 +8,7 @@ const { snapDashboard } = require("../modules/snapshots");
 const runtimeCache = require("../modules/runtimeCache");
 const { normalizeProjectScheduleTimezones } = require("../modules/projectSnapshotTimezone");
 const { hashProjectPassword, verifyProjectPassword } = require("../modules/projectPassword");
+const { applyTeamBrandDefaults } = require("../modules/teamOnboarding/projectBrandDefaults");
 const {
   signLegacyShareToken,
   signShareToken,
@@ -127,11 +128,12 @@ class ProjectController {
       });
   }
 
-  create(userId, data, options = {}) {
+  async create(userId, data, options = {}) {
     let newProject = {};
     const { transaction } = options;
+    const projectData = await applyTeamBrandDefaults(data, { transaction });
 
-    return db.Project.create(data, { transaction })
+    return db.Project.create(projectData, { transaction })
       .then((project) => {
         newProject = project;
         return this.updateProjectRole(project.id, userId, "teamOwner", options);
@@ -146,10 +148,12 @@ class ProjectController {
       })
       .then(() => {
         // now update the projects access in TeamRole
-        return this.teamController.addProjectAccess(data.team_id, userId, newProject.id, options);
+        return this.teamController.addProjectAccess(projectData.team_id, userId, newProject.id, options);
       })
       .then(() => {
-        return this.teamController.addProjectAccessToOwner(data.team_id, newProject.id, options);
+        return this.teamController.addProjectAccessToOwner(
+          projectData.team_id, newProject.id, options
+        );
       })
       .then(() => {
         if (transaction) {

@@ -108,7 +108,7 @@ function AiActionPreviewCard({
 }) {
   const isMetric = action.actionType?.startsWith("metric_monitor.");
   return (
-    <section className="mt-4 rounded-xl border border-divider bg-content1 p-4" aria-label={getActionTitle(action.actionType)}>
+    <section className="mt-4 rounded-xl border border-divider bg-surface p-4" aria-label={getActionTitle(action.actionType)}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">{getActionTitle(action.actionType)}</h3>
         {isApplied ? (

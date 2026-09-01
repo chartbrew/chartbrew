@@ -39,6 +39,7 @@ function AiChat({
   progressEvents = [],
   showSave = false,
   suggestions = [],
+  status,
   toolDisplayNames = {},
   framed = false,
   fill = false,
@@ -128,7 +129,7 @@ function AiChat({
                         className="h-7 min-h-7 px-2 text-xs text-muted"
                         onPress={onSave}
                         size="sm"
-                        variant="ghost"
+                        variant="tertiary"
                       >
                         <LuBookmark size={13} aria-hidden />
                         Save conversation
@@ -198,6 +199,7 @@ function AiChat({
           placeholder={placeholder}
           selectedContext={EMPTY_CONTEXT}
           showEnterHint={messages.length > 0}
+          status={status}
           suggestions={suggestions}
         />
       </div>
@@ -222,6 +224,7 @@ AiChat.propTypes = {
   progressEvents: PropTypes.arrayOf(PropTypes.object),
   showSave: PropTypes.bool,
   suggestions: PropTypes.arrayOf(PropTypes.string),
+  status: PropTypes.node,
   toolDisplayNames: PropTypes.object,
   framed: PropTypes.bool,
   fill: PropTypes.bool,

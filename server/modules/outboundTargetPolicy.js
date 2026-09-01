@@ -296,6 +296,19 @@ async function validateOutboundUrl(targetUrl, context = {}) {
     );
   }
 
+  if (Array.isArray(context.allowedPorts) && context.allowedPorts.length) {
+    const port = Number(parsedUrl.port || (protocol === "https:" ? 443 : 80));
+    if (!context.allowedPorts.includes(port)) {
+      throw createPolicyError(
+        "disallowed_port",
+        "The outbound URL uses a port that is not allowed.",
+        targetUrl,
+        context,
+        { port }
+      );
+    }
+  }
+
   const normalizedHostname = normalizeHostname(parsedUrl.hostname);
   if (!normalizedHostname) {
     throw createPolicyError(

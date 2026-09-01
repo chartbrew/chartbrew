@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 function ActivityEmptyState({ description, title }) {
   return (
-    <div className="rounded-3xl border border-divider bg-content1 px-4 py-5">
+    <div className="rounded-3xl border border-divider bg-surface px-4 py-5">
       <p className="font-medium">{title}</p>
       <p className="mt-1 text-sm text-foreground-500">{description}</p>
     </div>
@@ -17,7 +17,7 @@ ActivityEmptyState.propTypes = {
 
 function ActivityList({ children }) {
   return (
-    <div className="divide-y divide-divider overflow-hidden rounded-3xl border border-divider bg-content1">
+    <div className="divide-y divide-divider overflow-hidden rounded-3xl border border-divider bg-surface">
       {children}
     </div>
   );
@@ -32,7 +32,7 @@ function ActivityListRow({ actions, icon, meta, title }) {
     <div className="flex flex-col gap-3 px-4 py-3 md:flex-row md:items-center">
       <div className="flex min-w-0 flex-1 flex-row items-start gap-3">
         {icon ? (
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-divider bg-content2/40">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-divider bg-surface-secondary/40">
             {icon}
           </div>
         ) : null}

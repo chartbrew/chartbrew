@@ -425,6 +425,25 @@ function normalizeAccount(account, store) {
   })];
 }
 
+function normalizeBusinessProfile(profile, store) {
+  if (!profile) return [];
+  const metadata = profile.metadata && typeof profile.metadata === "object"
+    ? profile.metadata
+    : {};
+  return [store.addFact({
+    attributes: {
+      description: cleanValue(profile.description, 1000),
+      domain: cleanValue(profile.domain),
+      industry: cleanValue(metadata.industry),
+      language: cleanValue(metadata.language),
+      useCases: cleanValue(profile.useCases, 500),
+    },
+    factType: "business_profile",
+    label: profile.businessName,
+    state: "approved",
+  })];
+}
+
 function normalizePreview(toolName, result, store) {
   const preview = result.preview || {};
   const actionType = toolName === "preview_metric_monitor"
@@ -497,6 +516,7 @@ function normalizeToolResult(toolName, result = {}, store, options = {}) {
       ...normalizeDatasets(result.datasets || [], store),
       ...normalizeLearning(result.learning || [], store),
       ...normalizeAccount(result.account, store),
+      ...normalizeBusinessProfile(result.business_profile, store),
     ];
   }
   const bounded = boundFacts(facts, options.maximumCharacters || 12000);

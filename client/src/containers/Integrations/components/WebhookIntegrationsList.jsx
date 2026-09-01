@@ -201,7 +201,7 @@ function WebhookIntegrations({ teamId }) {
         <Table.ScrollContainer>
           <Table.Content
             aria-label="Webhook integrations"
-            className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+            className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
           >
             <Table.Header>
               <Table.Column id="name" isRowHeader textValue="Name">

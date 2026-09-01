@@ -48,7 +48,7 @@ export function AiAnswer({ actions, after, before, content, isError = false }) {
             isIconOnly
             onPress={copyAnswer}
             size="sm"
-            variant="ghost"
+            variant="tertiary"
           >
             {copied ? <LuCheck size={13} aria-hidden /> : <LuCopy size={13} aria-hidden />}
           </Button>

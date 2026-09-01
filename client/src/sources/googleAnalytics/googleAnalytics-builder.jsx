@@ -767,7 +767,7 @@ function GaBuilder(props) {
             {dateHelp && (
               <div className="col-span-12">
                 <div
-                  className={"bg-content2 rounded-md p-4 pl-5 pr-5"}
+                  className={"bg-surface-secondary rounded-md p-4 pl-5 pr-5"}
                 >
                   <Row className={"gap-1"}>
                     <Text>{"You can use relative dates such as "}</Text>

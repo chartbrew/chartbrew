@@ -82,7 +82,7 @@ function NoticeBoard() {
           </Card.Content>
           <Separator />
           <Card.Footer>
-            <Link to="/user/profile" className="w-full">
+            <Link to="/settings/profile" className="w-full">
               <Button
                 color="primary"
                 fullWidth

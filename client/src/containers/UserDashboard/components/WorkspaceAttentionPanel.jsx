@@ -79,7 +79,7 @@ function PanelItem({ action, description, icon, iconClassName, meta, onPress, ti
   const Icon = icon;
   return (
     <div className="flex flex-row items-start gap-3 px-4 py-4">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-divider bg-content2/40">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-divider bg-surface-secondary/40">
         <Icon className={iconClassName || "text-foreground-400"} size={18} aria-hidden />
       </div>
       <div className="min-w-0 flex-1 pt-0.5">
@@ -183,7 +183,7 @@ function WorkspaceAttentionPanel({ home, onCollapse }) {
       ) : (
         <Card.Content className="mt-3 border-t border-divider px-4 py-10">
           <div className="flex flex-col items-center justify-center gap-3 text-center">
-            <div className="flex size-11 items-center justify-center rounded-lg border border-divider bg-content2/40">
+            <div className="flex size-11 items-center justify-center rounded-lg border border-divider bg-surface-secondary/40">
               <LuCircleCheck className="text-success" size={22} aria-hidden />
             </div>
             <div className="flex flex-col gap-1">

@@ -203,7 +203,57 @@ function prioritizeHomeAttention(observations, dataHealthCount, limit = HOME_ATT
   };
 }
 
+function buildHomeOnboarding({
+  connectionCount,
+  datasetCount,
+  memberCount,
+  monitorCount,
+  projects,
+}) {
+  const charts = projects.flatMap((project) => project.Charts || []);
+  return {
+    dashboardId: projects[0]?.id || null,
+    milestones: {
+      automaticUpdates: projects.some((project) => project.updateSchedule?.frequency)
+        || charts.some((chart) => Number(chart.autoUpdate) > 0),
+      chart: charts.length > 0,
+      connection: connectionCount > 0,
+      dataset: datasetCount > 0,
+      sharedDashboard: projects.some((project) => project.public),
+      teammate: memberCount > 1,
+      watchedMetric: monitorCount > 0,
+    },
+  };
+}
+
 class HomeController {
+  async getOnboarding(access, monitorCount) {
+    if (!access.canConfigureTeam) return null;
+    const [connectionCount, datasetCount, memberCount, projects] = await Promise.all([
+      db.Connection.count({ where: { team_id: access.teamId } }),
+      db.Dataset.count({ where: { draft: false, team_id: access.teamId } }),
+      db.TeamRole.count({ where: { team_id: access.teamId } }),
+      db.Project.findAll({
+        attributes: ["id", "public", "updateSchedule"],
+        include: [{
+          model: db.Chart,
+          attributes: ["autoUpdate", "id"],
+          required: false,
+          where: { draft: false },
+        }],
+        order: [["id", "ASC"]],
+        where: { ghost: false, team_id: access.teamId },
+      }),
+    ]);
+    return buildHomeOnboarding({
+      connectionCount,
+      datasetCount,
+      memberCount,
+      monitorCount,
+      projects,
+    });
+  }
+
   async getAlerts(access) {
     const alerts = await db.Alert.findAll({
       include: [{
@@ -385,6 +435,7 @@ class HomeController {
     });
     const attention = prioritizeHomeAttention(visibleObservations, dataHealth.count);
     const observations = attention.observations;
+    const onboarding = await this.getOnboarding(access, monitors.length);
     let setupState = "active";
     if (monitors.length === 0) {
       const [connectionCount, datasetCount] = await Promise.all([
@@ -421,7 +472,9 @@ class HomeController {
       observations,
       needsAttention: attention.needsAttention,
       notableChanges: attention.notableChanges,
+      onboarding,
       setupState,
+      hasWatchedMetric: monitors.length > 0,
       unreadCount: unreadChanges + dataHealth.count,
     };
   }
@@ -435,6 +488,7 @@ class HomeController {
 module.exports = HomeController;
 module.exports.HOME_ATTENTION_LIMIT = HOME_ATTENTION_LIMIT;
 module.exports.buildRunHealthIssue = buildRunHealthIssue;
+module.exports.buildHomeOnboarding = buildHomeOnboarding;
 module.exports.getHealthRunType = getHealthRunType;
 module.exports.partitionRunHealth = partitionRunHealth;
 module.exports.prioritizeHomeAttention = prioritizeHomeAttention;

@@ -17,6 +17,8 @@ import { clearAiModalConversationId, selectAiModalConversationId } from "../../s
 import socketClient from "../../modules/socketClient";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import canAccess from "../../config/canAccess";
+import AiAccessNotice from "./AiAccessNotice";
+import AiAvailabilityStatus from "./AiAvailabilityStatus";
 import AiComposer from "./AiComposer";
 import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiContextPicker from "./AiContextPicker";
@@ -24,6 +26,8 @@ import AiMessageGroup from "./AiMessageGroup";
 import AiProgress from "./AiProgress";
 import { AiUserPrompt } from "./AiTranscript";
 import useChatAutoScroll from "./hooks/useChatAutoScroll";
+import useAiAvailability from "./hooks/useAiAvailability";
+import { canSubmitAiMessage } from "./aiAvailability";
 import {
   getChartToolMessageInfo,
   getCompletedActionIds,
@@ -57,6 +61,7 @@ function AiModal({ isOpen, onClose }) {
   const [contextSearch, setContextSearch] = useState("");
   const [isContextPopoverOpen, setIsContextPopoverOpen] = useState(false);
   const [isSecondContextPopoverOpen, setIsSecondContextPopoverOpen] = useState(false);
+  const [showAccessNotice, setShowAccessNotice] = useState(false);
 
   const params = useParams();
   const team = useSelector(selectTeam);
@@ -70,6 +75,19 @@ function AiModal({ isOpen, onClose }) {
   const datasets = useSelector(selectDatasetsNoDrafts);
   const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
   const isTeamAdmin = canAccess("teamAdmin", user.id, team?.TeamRoles);
+  const {
+    availability,
+    error: availabilityError,
+    isLoading: isAvailabilityLoading,
+    reload: reloadAvailability,
+  } = useAiAvailability({ enabled: isOpen, teamId: team?.id });
+  const aiEnabled = availability?.enabled === true;
+  const isAccessNoticeVisible = showAccessNotice && !aiEnabled;
+  const ensureAiAvailable = () => {
+    if (canSubmitAiMessage(availability)) return true;
+    setShowAccessNotice(true);
+    return false;
+  };
   const isReportingOnly = teamRole === "projectViewer";
   const questionPlaceholder = isReportingOnly
     ? "Ask about existing reports and metrics"
@@ -209,7 +227,7 @@ function AiModal({ isOpen, onClose }) {
 
   // Initialize Socket.IO connection
   useEffect(() => {
-    if (!isOpen || !user?.id || !team?.id) return;
+    if (!isOpen || !aiEnabled || !user?.id || !team?.id) return;
 
     let isMounted = true;
 
@@ -244,11 +262,11 @@ function AiModal({ isOpen, onClose }) {
       // Note: We don't disconnect the socket here - it's a singleton that stays connected
       // This allows seamless reconnection when modal reopens
     };
-  }, [isOpen, user?.id, team?.id]);
+  }, [aiEnabled, isOpen, user?.id, team?.id]);
 
   // Load conversations when modal opens
   useEffect(() => {
-    if (isOpen && team?.id) {
+    if (isOpen && aiEnabled && team?.id) {
       loadConversations();
       if (isTeamAdmin) loadAiToolDisplayNames();
       // check the route params and add project and chart id to the context
@@ -277,7 +295,7 @@ function AiModal({ isOpen, onClose }) {
         setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: datasetId, entity_type: "dataset", label: datasetLabel }] }));
       }
     }
-  }, [isOpen, team?.id]);
+  }, [aiEnabled, isOpen, team?.id]);
 
   // Join conversation room when conversation changes
   useEffect(() => {
@@ -332,6 +350,8 @@ function AiModal({ isOpen, onClose }) {
     // Allow submission if there's either a question or a selected context
     const hasContent = submittedText.trim() || selectedContext.multiSelect.length > 0 || selectedContext.singleSelect;
     if (!hasContent || isLoading) return;
+    if (!ensureAiAvailable()) return;
+    setShowAccessNotice(false);
 
     // Prepare context object (only multiSelect goes to context)
     let context = null;
@@ -507,11 +527,11 @@ function AiModal({ isOpen, onClose }) {
 
   // Open a specific conversation when requested from outside the modal
   useEffect(() => {
-    if (!isOpen || !team?.id || !pendingConversationId) return;
+    if (!isOpen || !aiEnabled || !team?.id || !pendingConversationId) return;
     const conversationId = pendingConversationId;
     dispatch(clearAiModalConversationId());
     _onSelectConversation(conversationId);
-  }, [isOpen, team?.id, pendingConversationId]);
+  }, [aiEnabled, isOpen, team?.id, pendingConversationId]);
 
   const _onDeleteConversation = async (conversationId) => {
     try {
@@ -536,6 +556,7 @@ function AiModal({ isOpen, onClose }) {
   };
 
   const _onConfirmPendingAction = async (pendingAction) => {
+    if (!ensureAiAvailable()) return;
     if (isLoading || !conversation?.id || !pendingAction?.actionId) return;
     setIsLoading(true);
     setProgressEvents([]);
@@ -587,6 +608,8 @@ function AiModal({ isOpen, onClose }) {
       }
       return;
     }
+
+    if (!ensureAiAvailable()) return;
 
     setIsLoading(true);
     setProgressEvents([]);
@@ -688,13 +711,22 @@ function AiModal({ isOpen, onClose }) {
     setIsLoading(false);
   };
 
+  const _onSubmitAi = (questionText) => {
+    if (!ensureAiAvailable()) return false;
+    _onAskAi(questionText);
+    return true;
+  };
+
 
   return (
     <Modal>
       <Modal.Backdrop
         isOpen={isOpen}
         onOpenChange={(nextOpen) => {
-          if (!nextOpen) onClose();
+          if (!nextOpen) {
+            setShowAccessNotice(false);
+            onClose();
+          }
         }}
       >
         <Modal.Container className={conversation ? "sm:mt-3" : ""} scroll="outside">
@@ -717,7 +749,15 @@ function AiModal({ isOpen, onClose }) {
                   isLoading={isLoading}
                   rows={2}
                   selectedContext={selectedContext}
-                  onSubmitQuestion={_onAskAi}
+                  status={(
+                    <AiAvailabilityStatus
+                      availability={availability}
+                      canManagePlatform={user.admin === true}
+                      canManageTeam={isTeamAdmin}
+                      onNavigate={onClose}
+                    />
+                  )}
+                  onSubmitQuestion={_onSubmitAi}
                   onAtTyped={() => {
                     if (!isContextPopoverOpen) {
                       setIsContextPopoverOpen(true);
@@ -743,6 +783,16 @@ function AiModal({ isOpen, onClose }) {
                     "Summarize the metrics that changed recently",
                     "Compare this month with the previous month"
                   ]}
+                />
+                <AiAccessNotice
+                  availability={availability}
+                  canManagePlatform={user.admin === true}
+                  canManageTeam={isTeamAdmin}
+                  error={availabilityError}
+                  isLoading={isAvailabilityLoading}
+                  isRequested={showAccessNotice}
+                  onNavigate={onClose}
+                  onRetry={reloadAvailability}
                 />
 
                 {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
@@ -807,7 +857,7 @@ function AiModal({ isOpen, onClose }) {
                       {conversations.map((conv) => (
                         <div
                           key={conv.id}
-                          className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-content2 transition-colors group"
+                          className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-surface-secondary transition-colors group"
                           onClick={() => _onSelectConversation(conv.id)}
                         >
                           <div className="pt-1">
@@ -885,7 +935,7 @@ function AiModal({ isOpen, onClose }) {
                         {conversations.map((c) => (
                           <div
                             key={c.id}
-                            className={`group relative flex cursor-pointer flex-row gap-2 rounded-lg px-2 py-2.5 transition-colors ${c.id === conversation.id ? "bg-content2" : "hover:bg-content2/60"}`}
+                            className={`group relative flex cursor-pointer flex-row gap-2 rounded-lg px-2 py-2.5 transition-colors ${c.id === conversation.id ? "bg-surface-secondary" : "hover:bg-surface-secondary/60"}`}
                             onClick={() => _onSelectConversation(c.id)}
                           >
                             <div className="pt-1">
@@ -1035,8 +1085,19 @@ function AiModal({ isOpen, onClose }) {
                         )}
                       </div>
                     </div>
-                    <div className="shrink-0 border-t border-divider bg-content1 px-4 py-3">
+                    <div className="shrink-0 border-t border-divider bg-surface px-4 py-3">
                       <div className="w-full">
+                        <AiAccessNotice
+                          availability={availability}
+                          canManagePlatform={user.admin === true}
+                          canManageTeam={isTeamAdmin}
+                          error={availabilityError}
+                          isLoading={isAvailabilityLoading}
+                          isRequested={showAccessNotice}
+                          onNavigate={onClose}
+                          onRetry={reloadAvailability}
+                        />
+                        {isAccessNoticeVisible ? <div className="h-3" /> : null}
                         <AiComposer
                           id="ai-conversation-form"
                           name="aiConversationQuestion"
@@ -1045,7 +1106,15 @@ function AiModal({ isOpen, onClose }) {
                           isLoading={isLoading}
                           layout="inline"
                           selectedContext={selectedContext}
-                          onSubmitQuestion={_onAskAi}
+                          status={(
+                            <AiAvailabilityStatus
+                              availability={availability}
+                              canManagePlatform={user.admin === true}
+                              canManageTeam={isTeamAdmin}
+                              onNavigate={onClose}
+                            />
+                          )}
+                          onSubmitQuestion={_onSubmitAi}
                           onAtTyped={() => {
                             if (!isSecondContextPopoverOpen) {
                               setIsSecondContextPopoverOpen(true);
@@ -1110,7 +1179,7 @@ function AiModal({ isOpen, onClose }) {
                               getContextLabel={getContextLabel}
                               placement="top"
                               contentClassName="z-[100] w-80"
-                              triggerVariant="ghost"
+                              triggerVariant="outline"
                               triggerSize="sm"
                               triggerIsIconOnly
                               triggerTooltip="Add context"

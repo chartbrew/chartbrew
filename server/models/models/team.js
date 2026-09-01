@@ -9,6 +9,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    useCases: DataTypes.TEXT,
+    onboardingCompletedAt: DataTypes.DATE,
+    aiEnabled: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     showBranding: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -33,6 +40,10 @@ module.exports = (sequelize, DataTypes) => {
     models.Team.hasMany(models.Template, { foreignKey: "team_id" });
     models.Team.hasMany(models.Apikey, { foreignKey: "team_id" });
     models.Team.hasMany(models.Connection, { foreignKey: "team_id" });
+    models.Team.hasOne(models.TeamBusinessProfile, {
+      foreignKey: "team_id",
+      onDelete: "CASCADE",
+    });
   };
 
   return Team;

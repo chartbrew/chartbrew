@@ -444,7 +444,7 @@ function DashboardList() {
                         <Dropdown size="sm">
                           <Dropdown.Trigger
                             aria-label={`Open options for ${project.name}`}
-                            className="flex size-8 items-center justify-center rounded-lg hover:bg-content2"
+                            className="flex size-8 items-center justify-center rounded-lg hover:bg-surface-secondary"
                             onClick={(event) => event.stopPropagation()}
                           >
                             <LuEllipsis className="text-foreground-400" />
@@ -575,7 +575,7 @@ function DashboardList() {
               <Table.ScrollContainer>
                 <Table.Content
                   aria-label="Dashboard list"
-                  className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+                  className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
                 >
                   <Table.Header>
                     <Table.Column id="name" isRowHeader textValue="Dashboard name">

@@ -77,6 +77,7 @@
     "googleapis": "^171.4.0",
     "helmet": "^7.1.0",
     "hot-formula-parser": "^4.0.0",
+    "htmlparser2": "^8.0.2",
     "ioredis": "^5.8.2",
     "jiti": "^2.6.1",
     "jsonwebtoken": "^9.0.2",

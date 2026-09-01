@@ -2,7 +2,6 @@ const simplecrypt = require("simplecrypt");
 const { v4: uuid } = require("uuid");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { nanoid } = require("nanoid");
 const { TOTP } = require("otpauth");
 const QRCode = require("qrcode");
 const { Op } = require("sequelize");
@@ -11,6 +10,7 @@ const db = require("../models/models");
 const mail = require("../modules/mail");
 const runtimeCache = require("../modules/runtimeCache");
 const { decrypt, encrypt } = require("../modules/cbCrypto");
+const createOwnedTeam = require("../modules/teamOnboarding/createOwnedTeam");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -20,98 +20,45 @@ const sc = simplecrypt({
 });
 
 class UserController {
-  createUser(user) {
-    let gNewUser;
-    return db.User.findOne({ where: { email: user.email } })
-      .then(async (foundUser) => {
-        if (foundUser) return new Promise((resolve, reject) => reject(new Error(409)));
-
-        const bcryptHash = await bcrypt.hash(user.password, 10);
-
-        return db.User.create({
+  async createUser(user, options = {}) {
+    const foundUser = await db.User.findOne({ where: { email: user.email } });
+    if (foundUser) throw new Error(409);
+    const bcryptHash = await bcrypt.hash(user.password, 10);
+    const transaction = await db.sequelize.transaction();
+    try {
+      const newUser = await db.User.create({
           name: user.name,
           email: user.email,
           password: bcryptHash,
           icon: user.icon,
           active: true,
-        });
-      })
-      .then((newUser) => {
-        gNewUser = newUser;
-
-        if (settings.teamRestricted === "1") {
-          return newUser;
-        }
-
-        const newTeam = {
-          name: `${newUser.name}'s team`
-        };
-        return db.Team.create(newTeam);
-      })
-      .then((data) => {
-        if (settings.teamRestricted === "1") {
-          return data;
-        }
-
-        // create a default first project
-        const newProject = {
-          name: "My first dashboard",
-          team_id: data.id,
-          brewName: `my-first-dashboard-${nanoid(8)}`,
-          dashboardTitle: "My first dashboard",
-        };
-
-        // create a ghost project
-        const ghostProject = {
-          team_id: data.id,
-          name: "Ghost Project",
-          brewName: `ghost-project-${nanoid(8)}`,
-          dashboardTitle: "Ghost Project",
-          ghost: true,
-        };
-
-        // create async
-        db.Project.create(newProject);
-        db.Project.create(ghostProject);
-
-        const teamRole = {
-          team_id: data.id,
-          user_id: gNewUser.id,
-          role: "teamOwner",
+      }, { transaction });
+      const shouldCreateOwnedTeam = options.createOwnedTeam !== false
+        && settings.teamRestricted !== "1";
+      if (shouldCreateOwnedTeam) {
+        await createOwnedTeam({
           canExport: true,
-        };
-        return db.TeamRole.create(teamRole);
-      })
-      .then(async () => {
-        if (settings.teamRestricted === "1") return gNewUser;
-
-        const firstUser = await db.User.findOne({
+          dashboardName: "My first dashboard",
+          name: `${newUser.name}'s team`,
+          transaction,
+          userId: newUser.id,
+        });
+      }
+      const firstUser = await db.User.findOne({
           attributes: ["id", "admin"],
           order: [["id", "ASC"]],
-        });
-        if (firstUser?.id !== gNewUser.id) return gNewUser;
-
-        const ownerRole = await db.TeamRole.findOne({
-          attributes: ["id"],
-          where: {
-            user_id: firstUser.id,
-            role: "teamOwner",
-          },
-        });
-        if (!ownerRole) return gNewUser;
-
-        if (!firstUser.admin) {
-          await db.User.update(
-            { admin: true },
-            { where: { id: firstUser.id } }
-          );
-        }
-        await gNewUser.reload();
-        return gNewUser;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(new Error(error.message)));
+          transaction,
       });
+      if (shouldCreateOwnedTeam && firstUser?.id === newUser.id && !firstUser.admin) {
+        await db.User.update({ admin: true }, { where: { id: firstUser.id }, transaction });
+      }
+      await transaction.commit();
+      await newUser.reload();
+      return newUser;
+    } catch (error) {
+      await transaction.rollback();
+      throw new Error(error.message);
+    }
   }
 
   async deleteUser(id) {
@@ -586,7 +533,7 @@ class UserController {
 
         return mail.emailUpdate({
           email,
-          updateUrl: `${settings.client}/user/profile?email=${token}`,
+          updateUrl: `${settings.client}/settings/profile?email=${token}`,
         });
       })
       .catch((error) => {

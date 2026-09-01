@@ -186,7 +186,7 @@ function ObservationDetail() {
   }
   if (!observation) {
     return (
-      <div className="rounded-3xl border border-divider bg-content1 px-4 py-5">
+      <div className="rounded-3xl border border-divider bg-surface px-4 py-5">
         <p className="font-medium">This change is not available</p>
         <Button className="mt-3" onPress={() => navigate("/activity")} size="sm" variant="secondary">
           Back to activity
@@ -288,7 +288,7 @@ function ObservationDetail() {
           <Dropdown aria-label="Change actions">
             <Dropdown.Trigger
               aria-label="More change actions"
-              className="flex size-10 items-center justify-center rounded-3xl border border-divider bg-surface text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex size-10 items-center justify-center rounded-3xl border border-divider bg-surface text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <LuEllipsis size={19} aria-hidden />
             </Dropdown.Trigger>
@@ -353,7 +353,7 @@ function ObservationDetail() {
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
         <section
           aria-labelledby="change-evidence-heading"
-          className="rounded-3xl border border-divider bg-content1 p-5 md:p-6 lg:col-start-1 lg:row-start-1"
+          className="rounded-3xl border border-divider bg-surface p-5 md:p-6 lg:col-start-1 lg:row-start-1"
         >
           <div className="flex flex-col sm:flex-row items-center sm:justify-between sm:gap-6">
             <h2 className="text-sm font-medium text-muted" id="change-evidence-heading">
@@ -411,7 +411,7 @@ function ObservationDetail() {
           </div>
         </section>
 
-        <aside className="overflow-hidden rounded-3xl border border-divider bg-content1 lg:sticky lg:top-20 lg:col-start-2 lg:row-span-3 lg:row-start-1">
+        <aside className="overflow-hidden rounded-3xl border border-divider bg-surface lg:sticky lg:top-20 lg:col-start-2 lg:row-span-3 lg:row-start-1">
           <section className="p-5" aria-labelledby="data-details-heading">
             <h2 className="font-tw text-base font-semibold" id="data-details-heading">
               Data details
@@ -536,7 +536,7 @@ function ObservationDetail() {
           </section>
         </aside>
 
-        <section className="rounded-3xl border border-divider bg-content1 p-5 md:p-6 lg:col-start-1 lg:row-start-2">
+        <section className="rounded-3xl border border-divider bg-surface p-5 md:p-6 lg:col-start-1 lg:row-start-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-tw text-lg font-semibold">Drivers</h2>
             <Button
@@ -590,7 +590,7 @@ function ObservationDetail() {
           ) : null}
         </section>
 
-        <section className="rounded-3xl border border-divider bg-content1 p-5 md:p-6 lg:col-start-1 lg:row-start-3">
+        <section className="rounded-3xl border border-divider bg-surface p-5 md:p-6 lg:col-start-1 lg:row-start-3">
           <h2 className="font-tw text-lg font-semibold">Investigate this change</h2>
           <div className="mt-4">
             <ObservationInvestigation observationId={observation.id} teamId={team.id} />

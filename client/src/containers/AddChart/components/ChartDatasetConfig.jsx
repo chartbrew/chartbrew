@@ -86,7 +86,7 @@ function FillOpacityControl(props) {
   } = props;
 
   return (
-    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+    <div className="rounded-xl border border-divider bg-surface-secondary/30 p-3">
       <Switch
         id={controlId}
         isSelected={fill}
@@ -817,7 +817,7 @@ function ChartDatasetConfig(props) {
                           return (
                             <div
                               key={series.id}
-                              className="flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-content2/50"
+                              className="flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-secondary/50"
                             >
                               <div className={isHidden ? "min-w-0 flex-1 opacity-50" : "min-w-0 flex-1"}>
                                 <ColorPickerControl

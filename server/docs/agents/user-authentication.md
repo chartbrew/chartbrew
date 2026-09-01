@@ -59,7 +59,7 @@ This document covers all authentication and user management flows in Chartbrew.
     - Generates a JWT signed with `settings.encryptionKey` that includes:
       - `{ id, email, newEmail }`
     - Sends an email to the **new email address** with a URL like:
-      - `${settings.client}/user/profile?email=${token}`
+      - `${settings.client}/settings/profile?email=${token}`
 - **Apply email update**: `PUT /user/:id/email/update`
   - Protected by [`server/modules/verifyUser.js`](../modules/verifyUser.js)
   - Calls `UserController.updateEmail(id, token)`

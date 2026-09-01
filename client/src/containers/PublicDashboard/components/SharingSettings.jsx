@@ -924,7 +924,7 @@ function SharingSettings(props) {
                   {!selectedPolicy && sharePolicies.map((policy, index) => (
                     <div
                       key={policy.id}
-                      className="flex flex-row items-center justify-between cursor-pointer hover:bg-content2 rounded-medium p-2"
+                      className="flex flex-row items-center justify-between cursor-pointer hover:bg-surface-secondary rounded-medium p-2"
                       onClick={() => setSelectedPolicy(policy)}
                     >
                       <div className="flex flex-col">

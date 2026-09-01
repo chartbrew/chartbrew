@@ -93,8 +93,45 @@ function createPinnedLookup(expectedHostname, resolvedAddresses = []) {
   };
 }
 
+function requestWithResponseLimit(options, maximumResponseBytes) {
+  const pending = request(options);
+  if (!Number.isInteger(maximumResponseBytes) || maximumResponseBytes < 1) return pending;
+  return new Promise((resolve, reject) => {
+    let receivedBytes = 0;
+    let settled = false;
+    const rejectLargeResponse = () => {
+      if (settled) return;
+      settled = true;
+      const error = new Error("Outbound response exceeded the allowed size.");
+      error.code = "RESPONSE_TOO_LARGE";
+      pending.abort();
+      reject(error);
+    };
+    pending.on("response", (response) => {
+      const contentLength = Number(response.headers?.["content-length"] || 0);
+      if (contentLength > maximumResponseBytes) rejectLargeResponse();
+    });
+    pending.on("data", (chunk) => {
+      receivedBytes += Buffer.byteLength(chunk);
+      if (receivedBytes > maximumResponseBytes) rejectLargeResponse();
+    });
+    pending.then((response) => {
+      if (settled) return;
+      settled = true;
+      resolve(response);
+    }).catch((error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    });
+  });
+}
+
 async function safeRequest(requestOptions, policyContext = {}) {
   const baseOptions = { ...requestOptions };
+  const maximumResponseBytes = Number.isInteger(baseOptions.maximumResponseBytes)
+    ? baseOptions.maximumResponseBytes : null;
+  delete baseOptions.maximumResponseBytes;
   const followRedirect = baseOptions.followRedirect !== false;
   const followAllRedirects = baseOptions.followAllRedirects === true;
   const maxRedirects = Number.isInteger(baseOptions.maxRedirects)
@@ -130,13 +167,13 @@ async function safeRequest(requestOptions, policyContext = {}) {
     });
 
     // oxlint-disable-next-line no-await-in-loop
-    const response = await request({
+    const response = await requestWithResponseLimit({
       ...optionsForRequest,
       lookup: createPinnedLookup(
         validationResult.hostname,
         validationResult.resolvedAddresses
       ),
-    });
+    }, maximumResponseBytes);
     const statusCode = response && response.statusCode;
     const location = response && response.headers && response.headers.location;
 

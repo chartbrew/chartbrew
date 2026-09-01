@@ -107,7 +107,7 @@ function NavbarContainer() {
         break;
       }
       case "profile": {
-        navigate("/user/profile");
+        navigate("/settings/profile");
         break;
       }
       case "account": {
@@ -359,7 +359,7 @@ function NavbarContainer() {
               <button
                 type="button"
                 onClick={() => setTheme("system")}
-                className={`flex min-w-[100px] flex-1 flex-col rounded-large border-2 border-solid px-4 py-4 text-left ${theme === "system" ? "border-secondary" : "border-content3"} bg-content3`}
+                className={`flex min-w-[100px] flex-1 flex-col rounded-large border-2 border-solid px-4 py-4 text-left ${theme === "system" ? "border-secondary" : "border-content3"} bg-surface-tertiary`}
               >
                 <LuContrast size={24} color={isDark ? "white" : "black"} />
                 <div className={isDark ? "mt-2 text-white" : "mt-2 text-black"}>System</div>

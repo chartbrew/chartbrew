@@ -292,14 +292,14 @@ function ChartDescription(props) {
                 id={templateKey}
                 className={cn(
                   "rounded-3xl",
-                  isUnavailable ? "bg-content2/20" : "bg-surface"
+                  isUnavailable ? "bg-surface-secondary/20" : "bg-surface"
                 )}
               >
                 <Accordion.Heading>
                   <Accordion.Trigger className="flex w-full items-start gap-3 p-4 text-left">
                     <span
                       className={cn(
-                        "flex size-10 shrink-0 items-center justify-center rounded-lg border border-divider bg-content2/40 text-foreground-500",
+                        "flex size-10 shrink-0 items-center justify-center rounded-lg border border-divider bg-surface-secondary/40 text-foreground-500",
                         isUnavailable ? "opacity-60" : ""
                       )}
                     >

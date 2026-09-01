@@ -41,7 +41,7 @@ function ColorPickerControl(props) {
     ? renderTrigger({ color: cssColor })
     : (
       <div className={cn(
-        "flex min-w-[140px] items-center gap-3 rounded-xl border border-divider bg-content1 px-3 py-2 shadow-sm transition-colors hover:bg-content2",
+        "flex min-w-[140px] items-center gap-3 rounded-xl border border-divider bg-surface px-3 py-2 shadow-sm transition-colors hover:bg-surface-secondary",
         swatchClassName,
       )}
       >

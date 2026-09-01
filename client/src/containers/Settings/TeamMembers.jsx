@@ -195,16 +195,12 @@ function TeamMembers(props) {
   return (
     <div style={style}>
       <div className="bg-surface p-4 rounded-3xl border border-divider">
-        <div className="text-lg font-semibold font-tw">{"Team members"}</div>
-        <div className="text-sm text-gray-500">{"Manage your team members and their roles"}</div>
-        <div className="h-4" />
-
         {_canAccess("teamAdmin") && (
           <Table className="shadow-none min-h-[200px]">
             <Table.ScrollContainer>
               <Table.Content
                 aria-label="Team members"
-                className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+                className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
               >
                 <Table.Header>
                   <Table.Column id="member" isRowHeader>

@@ -62,7 +62,7 @@ function QueryResultsTable({ result }) {
           <Table.ScrollContainer>
             <Table.Content
               aria-label="Results table"
-              className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+              className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
             >
               {getResultHeaderRows()?.length > 0 && (
                 <Table.Header>

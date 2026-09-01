@@ -309,6 +309,54 @@ describe("workspace orchestrator routes", () => {
     expect(response.body.orchestration.usage.total_tokens).toBe(0);
   });
 
+  it("reports team and platform AI availability", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+
+    const enabledResponse = await request(app)
+      .get(`/ai/availability?teamId=${seeded.team.id}`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .expect(200);
+    expect(enabledResponse.body).toEqual({ disabledBy: null, enabled: true });
+
+    await seeded.team.update({ aiEnabled: false });
+    const teamResponse = await request(app)
+      .get(`/ai/availability?teamId=${seeded.team.id}`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .expect(200);
+    expect(teamResponse.body).toEqual({ disabledBy: "team", enabled: false });
+
+    setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": false });
+    const platformResponse = await request(app)
+      .get(`/ai/availability?teamId=${seeded.team.id}`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .expect(200);
+    expect(platformResponse.body).toEqual({ disabledBy: "platform", enabled: false });
+  });
+
+  it("does not answer when Chartbrew AI is turned off for the team", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+    await seeded.team.update({ aiEnabled: false });
+
+    const response = await request(app)
+      .post("/ai/respond")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        message: "Summarize recent changes",
+        persistence: "ephemeral",
+        sessionId: crypto.randomUUID(),
+        teamId: seeded.team.id,
+      })
+      .expect(403);
+
+    expect(response.body.error).toBe(
+      "Chartbrew AI is turned off for this team. A team owner or admin can turn it on in Team settings."
+    );
+  });
+
   it("does not run a prepared action when Chartbrew AI is turned off", async () => {
     const app = await createTestApp();
     require("../../api/AiRoute.js")(app);

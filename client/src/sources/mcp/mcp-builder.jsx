@@ -148,7 +148,7 @@ function ArgumentsExample({ schema }) {
     <div className="flex min-w-0 flex-col gap-5">
       <div className="flex flex-col gap-2">
         <p className="text-sm font-semibold text-foreground">Example JSON</p>
-        <pre className="max-h-64 overflow-auto rounded-2xl border border-divider bg-content2 p-4 font-mono text-xs text-foreground">
+        <pre className="max-h-64 overflow-auto rounded-2xl border border-divider bg-surface-secondary p-4 font-mono text-xs text-foreground">
           {JSON.stringify(getSchemaExample(schema), null, 2)}
         </pre>
       </div>
@@ -610,7 +610,7 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
                 value={configuration.tool?.name || null}
                 variant="secondary"
               >
-                <Autocomplete.Trigger className="min-h-16 border-divider bg-content2 shadow-none">
+                <Autocomplete.Trigger className="min-h-16 border-divider bg-surface-secondary shadow-none">
                   <Autocomplete.Value>
                     {({ defaultChildren, isPlaceholder }) => {
                       if (isPlaceholder || !selectedTool) return defaultChildren;
@@ -749,7 +749,7 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
               {argumentsError ? <p className="text-sm text-danger">{argumentsError}</p> : null}
 
               {showMoreOptions ? (
-                <div className="overflow-hidden rounded-2xl border border-divider bg-content2/60">
+                <div className="overflow-hidden rounded-2xl border border-divider bg-surface-secondary/60">
                   <Disclosure defaultExpanded>
                     <Disclosure.Heading>
                       <Button
@@ -790,7 +790,7 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
         </Card.Content>
 
         {selectedTool ? (
-          <Card.Footer className="-mx-4 -mb-6 mt-8 flex flex-wrap items-center gap-2 border-t border-divider bg-content2/60 px-4 py-4 sm:-mx-6 sm:px-6">
+          <Card.Footer className="-mx-4 -mb-6 mt-8 flex flex-wrap items-center gap-2 border-t border-divider bg-surface-secondary/60 px-4 py-4 sm:-mx-6 sm:px-6">
             <Button className="h-10 rounded-full px-5" isPending={runLoading} onPress={runRequest} variant="primary">
               {runLoading ? <ButtonSpinner /> : <LuPlay fill="currentColor" size={16} aria-hidden />}
               Run

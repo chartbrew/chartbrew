@@ -139,7 +139,7 @@ module.exports = (app) => {
       active: true,
     };
 
-    return userController.createUser(userObj)
+    return userController.createUser(userObj, { createOwnedTeam: false })
       .then((newUser) => {
         return tokenizeUser(newUser, res);
       })

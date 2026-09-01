@@ -16,7 +16,9 @@ import {
   Tabs,
   Skeleton,
 } from "@heroui/react";
-import { Link, useNavigate, useParams } from "react-router";
+import {
+  Link, useNavigate, useParams, useSearchParams,
+} from "react-router";
 import _, { isEqual } from "lodash";
 import toast from "react-hot-toast";
 import {
@@ -146,6 +148,7 @@ function ProjectDashboard() {
   const params = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -158,6 +161,18 @@ function ProjectDashboard() {
   const hasRunInitialFiltering = useRef(null);
   const dashboardRef = useRef(null);
   const dashboardParentRef = useRef(null);
+
+  useEffect(() => {
+    if (Number(project?.id) !== Number(params.projectId)) return;
+    const setup = searchParams.get("setup");
+    if (setup === "updates") setScheduleVisible(true);
+    if (setup === "sharing") setShowShare(true);
+    if (setup === "updates" || setup === "sharing") {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("setup");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [params.projectId, project?.id, searchParams, setSearchParams]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -867,7 +882,7 @@ function ProjectDashboard() {
   const currentDashboardCharts = charts.filter((chart) => `${chart.project_id}` === params.projectId);
 
   return (
-    <div className={`w-full ${editingLayout && "bg-background dark:bg-content2 overflow-x-auto"}`}>
+    <div className={`w-full ${editingLayout && "bg-background dark:bg-background-secondary overflow-x-auto"}`}>
       {charts && currentDashboardCharts.length > 0
         && (
           <div ref={dashboardParentRef}>
@@ -907,7 +922,7 @@ function ProjectDashboard() {
                             <Popover.Dialog>
                               {_canAccess("teamAdmin") && (
                                 <div className="w-full">
-                                  <Link to={"/settings/members"}>
+                                  <Link to={"/settings/team/members"}>
                                     <Button
                                       variant="primary"
                                       size="sm"
@@ -1171,7 +1186,7 @@ function ProjectDashboard() {
           </div>
         )}
       <div
-        className={`bg-content2 w-full relative p-0 ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
+        className={`bg-surface-secondary w-full relative p-0 ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
         style={{
           ...(editingLayout && previewSize?.breakpoint && {
             width: previewSize.size,

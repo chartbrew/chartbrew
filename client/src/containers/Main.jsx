@@ -1,7 +1,7 @@
 import React, { useEffect, lazy, Suspense, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { Route, Routes, useLocation, useNavigate } from "react-router";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
 import { semanticColors } from "../lib/themeTokens";
 import { Helmet } from "react-helmet-async";
 
@@ -43,12 +43,12 @@ const Signup = lazy(() => import("./Signup"));
 const Login = lazy(() => import("./Login"));
 const ManageTeam = lazy(() => import("./Settings/ManageTeam"));
 const UserInvite = lazy(() => import("./UserInvite"));
-const ManageUser = lazy(() => import("./Settings/ManageUser"));
 const PublicDashboard = lazy(() => import("./PublicDashboard/PublicDashboard"));
 const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));
 const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
+const Onboarding = lazy(() => import("./Onboarding/Onboarding"));
 import FeedbackForm from "../components/FeedbackForm";
 import canAccess from "../config/canAccess";
 import AiModal from "./Ai/AiModal";
@@ -56,6 +56,7 @@ import Auth from "./Integrations/Auth/Auth";
 import SlackCallback from "./Integrations/Auth/SlackCallback";
 import Integration from "./Integrations/Integration/Integration";
 import NoAccessPage from "../components/NoAccessPage";
+import { shouldResumeOnboarding } from "./Onboarding/onboardingState";
 
 function authenticatePage() {
   if (window.location.pathname === "/login") {
@@ -170,6 +171,10 @@ function Main(props) {
 
       if (selectedTeam) {
         dispatch(saveActiveTeam(selectedTeam));
+        if (shouldResumeOnboarding(selectedTeam, user.id) && location.pathname !== "/start") {
+          navigate(`/start?team=${selectedTeam.id}`, { replace: true });
+          return;
+        }
         dispatch(getTeamConnections({ team_id: selectedTeam.id }));
         dispatch(getDatasets({ team_id: selectedTeam.id }));
       }
@@ -263,11 +268,20 @@ function Main(props) {
                 )}
               />
               <Route exact path="/signup" element={<Signup />} />
+              <Route exact path="/start" element={<Onboarding />} />
               <Route exact path="/google-auth" element={<GoogleAuth />} />
               <Route exact path="/login" element={<Login />} />
               <Route exact path="/user" element={<UserDashboard />} />
-              <Route exact path="/user/profile" element={<ManageUser />} />
-              <Route exact path="/edit" element={<ManageUser />} />
+              <Route
+                exact
+                path="/user/profile"
+                element={<Navigate replace to={`/settings/profile${location.search}`} />}
+              />
+              <Route
+                exact
+                path="/edit"
+                element={<Navigate replace to={`/settings/profile${location.search}`} />}
+              />
               <Route exact path="/passwordReset" element={<PasswordReset />} />
               <Route
                 exact

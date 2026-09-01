@@ -99,4 +99,51 @@ describe("safeRequest", () => {
       await close(server);
     }
   });
+
+  it("stops an outbound response after its byte limit", async () => {
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.write("12345");
+      res.end("67890");
+    });
+    const { port } = await listen(server);
+    vi.spyOn(dnsPromises, "lookup").mockResolvedValue([
+      { address: "127.0.0.1", family: 4 },
+    ]);
+    try {
+      await expect(safeRequest({
+        url: `http://response.chartbrew.test:${port}/large`,
+        method: "GET",
+        maximumResponseBytes: 5,
+      }, { allowPrivateHost: true })).rejects.toMatchObject({ code: "RESPONSE_TOO_LARGE" });
+    } finally {
+      await close(server);
+    }
+  });
+
+  it("validates every redirect before following it", async () => {
+    const server = http.createServer((req, res) => {
+      res.statusCode = 302;
+      res.setHeader("Location", "http://169.254.169.254/latest/meta-data");
+      res.end();
+    });
+    const { port } = await listen(server);
+    vi.spyOn(dnsPromises, "lookup").mockResolvedValue([
+      { address: "127.0.0.1", family: 4 },
+    ]);
+    try {
+      await expect(safeRequest({
+        url: `http://redirect.chartbrew.test:${port}/start`,
+        method: "GET",
+        followRedirect: true,
+        resolveWithFullResponse: true,
+        simple: false,
+      }, { allowPrivateHost: true })).rejects.toMatchObject({
+        code: "SSRF_BLOCKED",
+        reason: "metadata_endpoint",
+      });
+    } finally {
+      await close(server);
+    }
+  });
 });

@@ -252,7 +252,7 @@ function ConnectionWizard() {
                       <Card
                         role="button"
                         tabIndex={0}
-                        className={`w-full h-full cursor-pointer shadow-none transition-colors hover:bg-content2/40 ${selectedType === conn.id ? "border border-primary" : "border border-content3"}`}
+                        className={`w-full h-full cursor-pointer shadow-none transition-colors hover:bg-surface-secondary/40 ${selectedType === conn.id ? "border border-primary" : "border border-content3"}`}
                         onClick={() => setSelectedType(conn.id)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {

@@ -403,7 +403,7 @@ function DatarequestModal(props) {
                               _onCreateNewRequest(c);
                             }
                           }}
-                          className="w-full cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40"
+                          className="w-full cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-surface-secondary/40"
                         >
                           <Card.Content className="p-4 pl-unit-8">
                             <Row align="center" justify="space-between">

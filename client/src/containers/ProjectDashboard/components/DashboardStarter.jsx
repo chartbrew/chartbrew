@@ -66,7 +66,7 @@ const starterIconClasses = {
     icon: "text-warning",
   },
   default: {
-    wrapper: "bg-content3",
+    wrapper: "bg-surface-tertiary",
     icon: "text-foreground",
   },
 };
@@ -140,7 +140,7 @@ function AiRecommendation({
   return (
     <div className={`rounded-2xl border border-divider bg-surface p-5 ${disabled ? "border-dashed" : ""}`}>
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
-        <div className={`flex size-12 shrink-0 items-center justify-center rounded-2xl ${disabled ? "bg-content3 text-foreground-500" : "bg-accent/10 text-accent"}`}>
+        <div className={`flex size-12 shrink-0 items-center justify-center rounded-2xl ${disabled ? "bg-surface-tertiary text-foreground-500" : "bg-accent/10 text-accent"}`}>
           <Icon size={24} />
         </div>
         <div className="min-w-0 flex-1">
@@ -586,7 +586,7 @@ function DashboardStarter({
                         <Table.Row key={dataset.id} id={String(dataset.id)}>
                           <Table.Cell>
                             <div className="flex min-w-[220px] items-center gap-3">
-                              <Avatar size="sm" className="shrink-0 bg-content3">
+                              <Avatar size="sm" className="shrink-0 bg-surface-tertiary">
                                 {primaryConnection ? (
                                   <Avatar.Image
                                     src={getConnectionLogo(primaryConnection, isDark)}

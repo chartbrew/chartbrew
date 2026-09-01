@@ -4,6 +4,7 @@ export const teamFactory = {
   build: (overrides = {}) => {
     return {
       name: faker.company.name(),
+      aiEnabled: true,
       showBranding: true,
       allowReportRefresh: false,
       allowReportExport: false,

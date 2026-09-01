@@ -492,7 +492,7 @@ function WatchedMetricsPage() {
                             <Dropdown aria-label={`Options for ${recommendation.name}`}>
                               <Dropdown.Trigger
                                 aria-label={`Dismiss ${recommendation.name}`}
-                                className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+                                className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
                                 isDisabled={Boolean(recommendationPendingId)}
                               >
                                 {recommendationPendingId === recommendation.id
@@ -652,7 +652,7 @@ function WatchedMetricsPage() {
                           <Tooltip>
                             <Tooltip.Trigger
                               aria-label={`Edit ${monitor.name}`}
-                              className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary"
+                              className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary"
                               onClick={() => setSelectedMonitor(monitor)}
                             >
                               <LuPencil size={16} aria-hidden />
@@ -662,7 +662,7 @@ function WatchedMetricsPage() {
                           <Tooltip>
                             <Tooltip.Trigger
                               aria-label={`Stop watching ${monitor.name}`}
-                              className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-content2 focus-visible:outline-2 focus-visible:outline-primary"
+                              className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary"
                               onClick={() => setMonitorToRemove(monitor)}
                             >
                               <LuTrash2 size={16} aria-hidden />
@@ -710,7 +710,7 @@ function WatchedMetricsPage() {
                   ))}
                 </ActivityList>
               ) : (
-                <div className="rounded-3xl border border-divider bg-content1 px-4 py-5">
+                <div className="rounded-3xl border border-divider bg-surface px-4 py-5">
                   <p className="font-medium">No watched metrics match these filters</p>
                   <Button className="mt-3" onPress={clearFilters} size="sm" variant="secondary">
                     Clear filters

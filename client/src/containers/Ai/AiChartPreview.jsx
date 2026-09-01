@@ -59,7 +59,7 @@ function AiChartPreview({ parsed, chartData, loadError, onRetry }) {
             <Button
               onPress={() => window.open(`/dashboard/${parsed.projectId}`, "_blank", "noopener,noreferrer")}
               size="sm"
-              variant="ghost"
+              variant="tertiary"
             >
               <LuExternalLink size={15} aria-hidden />
               Open dashboard
@@ -71,7 +71,7 @@ function AiChartPreview({ parsed, chartData, loadError, onRetry }) {
                 "noopener,noreferrer"
               )}
               size="sm"
-              variant="ghost"
+              variant="tertiary"
             >
               <LuPencil size={15} aria-hidden />
               Edit chart
