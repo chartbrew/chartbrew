@@ -107,7 +107,7 @@ function NavbarContainer() {
         break;
       }
       case "profile": {
-        navigate("/user/profile");
+        navigate("/settings/profile");
         break;
       }
       case "account": {

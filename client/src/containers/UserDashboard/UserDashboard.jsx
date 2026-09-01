@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { useWindowSize } from "react-use";
 import {
   ProgressCircle, Spinner,
@@ -25,6 +25,7 @@ import TopNav from "../../components/TopNav";
 import { selectSidebarCollapsed } from "../../slices/ui";
 import { getDatasets } from "../../slices/dataset";
 import ChartbrewV5WelcomeModal from "./components/ChartbrewV5WelcomeModal";
+import SettingsSidebar from "../Settings/SettingsSidebar";
 
 /*
   The user dashboard with all the teams and projects
@@ -41,8 +42,10 @@ function UserDashboard(props) {
   const teamsRef = useRef(null);
   const initRef = useRef(null);
   const { height } = useWindowSize();
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const isSettings = location.pathname.startsWith("/settings");
 
   useEffect(() => {
     cleanErrors();
@@ -127,16 +130,16 @@ function UserDashboard(props) {
     <div className="dashboard bg-surface-secondary">
       {team?.id && (
         <div>
-          <Sidebar />
+          {isSettings ? <SettingsSidebar /> : <Sidebar />}
 
           <div
             className={cn(
-              "min-h-[calc(100vh-64px)] transition-all duration-300",
-              collapsed ? "ml-16" : "ml-64"
+              "min-h-screen transition-all duration-300",
+              isSettings ? "md:ml-64" : (collapsed ? "ml-16" : "ml-64")
             )}
           >
-            <TopNav />
-            <div className="px-6 py-4">
+            {isSettings ? null : <TopNav />}
+            <div className={cn(isSettings ? "px-4 py-6 sm:px-8 md:px-10 md:py-10" : "px-6 py-4")}>
               <Outlet />
 
               {window.location.pathname === "/user" && (

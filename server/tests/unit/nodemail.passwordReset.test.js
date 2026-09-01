@@ -35,7 +35,7 @@ describe("nodemail React Email templates", () => {
   });
 
   it("renders the email update template into HTML", async () => {
-    const updateUrl = "https://app.chartbrew.com/user/profile?email=test-token";
+    const updateUrl = "https://app.chartbrew.com/settings/profile?email=test-token";
     const mailModule = await import("../../modules/mail.js");
     const mail = mailModule.default || mailModule;
 

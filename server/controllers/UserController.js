@@ -533,7 +533,7 @@ class UserController {
 
         return mail.emailUpdate({
           email,
-          updateUrl: `${settings.client}/user/profile?email=${token}`,
+          updateUrl: `${settings.client}/settings/profile?email=${token}`,
         });
       })
       .catch((error) => {

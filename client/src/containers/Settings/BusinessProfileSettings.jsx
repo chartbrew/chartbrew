@@ -90,7 +90,6 @@ function BusinessProfileSettings() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-4">
-      <h2 className="font-tw text-lg font-semibold">Business profile</h2>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <TextField name="team-business-website" className="w-full gap-2">

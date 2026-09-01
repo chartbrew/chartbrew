@@ -82,7 +82,7 @@ type PreviewableEmail = typeof EmailUpdateEmail & {
 };
 
 (EmailUpdateEmail as PreviewableEmail).PreviewProps = {
-  updateUrl: "https://app.chartbrew.com/user/profile?email=preview-token-123",
+  updateUrl: "https://app.chartbrew.com/settings/profile?email=preview-token-123",
 };
 
 const styles = {

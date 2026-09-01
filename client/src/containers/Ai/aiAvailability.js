@@ -4,7 +4,7 @@ export function getAiDisabledGuidance(availability, permissions = {}) {
       return {
         actionLabel: "Open team settings",
         message: "Turn it on in Team settings to use Chartbrew AI for this team.",
-        settingsPath: "/settings/team?enableAi=team",
+        settingsPath: "/settings/team/ai?enableAi=team",
         title: "Chartbrew AI is off for this team",
       };
     }

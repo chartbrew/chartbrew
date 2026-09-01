@@ -1,17 +1,13 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { Avatar, Badge, Button, Chip, Dropdown, Separator, Tooltip } from "@heroui/react"
-import { Link, useNavigate } from "react-router"
+import { useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
-import { LuActivity, LuChevronDown, LuCoffee, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
+import { LuActivity, LuCheck, LuChevronDown, LuCoffee, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus } from "react-icons/lu"
 
 import { cn } from "../modules/utils"
 import { useTheme } from "../modules/ThemeContext"
-import cbLogoDark from "../assets/cb_logo_dark.svg"
-import cbLogoLight from "../assets/cb_logo_light.svg"
-import cbLogoSmallDark from "../assets/logo_blue.png";
-import cbLogoSmallLight from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess"
-import { getTeamMembers, saveActiveTeam, selectTeam, selectTeams } from "../slices/team"
+import { getBusinessProfileLogo, getTeamMembers, saveActiveTeam, selectTeam, selectTeams } from "../slices/team"
 import { clearConnections } from "../slices/connection"
 import { clearDatasets, getDatasets } from "../slices/dataset"
 import { selectSidebarCollapsed } from "../slices/ui"
@@ -19,18 +15,30 @@ import { logout } from "../slices/user"
 import { getHome } from "../api/observations"
 import { shouldResumeOnboarding } from "../containers/Onboarding/onboardingState"
 
+const getInitials = (name, fallback = "T") => name
+  ?.split(" ")
+  .map((part) => part[0])
+  .join("")
+  .slice(0, 2)
+  .toUpperCase() || fallback;
+
 
 function Sidebar() {
-  const { isDark, theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
   const collapsed = useSelector(selectSidebarCollapsed);
 
   const [activityCount, setActivityCount] = useState(0);
+  const [teamLogos, setTeamLogos] = useState({});
   
   const user = useSelector((state) => state.user);
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
-  const teamInitials = team?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "T";
-  const userInitials = user?.data?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
+  const orderedTeams = useMemo(() => (
+    team?.id ? [team, ...teams.filter((item) => `${item.id}` !== `${team.id}`)] : teams
+  ), [team, teams]);
+  const teamLogoUrl = teamLogos[team?.id] || null;
+  const teamInitials = getInitials(team?.name);
+  const userInitials = getInitials(user?.data?.name, "U");
   
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -55,6 +63,30 @@ function Sidebar() {
     };
   }, [team?.id]);
 
+  useEffect(() => {
+    let active = true;
+    const teamsWithoutLoadedLogos = orderedTeams.filter((item) => (
+      item?.id
+      && item.TeamBusinessProfile?.logoMimeType
+      && !Object.prototype.hasOwnProperty.call(teamLogos, item.id)
+    ));
+
+    if (!teamsWithoutLoadedLogos.length) return () => { active = false; };
+
+    Promise.all(teamsWithoutLoadedLogos.map((item) => (
+      getBusinessProfileLogo(item.id)
+        .then((url) => [item.id, url])
+        .catch(() => [item.id, null])
+    )))
+      .then((entries) => {
+        if (active) {
+          setTeamLogos((current) => ({ ...current, ...Object.fromEntries(entries) }));
+        }
+      })
+
+    return () => { active = false; };
+  }, [orderedTeams, teamLogos]);
+
   const _canAccess = (role, teamRoles) => {
     return canAccess(role, user.data.id, teamRoles);
   };
@@ -73,39 +105,13 @@ function Sidebar() {
   const isSettingsActive = pathMenu === "settings";
 
   const _getTeamRole = (teamRoles) => {
-    if (!teamRoles) return "";
-    let role = teamRoles.filter((o) => o.user_id === user.data.id)[0];
-    if (role.role === "teamOwner") {
-      return {
-        role: "Team Owner",
-        color: "accent",
-      };
-    } else if (role.role === "teamAdmin") {
-      return {
-        role: "Team Admin",
-        color: "success",
-      };
-    } else if (role.role === "projectAdmin") {
-      return {
-        role: "Project Admin",
-        color: "warning",
-      };
-    } else if (role.role === "projectEditor") {
-      return {
-        role: "Project Editor",
-        color: "default",
-      };
-    } else if (role.role === "projectViewer") {
-      return {
-        role: "Project Viewer",
-        color: "default",
-      };
-    }
-
-    return {
-      role: "Guest",
-      color: "default",
-    };
+    const role = teamRoles?.find((item) => item.user_id === user.data.id)?.role;
+    if (role === "teamOwner") return "Team owner";
+    if (role === "teamAdmin") return "Team admin";
+    if (role === "projectAdmin") return "Project admin";
+    if (role === "projectEditor") return "Project editor";
+    if (role === "projectViewer") return "Project viewer";
+    return "Guest";
   };
 
   const _onChangeTeam = (teamId) => {
@@ -163,81 +169,88 @@ function Sidebar() {
     >
       <div className="flex flex-col h-full justify-between">
         <div className="flex flex-col">
-          <Link to="/" className="flex items-center justify-center h-[calc(36px+1rem)] px-4">
-            {collapsed ? (
-              <img src={isDark ? cbLogoSmallDark : cbLogoSmallLight} alt="Chartbrew Logo" width={25} />
-            ) : (
-              <img src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={120} />
-            )}
-          </Link>
+          <Dropdown>
+            <Dropdown.Trigger
+              aria-label={`Switch team from ${team?.name || "current team"}`}
+              className={cn(
+                "group flex min-h-12 w-full cursor-pointer items-center text-foreground transition-colors hover:bg-default-50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent",
+                collapsed ? "justify-center px-2" : "justify-between gap-3 px-4",
+              )}
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Avatar key={team?.id} size="sm" className="h-7 w-7 shrink-0 rounded-lg bg-transparent">
+                  {teamLogoUrl ? <Avatar.Image alt="" src={teamLogoUrl} /> : null}
+                  <Avatar.Fallback className="rounded-lg">{teamInitials}</Avatar.Fallback>
+                </Avatar>
+                {collapsed ? null : (
+                  <span className="truncate text-sm font-semibold">{team?.name}</span>
+                )}
+              </div>
+              {collapsed ? null : (
+                <LuChevronDown
+                  aria-hidden
+                  className="shrink-0 text-default-400 transition-colors group-hover:text-default-600"
+                  size={16}
+                />
+              )}
+            </Dropdown.Trigger>
+            <Dropdown.Popover>
+              <Dropdown.Menu
+                aria-label="Switch team"
+                onAction={(key) => {
+                  if (key === "createTeam") {
+                    navigate("/start?new=1");
+                    return;
+                  }
 
-          {collapsed && <Separator className="mb-4" />}
+                  if (`${key}` === `${team?.id}`) return;
+                  _onChangeTeam(key);
+                }}
+              >
+                {orderedTeams.map((t) => {
+                  const isSelected = `${t.id}` === `${team?.id}`;
 
-          <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
-            <div className={cn(collapsed ? "" : "px-2")}>
-              <Dropdown>
-                <Dropdown.Trigger
-                  aria-label={collapsed ? `Switch workspace from ${team?.name}` : undefined}
-                  className={cn(
-                    "w-full",
-                    collapsed
-                      ? "flex justify-center rounded-md"
-                      : "flex min-h-10 items-center justify-between rounded-3xl border border-divider px-3 text-sm",
-                  )}
-                >
-                  {collapsed ? (
-                    <Avatar size="sm" className="cursor-pointer rounded-md" color="accent">
-                      <Avatar.Fallback>{teamInitials || <LuUsers size={18} />}</Avatar.Fallback>
-                    </Avatar>
-                  ) : (
-                    <>
-                      <span>{team?.name}</span>
-                      <LuChevronDown />
-                    </>
-                  )}
-                </Dropdown.Trigger>
-                <Dropdown.Popover>
-                  <Dropdown.Menu
-                    onAction={(key) => {
-                      if (key === "createTeam") {
-                        navigate("/start?new=1");
-                        return;
-                      }
-
-                      _onChangeTeam(key);
-                    }}
-                  >
-                  {teams.map((t) => (
+                  return (
                     <Dropdown.Item
+                      aria-current={isSelected ? "true" : undefined}
                       id={`${t.id}`}
                       key={t.id}
                       textValue={t.name}
                     >
-                      <div className="flex w-full flex-row items-center justify-between gap-2">
-                        <span>{t.name}</span>
-                        <Chip size="sm" variant="secondary" color={_getTeamRole(t.TeamRoles).color}>
-                          {_getTeamRole(t.TeamRoles).role}
-                        </Chip>
+                      <div className="flex w-full items-center gap-3">
+                        <Avatar size="sm" className="h-7 w-7 shrink-0 rounded-lg bg-transparent">
+                          {teamLogos[t.id] ? <Avatar.Image alt="" src={teamLogos[t.id]} /> : null}
+                          <Avatar.Fallback className="rounded-lg">{getInitials(t.name)}</Avatar.Fallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">{t.name}</div>
+                          <div className="text-xs text-default-400">{_getTeamRole(t.TeamRoles)}</div>
+                        </div>
+                        {isSelected ? (
+                          <>
+                            <LuCheck aria-hidden className="shrink-0 text-accent" size={17} />
+                            <span className="sr-only">Selected</span>
+                          </>
+                        ) : null}
                       </div>
                     </Dropdown.Item>
-                  ))}
-                  <Dropdown.Item
-                    id="createTeam"
-                    key="createTeam"
-                    textValue="Add new team"
-                  >
-                    <div className="flex w-full flex-row items-center justify-between gap-2">
-                      <span>Add new team</span>
-                      <LuPlus size={18} />
-                    </div>
-                  </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown.Popover>
-              </Dropdown>
-            </div>
+                  );
+                })}
+                <Dropdown.Item
+                  id="createTeam"
+                  key="createTeam"
+                  textValue="Add new team"
+                >
+                  <div className="flex w-full flex-row items-center justify-between gap-2">
+                    <span>Add new team</span>
+                    <LuPlus size={18} />
+                  </div>
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
 
-            <div className="h-4" />
-            <Separator />
+          <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
             <div className="h-2" />
 
             <div className={cn("flex flex-col gap-1", collapsed && "items-center")}>
@@ -450,7 +463,7 @@ function Sidebar() {
                         isIconOnly
                         size="sm"
                         className={cn("justify-center", "team-settings-tutorial")}
-                        onPress={() => navigate("/settings/members")}
+                        onPress={() => navigate("/settings/team")}
                       >
                         <LuSettings size={20} />
                       </Button>
@@ -463,7 +476,7 @@ function Sidebar() {
                     fullWidth
                     size="sm"
                     className={cn("justify-start", "team-settings-tutorial")}
-                    onPress={() => navigate("/settings/members")}
+                    onPress={() => navigate("/settings/team")}
                   >
                     <LuSettings size={18} />
                     Settings
@@ -572,7 +585,7 @@ function Sidebar() {
                       <Button
                         variant="tertiary"
                         size="sm"
-                        onPress={() => navigate("/settings/members")}
+                        onPress={() => navigate("/settings/team/members")}
                         isIconOnly
                         fullWidth
                         className="justify-center"
@@ -586,7 +599,7 @@ function Sidebar() {
                   <Button
                     variant="tertiary"
                     size="sm"
-                    onPress={() => navigate("/settings/members")}
+                    onPress={() => navigate("/settings/team/members")}
                     fullWidth
                     className="justify-start"
                   >

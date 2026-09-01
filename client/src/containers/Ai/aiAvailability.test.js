@@ -13,7 +13,7 @@ test("a team admin gets a direct Team settings action", () => {
     { disabledBy: "team", enabled: false },
     { canManageTeam: true }
   );
-  assert.equal(guidance.settingsPath, "/settings/team?enableAi=team");
+  assert.equal(guidance.settingsPath, "/settings/team/ai?enableAi=team");
   assert.equal(guidance.actionLabel, "Open team settings");
 });
 

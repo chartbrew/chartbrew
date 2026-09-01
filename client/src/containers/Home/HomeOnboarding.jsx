@@ -45,7 +45,7 @@ const MILESTONES = [{
   icon: LuUserPlus,
   key: "teammate",
   label: "Invite a teammate",
-  path: "/settings/members",
+  path: "/settings/team/members",
   secondaryAction: "Invite",
 }, {
   action: "Set up updates",

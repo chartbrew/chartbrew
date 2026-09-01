@@ -1,7 +1,7 @@
 import React, { useEffect, lazy, Suspense, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { Route, Routes, useLocation, useNavigate } from "react-router";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
 import { semanticColors } from "../lib/themeTokens";
 import { Helmet } from "react-helmet-async";
 
@@ -43,7 +43,6 @@ const Signup = lazy(() => import("./Signup"));
 const Login = lazy(() => import("./Login"));
 const ManageTeam = lazy(() => import("./Settings/ManageTeam"));
 const UserInvite = lazy(() => import("./UserInvite"));
-const ManageUser = lazy(() => import("./Settings/ManageUser"));
 const PublicDashboard = lazy(() => import("./PublicDashboard/PublicDashboard"));
 const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
@@ -273,8 +272,16 @@ function Main(props) {
               <Route exact path="/google-auth" element={<GoogleAuth />} />
               <Route exact path="/login" element={<Login />} />
               <Route exact path="/user" element={<UserDashboard />} />
-              <Route exact path="/user/profile" element={<ManageUser />} />
-              <Route exact path="/edit" element={<ManageUser />} />
+              <Route
+                exact
+                path="/user/profile"
+                element={<Navigate replace to={`/settings/profile${location.search}`} />}
+              />
+              <Route
+                exact
+                path="/edit"
+                element={<Navigate replace to={`/settings/profile${location.search}`} />}
+              />
               <Route exact path="/passwordReset" element={<PasswordReset />} />
               <Route
                 exact

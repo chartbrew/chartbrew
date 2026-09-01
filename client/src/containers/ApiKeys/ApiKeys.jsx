@@ -149,9 +149,6 @@ function ApiKeys() {
 
   return (
     <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
-      <div className="text-lg font-semibold font-tw">Developer settings</div>
-      <div className="text-sm text-gray-500">Manage your API keys and create new ones.</div>
-      <div className="h-4" />
       {loading && (
         <div className="flex justify-center">
           <ProgressCircle aria-label="Loading keys">Loading keys...</ProgressCircle>

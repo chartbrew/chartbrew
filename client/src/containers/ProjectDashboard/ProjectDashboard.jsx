@@ -922,7 +922,7 @@ function ProjectDashboard() {
                             <Popover.Dialog>
                               {_canAccess("teamAdmin") && (
                                 <div className="w-full">
-                                  <Link to={"/settings/members"}>
+                                  <Link to={"/settings/team/members"}>
                                     <Button
                                       variant="primary"
                                       size="sm"

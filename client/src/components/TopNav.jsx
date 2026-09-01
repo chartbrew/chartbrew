@@ -152,7 +152,7 @@ function TopNav() {
         dispatch(showFeedbackModal());
         break;
       case "profile":
-        navigate("/user/profile");
+        navigate("/settings/profile");
         break;
       case "roadmap":
         window.open("https://chartbrew.com/roadmap", "_blank");
