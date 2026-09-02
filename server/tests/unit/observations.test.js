@@ -350,8 +350,8 @@ describe("workspace observations", () => {
   });
 
   it("reserves one Home attention slot for data health", () => {
-    const changes = Array.from({ length: 4 }, (_, index) => ({
-      impact: index === 3 ? "positive" : "negative",
+    const changes = Array.from({ length: 9 }, (_, index) => ({
+      impact: index === 8 ? "positive" : "negative",
       lastDetectedAt: new Date(Date.UTC(2026, 7, 4, index)).toISOString(),
       monitor: { importance: 1 },
       severity: index === 0 ? "critical" : "medium",
@@ -359,8 +359,8 @@ describe("workspace observations", () => {
     const attention = prioritizeHomeAttention(changes, 2);
 
     expect(attention.showDataHealth).toBe(true);
-    expect(attention.observations).toHaveLength(2);
-    expect(attention.needsAttention).toHaveLength(2);
+    expect(attention.observations).toHaveLength(7);
+    expect(attention.needsAttention).toHaveLength(7);
     expect(attention.notableChanges).toHaveLength(0);
     expect(attention.observations[0].severity).toBe("critical");
   });

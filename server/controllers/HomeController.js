@@ -171,7 +171,7 @@ function partitionRunHealth(runs) {
 
 const IMPACT_RANK = { negative: 2, neutral: 1, positive: 0 };
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
-const HOME_ATTENTION_LIMIT = 3;
+const HOME_ATTENTION_LIMIT = 8;
 
 function rankObservations(left, right) {
   const impactDifference = (IMPACT_RANK[right.impact] || 0) - (IMPACT_RANK[left.impact] || 0);
