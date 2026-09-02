@@ -127,7 +127,7 @@ function UserDashboard(props) {
   }
 
   return (
-    <div className="dashboard bg-surface-secondary">
+    <div className="dashboard bg-background">
       {team?.id && (
         <div>
           {isSettings ? <SettingsSidebar /> : <Sidebar />}
@@ -153,7 +153,7 @@ function UserDashboard(props) {
       <div className="h-4" />
 
       {(teams && teams.length === 0) && (
-        <div className="bg-surface-secondary pt-10 mt-[-20px]">
+        <div className="bg-background pt-10 mt-[-20px]">
           <div className="flex justify-center items-center">
             <Spinner variant="simple" aria-label="Loading" />
           </div>

@@ -1,7 +1,10 @@
-import React from "react";
-import { Tabs } from "@heroui/react";
+import React, { useEffect, useState } from "react";
+import { Chip, Tabs } from "@heroui/react";
 import { useSearchParams } from "react-router";
+import { useSelector } from "react-redux";
 
+import { getActivityCounts } from "../../api/observations";
+import { selectTeam } from "../../slices/team";
 import AlertsPage from "./AlertsPage";
 import ChangesPage from "./ChangesPage";
 import DataHealthPage from "./DataHealthPage";
@@ -10,7 +13,29 @@ import WatchedMetricsPage from "./WatchedMetricsPage";
 
 function Activity() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const team = useSelector(selectTeam);
+  const [counts, setCounts] = useState({ changes: 0, dataHealth: 0 });
   const selectedTab = searchParams.get("tab") || "changes";
+
+  useEffect(() => {
+    let active = true;
+    const loadCounts = () => {
+      if (!team?.id) return;
+      getActivityCounts(team.id)
+        .then((nextCounts) => {
+          if (active) setCounts(nextCounts);
+        })
+        .catch(() => {
+          if (active) setCounts({ changes: 0, dataHealth: 0 });
+        });
+    };
+    loadCounts();
+    window.addEventListener("cb:activity-updated", loadCounts);
+    return () => {
+      active = false;
+      window.removeEventListener("cb:activity-updated", loadCounts);
+    };
+  }, [team?.id]);
 
   return (
     <main className="flex w-full flex-col gap-4">
@@ -30,16 +55,28 @@ function Activity() {
             aria-label="Activity sections"
             className="w-fit *:w-fit *:shrink-0 *:whitespace-nowrap"
           >
-            <Tabs.Tab id="changes">
+            <Tabs.Tab id="changes" className="gap-1">
               Changes
+              {counts.changes > 0 ? (
+                <Chip color="accent" size="sm" variant="soft">
+                  <Chip.Label>{counts.changes > 99 ? "99+" : counts.changes}</Chip.Label>
+                </Chip>
+              ) : null}
               <Tabs.Indicator />
             </Tabs.Tab>
             <Tabs.Tab id="alerts">
               Alerts
               <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Tab id="health">
+            <Tabs.Tab id="health" className="gap-1">
               Data health
+              {counts.dataHealth > 0 ? (
+                <Chip color="warning" size="sm" variant="soft">
+                  <Chip.Label>
+                    {counts.dataHealth > 99 ? "99+" : counts.dataHealth}
+                  </Chip.Label>
+                </Chip>
+              ) : null}
               <Tabs.Indicator />
             </Tabs.Tab>
             <Tabs.Tab id="monitors">

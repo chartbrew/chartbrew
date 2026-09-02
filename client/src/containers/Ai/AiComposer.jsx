@@ -135,7 +135,7 @@ function AiComposer({
       <div className={fill ? "min-h-0 flex-1" : undefined}>
       <TextField
         aria-label={placeholder}
-        className={fill ? "flex h-full min-h-0 w-full flex-col" : "flex w-full flex-col"}
+        className={fill ? "flex h-full min-h-0 w-full flex-col" : "flex w-full flex-col border border-divider rounded-3xl"}
         fullWidth
         isDisabled={isLoading}
         name={name}
@@ -214,8 +214,8 @@ function AiComposer({
 
   return (
     <div className={fill
-      ? "flex h-full min-h-0 flex-1 flex-col rounded-[2rem] bg-foreground/[0.055] p-3 dark:bg-foreground/[0.08]"
-      : "rounded-[2rem] bg-foreground/[0.055] p-3 dark:bg-foreground/[0.08]"}
+      ? "flex h-full min-h-0 flex-1 flex-col rounded-[2rem] bg-surface-secondary p-3 border border-divider"
+      : "rounded-[2rem] bg-surface-secondary p-3"}
     >
       {form}
     </div>

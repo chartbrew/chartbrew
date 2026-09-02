@@ -12,7 +12,7 @@ import { clearConnections } from "../slices/connection"
 import { clearDatasets, getDatasets } from "../slices/dataset"
 import { selectSidebarCollapsed } from "../slices/ui"
 import { logout } from "../slices/user"
-import { getHome } from "../api/observations"
+import { getActivityCounts } from "../api/observations"
 import { shouldResumeOnboarding } from "../containers/Onboarding/onboardingState"
 
 const getInitials = (name, fallback = "T") => name
@@ -47,9 +47,9 @@ function Sidebar() {
     let active = true;
     const loadActivityCount = () => {
       if (!team?.id) return;
-      getHome(team.id)
-        .then((home) => {
-          if (active) setActivityCount(home.unreadCount || 0);
+      getActivityCounts(team.id)
+        .then((counts) => {
+          if (active) setActivityCount(counts.total || 0);
         })
         .catch(() => {
           if (active) setActivityCount(0);

@@ -347,7 +347,7 @@ function DatasetQuery(props) {
             }}
             className="max-w-full"
           >
-            <Tabs.ListContainer className="w-fit max-w-full border border-divider bg-surface shadow-none">
+            <Tabs.ListContainer className="w-fit max-w-full border border-divider bg-background">
               <Tabs.List className="w-fit min-w-0 gap-1">
                 <Tabs.Tab
                   className="group h-10 w-fit shrink-0 px-5 font-semibold data-[selected=true]:text-foreground"
@@ -392,7 +392,7 @@ function DatasetQuery(props) {
         {!createMode && selectedTab === "queryBuilder" && (
           <div className="col-span-12 overflow-hidden rounded-3xl border border-divider bg-surface">
             {dataRequests && dataRequests.length > 0 && (
-              <div className="border-b border-divider bg-surface-secondary/60 px-5 pt-3">
+              <div className="border-b border-divider bg-surface-secondary px-5 pt-3">
                 <div className="flex w-full flex-row items-end gap-3">
                   <Tabs
                     className="min-w-0 flex-1"

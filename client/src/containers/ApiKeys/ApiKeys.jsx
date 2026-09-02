@@ -164,7 +164,7 @@ function ApiKeys() {
       </div>
       <div className="h-4" />
 
-      <Table className="shadow-none min-h-[200px]">
+      <Table className="shadow-none min-h-50">
         <Table.ScrollContainer>
           <Table.Content
             aria-label="API keys"
@@ -190,7 +190,7 @@ function ApiKeys() {
 
             <Table.Body
               renderEmptyState={() => (
-                <EmptyState className="flex h-full w-full min-h-[160px] flex-col items-center justify-center gap-2 text-center">
+                <EmptyState className="flex h-full w-full min-h-40 flex-col items-center justify-center gap-2 text-center">
                   <LuKeyRound className="size-6 text-muted" aria-hidden />
                   <span className="text-sm text-muted">You don&apos;t have any API Keys yet</span>
                 </EmptyState>
@@ -338,6 +338,7 @@ function ApiKeys() {
                     if (nextAll) setSelectedProjects([]);
                   }}
                   value={allProjects ? "all" : "selected"}
+                  variant="secondary"
                 >
                   <Label>Project access</Label>
                   <Radio value="all">

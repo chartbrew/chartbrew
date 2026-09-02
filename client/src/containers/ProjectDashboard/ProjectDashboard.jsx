@@ -882,7 +882,7 @@ function ProjectDashboard() {
   const currentDashboardCharts = charts.filter((chart) => `${chart.project_id}` === params.projectId);
 
   return (
-    <div className={`w-full ${editingLayout && "bg-background dark:bg-background-secondary overflow-x-auto"}`}>
+    <div className={`w-full bg-background ${editingLayout && "overflow-x-auto"}`}>
       {charts && currentDashboardCharts.length > 0
         && (
           <div ref={dashboardParentRef}>
@@ -1186,7 +1186,7 @@ function ProjectDashboard() {
           </div>
         )}
       <div
-        className={`bg-surface-secondary w-full relative p-0 ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
+        className={`bg-background w-full relative p-0 ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
         style={{
           ...(editingLayout && previewSize?.breakpoint && {
             width: previewSize.size,
