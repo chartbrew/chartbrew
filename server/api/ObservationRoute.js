@@ -78,6 +78,14 @@ module.exports = (app) => {
     }
   });
 
+  app.get("/team/:team_id/activity-counts", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await homeController.getActivityCounts(req.observationAccess));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
   app.get("/team/:team_id/data-health", ...routeAccess, async (req, res) => {
     try {
       return res.send(await homeController.getDataHealth(req.observationAccess));

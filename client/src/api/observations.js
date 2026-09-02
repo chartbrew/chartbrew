@@ -59,6 +59,10 @@ export function getActivity(teamId, filters = {}) {
   return observationRequest(`/team/${teamId}/activity?${query.toString()}`);
 }
 
+export function getActivityCounts(teamId) {
+  return observationRequest(`/team/${teamId}/activity-counts`);
+}
+
 export function getDataHealth(teamId) {
   return observationRequest(`/team/${teamId}/data-health`);
 }

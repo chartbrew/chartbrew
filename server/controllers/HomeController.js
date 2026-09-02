@@ -369,6 +369,19 @@ class HomeController {
     };
   }
 
+  async getActivityCounts(access) {
+    const observationController = new ObservationController();
+    const [changes, dataHealth] = await Promise.all([
+      observationController.countUnread(access),
+      this.getDataHealth(access),
+    ]);
+    return {
+      changes,
+      dataHealth: dataHealth.count,
+      total: changes + dataHealth.count,
+    };
+  }
+
   async getRecentDashboards(access) {
     const pins = await db.PinnedDashboard.findAll({
       attributes: ["project_id"],

@@ -1,15 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Card, Chip, Spinner,
+  Button, Chip, Spinner, Table,
 } from "@heroui/react";
 import {
-  LuActivity,
   LuArrowRight,
+  LuChartNoAxesColumn,
   LuChartNoAxesColumnIncreasing,
   LuChevronRight,
-  LuCircleCheck,
+  LuDatabase,
+  LuPlug,
   LuRefreshCw,
+  LuTrendingDown,
+  LuTrendingUp,
 } from "react-icons/lu";
 import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,17 +22,25 @@ import {
   getHome,
   getMonitorRecommendations,
   getObservationDigests,
+  resolveObservation,
 } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import { completeTutorial, selectUser } from "../../slices/user";
 import HomeAsk from "../Ai/HomeAsk";
-import ObservationCard from "../Activity/ObservationCard";
 import SummaryScheduleModal from "../Activity/SummaryScheduleModal";
-import { formatTimeAgo } from "../../modules/observationFormat";
+import {
+  formatCompactComparison,
+  formatObservationChangeMagnitude,
+  formatTimeAgo,
+} from "../../modules/observationFormat";
 import canAccess from "../../config/canAccess";
 import HomeDiscover from "./HomeDiscover";
 import HomeOnboarding from "./HomeOnboarding";
-import { shouldShowNeedsAttention } from "./homeAttentionState";
+import {
+  buildHomeActivityRows,
+  removeHomeActivityItem,
+  shouldShowNeedsAttention,
+} from "./homeAttentionState";
 import { getLinePause, getTypeDelay } from "./typewriter";
 
 function prefersReducedMotion() {
@@ -137,114 +148,18 @@ SectionHeading.propTypes = {
   title: PropTypes.string.isRequired,
 };
 
-function DataHealthAttention({ count, onPress }) {
-  return (
-    <Card className="h-full gap-0 rounded-3xl border border-divider shadow-none">
-      <Card.Header className="flex flex-row items-center gap-2 pb-2">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-divider bg-warning/10">
-          <LuRefreshCw className="text-warning" size={16} aria-hidden />
-        </div>
-        <p className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wide text-muted">
-          Data health
-        </p>
-      </Card.Header>
-      <Card.Content className="flex-1 gap-1">
-        <Card.Title className="text-base font-semibold">
-          {count} data {count === 1 ? "issue needs" : "issues need"} attention
-        </Card.Title>
-        <p className="text-sm text-muted">
-          Review this before relying on the affected metrics.
-        </p>
-      </Card.Content>
-      <Card.Footer className="justify-between gap-3 pt-3">
-        <Button onPress={onPress} size="sm" variant="tertiary">
-          Review data health
-          <LuArrowRight aria-hidden />
-        </Button>
-      </Card.Footer>
-    </Card>
-  );
+function getActivityIcon(row) {
+  const iconProps = { size: 18, "aria-hidden": true };
+  if (row.category !== "health") {
+    return row.item.direction === "increase"
+      ? <LuTrendingUp {...iconProps} />
+      : <LuTrendingDown {...iconProps} />;
+  }
+  if (row.item.type === "connection") return <LuPlug {...iconProps} />;
+  if (row.item.type === "dataset") return <LuDatabase {...iconProps} />;
+  if (row.item.type === "chart") return <LuChartNoAxesColumn {...iconProps} />;
+  return <LuRefreshCw {...iconProps} />;
 }
-
-DataHealthAttention.propTypes = {
-  count: PropTypes.number.isRequired,
-  onPress: PropTypes.func.isRequired,
-};
-
-function MetricAttentionStatus({ recommendationCount, setupState, onPress }) {
-  const status = recommendationCount > 0 ? {
-    action: "Review metrics",
-    description: "Review the suggested metrics and choose the ones that matter to your team.",
-    icon: LuActivity,
-    iconClassName: "text-accent",
-    title: `${recommendationCount} ${recommendationCount === 1 ? "metric is" : "metrics are"} ready to watch`,
-  } : {
-    collecting_baseline: {
-      action: "View progress",
-      description: "Your metric needs more data before Chartbrew can compare changes.",
-      icon: LuRefreshCw,
-      iconClassName: "text-foreground-400",
-      title: "Chartbrew is collecting a baseline",
-    },
-    metrics_need_review: {
-      action: "Review metric",
-      description: "Review its setup so Chartbrew can continue to evaluate it.",
-      icon: LuActivity,
-      iconClassName: "text-warning",
-      title: "A watched metric needs review",
-    },
-    no_important_changes: {
-      action: "View watched metrics",
-      description: "Chartbrew is watching your metrics and will show important changes here.",
-      icon: LuCircleCheck,
-      iconClassName: "text-success",
-      title: "Everything looks good",
-    },
-    waiting_for_data: {
-      action: "View watched metrics",
-      description: "The latest refresh did not return enough data to evaluate your metric.",
-      icon: LuRefreshCw,
-      iconClassName: "text-warning",
-      title: "Waiting for metric data",
-    },
-  }[setupState] || {
-    action: "View watched metrics",
-    description: "Chartbrew is tracking your metrics and will show important changes here.",
-    icon: LuCircleCheck,
-    iconClassName: "text-success",
-    title: "Watching for important changes",
-  };
-  const StatusIcon = status.icon;
-
-  return (
-    <Card className="h-full gap-0 rounded-3xl border border-divider shadow-none">
-      <Card.Header className="flex flex-row items-center gap-2 pb-2">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-divider bg-surface-secondary/40">
-          <StatusIcon className={status.iconClassName} size={16} aria-hidden />
-        </div>
-        <p className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wide text-muted">
-          Watched metrics
-        </p>
-      </Card.Header>
-      <Card.Content className="flex-1 gap-1">
-        <Card.Title className="text-base font-semibold">{status.title}</Card.Title>
-        <p className="text-sm text-muted">{status.description}</p>
-      </Card.Content>
-      <Card.Footer className="pt-3">
-        <Button onPress={onPress} size="sm" variant="tertiary">
-          {status.action}
-          <LuArrowRight aria-hidden />
-        </Button>
-      </Card.Footer>
-    </Card>
-  );
-}
-
-MetricAttentionStatus.propTypes = {
-  onPress: PropTypes.func.isRequired,
-  recommendationCount: PropTypes.number.isRequired,
-  setupState: PropTypes.string.isRequired,
-};
 
 function Home() {
   const dispatch = useDispatch();
@@ -256,6 +171,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [recommendationCount, setRecommendationCount] = useState(0);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const [resolvingId, setResolvingId] = useState(null);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   useEffect(() => {
@@ -317,6 +233,14 @@ function Home() {
     hasWatchedMetric: data.hasWatchedMetric,
     recommendationCount,
   });
+  const activityRows = buildHomeActivityRows({
+    dataHealth: showNeedsAttention && data.dataHealth.showOnHome
+      ? data.dataHealth.items
+      : [],
+    needsAttention: showNeedsAttention ? needsAttention : [],
+    notableChanges,
+  });
+  const canResolveActivity = canAccess("projectEditor", user?.id, team.TeamRoles);
 
   const dismissOnboarding = () => {
     setOnboardingDismissed(true);
@@ -327,6 +251,20 @@ function Home() {
       setOnboardingDismissed(false);
       toast.error("Could not dismiss Get started");
     });
+  };
+
+  const resolveActivity = async (row) => {
+    setResolvingId(row.id);
+    try {
+      await resolveObservation(team.id, row.item.id);
+      setData((current) => removeHomeActivityItem(current, row.item.id));
+      window.dispatchEvent(new CustomEvent("cb:activity-updated"));
+      toast.success("Change resolved");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setResolvingId(null);
+    }
   };
 
   return (
@@ -352,7 +290,7 @@ function Home() {
         </section>
       ) : null}
 
-      {showNeedsAttention ? (
+      {showNeedsAttention || activityRows.length > 0 ? (
         <section aria-labelledby="attention-heading">
           <SectionHeading
             action={(
@@ -364,38 +302,114 @@ function Home() {
             id="attention-heading"
             title="Metric activity"
           />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {data.dataHealth.showOnHome ? (
-              <DataHealthAttention
-                count={data.dataHealth.count}
-                onPress={() => navigate("/activity?tab=health")}
-              />
-            ) : null}
-            {needsAttention.map((observation) => (
-              <ObservationCard key={observation.id} observation={observation} />
-            ))}
-            {needsAttention.length === 0 && !data.dataHealth.showOnHome ? (
-              <MetricAttentionStatus
-                onPress={() => navigate("/activity?tab=monitors")}
-                recommendationCount={recommendationCount}
-                setupState={data.setupState}
-              />
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {notableChanges.length > 0 ? (
-        <section aria-labelledby="notable-heading">
-          <SectionHeading
-            id="notable-heading"
-            title="Notable changes"
-          />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {notableChanges.map((observation) => (
-              <ObservationCard key={observation.id} observation={observation} />
-            ))}
-          </div>
+          <Table className="overflow-hidden border border-divider shadow-none">
+            <Table.ScrollContainer>
+              <Table.Content
+                aria-label="Metric activity"
+                className="min-w-[760px]"
+                onRowAction={(key) => {
+                  const row = activityRows.find((item) => item.id === key);
+                  if (row) navigate(row.path);
+                }}
+              >
+                <Table.Header>
+                  <Table.Column id="activity" isRowHeader textValue="Activity">Activity</Table.Column>
+                  <Table.Column id="category" textValue="Category">Category</Table.Column>
+                  <Table.Column id="workspace" textValue="Workspace">Workspace</Table.Column>
+                  <Table.Column id="change" textValue="Change">Change</Table.Column>
+                  <Table.Column id="detected" textValue="Detected">Detected</Table.Column>
+              <Table.Column id="action" textValue="Row actions" />
+                </Table.Header>
+                <Table.Body renderEmptyState={() => (
+                  <span className="text-sm text-muted">No metric activity needs review.</span>
+                )}>
+                  {activityRows.map((row) => {
+                    const isHealth = row.category === "health";
+                    const isAttention = row.category === "attention";
+                    const metricName = row.item.chart?.name
+                      || row.item.monitor?.name
+                      || "Watched metric";
+                    const changeMagnitude = isHealth
+                      ? null
+                      : formatObservationChangeMagnitude(row.item);
+                    const changeClass = isHealth
+                      ? "text-warning"
+                      : isAttention
+                        ? "text-danger"
+                        : "text-success";
+                    return (
+                      <Table.Row className="cursor-pointer" id={row.id} key={row.id}>
+                        <Table.Cell>
+                          <div className="flex max-w-md items-center gap-3 py-1">
+                            <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg bg-current/10 ${changeClass}`}>
+                              {getActivityIcon(row)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-foreground">
+                                {isHealth ? row.item.title : metricName}
+                              </p>
+                              <p className="truncate text-xs text-muted">
+                                {isHealth
+                                  ? row.item.message
+                                  : formatCompactComparison(row.item) || row.item.summary}
+                              </p>
+                            </div>
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Chip
+                            color={isHealth ? "warning" : isAttention ? "danger" : "success"}
+                            size="sm"
+                            variant="soft"
+                          >
+                            <Chip.Label className="truncate">
+                              {isHealth
+                                ? "Data health"
+                                : isAttention ? "Needs attention" : "Notable change"}
+                            </Chip.Label>
+                          </Chip>
+                        </Table.Cell>
+                        <Table.Cell>{row.item.project?.name || "Workspace"}</Table.Cell>
+                        <Table.Cell className={`whitespace-nowrap font-medium ${changeClass}`}>
+                          {changeMagnitude
+                            ? `${row.item.direction === "increase" ? "+" : "−"}${changeMagnitude}`
+                            : "—"}
+                        </Table.Cell>
+                        <Table.Cell className="whitespace-nowrap text-sm text-muted">
+                          {formatTimeAgo(row.item.detectedAt || row.item.lastDetectedAt)}
+                        </Table.Cell>
+                        <Table.Cell>
+                    <div className="flex items-center justify-end gap-4">
+                            {!isHealth && canResolveActivity ? (
+                              <Button
+                                aria-label={`Resolve ${metricName}`}
+                                isPending={resolvingId === row.id}
+                                onPress={() => resolveActivity(row)}
+                                size="sm"
+                                variant="tertiary"
+                              >
+                                {({ isPending }) => (
+                                  <>
+                                    {isPending ? <Spinner color="current" size="sm" /> : null}
+                                    {isPending ? "Resolving..." : "Resolve"}
+                                  </>
+                                )}
+                              </Button>
+                            ) : null}
+                            <LuChevronRight
+                              className="text-foreground-400"
+                              size={16}
+                              aria-hidden
+                            />
+                          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
+          </Table>
         </section>
       ) : null}
 
