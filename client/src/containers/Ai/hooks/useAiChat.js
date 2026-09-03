@@ -12,6 +12,7 @@ function useAiChat({
   teamId,
 }) {
   const user = useSelector(selectUser);
+  const requestIdRef = useRef(0);
   const sessionIdRef = useRef(null);
   const [aiConversationId, setAiConversationId] = useState(null);
   const [error, setError] = useState(null);
@@ -79,6 +80,7 @@ function useAiChat({
 
     return () => {
       mounted = false;
+      requestIdRef.current += 1;
       socketClient.off("ai-progress", handleProgress);
       if (sessionIdRef.current) {
         socketClient.leaveConversation(sessionIdRef.current);
@@ -89,12 +91,14 @@ function useAiChat({
   const sendMessage = useCallback(async (message) => {
     const question = `${message || ""}`.trim();
     if (!question || isLoading || !teamId) return null;
+    const requestId = ++requestIdRef.current;
     const activeSessionId = ensureSessionId();
     setError(null);
     setIsLoading(true);
     setProgressEvents([]);
     setMessages((current) => [...current, { content: question, role: "user" }]);
     await joinProgressRoom(activeSessionId);
+    if (requestId !== requestIdRef.current) return null;
     try {
       const response = await respondAi({
         aiConversationId,
@@ -104,6 +108,7 @@ function useAiChat({
         sessionId: activeSessionId,
         teamId,
       });
+      if (requestId !== requestIdRef.current) return null;
       const orchestration = response.orchestration;
       setAiConversationId(orchestration.aiConversationId || aiConversationId);
       if (orchestration.sessionId) {
@@ -121,6 +126,7 @@ function useAiChat({
       ]);
       return orchestration;
     } catch (requestError) {
+      if (requestId !== requestIdRef.current) return null;
       setError(requestError.message);
       setMessages((current) => [
         ...current,
@@ -132,8 +138,10 @@ function useAiChat({
       ]);
       return null;
     } finally {
-      setIsLoading(false);
-      setProgressEvents([]);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+        setProgressEvents([]);
+      }
     }
   }, [
     aiConversationId,
@@ -146,12 +154,14 @@ function useAiChat({
   ]);
 
   const clear = useCallback(() => {
+    requestIdRef.current += 1;
     if (sessionIdRef.current) {
       socketClient.leaveConversation(sessionIdRef.current);
     }
     sessionIdRef.current = null;
     setAiConversationId(null);
     setError(null);
+    setIsLoading(false);
     setMessages([]);
     setProgressEvents([]);
     setSessionId(null);
@@ -159,12 +169,14 @@ function useAiChat({
 
   const confirmAction = useCallback(async (pendingAction) => {
     if (!pendingAction?.actionId || isLoading || !teamId) return null;
+    const requestId = ++requestIdRef.current;
     const activeSessionId = ensureSessionId();
     setError(null);
     setIsLoading(true);
     setProgressEvents([]);
     setMessages((current) => [...current, { content: "Confirm this change", role: "user" }]);
     await joinProgressRoom(activeSessionId);
+    if (requestId !== requestIdRef.current) return null;
     try {
       const response = await respondAi({
         action: {
@@ -176,6 +188,7 @@ function useAiChat({
         sessionId: activeSessionId,
         teamId,
       });
+      if (requestId !== requestIdRef.current) return null;
       const orchestration = response.orchestration;
       setMessages((current) => [
         ...current,
@@ -187,6 +200,7 @@ function useAiChat({
       ]);
       return orchestration;
     } catch (requestError) {
+      if (requestId !== requestIdRef.current) return null;
       setError(requestError.message);
       setMessages((current) => [
         ...current,
@@ -194,8 +208,10 @@ function useAiChat({
       ]);
       return null;
     } finally {
-      setIsLoading(false);
-      setProgressEvents([]);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+        setProgressEvents([]);
+      }
     }
   }, [aiConversationId, ensureSessionId, isLoading, joinProgressRoom, persistence, teamId]);
 

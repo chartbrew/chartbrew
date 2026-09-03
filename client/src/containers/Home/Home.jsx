@@ -17,6 +17,7 @@ import {
 import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import {
   getHome,
@@ -42,6 +43,12 @@ import {
   shouldShowNeedsAttention,
 } from "./homeAttentionState";
 import { getLinePause, getTypeDelay } from "./typewriter";
+
+const HOME_TRANSITION = {
+  duration: 0.2,
+  ease: [0.22, 1, 0.36, 1],
+};
+const HIDDEN_HOME_CONTENT = { opacity: 0, y: -8 };
 
 function prefersReducedMotion() {
   return typeof window !== "undefined"
@@ -173,6 +180,8 @@ function Home() {
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [resolvingId, setResolvingId] = useState(null);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [isChatFocused, setIsChatFocused] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (!team?.id) return;
@@ -200,6 +209,7 @@ function Home() {
 
   useEffect(() => {
     setOnboardingDismissed(false);
+    setIsChatFocused(false);
   }, [team?.id]);
 
   const saveSummary = (subscription) => {
@@ -268,29 +278,69 @@ function Home() {
   };
 
   return (
-    <main className="flex w-full flex-col gap-6">
-      <HomeGreeting
-        subtitle={`Here is what is moving across ${team.name}`}
-        title={`Good to see you, ${user?.name?.split(" ")[0] || "there"}.`}
-      />
+    <main className={isChatFocused
+      ? "flex h-[calc(100dvh-5.25rem)] min-h-0 w-full flex-col"
+      : "flex w-full flex-col gap-6"}
+    >
+      <AnimatePresence initial={false} mode="popLayout">
+        {!isChatFocused ? (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            exit={reducedMotion ? undefined : HIDDEN_HOME_CONTENT}
+            initial={reducedMotion ? false : HIDDEN_HOME_CONTENT}
+            transition={HOME_TRANSITION}
+          >
+            <HomeGreeting
+              subtitle={`Here is what is moving across ${team.name}`}
+              title={`Good to see you, ${user?.name?.split(" ")[0] || "there"}.`}
+            />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <HomeAsk teamId={team.id} />
+      <motion.div
+        className={isChatFocused
+        ? "mx-auto flex h-full min-h-0 w-full max-w-4xl flex-col pb-[env(safe-area-inset-bottom)]"
+        : "flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6"}
+        layout={reducedMotion ? false : "position"}
+        transition={HOME_TRANSITION}
+      >
+        <div className={isChatFocused
+          ? "flex h-full min-h-0 min-w-0 w-full flex-1 flex-col"
+          : "flex min-h-0 min-w-0 flex-1 flex-col"}
+        >
+          <HomeAsk
+            focused={isChatFocused}
+            key={team.id}
+            onFocusChange={setIsChatFocused}
+            teamId={team.id}
+          />
         </div>
 
-        <div className="hidden w-80 shrink-0 self-start lg:block xl:w-90">
-          <HomeDiscover />
-        </div>
-      </div>
+        <AnimatePresence initial={false} mode="popLayout">
+          {!isChatFocused ? (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="hidden w-80 shrink-0 self-start lg:block xl:w-90"
+              exit={reducedMotion ? undefined : HIDDEN_HOME_CONTENT}
+              initial={reducedMotion ? false : HIDDEN_HOME_CONTENT}
+              transition={HOME_TRANSITION}
+            >
+              <HomeDiscover />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </motion.div>
 
-      {showOnboarding ? (
-        <section aria-label="Get started">
-          <HomeOnboarding onboarding={data.onboarding} onDismiss={dismissOnboarding} />
-        </section>
-      ) : null}
+      {!isChatFocused ? (
+        <>
+          {showOnboarding ? (
+            <section aria-label="Get started">
+              <HomeOnboarding onboarding={data.onboarding} onDismiss={dismissOnboarding} />
+            </section>
+          ) : null}
 
-      {showNeedsAttention || activityRows.length > 0 ? (
+          {showNeedsAttention || activityRows.length > 0 ? (
         <section aria-labelledby="attention-heading">
           <SectionHeading
             action={(
@@ -411,9 +461,9 @@ function Home() {
             </Table.ScrollContainer>
           </Table>
         </section>
-      ) : null}
+          ) : null}
 
-      <section aria-labelledby="dashboards-heading">
+          <section aria-labelledby="dashboards-heading">
         <SectionHeading
           action={(
             <Button onPress={() => navigate("/dashboards")} size="sm" variant="tertiary">
@@ -473,31 +523,33 @@ function Home() {
             </Button>
           </div>
         )}
-      </section>
+          </section>
 
-      {digests.length === 0
-        && ![
-          "connect_data",
-          "create_dataset",
-          "waiting_for_metrics",
-          "waiting_for_setup",
-          "watch_metric",
-        ].includes(data.setupState) ? (
-        <div className="flex flex-col items-start gap-3 rounded-3xl border border-divider bg-surface px-4 py-4 md:flex-row md:items-center">
-          <div className="min-w-0 flex-1">
-            <p className="font-medium">Get a KPI review</p>
-            <p className="text-sm text-foreground-500">
-              Get the latest result for each watched metric in one email.
-            </p>
-          </div>
-          <Button
-            onPress={() => setSummaryModalOpen(true)}
-            size="sm"
-            variant="secondary"
-          >
-            Schedule review
-          </Button>
-        </div>
+          {digests.length === 0
+            && ![
+              "connect_data",
+              "create_dataset",
+              "waiting_for_metrics",
+              "waiting_for_setup",
+              "watch_metric",
+            ].includes(data.setupState) ? (
+            <div className="flex flex-col items-start gap-3 rounded-3xl border border-divider bg-surface px-4 py-4 md:flex-row md:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">Get a KPI review</p>
+                <p className="text-sm text-foreground-500">
+                  Get the latest result for each watched metric in one email.
+                </p>
+              </div>
+              <Button
+                onPress={() => setSummaryModalOpen(true)}
+                size="sm"
+                variant="secondary"
+              >
+                Schedule review
+              </Button>
+            </div>
+          ) : null}
+        </>
       ) : null}
 
       <SummaryScheduleModal

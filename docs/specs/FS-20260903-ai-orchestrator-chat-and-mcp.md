@@ -107,6 +107,9 @@ wait for the first answer.
 - Keep a clear **Close answer** action. It clears the current Home chat and restores the normal Home
   layout.
 
+Use a short fade and position transition when the Home chat enters or leaves the focused layout.
+Keep the transition immediate when the user prefers reduced motion.
+
 On small screens, use the available width and keep the composer above the safe-area inset. Do not add
 a second chat route, modal, or saved layout preference. This is local Home page state. `Home` owns the
 focused layout, and `HomeAsk` reports when its conversation starts or clears.
@@ -465,10 +468,10 @@ or work-step tables.
 
 ### Phase 2: focused Home chat
 
-- Move the active Home chat into one centered conversation column.
-- Keep the composer at the center bottom while the transcript scrolls.
-- Restore the normal Home layout when the user closes the answer.
-- Add desktop, small-screen, keyboard, and reduced-motion checks.
+- [x] Move the active Home chat into one centered conversation column.
+- [x] Keep the composer at the center bottom while the transcript scrolls.
+- [x] Restore the normal Home layout when the user closes the answer.
+- [x] Add desktop, small-screen, keyboard, and reduced-motion checks.
 
 ### Phase 3: chart result and work summary
 

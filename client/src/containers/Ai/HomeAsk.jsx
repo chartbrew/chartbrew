@@ -20,7 +20,7 @@ const EMPTY_CONTEXT = {
   singleSelect: null,
 };
 
-function HomeAsk({ teamId }) {
+function HomeAsk({ focused, onFocusChange, teamId }) {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const [saved, setSaved] = useState(false);
@@ -85,6 +85,7 @@ function HomeAsk({ teamId }) {
       return false;
     }
     setShowAccessNotice(false);
+    onFocusChange(true);
     chat.sendMessage(message || selectedContext.multiSelect.map((entity) => entity.label).join("\n"));
     return true;
   };
@@ -109,9 +110,11 @@ function HomeAsk({ teamId }) {
 
   const clearChat = () => {
     chat.clear();
+    setSaved(false);
     setSelectedContext(EMPTY_CONTEXT);
     setContextSearch("");
     setIsContextPickerOpen(false);
+    onFocusChange(false);
   };
 
   const selectedContextChips = selectedContext.multiSelect.length > 0 ? (
@@ -140,12 +143,34 @@ function HomeAsk({ teamId }) {
   ) : null;
 
   return (
-    <div className={conversationStarted
-      ? "flex min-w-0 flex-col gap-3"
+    <div className={focused
+      ? "flex h-full min-h-0 min-w-0 flex-col gap-3"
+      : conversationStarted
+        ? "flex min-w-0 flex-col gap-3"
       : `flex min-w-0 flex-col gap-3${isAccessNoticeVisible ? "" : " lg:h-[18rem]"}`}
     >
+      {conversationStarted ? (
+        <div className="flex shrink-0 flex-row justify-end">
+          <Button onPress={clearChat} size="sm" variant="tertiary">
+            <LuChevronUp aria-hidden />
+            Close answer
+          </Button>
+        </div>
+      ) : null}
+      <AiAccessNotice
+        availability={availability}
+        canManagePlatform={user.admin === true}
+        canManageTeam={isTeamAdmin}
+        error={availabilityError}
+        isLoading={isAvailabilityLoading}
+        isRequested={showAccessNotice}
+        onRetry={reloadAvailability}
+      />
+      {saved ? (
+        <p className="text-sm text-success">Conversation saved.</p>
+      ) : null}
       <AiChat
-        fill={!conversationStarted}
+        fill={focused || !conversationStarted}
         framed
         id="home-ask"
         isLoading={chat.isLoading}
@@ -194,31 +219,13 @@ function HomeAsk({ teamId }) {
         ]}
         toolDisplayNames={chat.toolDisplayNames}
       />
-      <AiAccessNotice
-        availability={availability}
-        canManagePlatform={user.admin === true}
-        canManageTeam={isTeamAdmin}
-        error={availabilityError}
-        isLoading={isAvailabilityLoading}
-        isRequested={showAccessNotice}
-        onRetry={reloadAvailability}
-      />
-      {saved ? (
-        <p className="text-sm text-success">Conversation saved.</p>
-      ) : null}
-      {conversationStarted ? (
-        <div className="flex flex-row justify-end">
-          <Button onPress={clearChat} size="sm" variant="tertiary">
-            <LuChevronUp aria-hidden />
-            Close answer
-          </Button>
-        </div>
-      ) : null}
     </div>
   );
 }
 
 HomeAsk.propTypes = {
+  focused: PropTypes.bool.isRequired,
+  onFocusChange: PropTypes.func.isRequired,
   teamId: PropTypes.number.isRequired,
 };
 

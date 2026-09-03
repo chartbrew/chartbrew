@@ -96,7 +96,9 @@ function AiChat({
       {messages.length > 0 ? (
         <ScrollShadow
           aria-live="polite"
-          className="min-w-0 max-h-[34rem] pr-3 [scrollbar-gutter:stable]"
+          className={fill
+            ? "min-h-0 min-w-0 flex-1 pr-3 [scrollbar-gutter:stable]"
+            : "min-w-0 max-h-[34rem] pr-3 [scrollbar-gutter:stable]"}
           orientation="vertical"
           ref={containerRef}
           size={28}
@@ -192,9 +194,12 @@ function AiChat({
         </ScrollShadow>
       ) : null}
 
-      <div className={fill ? "flex min-h-0 flex-1 flex-col" : undefined}>
+      <div className={fill && messages.length === 0
+        ? "flex min-h-0 flex-1 flex-col"
+        : undefined}
+      >
         <AiComposer
-          fill={fill}
+          fill={fill && messages.length === 0}
           framed={framed}
           id={id}
           isLoading={isLoading}

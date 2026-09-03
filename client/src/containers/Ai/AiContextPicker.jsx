@@ -61,7 +61,6 @@ function AiContextPicker({
   triggerTooltip,
 }) {
   const hasSelectedContext = selectedContext.multiSelect.length > 0;
-  const isIconOnly = triggerIsIconOnly || (showTriggerLabel && hasSelectedContext);
   const groups = contextSearch.trim()
     ? Object.keys(GROUP_LABELS).map((type) => ({
       label: GROUP_LABELS[type],
@@ -74,12 +73,13 @@ function AiContextPicker({
       variant={triggerVariant}
       size={triggerSize}
       isPending={isLoading}
-      isIconOnly={isIconOnly}
+      isIconOnly={triggerIsIconOnly}
       aria-label="Add context"
     >
       <LuPaperclip size={triggerSize === "sm" ? 16 : 18} />
-      {showTriggerLabel && !hasSelectedContext ? "Add context" : null}
-      {showTriggerLabel && hasSelectedContext ? selectedContext.multiSelect.length : null}
+      {showTriggerLabel
+        ? hasSelectedContext ? `Context (${selectedContext.multiSelect.length})` : "Add context"
+        : null}
     </Button>
   );
 
