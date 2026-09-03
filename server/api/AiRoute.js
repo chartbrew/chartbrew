@@ -6,6 +6,7 @@ const {
   respond,
   promoteSession,
   getAvailableTools,
+  getContextOptions,
   getConversations,
   getConversation,
   deleteConversation,
@@ -203,6 +204,19 @@ module.exports = (app) => {
       res.json({ tools });
     } catch (error) {
       sendAiError(res, error);
+    }
+  });
+
+  app.get("/ai/context", apiLimiter(20), verifyToken, checkAccess, async (req, res) => {
+    try {
+      const context = await getContextOptions(req.query.teamId, req.user.id, {
+        limit: req.query.limit,
+        query: req.query.query,
+        type: req.query.type,
+      });
+      return res.json({ context });
+    } catch (error) {
+      return sendAiError(res, error);
     }
   });
 

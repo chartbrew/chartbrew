@@ -6,10 +6,10 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 
-import { getAiConversation, getAiConversations, getAiTools, respondAi, deleteAiConversation } from "../../api/ai";
+import { getAiConversation, getAiConversations, getAiTools, respondAi, deleteAiConversation, searchAiContext } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
-import { getChart } from "../../slices/chart";
+import { getChart, selectCharts } from "../../slices/chart";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
@@ -59,6 +59,9 @@ function AiModal({ isOpen, onClose }) {
     singleSelect: null // entity selected via quick reply (only one at a time)
   });
   const [contextSearch, setContextSearch] = useState("");
+  const [contextEntities, setContextEntities] = useState([]);
+  const [contextLoadError, setContextLoadError] = useState("");
+  const [isContextLoading, setIsContextLoading] = useState(false);
   const [isContextPopoverOpen, setIsContextPopoverOpen] = useState(false);
   const [isSecondContextPopoverOpen, setIsSecondContextPopoverOpen] = useState(false);
   const [showAccessNotice, setShowAccessNotice] = useState(false);
@@ -70,7 +73,9 @@ function AiModal({ isOpen, onClose }) {
   const inputRef = useRef(null);
   const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
+  const routeContextSeedRef = useRef("");
   const projects = useSelector(selectProjects);
+  const charts = useSelector(selectCharts);
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
   const teamRole = team?.TeamRoles?.find((role) => role.user_id === user.id)?.role;
@@ -92,25 +97,13 @@ function AiModal({ isOpen, onClose }) {
   const questionPlaceholder = isReportingOnly
     ? "Ask about existing reports and metrics"
     : "Ask a question about your data";
-  const contextEntities = useMemo(() => [
-    ...projects.map((p) => ({ ...p, entity_type: "project" })),
-    ...(isTeamAdmin ? connections.map((c) => ({ ...c, entity_type: "connection" })) : []),
-    ...(!isReportingOnly ? datasets.map((d) => ({ ...d, entity_type: "dataset" })) : []),
-  ], [projects, connections, datasets, isReportingOnly, isTeamAdmin]);
-
-  // Filter context entities based on search
-  const filteredContextEntities = useMemo(() => contextEntities.filter((entity) => {
-    if (!contextSearch.trim()) return true;
-
-    const searchLower = contextSearch.toLowerCase();
-    const name = entity.name?.toLowerCase() || "";
-    const type = entity.type?.toLowerCase() || "";
-    const legend = entity.legend?.toLowerCase() || "";
-
-    return name.includes(searchLower) ||
-           type.includes(searchLower) ||
-           legend.includes(searchLower);
-  }), [contextEntities, contextSearch]);
+  const isAnyContextPickerOpen = isContextPopoverOpen || isSecondContextPopoverOpen;
+  const routeContextKey = [
+    params?.projectId,
+    params?.chartId,
+    params?.connectionId,
+    params?.datasetId,
+  ].join(":");
   const conversationGroups = useMemo(() => (
     groupAiMessages(conversation?.full_history || [])
   ), [conversation?.full_history]);
@@ -141,9 +134,12 @@ function AiModal({ isOpen, onClose }) {
 
   // Helper to get display label for context entity
   const getContextLabel = (entity) => {
+    if (entity.label) return entity.label;
     switch (entity.entity_type) {
       case "project":
-        return `Project: ${entity.name}`;
+        return `Dashboard: ${entity.name}`;
+      case "chart":
+        return `Chart: ${entity.name}`;
       case "connection":
         return `Connection: ${entity.name} (${entity.type})`;
       case "dataset":
@@ -151,6 +147,15 @@ function AiModal({ isOpen, onClose }) {
       default:
         return entity.name;
     }
+  };
+
+  const applyLoadedConversation = (nextConversation, overrides = {}) => {
+    setConversation({ ...nextConversation, ...overrides });
+    setSelectedContext({
+      multiSelect: nextConversation.context || [],
+      singleSelect: null,
+    });
+    if (nextConversation.contextNotice) toast(nextConversation.contextNotice);
   };
 
   // Function to fetch chart data when a chart is created
@@ -269,33 +274,115 @@ function AiModal({ isOpen, onClose }) {
     if (isOpen && aiEnabled && team?.id) {
       loadConversations();
       if (isTeamAdmin) loadAiToolDisplayNames();
-      // check the route params and add project and chart id to the context
-      const projectId = parseInt(params?.projectId, 10);
-      const chartId = parseInt(params?.chartId, 10);
-      const connectionId = parseInt(params?.connectionId, 10);
-      const datasetId = parseInt(params?.datasetId, 10);
-
-      if (projectId && selectedContext?.multiSelect?.find(e => e.id === projectId) === undefined) {
-        const project = projects.find(p => p.id === projectId);
-        const projectLabel = `Project: ${project?.name}`;
-        setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: projectId, entity_type: "project", label: projectLabel }] }));
-      }
-      if (chartId && selectedContext?.multiSelect?.find(e => e.id === chartId) === undefined) {
-        const chartLabel = `Chart ID: ${chartId}`;
-        setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: chartId, entity_type: "chart", label: chartLabel }] }));
-      }
-      if (connectionId && selectedContext?.multiSelect?.find(e => e.id === connectionId) === undefined) {
-        const connection = connections.find(c => c.id === connectionId);
-        const connectionLabel = `Connection: ${connection?.name} (${connection?.type})`;
-        setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: connectionId, entity_type: "connection", label: connectionLabel }] }));
-      }
-      if (datasetId && selectedContext?.multiSelect?.find(e => e.id === datasetId) === undefined) {
-        const dataset = datasets.find(d => d.id === datasetId);
-        const datasetLabel = `Dataset: ${getDatasetDisplayName(dataset)}`;
-        setSelectedContext(prev => ({ ...prev, multiSelect: [...prev.multiSelect, { id: datasetId, entity_type: "dataset", label: datasetLabel }] }));
-      }
     }
   }, [aiEnabled, isOpen, team?.id]);
+
+  useEffect(() => {
+    if (!isOpen || !aiEnabled || !team?.id || !isAnyContextPickerOpen) return undefined;
+    let isActive = true;
+    const timeout = setTimeout(async () => {
+      setIsContextLoading(true);
+      setContextLoadError("");
+      try {
+        const response = await searchAiContext(team.id, {
+          limit: 30,
+          query: contextSearch.trim(),
+        });
+        if (isActive) setContextEntities(response.context || []);
+      } catch (error) {
+        if (isActive) {
+          setContextEntities([]);
+          setContextLoadError(error.message);
+        }
+      } finally {
+        if (isActive) setIsContextLoading(false);
+      }
+    }, 200);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeout);
+    };
+  }, [aiEnabled, contextSearch, isAnyContextPickerOpen, isOpen, team?.id]);
+
+  // Route context starts a new conversation. Saved conversations restore their own context.
+  useEffect(() => {
+    if (!isOpen || !aiEnabled || conversation?.id || pendingConversationId) return;
+    if (routeContextSeedRef.current === routeContextKey) return;
+    const projectId = parseInt(params?.projectId, 10);
+    const chartId = parseInt(params?.chartId, 10);
+    const connectionId = parseInt(params?.connectionId, 10);
+    const datasetId = parseInt(params?.datasetId, 10);
+    const routeContext = [];
+
+    if (projectId) {
+      const project = projects.find((item) => item.id === projectId);
+      routeContext.push({
+        entity_type: "project",
+        id: projectId,
+        label: `Dashboard: ${project?.name || projectId}`,
+        name: project?.name || `${projectId}`,
+        project_id: projectId,
+      });
+    }
+    if (chartId) {
+      const chart = charts.find((item) => item.id === chartId);
+      const project = projects.find((item) => item.id === chart?.project_id);
+      routeContext.push({
+        entity_type: "chart",
+        id: chartId,
+        label: `Chart: ${chart?.name || chartId}`,
+        metadata: {
+          chartType: chart?.type,
+          dashboardName: project?.name,
+        },
+        name: chart?.name || `${chartId}`,
+        project_id: chart?.project_id || projectId || null,
+      });
+    }
+    if (connectionId) {
+      const connection = connections.find((item) => item.id === connectionId);
+      routeContext.push({
+        entity_type: "connection",
+        id: connectionId,
+        label: `Connection: ${connection?.name || connectionId}`,
+        metadata: { sourceType: connection?.subType || connection?.type },
+        name: connection?.name || `${connectionId}`,
+        project_id: null,
+      });
+    }
+    if (datasetId) {
+      const dataset = datasets.find((item) => item.id === datasetId);
+      routeContext.push({
+        entity_type: "dataset",
+        id: datasetId,
+        label: `Dataset: ${getDatasetDisplayName(dataset) || datasetId}`,
+        name: getDatasetDisplayName(dataset) || `${datasetId}`,
+        project_id: projectId || null,
+      });
+    }
+    if (routeContext.length === 0) return;
+    routeContextSeedRef.current = routeContextKey;
+
+    setSelectedContext((current) => {
+      const items = new Map(current.multiSelect.map((item) => [
+        `${item.entity_type}:${item.id}`,
+        item,
+      ]));
+      routeContext.forEach((item) => items.set(`${item.entity_type}:${item.id}`, item));
+      return { ...current, multiSelect: [...items.values()] };
+    });
+  }, [
+    aiEnabled,
+    charts,
+    connections,
+    conversation?.id,
+    datasets,
+    isOpen,
+    pendingConversationId,
+    projects,
+    routeContextKey,
+  ]);
 
   // Join conversation room when conversation changes
   useEffect(() => {
@@ -353,11 +440,8 @@ function AiModal({ isOpen, onClose }) {
     if (!ensureAiAvailable()) return;
     setShowAccessNotice(false);
 
-    // Prepare context object (only multiSelect goes to context)
-    let context = null;
-    if (selectedContext.multiSelect.length > 0) {
-      context = selectedContext.multiSelect;
-    }
+    // An empty array also removes saved context from the conversation.
+    const context = selectedContext.multiSelect;
 
     setIsLoading(true);
     setProgressEvents([]);
@@ -373,10 +457,10 @@ function AiModal({ isOpen, onClose }) {
       content: currentQuestion || selectedContext.multiSelect.map((entity) => entity.label).join("\n")
     };
 
-    setSelectedContext({
-      multiSelect: [],
-      singleSelect: null
-    });
+    setSelectedContext((current) => ({
+      ...current,
+      singleSelect: null,
+    }));
     setContextSearch("");
 
     try {
@@ -434,10 +518,9 @@ function AiModal({ isOpen, onClose }) {
             
             if (fullConversation?.conversation) {
               // Update conversation with complete data including full_history
-              setConversation({
-                ...fullConversation.conversation,
+              applyLoadedConversation(fullConversation.conversation, {
                 id: newConversation.id,
-                isTemporary: false
+                isTemporary: false,
               });
 
               // Clear localMessages and progress events since they're now in full_history
@@ -464,7 +547,7 @@ function AiModal({ isOpen, onClose }) {
         // Refresh conversation with updated history from database
         const updatedConversation = await getAiConversation(conversation.id, team.id);
         if (updatedConversation?.conversation) {
-          setConversation(updatedConversation.conversation);
+          applyLoadedConversation(updatedConversation.conversation);
         }
         
         // Refresh conversations list
@@ -499,6 +582,7 @@ function AiModal({ isOpen, onClose }) {
 
   const _onSelectConversation = async (conversationId) => {
     // Reset state for clean viewing
+    routeContextSeedRef.current = routeContextKey;
     setLocalMessages([]);
     setProgressEvents([]);
     setCreatedCharts([]);
@@ -514,7 +598,7 @@ function AiModal({ isOpen, onClose }) {
     try {
       const response = await getAiConversation(conversationId, team.id);
       if (response?.conversation) {
-        setConversation(response.conversation);
+        applyLoadedConversation(response.conversation);
       } else {
         toast.error("Failed to fetch conversation");
       }
@@ -540,11 +624,13 @@ function AiModal({ isOpen, onClose }) {
 
       // If we deleted the current conversation, go back to welcome screen
       if (conversation?.id === conversationId) {
+        routeContextSeedRef.current = "";
         setConversation(null);
         setLocalMessages([]);
         setProgressEvents([]);
         setCreatedCharts([]);
         setPendingActions([]);
+        setSelectedContext({ multiSelect: [], singleSelect: null });
         fetchedChartsRef.current.clear();
       }
 
@@ -572,7 +658,7 @@ function AiModal({ isOpen, onClose }) {
       });
       const updatedConversation = await getAiConversation(conversation.id, team.id);
       if (updatedConversation?.conversation) {
-        setConversation(updatedConversation.conversation);
+        applyLoadedConversation(updatedConversation.conversation);
       }
       setPendingActions((current) => current.filter((item) => {
         return item.actionId !== pendingAction.actionId;
@@ -647,7 +733,7 @@ function AiModal({ isOpen, onClose }) {
       // Call orchestrate with the suggestion action
       const response = await respondAi({
         aiConversationId: currentConversationId,
-        context: null,
+        context: selectedContext.multiSelect,
         message: syntheticQuestion,
         persistence: "persistent",
         teamId: team.id,
@@ -676,10 +762,9 @@ function AiModal({ isOpen, onClose }) {
         if (newConversation) {
           const fullConversation = await getAiConversation(newConversation.id, team.id);
           if (fullConversation?.conversation) {
-            setConversation({
-              ...fullConversation.conversation,
+            applyLoadedConversation(fullConversation.conversation, {
               id: newConversation.id,
-              isTemporary: false
+              isTemporary: false,
             });
             setLocalMessages([]);
             setProgressEvents([]);
@@ -770,7 +855,9 @@ function AiModal({ isOpen, onClose }) {
                       isLoading={isLoading}
                       contextSearch={contextSearch}
                       setContextSearch={setContextSearch}
-                      filteredContextEntities={filteredContextEntities}
+                      contextEntities={contextEntities}
+                      error={contextLoadError}
+                      isSearching={isContextLoading}
                       selectedContext={selectedContext}
                       setSelectedContext={setSelectedContext}
                       getContextLabel={getContextLabel}
@@ -911,6 +998,7 @@ function AiModal({ isOpen, onClose }) {
                         <Button
                           variant="primary"
                           onPress={() => {
+                            routeContextSeedRef.current = "";
                             setConversation(null);
                             setLocalMessages([]);
                             setProgressEvents([]);
@@ -1104,7 +1192,7 @@ function AiModal({ isOpen, onClose }) {
                           inputRef={inputRef}
                           placeholder={questionPlaceholder}
                           isLoading={isLoading}
-                          layout="inline"
+                          rows={2}
                           selectedContext={selectedContext}
                           status={(
                             <AiAvailabilityStatus
@@ -1173,11 +1261,13 @@ function AiModal({ isOpen, onClose }) {
                               isLoading={isLoading}
                               contextSearch={contextSearch}
                               setContextSearch={setContextSearch}
-                              filteredContextEntities={filteredContextEntities}
+                              contextEntities={contextEntities}
+                              error={contextLoadError}
+                              isSearching={isContextLoading}
                               selectedContext={selectedContext}
                               setSelectedContext={setSelectedContext}
                               getContextLabel={getContextLabel}
-                              placement="top"
+                              placement="top start"
                               contentClassName="z-[100] w-80"
                               triggerVariant="outline"
                               triggerSize="sm"

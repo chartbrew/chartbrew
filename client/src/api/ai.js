@@ -69,6 +69,26 @@ export async function getAiTools(teamId) {
   return response.json();
 }
 
+export async function searchAiContext(teamId, options = {}) {
+  const token = getAuthToken();
+  const params = new URLSearchParams({ teamId: String(teamId) });
+  if (options.query) params.set("query", options.query);
+  if (options.type) params.set("type", options.type);
+  if (options.limit) params.set("limit", String(options.limit));
+  const response = await fetch(`${API_HOST}/ai/context?${params.toString()}`, {
+    headers: new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    }),
+    method: "GET",
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Context could not be loaded");
+  }
+  return data;
+}
+
 export async function orchestrateAi(teamId, question, conversationHistory = [], aiConversationId, context = null) {
   const token = getAuthToken();
   const url = `${API_HOST}/ai/orchestrate`;

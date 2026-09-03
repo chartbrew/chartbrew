@@ -17,7 +17,13 @@ const { getAiRoleScope } = require("../modules/ai/orchestrator/rolePolicy");
 const db = require("../models/models");
 const runtimeCache = require("../modules/runtimeCache");
 const socketManager = require("../modules/socketManager");
-const { validateAiContext } = require("../modules/ai/contextAuthorization");
+const {
+  loadAiConversationContext,
+  replaceAiConversationContext,
+  searchAiContext,
+  serializeAiContext,
+  validateAiContext,
+} = require("../modules/ai/contextAuthorization");
 const { getObservationAccess } = require("../modules/observations/access");
 const { getWorkspaceAccessEnvelope } = require("../modules/workspaceContext/accessEnvelope");
 const {
@@ -224,7 +230,7 @@ async function getOrchestration(
   context = null,
 ) {
   const access = await getObservationAccess(teamId, userId);
-  const requestedContext = Array.isArray(context) && context.length > 0
+  const requestedContext = Array.isArray(context)
     ? await validateAiContext(access, context)
     : null;
   let conversation;
@@ -260,18 +266,9 @@ async function getOrchestration(
   });
 
   const storedContext = aiConversationId
-    ? await db.AiConversationContext.findAll({
-      attributes: ["entity_id", "entity_type"],
-      where: { conversation_id: conversation.id, team_id: teamId },
-    })
-    : [];
-  const validatedContext = requestedContext || await validateAiContext(
-    access,
-    storedContext.map((item) => ({
-      entityId: item.entity_id,
-      entityType: item.entity_type,
-    })),
-  );
+    ? await loadAiConversationContext(access, conversation.id)
+    : { context: [] };
+  const validatedContext = requestedContext || storedContext.context;
 
   // Conversation history is always rebuilt on the server.
   const messages = await db.AiMessage.findAll({
@@ -300,8 +297,8 @@ async function getOrchestration(
     return messageObj;
   });
 
-  if (Array.isArray(context) && context.length > 0) {
-    await saveConversationContext(conversation.id, teamId, validatedContext);
+  if (Array.isArray(context)) {
+    await replaceAiConversationContext(conversation.id, teamId, validatedContext);
   }
 
   try {
@@ -338,9 +335,7 @@ async function getOrchestration(
           question,
           fullHistory,
           conversation,
-          messages.length === 0 || (Array.isArray(context) && context.length > 0)
-            ? validatedContext
-            : [],
+          validatedContext,
           orchestrationOptions,
         );
       } catch (providerError) {
@@ -525,18 +520,6 @@ async function saveUsageRecords(teamId, conversationId, usageRecords = []) {
     purpose: usage.purpose || "ask_data",
     team_id: teamId,
     total_tokens: usage.total_tokens,
-  })));
-}
-
-async function saveConversationContext(conversationId, teamId, context = []) {
-  if (!conversationId || context.length === 0) return;
-  await Promise.all(context.map((item) => db.AiConversationContext.findOrCreate({
-    where: {
-      conversation_id: conversationId,
-      entity_id: item.entityId,
-      entity_type: item.entityType,
-    },
-    defaults: { team_id: teamId },
   })));
 }
 
@@ -781,10 +764,9 @@ async function respond({
     access,
     sessionId: getAiSessionBinding("session", resolvedSessionId),
   });
-  const validatedContext = context?.length
+  const validatedContext = Array.isArray(context)
     ? await validateAiContext(access, context)
     : await validateAiContext(access, existingSession?.context || []);
-  const promptContext = existingSession && !context?.length ? [] : validatedContext;
   const orchestrationOptions = await getOrchestrationOptions(
     access,
     userId,
@@ -823,7 +805,7 @@ async function respond({
         `${message}`.trim(),
         existingSession?.history || [],
         { id: resolvedSessionId, message_count: existingSession?.messageCount || 0 },
-        promptContext,
+        validatedContext,
         orchestrationOptions,
       );
     } catch (providerError) {
@@ -914,7 +896,7 @@ async function promoteSession({ sessionId, teamId, userId }) {
     tool_name: message.name,
     workspace_access_version: message.role !== "user" ? envelope.accessVersion : null,
   })));
-  await saveConversationContext(conversation.id, teamId, validatedContext);
+  await replaceAiConversationContext(conversation.id, teamId, validatedContext);
   await clearPendingActions({
     access,
     sessionId: getAiSessionBinding("session", validSessionId),
@@ -992,6 +974,7 @@ async function getConversation(conversationId, teamId, userId) {
   assertConversationOwnership(conversation, userId);
   const access = await getObservationAccess(teamId, userId);
   const envelope = await getWorkspaceAccessEnvelope(access);
+  const activeContext = await loadAiConversationContext(access, conversationId);
 
   // Load messages from AiMessage table
   const storedMessages = await db.AiMessage.findAll({
@@ -1050,11 +1033,20 @@ async function getConversation(conversationId, teamId, userId) {
   // Return conversation with messages and usage stats
   return {
     ...conversation.toJSON(),
+    context: serializeAiContext(activeContext.context),
+    contextNotice: activeContext.removedCount > 0
+      ? "This item is no longer available. Select another item."
+      : null,
     full_history: fullHistory,
     total_tokens: parseInt(stats.total_tokens, 10) || 0,
     prompt_tokens: parseInt(stats.prompt_tokens, 10) || 0,
     completion_tokens: parseInt(stats.completion_tokens, 10) || 0,
   };
+}
+
+async function getContextOptions(teamId, userId, options = {}) {
+  const access = await getObservationAccess(teamId, userId);
+  return searchAiContext(access, options);
 }
 
 async function deleteConversation(conversationId, teamId, userId) {
@@ -1159,6 +1151,7 @@ module.exports = {
   respond,
   promoteSession,
   getAvailableTools,
+  getContextOptions,
   getConversations,
   getConversation,
   deleteConversation,

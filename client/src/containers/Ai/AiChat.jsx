@@ -37,10 +37,14 @@ function AiChat({
   onSubmit,
   placeholder = "Ask a question about your data",
   progressEvents = [],
+  selectedContext = EMPTY_CONTEXT,
   showSave = false,
   suggestions = [],
   status,
   toolDisplayNames = {},
+  leadingContent,
+  leadingControl,
+  onAtTyped,
   framed = false,
   fill = false,
 }) {
@@ -194,10 +198,13 @@ function AiChat({
           framed={framed}
           id={id}
           isLoading={isLoading}
+          leadingContent={leadingContent}
+          leadingControl={leadingControl}
           name={`${id}-question`}
+          onAtTyped={onAtTyped}
           onSubmitQuestion={onSubmit}
           placeholder={placeholder}
-          selectedContext={EMPTY_CONTEXT}
+          selectedContext={selectedContext}
           showEnterHint={messages.length > 0}
           status={status}
           suggestions={suggestions}
@@ -222,10 +229,17 @@ AiChat.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   progressEvents: PropTypes.arrayOf(PropTypes.object),
+  selectedContext: PropTypes.shape({
+    multiSelect: PropTypes.array.isRequired,
+    singleSelect: PropTypes.object,
+  }),
   showSave: PropTypes.bool,
   suggestions: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.node,
   toolDisplayNames: PropTypes.object,
+  leadingContent: PropTypes.node,
+  leadingControl: PropTypes.node,
+  onAtTyped: PropTypes.func,
   framed: PropTypes.bool,
   fill: PropTypes.bool,
 };
