@@ -249,7 +249,6 @@
     --field-border: transparent;
     --field-foreground: oklch(99.11% 0.0016 46.92);
     --field-placeholder: oklch(70.50% 0.0032 46.92);
-    --focus: oklch(77.45% 0.1235 46.92);
     --foreground: oklch(99.11% 0.0016 46.92);
     --muted: oklch(70.50% 0.0032 46.92);
     --overlay: oklch(21.03% 0.0032 46.92);
@@ -271,6 +270,7 @@
 
     --accent: var(--cb-primary-500);
     --accent-foreground: #ffffff;
+    --focus: var(--cb-primary-500);
 
     --radius: 0.5rem;
     --field-radius: 0.75rem;

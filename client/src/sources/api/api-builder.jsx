@@ -580,7 +580,7 @@ function ApiBuilder(props) {
   const blockMenuSwitch = saveLoading || requestLoading;
 
   return (
-    <div className="px-4 max-w-(--breakpoint-2xl) mx-auto">
+    <div className="mx-auto max-w-(--breakpoint-2xl) px-4 pt-4">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-7">
           <Row justify="space-between" align="center">

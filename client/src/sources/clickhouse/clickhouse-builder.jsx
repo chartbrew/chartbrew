@@ -300,7 +300,7 @@ function ClickHouseBuilder(props) {
   const blockResultsTabSwitch = saveLoading || requestLoading;
 
   return (
-    <div style={styles.container} className="pl-1 pr-1 sm:pl-4 sm:pr-4">
+    <div style={styles.container} className="px-1 pt-4 sm:px-4">
       <div className="grid grid-cols-12 gap-8">
         <div className="col-span-12 sm:col-span-6 md:col-span-5">
           <Row justify="space-between" align="center">

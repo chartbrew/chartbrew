@@ -543,7 +543,7 @@ function StripeOfficialBuilder(props) {
 
   return (
     <StripeOfficialBuilderProvider value={contextValue}>
-      <div className="grid grid-cols-12 gap-5 px-2 pb-5 lg:px-4">
+      <div className="grid grid-cols-12 gap-5 px-2 pb-5 pt-4 lg:px-4">
         <div className="col-span-12 flex flex-col gap-5 xl:col-span-8 2xl:col-span-9">
           <StripeOfficialOutputModeSelector />
           <StripeOfficialCategoryStep />

@@ -225,7 +225,7 @@ function CustomerioBuilder(props) {
   };
 
   return (
-    <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
+    <div style={styles.container} className="px-1 pt-4 md:px-4">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 sm:col-span-7">
           <Container>
