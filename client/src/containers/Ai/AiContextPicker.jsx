@@ -90,7 +90,7 @@ function AiContextPicker({
       </Popover.Trigger>
       <Popover.Content placement={placement} className={contentClassName}>
         <Popover.Dialog>
-          <div className="p-2 w-full">
+          <div className="w-full">
             <div className="mb-2 text-xs font-medium text-foreground">
               Add workspace context
             </div>
@@ -102,6 +102,7 @@ function AiContextPicker({
               className="mb-2"
               autoFocus
               fullWidth
+              variant="secondary"
             />
             <div className="max-h-64 overflow-y-auto w-full">
               {isSearching ? (

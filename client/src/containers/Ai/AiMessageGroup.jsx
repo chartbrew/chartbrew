@@ -12,7 +12,11 @@ function AiMessageGroup({
   group,
   groupIndex,
   createdCharts,
+  chartLoadErrors,
   toolDisplayNames,
+  teamId,
+  selectedContext,
+  onChartAction,
   onSuggestionClick,
   onChangeAction,
   onConfirmAction,
@@ -33,7 +37,15 @@ function AiMessageGroup({
     const chartData = createdCharts.find((chart) => `${chart.id}` === `${parsed.chartId}`);
     return (
       <div className="mx-auto mb-6 w-full max-w-3xl px-4">
-        <AiChartPreview chartData={chartData} parsed={parsed} />
+        <AiChartPreview
+          chartData={chartData}
+          isUnavailable={chartLoadErrors[parsed.chartId] === "unavailable"}
+          loadError={chartLoadErrors[parsed.chartId] === "failed"}
+          onChartAction={onChartAction}
+          parsed={parsed}
+          selectedContext={selectedContext}
+          teamId={teamId}
+        />
       </div>
     );
   }
@@ -69,6 +81,11 @@ function AiMessageGroup({
       <AiAnswer
         after={(
           <>
+            <AiToolOperations
+              groupIndex={groupIndex}
+              operations={operations}
+              toolDisplayNames={toolDisplayNames}
+            />
             {suggestions.length > 0 ? (
               <div className="mt-3 flex flex-row flex-wrap gap-2">
                 {suggestions.map((suggestion) => (
@@ -97,11 +114,6 @@ function AiMessageGroup({
             ) : null}
           </>
         )}
-        before={<AiToolOperations
-          groupIndex={groupIndex}
-          operations={operations}
-          toolDisplayNames={toolDisplayNames}
-        />}
         content={finalMessage?.content || "Work completed."}
         isError={finalMessage?.isError}
       />
@@ -119,7 +131,11 @@ AiMessageGroup.propTypes = {
   }).isRequired,
   groupIndex: PropTypes.number.isRequired,
   createdCharts: PropTypes.arrayOf(PropTypes.object).isRequired,
+  chartLoadErrors: PropTypes.object.isRequired,
   toolDisplayNames: PropTypes.object.isRequired,
+  teamId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  selectedContext: PropTypes.shape({ multiSelect: PropTypes.array }).isRequired,
+  onChartAction: PropTypes.func.isRequired,
   onSuggestionClick: PropTypes.func.isRequired,
   onChangeAction: PropTypes.func.isRequired,
   onConfirmAction: PropTypes.func.isRequired,

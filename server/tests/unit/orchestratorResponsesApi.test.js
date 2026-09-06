@@ -8,10 +8,11 @@ const {
   buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
   appendDashboardLinksToAssistantMessage,
-  appendTemporaryChartNextStep,
+  stripTemporaryChartSuggestions,
   attachContextManifest,
   collectRecentSourceContext,
   getChartPreviewsFromToolResults,
+  getWorkSummaryFromMessages,
   getConnectionInspectionToolChoice,
   getVisualizationToolChoice,
   sanitizeToolError,
@@ -134,8 +135,25 @@ describe("orchestrator Responses API adapters", () => {
     expect(message).toBe("I created Total sessions.");
   });
 
-  it("adds a dashboard next step after a temporary KPI preview", () => {
-    const message = appendTemporaryChartNextStep("The trial conversion KPI is ready.", [{
+  it("removes dashboard suggestions after a temporary KPI preview", () => {
+    const message = stripTemporaryChartSuggestions([
+      "The trial conversion KPI is ready.",
+      "Would you like to add this KPI to a dashboard?",
+      "```cb-actions",
+      JSON.stringify({
+        version: 1,
+        suggestions: [{
+          action: "reply",
+          id: "add_preview_to_dashboard",
+          label: "Add it to a dashboard",
+        }, {
+          action: "reply",
+          id: "keep_preview",
+          label: "Keep it as a preview",
+        }],
+      }),
+      "```",
+    ].join("\n\n"), [{
       name: "create_temporary_chart",
       content: JSON.stringify({
         chart_created: true,
@@ -145,14 +163,11 @@ describe("orchestrator Responses API adapters", () => {
       }),
     }]);
 
-    expect(message).toContain("Would you like to add this KPI to a dashboard?");
-    expect(message).toContain("```cb-actions");
-    expect(message).toContain("Add it to a dashboard");
-    expect(message).toContain("Keep it as a preview");
+    expect(message).toBe("The trial conversion KPI is ready.");
   });
 
   it("does not offer dashboard placement after the preview was moved", () => {
-    const message = appendTemporaryChartNextStep("I added the KPI to Watched Metrics Lab.", [{
+    const message = stripTemporaryChartSuggestions("I added the KPI to Watched Metrics Lab.", [{
       name: "create_temporary_chart",
       content: JSON.stringify({ chart_created: true, chart_id: 44, type: "kpi" }),
     }, {
@@ -163,8 +178,8 @@ describe("orchestrator Responses API adapters", () => {
     expect(message).toBe("I added the KPI to Watched Metrics Lab.");
   });
 
-  it("replaces unrelated quick replies after a temporary preview", () => {
-    const message = appendTemporaryChartNextStep([
+  it("removes quick replies after a temporary preview", () => {
+    const message = stripTemporaryChartSuggestions([
       "The KPI is ready.",
       "```cb-actions",
       JSON.stringify({
@@ -177,9 +192,7 @@ describe("orchestrator Responses API adapters", () => {
       content: JSON.stringify({ chart_created: true, chart_id: 44, type: "kpi" }),
     }]);
 
-    expect(message).not.toContain("Show recent changes");
-    expect(message).toContain("Add it to a dashboard");
-    expect(message).toContain("Keep it as a preview");
+    expect(message).toBe("The KPI is ready.");
   });
 
   it("requires a tool until an explicit visualization action finishes", () => {
@@ -206,6 +219,7 @@ describe("orchestrator Responses API adapters", () => {
         name: "Trial conversion",
         type: "kpi",
         visibility: "temporary",
+        datasets: [{ id: 99, name: "Trials", projectId: 12 }],
       }),
     }]);
 
@@ -213,11 +227,46 @@ describe("orchestrator Responses API adapters", () => {
       chartId: 44,
       chartName: "Trial conversion",
       chartType: "kpi",
+      dashboard: null,
+      datasets: [{ id: 99, name: "Trials", projectId: 12 }],
       projectId: 77,
       toolName: "create_temporary_chart",
       visibility: "temporary",
     }]);
     expect(JSON.stringify(previews)).not.toContain("dataset_id");
+  });
+
+  it("builds a safe work summary from tool calls and results", () => {
+    const summary = getWorkSummaryFromMessages([{
+      role: "assistant",
+      tool_calls: [{
+        id: "call_1",
+        function: { name: "get_schema", arguments: "{\"secret\":\"hidden\"}" },
+      }, {
+        id: "call_2",
+        function: { name: "create_temporary_chart", arguments: "{}" },
+      }],
+    }, {
+      role: "tool",
+      name: "get_schema",
+      tool_call_id: "call_1",
+      content: "{\"fields\":[\"email\"]}",
+    }, {
+      role: "tool",
+      name: "create_temporary_chart",
+      tool_call_id: "call_2",
+      content: "{\"error\":\"Could not create chart\"}",
+    }]);
+
+    expect(summary).toEqual([{
+      name: "get_schema",
+      status: "complete",
+    }, {
+      name: "create_temporary_chart",
+      status: "failed",
+    }]);
+    expect(JSON.stringify(summary)).not.toContain("secret");
+    expect(JSON.stringify(summary)).not.toContain("email");
   });
 
   it("builds a fallback dashboard creation message with a dashboard link", () => {

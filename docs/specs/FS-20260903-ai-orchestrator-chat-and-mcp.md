@@ -127,23 +127,33 @@ work:
 If the selected entity was deleted or the user lost access, remove it from active context and show:
 “This item is no longer available. Select another item.”
 
+Saved dataset selection must preserve scope. A dataset limited to a page path, region, plan, segment,
+or filter must not answer a broader request unless the user includes that scope.
+
 ### Chart result
 
 The chart result is one component with these parts:
 
-- Chart title, type, and Preview or Saved state.
+- Chart title, type, and Preview or Saved state. A saved chart title opens the chart in a new tab.
 - Chart preview.
-- **Uses** list with each dataset name and an **Open dataset** link in a new tab.
+- Dataset links with the dataset icon and an external-link icon.
 - Saved location, when present, with an **Open dashboard** link in a new tab.
-- **Open chart** link in a new tab for a saved chart.
-- Dashboard ComboBox and **Add to dashboard** action for a preview.
-- **Keep as preview** action for a preview.
+- Dashboard ComboBox that adds a preview to the selected dashboard.
+
+When a chart is updated during the conversation, the visible chart must reload immediately. When a
+preview is added to a dashboard, the component must change from Preview to Saved and keep the selected
+dashboard visible, both immediately and after the conversation is saved or reloaded. If the same chart
+appears more than once, all its result components must show the saved state.
+
+If a preview or saved chart no longer exists, the result must stop loading and show an Unavailable
+state. Remove chart and dashboard actions, but keep links to datasets that still exist.
 
 The dashboard ComboBox defaults to an exact dashboard from active context. It does not guess from an
 old message or a partial name. Hide placement actions when the user cannot edit the target dashboard.
+Do not repeat dashboard placement as reply text or quick-reply suggestions.
 
 The direct placement action must use the same server permission and chart validation path as a normal
-chart save. It also adds a user-visible action and result to the conversation history.
+chart save. It updates the existing preview state in place and does not add a user or agent message.
 
 ### Work summary
 
@@ -285,12 +295,12 @@ validated references.
 
 ### Direct chat actions
 
-The chart placement action uses the current Ask response endpoint with the
-`add_preview_to_dashboard` action and a small, validated payload. It does not pass through the model.
-It checks the current user, team, entity access, conversation ownership, and payload. The result is
-saved as normal conversation activity. OAuth uses the existing connection OAuth route with a signed
-conversation return reference. Continue uses a normal quick reply. Retries stay specific to the failed
-operation. Do not add a general action registry.
+The chart placement action uses a direct preview placement endpoint with the
+`add_preview_to_dashboard` action and a small, validated payload. It does not pass through the model
+or create a new chat turn. It checks the current user, team, entity access, conversation ownership,
+and payload, then updates the existing preview record. OAuth uses the existing connection OAuth route
+with a signed conversation return reference. Continue uses a normal quick reply. Retries stay
+specific to the failed operation. Do not add a general action registry.
 
 ## Connection Resolution
 
@@ -475,10 +485,10 @@ or work-step tables.
 
 ### Phase 3: chart result and work summary
 
-- Add dataset links and dashboard placement to chart results.
-- Add direct action validation and saved activity.
-- Keep the safe work summary after completion and reload.
-- Add loading accessibility.
+- [x] Add dataset links and dashboard placement to chart results.
+- [x] Add direct action validation and update the preview state in place.
+- [x] Keep the safe work summary after completion and reload.
+- [x] Add loading accessibility.
 
 ### Phase 4: connection setup
 
@@ -533,6 +543,9 @@ Do not start the next phase until the current phase tests pass. Each phase can m
 - A chart preview shows every dataset and can open each permitted dataset.
 - The exact selected dashboard is the ComboBox default.
 - A permitted user can add a preview. A read-only user cannot.
+- An updated chart reloads in the active chat without a page refresh.
+- Placement changes Preview to Saved and preserves the dashboard selection after reload.
+- A deleted preview or saved chart shows Unavailable instead of a loading state.
 - Saved chart and dashboard links open the correct routes in a new tab.
 - Direct actions cannot cross team or project boundaries.
 - Live activity uses an accessible status region.

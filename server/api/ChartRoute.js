@@ -200,6 +200,9 @@ module.exports = (app) => {
       // check if the chart is part of the right project
       if (chartId && projectId) {
         const chart = await chartController.findById(req.params.chart_id);
+        if (!chart) {
+          return res.status(404).json({ message: "Chart not found" });
+        }
         if (chart.project_id.toString() !== projectId.toString()) {
           return res.status(403).json({ message: "Access denied" });
         }

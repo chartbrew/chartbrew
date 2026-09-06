@@ -56,6 +56,10 @@ function ObservationInvestigation({ observationId, teamId }) {
     return chat.confirmAction(action);
   };
 
+  const onChartAction = (action) => {
+    return chat.runChartAction(action);
+  };
+
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <AiChat
@@ -63,6 +67,7 @@ function ObservationInvestigation({ observationId, teamId }) {
         isLoading={chat.isLoading}
         messages={chat.messages}
         onChangeAction={onChangeAction}
+        onChartAction={onChartAction}
         onConfirmAction={onConfirmAction}
         onSave={chat.save}
         onSubmit={onSubmit}
@@ -81,6 +86,7 @@ function ObservationInvestigation({ observationId, teamId }) {
           "Which accessible dataset can explain this?",
         ]}
         toolDisplayNames={chat.toolDisplayNames}
+        teamId={teamId}
       />
       <AiAccessNotice
         availability={availability}

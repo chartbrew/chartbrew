@@ -3,6 +3,7 @@ const rateLimit = require("express-rate-limit");
 const db = require("../models/models");
 const {
   getOrchestration,
+  placeChartPreview,
   respond,
   promoteSession,
   getAvailableTools,
@@ -139,6 +140,25 @@ module.exports = (app) => {
         userId: req.user.id,
       });
       return res.json({ orchestration });
+    } catch (error) {
+      return sendAiError(res, error);
+    }
+  });
+
+  app.post("/ai/chart-previews/place", apiLimiter(20), verifyToken, checkAccess, async (req, res) => {
+    const {
+      action, aiConversationId, persistence, sessionId, teamId,
+    } = req.body;
+    try {
+      const chartPreview = await placeChartPreview({
+        action,
+        aiConversationId,
+        persistence,
+        sessionId,
+        teamId,
+        userId: req.user.id,
+      });
+      return res.json({ chartPreview });
     } catch (error) {
       return sendAiError(res, error);
     }

@@ -6,6 +6,7 @@ import {
   setChartPreviewFailed,
   setChartPreviewLoaded,
   setChartPreviewLoading,
+  setChartPreviewUnavailable,
   shouldLoadChartPreview,
 } from "./chartPreviewState.js";
 
@@ -28,4 +29,6 @@ test("keeps explicit loading, success, and retryable failure states", () => {
   assert.equal(loaded[key].chart.name, "Trials");
   const failed = setChartPreviewFailed(loaded, key);
   assert.deepEqual(failed[key], { chart: null, error: true });
+  const unavailable = setChartPreviewUnavailable(loaded, key);
+  assert.deepEqual(unavailable[key], { chart: null, error: false, unavailable: true });
 });

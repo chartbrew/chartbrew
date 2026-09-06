@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
-import { getAiTools, promoteAiSession, respondAi } from "../../../api/ai";
+import {
+  getAiTools, placeAiChartPreview, promoteAiSession, respondAi,
+} from "../../../api/ai";
 import socketClient from "../../../modules/socketClient";
 import { selectUser } from "../../../slices/user";
 import { isProgressForConversation, normalizeProgressEvent } from "../aiMessageUtils";
@@ -122,6 +124,7 @@ function useAiChat({
           content: orchestration.message,
           pendingAction: orchestration.pendingAction,
           role: "assistant",
+          workSummary: orchestration.workSummary || [],
         },
       ]);
       return orchestration;
@@ -196,6 +199,7 @@ function useAiChat({
           actionResult: orchestration.actionResult,
           content: orchestration.message,
           role: "assistant",
+          workSummary: orchestration.workSummary || [],
         },
       ]);
       return orchestration;
@@ -214,6 +218,23 @@ function useAiChat({
       }
     }
   }, [aiConversationId, ensureSessionId, isLoading, joinProgressRoom, persistence, teamId]);
+
+  const runChartAction = useCallback(async ({ action }) => {
+    const chartPreview = await placeAiChartPreview({
+      action,
+      aiConversationId,
+      persistence,
+      sessionId: sessionIdRef.current,
+      teamId,
+    });
+    setMessages((current) => current.map((message) => ({
+      ...message,
+      chartPreviews: message.chartPreviews?.map((preview) => (
+        `${preview.chartId}` === `${chartPreview.chartId}` ? chartPreview : preview
+      )),
+    })));
+    return chartPreview;
+  }, [aiConversationId, persistence, teamId]);
 
   const changeAction = useCallback((pendingAction) => {
     setMessages((current) => current.map((message) => {
@@ -254,6 +275,7 @@ function useAiChat({
     isLoading,
     messages,
     progressEvents,
+    runChartAction,
     save,
     sendMessage,
     sessionId,

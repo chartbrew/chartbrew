@@ -77,6 +77,12 @@ async function createTemporaryChartFromDataset(payload, normalizedTeamId) {
   return {
     ...chartResult,
     data_request_id: await getDatasetDataRequestId(dataset),
+    datasets: [{
+      id: dataset.id,
+      name: dataset.name || dataset.legend || "Dataset",
+      projectId: (dataset.project_ids || [])[0] || null,
+    }],
+    dashboard: null,
     ghost_project_id: ghostProject.id,
     is_temporary: true,
     project_id: ghostProject.id,
@@ -316,6 +322,12 @@ async function createTemporaryChart(payload) {
       chart_id: chart.id,
       dataset_id: dataset.id,
       data_request_id: dataRequestId,
+      datasets: [{
+        id: dataset.id,
+        name: dataset.name || dataset.legend || "Dataset",
+        projectId: null,
+      }],
+      dashboard: null,
       name: chart.name,
       type: chart.type,
       project_id: ghostProject.id,

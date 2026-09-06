@@ -101,7 +101,7 @@ describe("AI conversation context", () => {
       expect.objectContaining({
         entity_type: "project",
         id: project.id,
-        metadata: { chartCount: 1 },
+        metadata: { canEdit: true, chartCount: 1 },
         name: "Sales overview",
       }),
       expect.objectContaining({
@@ -200,6 +200,11 @@ describe("AI conversation context", () => {
       "Hidden dataset",
       "Private connection",
     ]));
+    expect(response.body.context.find((item) => (
+      item.entity_type === "project" && item.id === visibleProject.id
+    ))).toEqual(
+      expect.objectContaining({ metadata: expect.objectContaining({ canEdit: false }) })
+    );
   });
 
   it("replaces and clears the active context set", async () => {

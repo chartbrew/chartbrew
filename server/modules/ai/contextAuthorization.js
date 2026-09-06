@@ -4,6 +4,7 @@ const {
 } = require("sequelize");
 const {
   assertCanViewProject,
+  canEditProject,
   createHttpError,
   getProjectScope,
 } = require("../observations/access");
@@ -59,7 +60,7 @@ async function validateProject(access, projectId) {
     entityId: `${project.id}`,
     entityType: "project",
     label: `Dashboard: ${project.name}`,
-    metadata: {},
+    metadata: { canEdit: canEditProject(access, project.id) },
     name: project.name,
     projectId: project.id,
   };
@@ -295,7 +296,10 @@ async function searchProjects(access, query, limit) {
     entityType: "project",
     id: project.id,
     label: `Dashboard: ${project.name}`,
-    metadata: { chartCount: countByProject.get(project.id) || 0 },
+    metadata: {
+      canEdit: canEditProject(access, project.id),
+      chartCount: countByProject.get(project.id) || 0,
+    },
     name: project.name,
     projectId: project.id,
     updatedAt: project.updatedAt,

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   getChartToolMessageInfo,
+  groupAiMessages,
   isProgressForConversation,
   normalizeProgressEvent,
 } from "./aiMessageUtils.js";
@@ -37,7 +38,44 @@ test("restores a saved chart from persistent tool history", () => {
   });
   assert.equal(parsed.type, "chart_created");
   assert.equal(parsed.projectId, 78);
-  assert.equal(parsed.isTemporary, undefined);
+  assert.equal(parsed.isTemporary, false);
+});
+
+test("restores one saved chart after a preview is added to a dashboard", () => {
+  const groups = groupAiMessages([{
+    content: JSON.stringify({
+      chart_id: 44,
+      ghost_project_id: 77,
+      name: "Trial conversion",
+      visibility: "temporary",
+    }),
+    name: "create_temporary_chart",
+    role: "tool",
+  }, {
+    content: "",
+    role: "assistant",
+    tool_calls: [{
+      function: { arguments: "{}", name: "move_chart_to_dashboard" },
+      id: "move_44",
+    }],
+  }, {
+    content: JSON.stringify({
+      chart_id: 44,
+      chart_name: "Trial conversion",
+      new_project_id: 88,
+      visibility: "dashboard",
+    }),
+    name: "move_chart_to_dashboard",
+    role: "tool",
+    tool_call_id: "move_44",
+  }, {
+    content: "Added Trial conversion to Growth.",
+    role: "assistant",
+  }]);
+  const chartGroups = groups.filter((group) => group.type.startsWith("chart_"));
+  assert.equal(chartGroups.length, 1);
+  assert.equal(chartGroups[0].items[0].parsed.projectId, 88);
+  assert.equal(chartGroups[0].items[0].parsed.visibility, "dashboard");
 });
 
 test("normalizes socket progress events and scopes them to the active chat", () => {

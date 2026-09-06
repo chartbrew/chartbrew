@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 
-import { getAiConversation, getAiConversations, getAiTools, respondAi, deleteAiConversation, searchAiContext } from "../../api/ai";
+import { getAiConversation, getAiConversations, getAiTools, placeAiChartPreview, respondAi, deleteAiConversation, searchAiContext } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { getChart, selectCharts } from "../../slices/chart";
@@ -54,6 +54,7 @@ function AiModal({ isOpen, onClose }) {
   const [pendingActions, setPendingActions] = useState([]);
   const [toolDisplayNames, setToolDisplayNames] = useState({});
   const [createdCharts, setCreatedCharts] = useState([]);
+  const [chartLoadErrors, setChartLoadErrors] = useState({});
   const [selectedContext, setSelectedContext] = useState({
     multiSelect: [], // entities selected via "@" button (multiple allowed)
     singleSelect: null // entity selected via quick reply (only one at a time)
@@ -167,6 +168,12 @@ function AiModal({ isOpen, onClose }) {
       }));
 
       if (result?.payload) {
+        setChartLoadErrors((current) => {
+          if (!current[chartId]) return current;
+          const next = { ...current };
+          delete next[chartId];
+          return next;
+        });
         setCreatedCharts(prevCharts => {
           // Check if chart already exists
           const existingIndex = prevCharts.findIndex(c => c.id === result.payload.id);
@@ -182,6 +189,13 @@ function AiModal({ isOpen, onClose }) {
         });
         return result.payload;
       }
+      setChartLoadErrors((current) => ({
+        ...current,
+        [chartId]: result?.meta?.requestStatus === "fulfilled"
+          || result?.error?.message === "Chart not found"
+          ? "unavailable"
+          : "failed",
+      }));
     } catch (error) {
       console.error("Failed to fetch chart data:", error);
       toast.error("Failed to load chart data");
@@ -321,6 +335,9 @@ function AiModal({ isOpen, onClose }) {
         entity_type: "project",
         id: projectId,
         label: `Dashboard: ${project?.name || projectId}`,
+        metadata: {
+          canEdit: canAccess("projectEditor", user.id, team.TeamRoles),
+        },
         name: project?.name || `${projectId}`,
         project_id: projectId,
       });
@@ -586,6 +603,7 @@ function AiModal({ isOpen, onClose }) {
     setLocalMessages([]);
     setProgressEvents([]);
     setCreatedCharts([]);
+    setChartLoadErrors({});
     setPendingActions([]);
     fetchedChartsRef.current.clear();
     setSelectedContext({
@@ -629,6 +647,7 @@ function AiModal({ isOpen, onClose }) {
         setLocalMessages([]);
         setProgressEvents([]);
         setCreatedCharts([]);
+        setChartLoadErrors({});
         setPendingActions([]);
         setSelectedContext({ multiSelect: [], singleSelect: null });
         fetchedChartsRef.current.clear();
@@ -676,6 +695,21 @@ function AiModal({ isOpen, onClose }) {
       return item.actionId !== pendingAction.actionId;
     }));
     await _onAskAi("I want to change the proposed settings.");
+  };
+
+  const _onChartAction = async ({ action }) => {
+    if (!conversation?.id) return null;
+    const chartPreview = await placeAiChartPreview({
+      action,
+      aiConversationId: conversation.id,
+      persistence: "persistent",
+      teamId: team.id,
+    });
+    const updatedConversation = await getAiConversation(conversation.id, team.id);
+    if (updatedConversation?.conversation) {
+      applyLoadedConversation(updatedConversation.conversation);
+    }
+    return chartPreview;
   };
 
   const _onSuggestionClick = async (suggestion) => {
@@ -1003,6 +1037,7 @@ function AiModal({ isOpen, onClose }) {
                             setLocalMessages([]);
                             setProgressEvents([]);
                             setCreatedCharts([]);
+                            setChartLoadErrors({});
                             setPendingActions([]);
                             fetchedChartsRef.current.clear();
                             setSelectedContext({
@@ -1115,12 +1150,16 @@ function AiModal({ isOpen, onClose }) {
                                 group={group}
                                 groupIndex={index}
                                 createdCharts={createdCharts}
+                                chartLoadErrors={chartLoadErrors}
                                 completedActionIds={completedActionIds}
                                 toolDisplayNames={toolDisplayNames}
                                 onChangeAction={_onChangePendingAction}
+                                onChartAction={_onChartAction}
                                 onConfirmAction={_onConfirmPendingAction}
                                 onSuggestionClick={_onSuggestionClick}
                                 isLoading={isLoading}
+                                selectedContext={selectedContext}
+                                teamId={team.id}
                               />
                             ))}
                             {pendingActions.map((pendingAction) => (

@@ -21,14 +21,24 @@ function AiProgress({
   if (activities.length === 0) {
     if (!isLoading) return null;
     return (
-      <div className={className ? `min-w-0 ${className}` : "min-w-0"}>
+      <div
+        aria-atomic="true"
+        aria-live="polite"
+        className={className ? `min-w-0 ${className}` : "min-w-0"}
+        role="status"
+      >
         <AiLoadingActivity />
       </div>
     );
   }
 
   return (
-    <div className={className ? `min-w-0 ${className}` : "min-w-0"}>
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      className={className ? `min-w-0 ${className}` : "min-w-0"}
+      role="status"
+    >
       <ol className="flex min-w-0 flex-col">
         {activities.map((activity, index) => {
           const isCurrent = isLoading && index === activities.length - 1;

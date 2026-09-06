@@ -154,6 +154,36 @@ export async function respondAi({
   return response.json();
 }
 
+export async function placeAiChartPreview({
+  action,
+  aiConversationId,
+  persistence,
+  sessionId,
+  teamId,
+}) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_HOST}/ai/chart-previews/place`, {
+    headers: new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    }),
+    method: "POST",
+    body: JSON.stringify({
+      action,
+      aiConversationId,
+      persistence,
+      sessionId,
+      teamId,
+    }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "The chart could not be added to the dashboard");
+  }
+  return data.chartPreview;
+}
+
 export async function promoteAiSession(teamId, sessionId) {
   const token = getAuthToken();
   const response = await fetch(`${API_HOST}/ai/sessions/${sessionId}/promote`, {

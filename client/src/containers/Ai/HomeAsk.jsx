@@ -108,6 +108,10 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
     return chat.confirmAction(action);
   };
 
+  const onChartAction = (action) => {
+    return chat.runChartAction(action);
+  };
+
   const clearChat = () => {
     chat.clear();
     setSaved(false);
@@ -198,6 +202,7 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
         messages={chat.messages}
         onAtTyped={() => setIsContextPickerOpen(true)}
         onChangeAction={onChangeAction}
+        onChartAction={onChartAction}
         onConfirmAction={onConfirmAction}
         onSave={onSave}
         onSubmit={onSubmit}
@@ -218,6 +223,7 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
           "Check data freshness",
         ]}
         toolDisplayNames={chat.toolDisplayNames}
+        teamId={teamId}
       />
     </div>
   );

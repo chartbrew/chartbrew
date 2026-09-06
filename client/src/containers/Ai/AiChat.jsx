@@ -11,6 +11,7 @@ import AiComposer from "./AiComposer";
 import AiChartPreview from "./AiChartPreview";
 import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiProgress from "./AiProgress";
+import AiToolOperations from "./AiToolOperations";
 import { AiAnswer, AiUserPrompt } from "./AiTranscript";
 import { getCompletedActionIds, parseAiMessage } from "./aiMessageUtils";
 import useChatAutoScroll from "./hooks/useChatAutoScroll";
@@ -19,6 +20,7 @@ import {
   setChartPreviewFailed,
   setChartPreviewLoaded,
   setChartPreviewLoading,
+  setChartPreviewUnavailable,
   shouldLoadChartPreview,
 } from "./chartPreviewState";
 
@@ -33,6 +35,7 @@ function AiChat({
   messages,
   onSave,
   onChangeAction,
+  onChartAction,
   onConfirmAction,
   onSubmit,
   placeholder = "Ask a question about your data",
@@ -42,6 +45,7 @@ function AiChat({
   suggestions = [],
   status,
   toolDisplayNames = {},
+  teamId,
   leadingContent,
   leadingControl,
   onAtTyped,
@@ -50,6 +54,7 @@ function AiChat({
 }) {
   const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
+  const loadedPreviewCountRef = useRef(0);
   const [chartStates, setChartStates] = useState({});
   const completedActionIds = getCompletedActionIds(messages);
   const chartPreviews = useMemo(() => messages.flatMap((message) => (
@@ -72,19 +77,32 @@ function AiChat({
         chart_id: preview.chartId,
         project_id: preview.projectId,
       })).unwrap();
-      setChartStates((current) => setChartPreviewLoaded(current, key, chart));
-    } catch (_error) {
-      setChartStates((current) => setChartPreviewFailed(current, key));
+      setChartStates((current) => (
+        chart
+          ? setChartPreviewLoaded(current, key, chart)
+          : setChartPreviewUnavailable(current, key)
+      ));
+    } catch (error) {
+      setChartStates((current) => (
+        error.message === "Chart not found"
+          ? setChartPreviewUnavailable(current, key)
+          : setChartPreviewFailed(current, key)
+      ));
     }
   }, [dispatch]);
 
   useEffect(() => {
-    chartPreviews.forEach((preview) => loadChartPreview(preview));
+    const previousCount = loadedPreviewCountRef.current;
+    chartPreviews.forEach((preview, index) => {
+      loadChartPreview(preview, index >= previousCount);
+    });
+    loadedPreviewCountRef.current = chartPreviews.length;
   }, [chartPreviews, loadChartPreview]);
 
   useEffect(() => {
     if (messages.length > 0) return;
     fetchedChartsRef.current.clear();
+    loadedPreviewCountRef.current = 0;
     setChartStates({});
   }, [messages.length]);
 
@@ -143,6 +161,13 @@ function AiChat({
                     ) : null}
                     after={(
                       <>
+                        {message.workSummary?.length > 0 ? (
+                          <AiToolOperations
+                            groupIndex={index}
+                            operations={message.workSummary}
+                            toolDisplayNames={toolDisplayNames}
+                          />
+                        ) : null}
                         {message.chartPreviews?.length > 0 ? null : suggestionActions}
                         {parsed.type === "message_with_action" ? (
                           <AiActionPreviewCard
@@ -163,10 +188,13 @@ function AiChat({
                     return (
                       <AiChartPreview
                         chartData={chartState.chart}
+                        isUnavailable={chartState.unavailable}
                         key={`${preview.chartId}-${preview.projectId}`}
                         loadError={chartState.error}
+                        onChartAction={onChartAction}
                         onRetry={() => loadChartPreview(preview, true)}
                         parsed={{
+                          ...preview,
                           chartId: preview.chartId,
                           chartName: preview.chartName,
                           projectId: preview.projectId,
@@ -175,6 +203,8 @@ function AiChat({
                             : "chart_created",
                           visibility: preview.visibility,
                         }}
+                        selectedContext={selectedContext}
+                        teamId={teamId}
                       />
                     );
                   })}
@@ -227,9 +257,11 @@ AiChat.propTypes = {
     content: PropTypes.string,
     isError: PropTypes.bool,
     role: PropTypes.string,
+    workSummary: PropTypes.arrayOf(PropTypes.object),
   })).isRequired,
   onSave: PropTypes.func,
   onChangeAction: PropTypes.func.isRequired,
+  onChartAction: PropTypes.func,
   onConfirmAction: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
@@ -242,6 +274,7 @@ AiChat.propTypes = {
   suggestions: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.node,
   toolDisplayNames: PropTypes.object,
+  teamId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   leadingContent: PropTypes.node,
   leadingControl: PropTypes.node,
   onAtTyped: PropTypes.func,

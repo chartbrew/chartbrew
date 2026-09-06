@@ -44,24 +44,21 @@ async function moveChartToDashboard(payload) {
       throw new Error("Cannot move chart to this project");
     }
 
-    // Get existing charts in the target project for layout calculation
-    const existingCharts = await db.Chart.findAll({
-      where: { project_id: target_project_id },
-      attributes: ["layout"],
-    });
-
-    // Calculate new layout for the chart
-    const calculatedLayout = calculateChartLayout(existingCharts);
-    const finalLayout = ensureCompleteLayout(calculatedLayout);
-
-    // Update the chart's project_id and layout
-    await db.Chart.update(
-      {
-        project_id: target_project_id,
-        layout: finalLayout
-      },
-      { where: { id: chart_id } }
-    );
+    const isAlreadyPlaced = Number(chart.project_id) === Number(target_project_id);
+    if (!isAlreadyPlaced) {
+      const existingCharts = await db.Chart.findAll({
+        where: { project_id: target_project_id },
+        attributes: ["layout"],
+      });
+      const finalLayout = ensureCompleteLayout(calculateChartLayout(existingCharts));
+      await db.Chart.update(
+        {
+          project_id: target_project_id,
+          layout: finalLayout
+        },
+        { where: { id: chart_id } }
+      );
+    }
 
     // Update project_ids for all datasets used by this chart
     const chartDatasetConfigs = await db.ChartDatasetConfig.findAll({
@@ -72,33 +69,44 @@ async function moveChartToDashboard(payload) {
       }]
     });
 
-    for (const cdc of chartDatasetConfigs) {
-      if (cdc.Dataset) {
-        const currentProjectIds = cdc.Dataset.project_ids || [];
-
-        // Add target project if not already included
-        if (!currentProjectIds.includes(target_project_id)) {
-          cdc.Dataset.update({
-            project_ids: [...currentProjectIds, target_project_id]
-          });
-        }
+    await Promise.all(chartDatasetConfigs.map(async (cdc) => {
+      if (!cdc.Dataset) return;
+      const currentProjectIds = cdc.Dataset.project_ids || [];
+      if (!currentProjectIds.includes(target_project_id)) {
+        await cdc.Dataset.update({
+          project_ids: [...currentProjectIds, target_project_id]
+        });
       }
-    }
+    }));
 
     // Run the chart update in the background
-    try {
-      const ChartController = require("../../../controllers/ChartController"); // eslint-disable-line
-      const chartController = new ChartController();
-      chartController.updateChartData(chart_id, null, {}).catch(() => null);
-    } catch {
-      // Ignore background update errors
+    if (!isAlreadyPlaced) {
+      try {
+        const ChartController = require("../../../controllers/ChartController"); // eslint-disable-line
+        const chartController = new ChartController();
+        chartController.updateChartData(chart_id, null, {}).catch(() => null);
+      } catch {
+        // Ignore background update errors
+      }
     }
 
     return {
       chart_id,
+      chart_name: chart.name,
+      chart_type: chart.type,
       previous_project_id: chart.project_id,
       new_project_id: target_project_id,
+      project_id: target_project_id,
       visibility: "dashboard",
+      dashboard: {
+        id: targetProject.id,
+        name: targetProject.name,
+      },
+      datasets: chartDatasetConfigs.filter((config) => config.Dataset).map((config) => ({
+        id: config.Dataset.id,
+        name: config.Dataset.name || config.Dataset.legend || "Dataset",
+        projectId: targetProject.id,
+      })),
       dashboard_url: `${global.clientUrl}/dashboard/${target_project_id}`,
       chart_url: `${global.clientUrl}/dashboard/${target_project_id}/chart/${chart_id}/edit`,
     };

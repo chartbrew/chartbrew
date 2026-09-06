@@ -6,6 +6,7 @@ const {
   orchestrate,
   orchestrateWorkspaceSplit,
 } = require("../modules/ai/orchestrator/orchestrator");
+const moveChartToDashboard = require("../modules/ai/orchestrator/tools/moveChartToDashboard");
 const {
   runDeterministicWorkspaceRequest,
 } = require("../modules/ai/orchestrator/runtime/deterministicExecutor");
@@ -24,7 +25,10 @@ const {
   serializeAiContext,
   validateAiContext,
 } = require("../modules/ai/contextAuthorization");
-const { getObservationAccess } = require("../modules/observations/access");
+const {
+  canEditProject,
+  getObservationAccess,
+} = require("../modules/observations/access");
 const { getWorkspaceAccessEnvelope } = require("../modules/workspaceContext/accessEnvelope");
 const {
   CHARTBREW_AI_DISABLED_MESSAGE,
@@ -50,6 +54,12 @@ const NON_PERSISTENT_WORKSPACE_TOOLS = new Set([
   "preview_kpi_review",
   "preview_metric_monitor",
   "recommend_metric_monitors",
+]);
+const CHART_REFERENCE_TOOLS = new Set([
+  "create_temporary_chart",
+  "move_chart_to_dashboard",
+  "update_chart",
+  "update_dataset",
 ]);
 const MAX_SESSION_MESSAGES = 60;
 const MAX_SESSION_CHARACTERS = 100000;
@@ -93,6 +103,19 @@ function validateConfirmationAction(action) {
     throw createAiError("This confirmation is not valid", 400);
   }
   return action;
+}
+
+function validateChartPlacementAction(action) {
+  const chartId = Number(action?.chartId);
+  const targetProjectId = Number(action?.targetProjectId);
+  if (action?.type !== "add_preview_to_dashboard"
+    || !Number.isInteger(chartId)
+    || chartId < 1
+    || !Number.isInteger(targetProjectId)
+    || targetProjectId < 1) {
+    throw createAiError("Choose a valid chart preview and dashboard", 400);
+  }
+  return { chartId, targetProjectId };
 }
 
 function getSinglePendingActionId(actions = []) {
@@ -627,6 +650,128 @@ async function confirmEphemeralAction({ action, sessionId, teamId, userId }) {
   };
 }
 
+function hasChartReference(message, chartId, accessVersion = null) {
+  if (accessVersion
+    && message.sensitive_workspace_context
+    && message.workspace_access_version !== accessVersion) return false;
+  if (!CHART_REFERENCE_TOOLS.has(message.tool_name || message.name)) return false;
+  try {
+    return `${JSON.parse(message.content).chart_id}` === `${chartId}`;
+  } catch (_error) {
+    return false;
+  }
+}
+
+async function placeChartPreview({ action, aiConversationId, persistence, sessionId, teamId, userId }) {
+  const { chartId, targetProjectId } = validateChartPlacementAction(action);
+  const access = await getObservationAccess(teamId, userId);
+  const envelope = await getWorkspaceAccessEnvelope(access);
+  let conversation = null;
+  let session = null;
+  let history;
+  let resolvedSessionId;
+
+  if (persistence === "persistent") {
+    if (!aiConversationId || !ACTION_ID_PATTERN.test(aiConversationId)) {
+      throw createAiError("Open the conversation that created this preview", 400);
+    }
+    conversation = await db.AiConversation.findOne({
+      where: { id: aiConversationId, team_id: teamId },
+    });
+    assertConversationOwnership(conversation, userId);
+    history = await db.AiMessage.findAll({
+      order: [["sequence", "ASC"]],
+      where: { conversation_id: conversation.id },
+    });
+  } else if (persistence === "ephemeral") {
+    if (!sessionId) throw createAiError("This chat has expired", 404);
+    resolvedSessionId = validateSessionId(sessionId);
+    session = await runtimeCache.getAiSession({
+      sessionId: resolvedSessionId,
+      teamId,
+      userId,
+    });
+    if (!session) throw createAiError("This chat has expired", 404);
+    if (session.accessVersion !== envelope.accessVersion) {
+      throw createAiError("Your workspace access changed. Start a new chat.", 409);
+    }
+    history = session.history || [];
+  } else {
+    throw createAiError("Choose a valid conversation mode", 400);
+  }
+
+  const previewIndexes = history.map((item, index) => (
+    hasChartReference(item, chartId, envelope.accessVersion) ? index : -1
+  )).filter((index) => index !== -1);
+  if (previewIndexes.length === 0) {
+    throw createAiError("This chart preview is not part of this conversation", 409);
+  }
+
+  const chart = await db.Chart.findOne({
+    attributes: ["id", "name", "project_id", "type"],
+    include: [{
+      model: db.Project,
+      attributes: ["ghost", "id", "name", "team_id"],
+      required: true,
+    }],
+    where: { id: chartId },
+  });
+  if (!chart || Number(chart.Project.team_id) !== Number(teamId)) {
+    throw createAiError("This chart preview is no longer available", 409);
+  }
+  const targetProject = await db.Project.findOne({
+    attributes: ["ghost", "id", "name", "team_id"],
+    where: { id: targetProjectId, team_id: teamId },
+  });
+  if (!targetProject || targetProject.ghost) {
+    throw createAiError("Choose an available dashboard", 404);
+  }
+  if (!canEditProject(access, targetProject.id)) {
+    throw createAiError("You do not have permission to add charts to this dashboard", 403);
+  }
+  if (!chart.Project.ghost && Number(chart.project_id) !== Number(targetProject.id)) {
+    throw createAiError(`This chart is already saved to ${chart.Project.name}`, 409);
+  }
+
+  const result = await moveChartToDashboard({
+    chart_id: chart.id,
+    target_project_id: targetProject.id,
+    team_id: teamId,
+  });
+  const resultContent = JSON.stringify(result);
+
+  if (conversation) {
+    await Promise.all(previewIndexes.map((index) => history[index].update({
+      content: resultContent,
+      tool_result_preview: resultContent.substring(0, 500),
+    })));
+  } else {
+    const updatedHistory = history.map((item, index) => (
+      previewIndexes.includes(index) ? { ...item, content: resultContent } : item
+    ));
+    await runtimeCache.setAiSession({
+      payload: {
+        ...session,
+        history: updatedHistory,
+      },
+      sessionId: resolvedSessionId,
+      teamId,
+      userId,
+    });
+  }
+
+  return {
+    chartId: result.chart_id,
+    chartName: result.chart_name,
+    chartType: result.chart_type,
+    dashboard: result.dashboard,
+    datasets: result.datasets || [],
+    projectId: result.new_project_id,
+    toolName: "move_chart_to_dashboard",
+    visibility: "dashboard",
+  };
+}
+
 async function confirmTypedPersistentAction({ aiConversationId, teamId, userId }) {
   if (!aiConversationId || !ACTION_ID_PATTERN.test(aiConversationId)) {
     throw createAiError("Open the conversation that prepared this change", 400);
@@ -1148,6 +1293,7 @@ async function getAiUsage(teamId, startDate, endDate) {
 module.exports = {
   applyDirectMetricInstruction,
   getOrchestration,
+  placeChartPreview,
   respond,
   promoteSession,
   getAvailableTools,

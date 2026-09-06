@@ -573,6 +573,28 @@ describe("dataset intelligence search", () => {
     expect(result.reasons).toContain("existing_chart");
     expect(result.reasons).toContain("field");
   });
+
+  it("does not use a path-scoped dataset for a site-wide request", () => {
+    const dataset = { ...buildDataset(), name: "Top Countries Visiting /tools" };
+    const profile = buildDatasetProfile({
+      dataset,
+      sampleData: sampleRows,
+      policy,
+    }).profile;
+
+    expect(scoreDataset(dataset, profile, "top countries visiting my site"))
+      .toEqual({ score: 0, reasons: ["scope_mismatch"] });
+    const scopedResult = scoreDataset(dataset, profile, "top countries visiting /tools");
+    expect(scopedResult.score).toBeGreaterThan(0);
+  });
+
+  it("matches nested paths with hyphens and does not treat ratios as paths", () => {
+    expect(scoreDataset({ name: "Visitors to /tools/plan-builder" }, null,
+      "visitors to /tools/plan-builder").score).toBeGreaterThan(0);
+    expect(scoreDataset({ name: "Visitors to /tools/plan-builder" }, null,
+      "visitors to /tools").reasons).toContain("scope_mismatch");
+    expect(scoreDataset({ name: "Revenue/Cost" }, null, "revenue").score).toBeGreaterThan(0);
+  });
 });
 
 describe("dataset intelligence backfill", () => {

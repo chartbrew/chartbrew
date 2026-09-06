@@ -261,6 +261,7 @@ const CHART_PREVIEW_TOOLS = new Set([
   "create_chart",
   "create_dashboard_chart",
   "create_temporary_chart",
+  "move_chart_to_dashboard",
   "update_chart",
   "update_dataset",
 ]);
@@ -1443,6 +1444,7 @@ ${ENTITY_CREATION_RULES}
 - **KPI means a visualization**: A request to create, build, display, or convert something to a KPI means a KPI chart. It does not mean a KPI review or a watched metric unless the user explicitly asks for those features.
 - **Complete explicit visualization requests**: Never answer a chart or KPI creation request with choices, a workspace report, or a promise to create it later. Use the tools and show the result in the current turn.
 - **Reuse saved datasets**: When the user asks to use the same or an existing dataset, call search_datasets, inspect or run the best match as needed, then call create_temporary_chart with dataset_id. Do not create a duplicate dataset.
+- **Match dataset scope exactly**: Treat page paths, regions, plans, segments, and filters in a dataset name or summary as required scope. Never use a narrowly scoped dataset for a broader request. For example, a dataset for /tools/ visitors cannot answer a site-wide visitors question unless the user asks for /tools/.
 - **Preview when uncertain**: If one saved dataset is the strongest semantic match, use it for a temporary preview. A preview is reversible. Ask a question only when no dataset can safely satisfy the request.
 - **Remember**: Temporary charts give users control. They can see the visualization immediately and decide where to save it. It's better to show a preview than to pollute their dashboards with unwanted charts.
 - **Only ask questions when**: Context is truly ambiguous, multiple valid options exist with no clear preference, or you need clarification on user intent.
@@ -1522,7 +1524,7 @@ ${ENTITY_CREATION_RULES}
    **Temporary chart workflow:**
    - Create the temporary preview chart automatically
    - Show the chart to the user
-   - After showing the chart, offer to add it to a dashboard: "Would you like to add this chart to a dashboard?"
+   - Do not ask whether to add the preview to a dashboard and do not add placement suggestions to the reply. The chart result provides the dashboard control.
    - If user says yes and specifies a dashboard, use move_chart_to_dashboard
    - The layout will be automatically recalculated when moving
    
@@ -1976,47 +1978,17 @@ function appendDashboardLinksToAssistantMessage(content = "", toolResults = []) 
   return [content, links].filter(Boolean).join("\n\n");
 }
 
-function appendTemporaryChartNextStep(content = "", toolResults = []) {
-  const results = toolResults.map((result) => ({
-    name: result.name,
-    value: parseToolResultContent(result.content),
-  }));
-  const movedChartIds = new Set(results
-    .filter((result) => result.name === "move_chart_to_dashboard")
-    .map((result) => `${result.value?.chart_id || ""}`));
-  const preview = results.findLast((result) => (
+function stripTemporaryChartSuggestions(content = "", toolResults = []) {
+  const hasPreview = toolResults.some((result) => (
     result.name === "create_temporary_chart"
-    && result.value?.chart_created
-    && !movedChartIds.has(`${result.value.chart_id}`)
+    && parseToolResultContent(result.content)?.chart_created
   ));
-  if (!preview) return content;
+  if (!hasPreview) return content;
 
-  const noun = preview.value.type === "kpi" ? "KPI" : "chart";
-  let result = `${content || ""}`
+  return `${content || ""}`
+    .replace(/Would you like (?:me )?to add this (?:chart|KPI) to a dashboard\?\s*/gi, "")
     .replace(/```cb-actions[\s\S]*?```/g, "")
     .trim();
-  if (!/\b(add|save|place|move)\b.{0,80}\bdashboard\b|\bwhich dashboard\b/i.test(result)) {
-    result = [result, `Would you like to add this ${noun} to a dashboard?`]
-      .filter(Boolean)
-      .join("\n\n");
-  }
-  return [
-    result,
-    "```cb-actions",
-    JSON.stringify({
-      version: 1,
-      suggestions: [{
-        action: "reply",
-        id: "add_preview_to_dashboard",
-        label: "Add it to a dashboard",
-      }, {
-        action: "reply",
-        id: "keep_preview",
-        label: "Keep it as a preview",
-      }],
-    }, null, 2),
-    "```",
-  ].join("\n");
 }
 
 function getVisualizationToolChoice({ blocked, complete, required }) {
@@ -2056,20 +2028,44 @@ function getChartPreviewsFromToolResults(toolResults = []) {
     if (!CHART_PREVIEW_TOOLS.has(result.name)) return;
     const value = parseToolResultContent(result.content);
     if (!value?.chart_id || value.error) return;
-    const isTemporary = value.visibility === "temporary"
-      || result.name === "create_temporary_chart"
-      || value.is_temporary
-      || value.ghost_project_id;
+    const isTemporary = value.visibility
+      ? value.visibility === "temporary"
+      : result.name === "create_temporary_chart" || value.is_temporary || value.ghost_project_id;
     previewsByChartId.set(`${value.chart_id}`, {
       chartId: value.chart_id,
       chartName: value.chart_name || value.name || "Generated chart",
-      chartType: value.type || null,
-      projectId: value.project_id || value.ghost_project_id,
+      chartType: value.chart_type || value.type || null,
+      dashboard: value.dashboard || null,
+      datasets: Array.isArray(value.datasets) ? value.datasets.map((dataset) => ({
+        id: dataset.id,
+        name: dataset.name,
+        projectId: dataset.projectId || null,
+      })) : [],
+      projectId: value.new_project_id || value.project_id || value.ghost_project_id,
       toolName: result.name,
       visibility: isTemporary ? "temporary" : "dashboard",
     });
   });
   return [...previewsByChartId.values()];
+}
+
+function getWorkSummaryFromMessages(messages = []) {
+  const results = new Map(messages.filter((message) => message.role === "tool").map((message) => {
+    const content = parseToolResultContent(message.content);
+    return [message.tool_call_id, content?.error ? "failed" : "complete"];
+  }));
+  const activities = new Map();
+  messages.filter((message) => message.role === "assistant").forEach((message) => {
+    (message.tool_calls || []).forEach((toolCall) => {
+      const name = toolCall.function?.name;
+      if (!name) return;
+      activities.set(name, {
+        name,
+        status: results.get(toolCall.id) || "failed",
+      });
+    });
+  });
+  return [...activities.values()];
 }
 
 function getPendingActionFromToolResults(toolResults = []) {
@@ -2719,7 +2715,7 @@ async function orchestrate(
     assistantMessage.content,
     allToolResults
   );
-  assistantMessage.content = appendTemporaryChartNextStep(
+  assistantMessage.content = stripTemporaryChartSuggestions(
     assistantMessage.content,
     allToolResults
   );
@@ -2761,6 +2757,7 @@ async function orchestrate(
     iterations,
     pendingAction: getPendingActionFromToolResults(allToolResults),
     snapshots, // Chart snapshots from tool results
+    workSummary: getWorkSummaryFromMessages(persistedMessages),
   };
 }
 
@@ -2791,12 +2788,13 @@ module.exports = {
   buildDisambiguationAssistantMessage,
   buildFallbackAssistantMessage,
   appendDashboardLinksToAssistantMessage,
-  appendTemporaryChartNextStep,
+  stripTemporaryChartSuggestions,
   attachContextManifest,
   filterToolDefinitionsForUser,
   getConnectionInspectionToolChoice,
   getVisualizationToolChoice,
   getChartPreviewsFromToolResults,
+  getWorkSummaryFromMessages,
   sanitizeToolError,
   buildUsageRecordFromResponse,
 };
