@@ -13,7 +13,10 @@ import { getChart, selectCharts } from "../../slices/chart";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
-import { clearAiModalConversationId, selectAiModalConversationId } from "../../slices/ui";
+import {
+  clearAiModalConversationId, selectAiModalConversationId, selectActiveAiConversation,
+  setActiveAiConversation, updateActiveAiConversation, dismissAiConversation,
+} from "../../slices/ui";
 import socketClient from "../../modules/socketClient";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import canAccess from "../../config/canAccess";
@@ -71,6 +74,8 @@ function AiModal({ isOpen, onClose }) {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const pendingConversationId = useSelector(selectAiModalConversationId);
+  const activeConversation = useSelector(selectActiveAiConversation);
+  const activeKeyRef = useRef(crypto.randomUUID());
   const inputRef = useRef(null);
   const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
@@ -152,11 +157,22 @@ function AiModal({ isOpen, onClose }) {
 
   const applyLoadedConversation = (nextConversation, overrides = {}) => {
     setConversation({ ...nextConversation, ...overrides });
+    dispatch(updateActiveAiConversation({
+      key: activeKeyRef.current, id: nextConversation.id, title: nextConversation.title,
+    }));
     setSelectedContext({
       multiSelect: nextConversation.context || [],
       singleSelect: null,
     });
     if (nextConversation.contextNotice) toast(nextConversation.contextNotice);
+  };
+
+  const beginActiveConversation = (title, id = conversation?.id) => {
+    activeKeyRef.current = crypto.randomUUID();
+    dispatch(setActiveAiConversation({
+      key: activeKeyRef.current, id, userId: user.id, teamId: team.id,
+      title: title || "Continue conversation", busy: true,
+    }));
   };
 
   // Function to fetch chart data when a chart is created
@@ -266,9 +282,11 @@ function AiModal({ isOpen, onClose }) {
 
     // Set up conversation-created listener
     const handleConversationCreated = (data) => {
+      if (data?.sessionId !== activeKeyRef.current || String(data?.teamId) !== String(team.id)) return;
       if (data?.conversationId) {
         socketClient.joinConversation(data.conversationId);
         setConversation(prev => prev ? { ...prev, id: data.conversationId, isTemporary: false } : null);
+        dispatch(updateActiveAiConversation({ key: activeKeyRef.current, id: data.conversationId }));
       }
     };
 
@@ -473,6 +491,8 @@ function AiModal({ isOpen, onClose }) {
       role: "user",
       content: currentQuestion || selectedContext.multiSelect.map((entity) => entity.label).join("\n")
     };
+    beginActiveConversation(conversation?.title || userMessage.content.slice(0, 100));
+    const activeKey = activeKeyRef.current;
 
     setSelectedContext((current) => ({
       ...current,
@@ -505,6 +525,7 @@ function AiModal({ isOpen, onClose }) {
           context,
           message: currentQuestion,
           persistence: "persistent",
+          sessionId: activeKey,
           teamId: team.id,
         });
 
@@ -594,10 +615,15 @@ function AiModal({ isOpen, onClose }) {
       setProgressEvents([]);
     }
 
+    dispatch(updateActiveAiConversation({ key: activeKey, busy: false }));
     setIsLoading(false);
   };
 
   const _onSelectConversation = async (conversationId) => {
+    if (isLoading) return;
+    beginActiveConversation("Continue conversation", conversationId);
+    const activeKey = activeKeyRef.current;
+    setConversation(null);
     // Reset state for clean viewing
     routeContextSeedRef.current = routeContextKey;
     setLocalMessages([]);
@@ -615,29 +641,33 @@ function AiModal({ isOpen, onClose }) {
     
     try {
       const response = await getAiConversation(conversationId, team.id);
+      if (activeKey !== activeKeyRef.current) return;
       if (response?.conversation) {
         applyLoadedConversation(response.conversation);
       } else {
         toast.error("Failed to fetch conversation");
       }
     } catch (error) {
+      if ([403, 404].includes(error.status)) dispatch(dismissAiConversation(activeKey));
       toast.error(error.message);
     } finally {
-      setIsLoading(false);
+      dispatch(updateActiveAiConversation({ key: activeKey, busy: false }));
+      if (activeKey === activeKeyRef.current) setIsLoading(false);
     }
   };
 
   // Open a specific conversation when requested from outside the modal
   useEffect(() => {
-    if (!isOpen || !aiEnabled || !team?.id || !pendingConversationId) return;
+    if (!isOpen || !aiEnabled || isLoading || !team?.id || !pendingConversationId) return;
     const conversationId = pendingConversationId;
     dispatch(clearAiModalConversationId());
     _onSelectConversation(conversationId);
-  }, [aiEnabled, isOpen, team?.id, pendingConversationId]);
+  }, [aiEnabled, isOpen, isLoading, team?.id, pendingConversationId]);
 
   const _onDeleteConversation = async (conversationId) => {
     try {
       await deleteAiConversation(conversationId, team.id);
+      if (activeConversation?.id === conversationId) dispatch(dismissAiConversation(activeConversation.key));
       toast.success("Conversation deleted");
 
       // If we deleted the current conversation, go back to welcome screen
@@ -665,6 +695,8 @@ function AiModal({ isOpen, onClose }) {
     if (isLoading || !conversation?.id || !pendingAction?.actionId) return;
     setIsLoading(true);
     setProgressEvents([]);
+    beginActiveConversation(conversation.title);
+    const activeKey = activeKeyRef.current;
     try {
       await respondAi({
         action: {
@@ -686,6 +718,7 @@ function AiModal({ isOpen, onClose }) {
     } catch (error) {
       toast.error(error.message);
     } finally {
+      dispatch(updateActiveAiConversation({ key: activeKey, busy: false }));
       setIsLoading(false);
     }
   };
@@ -741,6 +774,7 @@ function AiModal({ isOpen, onClose }) {
         params: suggestion.params || {},
         label: suggestion.label
       })}`;
+      beginActiveConversation(conversation?.title || suggestion.label);
 
       // Add user message to local messages
       const userMessage = {
@@ -770,6 +804,7 @@ function AiModal({ isOpen, onClose }) {
         context: selectedContext.multiSelect,
         message: syntheticQuestion,
         persistence: "persistent",
+        sessionId: activeKeyRef.current,
         teamId: team.id,
       });
 
@@ -827,6 +862,7 @@ function AiModal({ isOpen, onClose }) {
       setProgressEvents([]);
     }
 
+    dispatch(updateActiveAiConversation({ key: activeKeyRef.current, busy: false }));
     setIsLoading(false);
   };
 
@@ -1032,6 +1068,7 @@ function AiModal({ isOpen, onClose }) {
                         <Button
                           variant="primary"
                           onPress={() => {
+                            dispatch(dismissAiConversation(activeKeyRef.current));
                             routeContextSeedRef.current = "";
                             setConversation(null);
                             setLocalMessages([]);
@@ -1047,6 +1084,7 @@ function AiModal({ isOpen, onClose }) {
                             setContextSearch("");
                           }}
                           fullWidth
+                          isDisabled={isLoading}
                         >
                           <LuPlus size={18} />
                           New conversation

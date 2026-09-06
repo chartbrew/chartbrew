@@ -168,7 +168,13 @@ async function createTemporaryChart(payload) {
         chartType, xAxis, yAxis, spec
       }),
       yAxis: yAxis ?? spec.yAxis,
+      yAxisOperation: yAxisOperation ?? spec.yAxisOperation,
       dateField: dateField ?? spec.dateField,
+      transform,
+      encoding: encoding || spec.encoding,
+      visualization: visualization || spec.visualization,
+      chartSpec: spec,
+      formula: formula ?? spec.formula,
     });
     const resolvedXAxis = alignedBindings.xAxis;
     yAxis = alignedBindings.yAxis ?? yAxis;

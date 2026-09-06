@@ -13,7 +13,7 @@ import {
   selectUser,
 } from "../slices/user";
 import { getTeams, saveActiveTeam, selectTeam, selectTeams } from "../slices/team";
-import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal, toggleAiModal } from "../slices/ui";
+import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal, toggleAiModal, setActiveAiConversation } from "../slices/ui";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { useTheme } from "../modules/ThemeContext";
 import { IconContext } from "react-icons";
@@ -52,6 +52,7 @@ const Onboarding = lazy(() => import("./Onboarding/Onboarding"));
 import FeedbackForm from "../components/FeedbackForm";
 import canAccess from "../config/canAccess";
 import AiModal from "./Ai/AiModal";
+import ActiveConversationBar from "./Ai/ActiveConversationBar";
 import Auth from "./Integrations/Auth/Auth";
 import SlackCallback from "./Integrations/Auth/SlackCallback";
 import Integration from "./Integrations/Integration/Integration";
@@ -195,6 +196,13 @@ function Main(props) {
       dispatch(saveActiveTeam(returnTeam));
     }
     dispatch(hideAiModal());
+    dispatch(setActiveAiConversation({
+      id: conversationId, key: conversationId, userId: user.id,
+      teamId: returnTeam.id, title: "Continue conversation",
+    }));
+    query.delete("aiConversationId");
+    query.delete("aiTeamId");
+    navigate({ pathname: location.pathname, search: query.toString() }, { replace: true });
   }, [dispatch, location.pathname, location.search, team?.id, teams, user?.id]);
 
   return (
@@ -346,8 +354,9 @@ function Main(props) {
       </Modal.Backdrop>
 
       {team?.id && (
-        <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
+        <AiModal key={`${user?.id}:${team.id}`} isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
       )}
+      <ActiveConversationBar />
 
       <Toaster
         position="top-center"

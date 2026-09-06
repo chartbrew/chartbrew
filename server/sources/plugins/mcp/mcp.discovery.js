@@ -320,10 +320,25 @@ async function discoverMcpConnection(connection, options = {}) {
     const listResult = await client.listTools(undefined, { cacheMode: "refresh" });
     const rawTools = Array.isArray(listResult?.tools) ? listResult.tools : [];
     const requestedApprovals = options.allowedTools || connection?.schema?.mcp?.allowedTools || {};
-    const tools = selectTools(rawTools, {
+    const selectedTools = selectTools(rawTools, {
       question: connection.options?.mcp?.toolQuery,
       allowedTools: requestedApprovals,
-    }).map(sanitizeTool).sort((a, b) => a.name.localeCompare(b.name));
+    });
+    const tools = [];
+    selectedTools.forEach((tool) => {
+      try {
+        tools.push(sanitizeTool(tool));
+      } catch (error) {
+        // Reject this tool, not the other tools in the connection. Execution still validates each tool.
+        if (!["MCP_SCHEMA_TOO_LARGE", "MCP_SCHEMA_TOO_DEEP", "MCP_EXTERNAL_SCHEMA_REFERENCE", "MCP_INVALID_TOOL"].includes(error.code)) {
+          throw error;
+        }
+      }
+    });
+    if (selectedTools.length && !tools.length) {
+      throw createMcpError("MCP_NO_USABLE_TOOLS", "Chartbrew cannot use the tools returned by this server. Choose different tools on the server and load them again.");
+    }
+    tools.sort((a, b) => a.name.localeCompare(b.name));
     const resources = await listContextResources(client);
     const protocolEra = client.getProtocolEra() || "legacy";
     const serverInfo = client.getServerVersion() || {};
@@ -344,7 +359,8 @@ async function discoverMcpConnection(connection, options = {}) {
       instructions: trimText(client.getInstructions(), 4000),
       resources,
       tools,
-      omittedToolCount: rawTools.length - tools.length,
+      omittedToolCount: rawTools.length - selectedTools.length,
+      unsupportedToolCount: selectedTools.length - tools.length,
       catalogCache: getCatalogCache(listResult, protocolEra),
       discoveredAt: new Date().toISOString(),
     };

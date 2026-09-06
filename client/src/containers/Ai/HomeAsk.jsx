@@ -23,7 +23,6 @@ const EMPTY_CONTEXT = {
 function HomeAsk({ focused, onFocusChange, teamId }) {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
-  const [saved, setSaved] = useState(false);
   const [showAccessNotice, setShowAccessNotice] = useState(false);
   const [selectedContext, setSelectedContext] = useState(EMPTY_CONTEXT);
   const [contextSearch, setContextSearch] = useState("");
@@ -74,11 +73,6 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
     };
   }, [contextSearch, isContextPickerOpen, teamId]);
 
-  const onSave = async () => {
-    const result = await chat.save();
-    setSaved(Boolean(result));
-  };
-
   const onSubmit = (message) => {
     if (!canSubmitAiMessage(availability)) {
       setShowAccessNotice(true);
@@ -114,7 +108,6 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
 
   const clearChat = () => {
     chat.clear();
-    setSaved(false);
     setSelectedContext(EMPTY_CONTEXT);
     setContextSearch("");
     setIsContextPickerOpen(false);
@@ -157,7 +150,7 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
         <div className="flex shrink-0 flex-row justify-end">
           <Button onPress={clearChat} size="sm" variant="tertiary">
             <LuChevronUp aria-hidden />
-            Close answer
+            Minimize chat
           </Button>
         </div>
       ) : null}
@@ -170,9 +163,6 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
         isRequested={showAccessNotice}
         onRetry={reloadAvailability}
       />
-      {saved ? (
-        <p className="text-sm text-success">Conversation saved.</p>
-      ) : null}
       <AiChat
         fill={focused || !conversationStarted}
         framed
@@ -206,12 +196,10 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
         onChangeAction={onChangeAction}
         onChartAction={onChartAction}
         onConfirmAction={onConfirmAction}
-        onSave={onSave}
         onSubmit={onSubmit}
         placeholder={questionPlaceholder}
         progressEvents={chat.progressEvents}
         selectedContext={selectedContext}
-        showSave={Boolean(chat.sessionId)}
         status={(
           <AiAvailabilityStatus
             availability={availability}

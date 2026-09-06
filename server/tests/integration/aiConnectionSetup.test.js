@@ -118,6 +118,37 @@ describe("connection cards", () => {
     await expect(update("missing_tool", true)).rejects.toMatchObject({ code: "MCP_TOOL_NOT_FOUND" });
   });
 
+  it("saves bulk approvals together and rejects invalid or destructive tools without partial changes", async () => {
+    const { team, user } = await seed();
+    const tools = Array.from({ length: 23 }, (_, id) => sanitizeTool({
+      name: `read_${id}`, inputSchema: { type: "object" }, annotations: { readOnlyHint: true },
+    }));
+    tools.push(sanitizeTool({ name: "delete_data", annotations: { destructiveHint: true } }));
+    const connection = await models.Connection.create({
+      name: "Bulk approval test", team_id: team.id, type: "mcp", subType: "mcp",
+      host: "https://fixture.example/mcp", schema: { mcp: { tools, allowedTools: {} } },
+    });
+    const update = (toolNames, isEditor = true) => getSourceById("mcp").backend.actions.updateToolApproval({
+      connection, user: { id: user.id, isEditor }, params: { toolNames, enabled: true },
+    });
+    await expect(update(["read_0"], false)).rejects.toMatchObject({ code: "MCP_ADMIN_REQUIRED" });
+    for (const names of [[], [1], [""], "read_0", Array(251).fill("read_0")]) {
+      await expect(update(names)).rejects.toMatchObject({ code: "MCP_INVALID_APPROVAL" });
+    }
+    await expect(update(["read_0", "delete_data"])).rejects.toMatchObject({ code: "MCP_TOOL_NOT_AVAILABLE" });
+    await expect(update(["read_0", "missing"])).rejects.toMatchObject({ code: "MCP_TOOL_NOT_FOUND" });
+    await connection.reload();
+    expect(connection.schema.mcp.allowedTools).toEqual({});
+    const result = await update(tools.slice(0, 23).map((tool) => tool.name));
+    await connection.reload();
+    expect(connection.schema.mcp.allowedTools).toEqual(result.allowedTools);
+    expect(Object.keys(result.allowedTools)).toHaveLength(23);
+    tools.slice(0, 23).forEach((tool) => expect(result.allowedTools[tool.name]).toMatchObject({
+      ask: true, datasets: true, approvedBy: user.id, contractFingerprint: tool.contractFingerprint,
+    }));
+    expect(result.allowedTools.delete_data).toBeUndefined();
+  });
+
   it("rolls back the connection if its conversation reference cannot be saved", async () => {
     const { token, payload, team } = await seed();
     const app = await createTestApp();

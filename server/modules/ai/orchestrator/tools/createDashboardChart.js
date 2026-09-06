@@ -3,6 +3,7 @@ const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
 const {
+  alignSourceChartBindings,
   removeCompiledMetricAccumulation,
   repairSourceDatasetIntentAsync,
 } = require("./sourceIntentRepair");
@@ -102,9 +103,26 @@ async function createDashboardChart(payload) {
     subType = chartSanitization.subType;
     spec = chartSanitization.spec;
     const chartType = type || spec.type || "line";
-    const resolvedXAxis = resolveXAxis({
+    let resolvedXAxis = resolveXAxis({
       chartType, xAxis, yAxis, spec
     });
+    const aligned = await alignSourceChartBindings(source, {
+      connection,
+      configuration,
+      type: chartType,
+      xAxis: resolvedXAxis,
+      yAxis: yAxis ?? spec.yAxis,
+      yAxisOperation: yAxisOperation ?? spec.yAxisOperation,
+      dateField: dateField ?? spec.dateField,
+      transform,
+      encoding: encoding || spec.encoding,
+      visualization: visualization || spec.visualization,
+      chartSpec: spec,
+      formula: formula ?? spec.formula,
+    });
+    resolvedXAxis = aligned.xAxis;
+    yAxis = aligned.yAxis ?? yAxis;
+    dateField = aligned.dateField ?? dateField;
     const resolvedDisplayLegend = displayLegend !== undefined
       ? displayLegend
       : spec.displayLegend ?? true;

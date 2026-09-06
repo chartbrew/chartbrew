@@ -71,11 +71,9 @@ function ObservationInvestigation({ observationId, teamId }) {
         onChangeAction={onChangeAction}
         onChartAction={onChartAction}
         onConfirmAction={onConfirmAction}
-        onSave={chat.save}
         onSubmit={onSubmit}
         placeholder="Ask a follow-up about this change"
         progressEvents={chat.progressEvents}
-        showSave={Boolean(chat.sessionId)}
         status={(
           <AiAvailabilityStatus
             availability={availability}

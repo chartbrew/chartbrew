@@ -205,6 +205,22 @@ describe("orchestrator Responses API adapters", () => {
     expect(message).toBe("The KPI is ready.");
   });
 
+  it("keeps the group placement question only for multiple distinct remaining previews", () => {
+    const content = "Would you like all these charts added to a dashboard?\n```cb-actions\n{}\n```";
+    const preview = (id) => ({ name: "create_temporary_chart", content: JSON.stringify({ chart_created: true, chart_id: id }) });
+    expect(stripTemporaryChartSuggestions(content, [preview(1), preview(2)])).toBe(content);
+    expect(stripTemporaryChartSuggestions(content, [preview(1), preview(1)])).not.toContain("cb-actions");
+    expect(stripTemporaryChartSuggestions(content, [preview(1), preview(2), {
+      name: "move_chart_to_dashboard", content: JSON.stringify({ chart_id: 2, new_project_id: 12 }),
+    }])).not.toContain("cb-actions");
+    const prompt = buildSystemPrompt({ chartCatalog: [], connections: [], projects: [] });
+    expect(prompt).toContain("create a separate useful preview for each part");
+    expect(prompt).toContain("Create each distinct chart once");
+    expect(prompt).toContain("bare \"yes\" without a destination");
+    expect(prompt).toContain("needs_structured_data");
+    expect(prompt).not.toContain("One attempt only");
+  });
+
   it("requires a tool until an explicit visualization action finishes", () => {
     expect(getVisualizationToolChoice({
       blocked: false,

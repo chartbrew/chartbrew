@@ -150,7 +150,31 @@ state. Remove chart and dashboard actions, but keep links to datasets that still
 
 The dashboard ComboBox defaults to an exact dashboard from active context. It does not guess from an
 old message or a partial name. Hide placement actions when the user cannot edit the target dashboard.
-Do not repeat dashboard placement as reply text or quick-reply suggestions.
+Do not repeat dashboard placement as reply text or quick-reply suggestions for a single preview.
+After several distinct previews, ask once whether to place all of them in a dashboard. Wait for
+consent and an explicit or unambiguous selected destination, then move those previews without
+creating duplicates.
+
+Resolve follow-ups such as "create a preview for it" against the most recent relevant answer and
+selected context. Create separate useful previews for its metrics and breakdowns, preserving the
+source, filters, date range, and units. Reuse existing previews. Ask only when the meaning or scope
+is unresolved, or the full set exceeds the work that can be completed in one turn.
+MCP response text is not chart-ready data. If the source returns only response text, request named
+metric columns through an approved tool before creating a chart. Do not turn the full response into
+a one-cell table. Apply this check before writes for new and reused datasets.
+
+Prefer approved tools that return named scalar columns. If nested results are needed, save explicit
+field paths in `DataRequest.configuration.output.fields`, for example
+`{ "page": ["column_0"], "visitors": ["column_1", "0"] }`. Paths select values from each
+normalized result row. Verify their meanings from source metadata or documentation; do not guess
+tuple positions or replace visitor counts with event counts. Apply the mapping once on every fresh
+request and reuse the mapped rows from cache. Reject missing paths, objects, and arrays as mapped
+cells. Preserve zero and null values.
+
+Before creating an MCP chart or its dataset, render a bounded sample with the existing chart engine.
+Reject empty results or measures with no finite numeric values. Return a correction message to the
+agent so it can adjust the query, mapping, or chart fields. Do not report a successful preview when
+source validation or execution failed. These checks apply to new and reused datasets.
 
 The direct placement action must use the same server permission and chart validation path as a normal
 chart save. It updates the existing preview state in place and does not add a user or agent message.
@@ -192,7 +216,7 @@ reconnect action. Chat must reuse this save-then-start sequence and the existing
 
 The OAuth state includes a signed conversation reference. After OAuth, open the connection page for
 tool approval and keep the chat closed. Keep the conversation and team IDs in the route query for a
-later conversation bubble. Do not build that bubble or send a new model request in this phase.
+active conversation bar. Do not send a new model request on return.
 
 Show the full discovered tool list when it contains 250 tools or fewer, regardless of Tool focus.
 Only larger lists use matching against the saved user question plus basic schema, documentation,
@@ -201,11 +225,16 @@ using a fixed provider shortlist. For later calls, documented provider URL filte
 selected tool names. Keep explicit user URL filters unchanged. Keep existing approved tools, do not
 auto-approve new tools, and keep response, schema, page, and catalog byte limits. A large tool count
 alone must not fail setup. Show Tool focus only when tools were omitted; users can change it and
-save to reload the selection.
+save to reload the selection. Exclude individual tools that fail schema safety checks without
+blocking usable tools. Show a separate warning count; these exclusions must not trigger Tool focus
+on a small list. Do not keep approvals for excluded tools. If no selected tools are usable, show a
+clear error. After a successful tool reload, clear the previous OAuth return error.
 Render 10 tools per page in the connection form. Search and hint filters apply to the full discovered
 list before pagination and return to page 1 when changed. Keep approvals when switching pages.
 Use one **Allow access** toggle per tool to enable or disable both Ask and Datasets together. Save
 approval changes under a connection row lock so concurrent changes cannot overwrite each other.
+Add **Allow all** beside pagination. It applies to all available tools across all pages and filters,
+excludes tools marked as destructive, and saves the explicit tool selection in one transaction.
 Preserve older limited approvals until the user changes them; do not silently expand access.
 
 Owners and admins can approve MCP tools for Ask. Other roles see **Ask an admin** when approval is
@@ -532,6 +561,25 @@ request. The button does not grant permissions or mark the connection as ready.
 The existing MCP form still provides save-and-connect. PostHog setup uses its documented individual-tool
 mode and read-only filter; these do not replace Chartbrew's own tool approval checks.
 See [PostHog's setup and authentication documentation](https://posthog.com/docs/model-context-protocol/faq).
+
+### Phase 4 follow-up: active conversation bar
+
+- Save Home and observation conversations automatically through the existing saved-chat flow.
+- Name chats from the first question, with whitespace collapsed and long titles shortened. Keep
+  descriptive existing names. Use the first saved question when displaying older generic names.
+  Save each question before generating its answer so failed requests also leave a history entry.
+- Keep one active conversation reference per user and team in the current browser tab. Restore it
+  after navigation or refresh. Store only the conversation ID in browser session storage, not messages
+  or chart data. Load the title and history through the existing access-checked API.
+- Show a compact floating bar at the bottom center when the active conversation is not visible.
+  Use its title as the hint. Clicking the bar opens the existing chat with the same conversation.
+- Keep the bar hidden on public pages and while the chat is open. An in-progress request shows a
+  loading indicator; it becomes available to reopen when that request finishes.
+- Reveal a separate close button sliding out from the right on hover or keyboard focus. Keep it
+  visible on touch screens and respect reduced motion. Dismissal removes only the active reference;
+  the conversation remains in history. A late response must not restore a dismissed bar.
+- OAuth return parameters select the active conversation without opening it. Consume those parameters
+  so a later refresh does not undo dismissal. Deleted or inaccessible conversations remove the bar.
 
 ### Phase 5: explicit memory
 

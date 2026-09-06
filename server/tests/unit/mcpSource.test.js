@@ -10,6 +10,9 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const db = require("../../models/models");
 const mcpAi = require("../../sources/plugins/mcp/ai/mcp.ai");
+const { buildAiVisualization } = require("../../visualization/aiVisualization");
+const { VisualizationEngine } = require("../../visualization/VisualizationEngine");
+const { alignSourceChartBindings } = require("../../modules/ai/orchestrator/tools/sourceIntentRepair");
 const { normalizeToolResult, selectToolOutput } = require("../../sources/plugins/mcp/mcp.normalize");
 const {
   applyToolApproval,
@@ -410,6 +413,51 @@ describe("MCP result and variable handling", () => {
     const value = { payload: { records: [{ id: 1 }] } };
     expect(selectToolOutput(value, { mode: "path", path: "payload.records" }))
       .toEqual([{ id: 1 }]);
+  });
+
+  it("maps nested MCP values into named scalar columns without guessing tuple positions", async () => {
+    const output = { mode: "auto", fields: { page: ["column_0"], visitors: ["column_1", "0"], previous: ["column_1", "1"] } };
+    expect(selectToolOutput([["/", [899, 0]], ["/pricing", [218, null]]], output))
+      .toEqual([{ page: "/", visitors: 899, previous: 0 }, { page: "/pricing", visitors: 218, previous: null }]);
+    const tool = createTool();
+    const plan = await mcpAi.planDataset({ connection: createConnection(tool), overrides: { toolName: tool.name, output } });
+    expect(plan.configuration.output.fields).toEqual(output.fields);
+    expect(plan.outputFields).toEqual(["root[].page", "root[].visitors", "root[].previous"]);
+    expect(mcpProtocol.validateConfiguration(plan.configuration).configuration.output.fields).toEqual(output.fields);
+    expect(() => selectToolOutput([["/", [899, 0]]], { fields: { visitors: ["column_1"] } })).toThrow("single value");
+    expect(() => selectToolOutput([["/", [899, 0]]], { fields: { visitors: ["missing"] } })).toThrow("not found");
+    for (const fields of [{ visitors: ["__proto__"] }, JSON.parse("{\"__proto__\":[\"id\"]}"), { visitors: "column_1.0" }]) {
+      expect(mcpProtocol.validateConfiguration({ ...plan.configuration, output: { fields } }).valid).toBe(false);
+      expect(() => selectToolOutput([], { fields })).toThrow("valid name and field path");
+    }
+  });
+
+  it("does not apply saved mappings again to cached dataset rows", async () => {
+    const cache = require("../../controllers/DataRequestCacheController");
+    const connection = { ...createConnection(createTool()), id: 42 };
+    const request = { id: 19, configuration: { output: { fields: { left: ["right"], right: ["left"] } } } };
+    const rows = [{ left: 1, right: 2 }];
+    const saved = vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+    const cached = vi.spyOn(cache, "findLast").mockResolvedValue({ connection_id: 42, dataRequest: request, responseData: { data: rows } });
+    try {
+      const result = await mcpProtocol.runDataRequest({ connection, dataRequest: request, getCache: true });
+      expect(result.responseData.data).toEqual(rows);
+    } finally {
+      cached.mockRestore();
+      saved.mockRestore();
+    }
+  });
+
+  it("checks mapped rows with the chart engine and rejects empty rendered results", async () => {
+    const source = { backend: { ai: mcpAi } };
+    const rows = selectToolOutput([["/", [899, 0]]], { fields: { page: ["column_0"], visitors: ["column_1", "0"] } });
+    const payload = { rows, type: "bar", xAxis: "root[].page", yAxis: "root[].visitors" };
+    await expect(alignSourceChartBindings(source, payload)).resolves.toMatchObject({ yAxis: "root[].visitors" });
+    await expect(alignSourceChartBindings(source, { ...payload, rows: [{ page: "/", visitors: 0 }] })).resolves.toBeTruthy();
+    const visualization = buildAiVisualization({ chart: { type: "bar" }, cdc: payload });
+    visualization.layers[0].transforms = [{ type: "filter", field: "root[].visitors", operator: "gt", value: 1000 }];
+    await expect(alignSourceChartBindings(source, { ...payload, visualization })).rejects.toThrow("no usable values");
+    await expect(alignSourceChartBindings(source, { ...payload, rows: [] })).rejects.toThrow("No rows");
   });
 
   it("turns HogQL column/result tuples into object rows", () => {
@@ -999,12 +1047,41 @@ describe("MCP source integration contracts", () => {
       rows: [{ day: "2026-07-15", visitors: 12 }, { day: "2026-07-16", visitors: 18 }],
       type: "line",
       xAxis: "root[].page",
-      yAxis: "root[].count",
+      yAxis: "root[].visitors",
     })).toMatchObject({
       xAxis: "root[].day",
       yAxis: "root[].visitors",
       dateField: "root[].day",
     });
+  });
+
+  it("requires scalar measures and keeps explicit nested tuple selections", () => {
+    const rows = [{ column_0: "/", column_1: [899, 0], column_5: 0.23 }];
+    const chart = { rows, type: "bar", xAxis: "root[].column_0" };
+    expect(mcpAi.suggestChartBindings(rows)).toBeNull();
+    expect(() => mcpAi.alignChartBindings({ ...chart, yAxis: "root[].column_1" }))
+      .toThrow("does not select numeric values");
+    expect(() => mcpAi.alignChartBindings({ ...chart, yAxis: "root[].visitors" }))
+      .toThrow("does not select numeric values");
+    expect(() => mcpAi.alignChartBindings(chart)).toThrow("Select a numeric chart measure");
+    expect(mcpAi.alignChartBindings({ ...chart, yAxis: "root[].column_1[0]" }).yAxis)
+      .toBe("root[].column_1[0]");
+    const bindings = mcpAi.alignChartBindings({ ...chart, yAxis: "root[].column_1[0]" });
+    const prepared = new VisualizationEngine({
+      chart: { id: 1, type: "bar", visualization: buildAiVisualization({ chart: { type: "bar" }, cdc: bindings }) },
+      datasets: [{ data: rows, options: { id: "binding-1" } }],
+    }).prepare().preparedData;
+    expect(prepared.results[0].rows[0]).toMatchObject({ category: "/", value: 899 });
+    expect(mcpAi.alignChartBindings({ ...chart, yAxis: "root[].column_1[1]" }).yAxis)
+      .toBe("root[].column_1[1]");
+    expect(() => mcpAi.alignChartBindings({
+      ...chart,
+      yAxis: "root[].column_5",
+      encoding: { value: { field: "root[].column_1", type: "quantitative" } },
+    })).toThrow("does not select numeric values");
+    expect(() => mcpAi.alignChartBindings({
+      ...chart, yAxis: "root[].column_0", yAxisOperation: "count",
+    })).not.toThrow();
   });
 
   it("returns suggestedBindings from an MCP preview", async () => {
@@ -1033,6 +1110,32 @@ describe("MCP source integration contracts", () => {
         xAxis: "root[].pathname",
         yAxis: "root[].visitors",
       });
+    } finally {
+      executeSpy.mockRestore();
+    }
+  });
+
+  it("requires structured data instead of suggesting a chart of response text", async () => {
+    const tool = createTool();
+    const connection = createConnection(tool);
+    const executeSpy = vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+      data: [{ content: "visitors: current: 2363, previous: 2540; top pages: /, /tools" }], tool,
+    });
+    try {
+      const preview = await mcpAi.previewConfiguration({
+        connection,
+        configuration: {
+          source: "mcp", tool: { name: tool.name, contractFingerprint: tool.contractFingerprint },
+          arguments: {}, output: { mode: "auto", path: [] },
+        },
+      });
+      expect(preview.status).toBe("needs_structured_data");
+      expect(preview.suggestedBindings).toBeNull();
+      expect(preview.message).toContain("approved tool");
+      expect(mcpAi.suggestChartBindings([{ name: "Home", category: "Page" }], { type: "table" }))
+        .toEqual({ xAxis: "root[]" });
+      expect(mcpAi.suggestChartBindings([{ visitors: 2363 }], { type: "kpi" }))
+        .toEqual({ xAxis: "root[].visitors", yAxis: "root[].visitors" });
     } finally {
       executeSpy.mockRestore();
     }

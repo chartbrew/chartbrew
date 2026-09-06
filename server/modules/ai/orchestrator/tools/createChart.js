@@ -1,8 +1,9 @@
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
-const { removeCompiledMetricAccumulation } = require("./sourceIntentRepair");
-const { normalizeTeamId, requireDatasetForTeam, requireProjectForTeam } = require("./teamScope");
+const { alignSourceChartBindings, removeCompiledMetricAccumulation } = require("./sourceIntentRepair");
+const { normalizeTeamId, requireConnectionForTeam, requireDatasetForTeam, requireProjectForTeam } = require("./teamScope");
+const { findSourceForConnection } = require("../../../../sources");
 const { buildAiVisualization } = require("../../../../visualization/aiVisualization");
 
 const chartController = new ChartController();
@@ -87,9 +88,32 @@ async function createChart(payload) {
     subType = chartSanitization.subType;
     chartSpec = chartSanitization.spec;
     const chartType = type || chartSpec.type || "line";
-    const resolvedXAxis = resolveXAxis({
+    let resolvedXAxis = resolveXAxis({
       chartType, xAxis, yAxis, chartSpec
     });
+    if (dataRequest?.connection_id) {
+      const connection = await requireConnectionForTeam(dataRequest.connection_id, normalizedTeamId);
+      const source = findSourceForConnection(connection);
+      if (source?.backend?.ai?.alignChartBindings) {
+        const aligned = await alignSourceChartBindings(source, {
+          connection,
+          configuration: dataRequest.configuration,
+          type: chartType,
+          xAxis: resolvedXAxis,
+          yAxis: yAxis ?? chartSpec.yAxis,
+          yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation,
+          dateField: dateField ?? chartSpec.dateField,
+          transform: dataRequest.transform,
+          encoding: encoding || chartSpec.encoding,
+          visualization: visualization || chartSpec.visualization,
+          chartSpec,
+          formula: formula ?? chartSpec.formula,
+        });
+        resolvedXAxis = aligned.xAxis;
+        yAxis = aligned.yAxis ?? yAxis;
+        dateField = aligned.dateField ?? dateField;
+      }
+    }
     const canonicalVisualization = buildAiVisualization({
       bindingId: "binding-1",
       chart: {

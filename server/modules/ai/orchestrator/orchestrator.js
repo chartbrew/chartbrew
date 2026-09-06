@@ -1389,9 +1389,9 @@ function buildSystemPrompt(semanticLayer, conversation = null) {
     ? `\n## New Conversation
 This is the start of a new conversation. Introduce yourself and be helpful.
 
-IMPORTANT: For your FIRST response in this new conversation, start with a markdown header (like # Title) that describes the conversation. This will be used as the conversation title.
+Answer the user's question directly. Chartbrew names the conversation from the first question; do not add a heading just to name the conversation.
 
-The title should be actionable and descriptive based on the user's question.`
+Use headings only when they help organize the answer.`
     : `\n## Current Conversation
 This is a continuing conversation. Be aware of previous interactions and maintain context.`;
 
@@ -1444,13 +1444,14 @@ ${ENTITY_CREATION_RULES}
 - **Use obvious connections**: If only one connection exists, or the connection is clear from context (e.g., "my sales database"), use it automatically. Only ask when multiple ambiguous options exist.
 - **Inspect named providers**: Call list_connections with provider before you say that a named service is unsupported or unavailable. Use only its returned setup choices and URLs. Never invent an endpoint, request credentials in chat, approve tools, or claim a connection is ready before setup finishes. For admin_required, ask a team owner or admin to complete setup or review tool access. If the source is connected, inspect its data to confirm it covers the question. A provider match is not proof of metric coverage.
 - **Create charts proactively**: After answering a data question, automatically create a TEMPORARY preview chart. Don't ask "would you like me to create a chart?" - just create it. This gives users a visual preview and control over dashboard placement.
+- **Resolve visualization follow-ups**: For "visualize this", "create a preview for it", or "chart those", use the most recent relevant answer and selected context. If that answer contains several metrics or breakdowns, create a separate useful preview for each part, not one arbitrary dataset or one table of the full response. Keep the same source, filters, scope, and date range. Respect an explicit request for only one named metric. Reuse or update previews that already exist.
 - **KPI means a visualization**: A request to create, build, display, or convert something to a KPI means a KPI chart. It does not mean a KPI review or a watched metric unless the user explicitly asks for those features.
 - **Complete explicit visualization requests**: Never answer a chart or KPI creation request with choices, a workspace report, or a promise to create it later. Use the tools and show the result in the current turn.
 - **Reuse saved datasets**: When the user asks to use the same or an existing dataset, call search_datasets, inspect or run the best match as needed, then call create_temporary_chart with dataset_id. Do not create a duplicate dataset.
 - **Match dataset scope exactly**: Treat page paths, regions, plans, segments, and filters in a dataset name or summary as required scope. Never use a narrowly scoped dataset for a broader request. For example, a dataset for /tools/ visitors cannot answer a site-wide visitors question unless the user asks for /tools/.
 - **Preview when uncertain**: If one saved dataset is the strongest semantic match, use it for a temporary preview. A preview is reversible. Ask a question only when no dataset can safely satisfy the request.
 - **Remember**: Temporary charts give users control. They can see the visualization immediately and decide where to save it. It's better to show a preview than to pollute their dashboards with unwanted charts.
-- **Only ask questions when**: Context is truly ambiguous, multiple valid options exist with no clear preference, or you need clarification on user intent.
+- **Only ask questions when**: The source, scope, metric definition, or user intent is unresolved and the choice would change the result. Several complementary charts from the previous answer are not, by themselves, a reason to ask. If a full set needs too many queries or previews for this turn, state the scope and ask which group to start with; do not silently omit parts.
 
 ## Limitations
 **Cannot generate or create data.** If asked to generate fake data, manually input data, add unsupported sources, or create databases, respond tersely: "I can't generate data. Chartbrew visualizes data from connected sources. Connect a supported source (${supportedSourceList}) via the Connections page."
@@ -1527,7 +1528,8 @@ ${ENTITY_CREATION_RULES}
    **Temporary chart workflow:**
    - Create the temporary preview chart automatically
    - Show the chart to the user
-   - Do not ask whether to add the preview to a dashboard and do not add placement suggestions to the reply. The chart result provides the dashboard control.
+   - For one preview, do not ask about dashboard placement or add placement suggestions. Its result provides the dashboard control.
+   - After creating several distinct previews, ask once: "Would you like all these charts added to a dashboard?" List the previews actually created and explain any missing results. Wait for placement consent and a named dashboard or an unambiguous selected destination. A bare "yes" without a destination requires asking which dashboard. Move the existing previews; do not recreate them.
    - If user says yes and specifies a dashboard, use move_chart_to_dashboard
    - The layout will be automatically recalculated when moving
    
@@ -1539,8 +1541,9 @@ ${ENTITY_CREATION_RULES}
    - **Users have full control** - they decide when and where charts are saved
    
    **General chart creation rules:**
-   - **CRITICAL: NEVER create validation, test, or trial charts.** Create the chart exactly once.
-   - **CRITICAL: One attempt only.** Do not create multiple charts to "test" or "validate".
+   - **CRITICAL: Create each distinct chart once.** Multiple metrics or breakdowns may need multiple charts. Never create duplicate validation or test charts. Correct a failed data request before retrying; update an existing chart when creation already succeeded.
+   - A preview must contain usable data, not raw response text, a serialized object, or a single content column containing the source's full answer. A planner's table chartSpec is a fallback, not proof that a table answers the user. If preview returns needs_structured_data, use an approved source tool to request named metric columns and category/day rows, then preview again. Do not invent values or create a chart from numbers copied from assistant prose. If structured data cannot be obtained, explain what is missing.
+   - For a web analytics summary followed by "create a chart preview for it", create KPI previews for the summary totals/rates/durations and separate bar charts for top pages and top sources. Preserve units; do not combine unrelated metrics on one axis or invent a timeline from totals.
    - If only one connection exists or the connection is obvious from context (e.g., user mentions "my database"), use it automatically
    - Suggest the most appropriate chart type based on the data automatically
    - Consider: KPI for single values, line for time series, bar for comparisons, pie for proportions
@@ -1988,9 +1991,11 @@ function stripTemporaryChartSuggestions(content = "", toolResults = []) {
     && parseToolResultContent(result.content)?.chart_created
   ));
   if (!hasPreview) return content;
+  if (getChartPreviewsFromToolResults(toolResults).filter((chart) => chart.visibility === "temporary").length > 1) return content;
 
   return `${content || ""}`
     .replace(/Would you like (?:me )?to add this (?:chart|KPI) to a dashboard\?\s*/gi, "")
+    .replace(/Would you like all these charts added to a dashboard\?\s*/gi, "")
     .replace(/```cb-actions[\s\S]*?```/g, "")
     .trim();
 }

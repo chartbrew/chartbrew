@@ -284,7 +284,23 @@ function selectAutomaticOutput(value) {
   return [value];
 }
 
+function validateOutput(output = {}) {
+  if (output.fields === undefined) return;
+  if (!output.fields || typeof output.fields !== "object" || Array.isArray(output.fields)
+    || Object.keys(output.fields).length > 50) {
+    throw createMcpError("MCP_INVALID_OUTPUT_MAPPING", "Choose at most 50 output columns.");
+  }
+  Object.entries(output.fields).forEach(([name, path]) => {
+    if (!/^[A-Za-z_][A-Za-z0-9_]{0,99}$/.test(name) || FORBIDDEN_PATH_KEYS.has(name)
+      || !Array.isArray(path) || !path.length || path.length > 16
+      || path.some((part) => typeof part !== "string" || !part.length || part.length > 200 || FORBIDDEN_PATH_KEYS.has(part))) {
+      throw createMcpError("MCP_INVALID_OUTPUT_MAPPING", "Each output column needs a valid name and field path.");
+    }
+  });
+}
+
 function selectToolOutput(value, output = {}) {
+  validateOutput(output);
   let rows;
   if (output.mode === "path" || normalizePath(output.path).length > 0) {
     rows = selectAutomaticOutput(selectPath(value, output.path));
@@ -294,10 +310,22 @@ function selectToolOutput(value, output = {}) {
   if (rows.length > MCP_LIMITS.maxResultRows) {
     throw createMcpError("MCP_TOO_MANY_ROWS", "The MCP tool returned too many rows.");
   }
+  const fields = Object.entries(output.fields || {});
+  if (fields.length) {
+    rows = rows.map((row) => Object.fromEntries(fields.map(([name, path]) => {
+      const cell = selectPath(row, path);
+      if (cell !== null && !["string", "number", "boolean"].includes(typeof cell)
+        || (typeof cell === "number" && !Number.isFinite(cell))) {
+        throw createMcpError("MCP_INVALID_OUTPUT_VALUE", `The ${name} column must select a single value, not a list or object. Check its field path.`);
+      }
+      return [name, cell];
+    })));
+  }
   return rows;
 }
 
 module.exports = {
   normalizeToolResult,
   selectToolOutput,
+  validateOutput,
 };

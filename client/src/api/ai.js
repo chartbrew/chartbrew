@@ -47,7 +47,9 @@ export async function getAiConversation(conversationId, teamId) {
   const response = await fetch(url, { headers, method: "GET" });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch AI conversation");
+    const error = new Error("Could not open this conversation. Try again.");
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();
@@ -125,7 +127,7 @@ export async function respondAi({
   aiConversationId,
   context = null,
   message,
-  persistence = "ephemeral",
+  persistence = "persistent",
   sessionId,
   teamId,
 }) {

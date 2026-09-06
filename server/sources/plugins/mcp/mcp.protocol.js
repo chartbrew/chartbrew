@@ -12,7 +12,7 @@ const {
 const { MCP_LIMITS } = require("./mcp.constants");
 const { withMcpClient } = require("./mcp.client");
 const { discoverMcpConnection } = require("./mcp.discovery");
-const { normalizeToolResult, selectToolOutput } = require("./mcp.normalize");
+const { normalizeToolResult, selectToolOutput, validateOutput } = require("./mcp.normalize");
 const mcpOauth = require("./mcp.oauth");
 const {
   applyToolApproval,
@@ -316,6 +316,11 @@ async function updateToolApproval({ connection, params, user }) {
   if (typeof params?.enabled !== "boolean") {
     throw createMcpError("MCP_INVALID_APPROVAL", "Choose whether to allow this tool.", 400);
   }
+  const toolNames = params.toolNames ?? [params.toolName];
+  if (!Array.isArray(toolNames) || !toolNames.length || toolNames.length > MCP_LIMITS.maxTools
+    || toolNames.some((name) => typeof name !== "string" || !name.trim() || name.length > 256)) {
+    throw createMcpError("MCP_INVALID_APPROVAL", "Choose valid tools to update.", 400);
+  }
   return db.sequelize.transaction(async (transaction) => {
     const saved = await db.Connection.findOne({
       where: { id: connection.id, team_id: connection.team_id },
@@ -324,13 +329,13 @@ async function updateToolApproval({ connection, params, user }) {
     });
     if (!saved) throw createMcpError("MCP_CONNECTION_NOT_FOUND", "This connection is no longer available.", 404);
     const schema = saved.schema || {};
-    const result = applyToolApproval(
+    const result = [...new Set(toolNames.map((name) => name.trim()))].reduce((current, name) => applyToolApproval(
       schema.mcp?.tools,
-      schema.mcp?.allowedTools,
-      String(params.toolName || "").trim(),
+      current.allowedTools,
+      name,
       { datasets: params.enabled, ask: params.enabled },
       user
-    );
+    ), { allowedTools: schema.mcp?.allowedTools || {} });
     await saved.update({
       schema: { ...schema, mcp: { ...schema.mcp, allowedTools: result.allowedTools } },
     }, { transaction });
@@ -376,6 +381,7 @@ function getConfiguration(dataRequest = {}) {
     output: {
       mode: configuration.output?.mode || "auto",
       path: configuration.output?.path || [],
+      ...(configuration.output?.fields !== undefined ? { fields: configuration.output.fields } : {}),
     },
   };
 }
@@ -383,6 +389,11 @@ function getConfiguration(dataRequest = {}) {
 function validateConfiguration(configuration, options = {}) {
   const config = getConfiguration({ configuration });
   const errors = [];
+  try {
+    validateOutput(config.output);
+  } catch (error) {
+    errors.push(error.message);
+  }
   if (configuration?.source !== "mcp") errors.push("The data source must be MCP.");
   if (!config.tool.name) errors.push("Choose an MCP tool.");
   if (!config.tool.contractFingerprint) errors.push("The MCP tool approval is missing.");
@@ -407,6 +418,7 @@ function validateArguments(tool, args) {
 
 async function executeTool(connection, dataRequest, approvalUse = "datasets") {
   const config = getConfiguration(dataRequest);
+  validateOutput(config.output);
   return withMcpClient(connection, async (client) => {
     const catalogExpiresAt = Date.parse(connection?.schema?.mcp?.catalogCache?.expiresAt || "");
     const hasFreshCatalog = Number.isFinite(catalogExpiresAt)
@@ -461,28 +473,14 @@ async function runDataRequest({
   if (getCache && savedConnection.id && dataRequest?.id) {
     const cached = await checkAndGetCache(savedConnection.id, dataRequest);
     if (cached) {
-      let response = cached;
-      try {
-        const data = cached.responseData?.data;
-        if (data !== undefined) {
-          response = {
-            ...cached,
-            responseData: {
-              ...cached.responseData,
-              data: selectToolOutput(data, getConfiguration(processedDataRequest || dataRequest).output),
-            },
-          };
-        }
-      } catch (_error) {
-        response = cached;
-      }
+      // Cached rows already have output selection and field mapping applied.
       await completeConnectorAudit(auditContext, {
         cacheHit: true,
         connectionType: "mcp",
         durationMs: Date.now() - startedAt,
-        ...serializeResponsePreview(response.responseData),
+        ...serializeResponsePreview(cached.responseData),
       });
-      return response;
+      return cached;
     }
   }
 

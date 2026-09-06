@@ -31,7 +31,7 @@ import {
   LuTriangleAlert,
 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 
 import { ButtonSpinner } from "../../components/ButtonSpinner";
@@ -43,7 +43,7 @@ import {
 } from "../../slices/connection";
 import { selectTeam } from "../../slices/team";
 import { saveAndStartMcpOAuth } from "./mcp-oauth";
-import { getMcpToolPage } from "./mcp-tool-list";
+import { getMcpToolPage, getMcpToolsToAllow } from "./mcp-tool-list";
 
 const AUTH_OPTIONS = [
   { id: "none", label: "No authentication" },
@@ -332,14 +332,17 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
   const connectionRef = useRef(connection);
   const approvalTasksRef = useRef({});
   const [savingApprovals, setSavingApprovals] = useState({});
+  const [allowAllLoading, setAllowAllLoading] = useState(false);
 
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const team = useSelector(selectTeam);
   connectionRef.current = connection;
   const tools = connection.schema?.mcp?.tools || [];
   const toolResults = getMcpToolPage(tools, { search: toolSearch, hintFilter: toolHintFilter, page: toolPage });
   const approvals = connection.schema?.mcp?.allowedTools || {};
+  const toolsToAllow = getMcpToolsToAllow(tools, approvals);
   const reviewRequired = new Set(
     (connection.schema?.mcp?.reviewRequired || []).map((item) => item.name)
   );
@@ -418,6 +421,11 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
 
   const applyDiscovery = (discovery) => {
     if (!discovery) return;
+    const search = new URLSearchParams(location.search);
+    if (search.get("mcpOAuth") === "error") {
+      search.delete("mcpOAuth");
+      navigate({ pathname: location.pathname, search: search.toString(), hash: location.hash }, { replace: true });
+    }
     setToolPage(1);
     setConnection((current) => ({
       ...current,
@@ -620,6 +628,38 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
     });
   };
 
+  const onAllowAll = async () => {
+    if (allowAllLoading || Object.values(savingApprovals).some(Boolean) || !toolsToAllow.length) return;
+    if (!editConnection?.id) {
+      toolsToAllow.forEach((tool) => onChangeApproval(tool, true));
+      return;
+    }
+    setAllowAllLoading(true);
+    try {
+      const result = await dispatch(runSourceAction({
+        team_id: team.id,
+        connection_id: editConnection.id,
+        action: "updateToolApproval",
+        params: { toolNames: toolsToAllow.map((tool) => tool.name), enabled: true },
+      })).unwrap();
+      if (!result?.allowedTools) throw new Error("Missing approvals");
+      setConnection((current) => ({
+        ...current,
+        schema: { ...current.schema, mcp: {
+          ...current.schema.mcp,
+          allowedTools: result.allowedTools,
+          reviewRequired: (current.schema.mcp.reviewRequired || [])
+            .filter((item) => !toolsToAllow.some((tool) => tool.name === item.name)),
+        } },
+      }));
+      toast.success("Access enabled for all available tools");
+    } catch (error) {
+      toast.error("Could not allow all tools. Try again.");
+    } finally {
+      setAllowAllLoading(false);
+    }
+  };
+
   return (
     <div className="flex max-w-5xl flex-col gap-8">
       <Card className="gap-6 rounded-3xl border border-divider p-6 shadow-none">
@@ -751,7 +791,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
           {authenticationType === "oauth" && (
             <div className="flex flex-wrap items-center gap-3">
               {editConnection?.id ? (
-                <Button variant="outline" isDisabled={saveLoading} isPending={oauthLoading} onPress={onStartOAuth}>
+                <Button variant="outline" isDisabled={saveLoading || allowAllLoading} isPending={oauthLoading} onPress={onStartOAuth}>
                   {oauthLoading ? <ButtonSpinner /> : null}
                   {editConnection?.authentication?.hasToken ? "Reconnect OAuth" : "Connect with OAuth"}
                 </Button>
@@ -771,14 +811,14 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
             <Button
               variant="tertiary"
               isPending={testLoading}
-              isDisabled={saveLoading || oauthLoading
+              isDisabled={saveLoading || oauthLoading || allowAllLoading
                 || authenticationType === "oauth" && !editConnection?.authentication?.hasToken}
               onPress={onTest}
             >
               {testLoading ? <ButtonSpinner /> : <LuRefreshCw />}
               Test and load tools
             </Button>
-            <Button variant="primary" isPending={saveLoading || oauthLoading} onPress={onSave}>
+            <Button variant="primary" isDisabled={allowAllLoading} isPending={saveLoading || oauthLoading} onPress={onSave}>
               {(saveLoading || oauthLoading) && <ButtonSpinner />}
               {authenticationType === "oauth" && !editConnection?.id ? "Save and connect" : "Save connection"}
             </Button>
@@ -814,7 +854,22 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>Connection setup did not finish</Alert.Title>
-            <Alert.Description>Check the connection details and try signing in again.</Alert.Description>
+            <Alert.Description>
+              {editConnection?.authentication?.hasToken
+                ? "Sign-in succeeded, but Chartbrew could not load the tools. Press Test and load tools to try again."
+                : "Check the connection details and try signing in again."}
+            </Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+      {connection.schema?.mcp?.unsupportedToolCount > 0 && (
+        <Alert status="warning">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Some tools are not available</Alert.Title>
+            <Alert.Description>
+              Chartbrew cannot safely use {connection.schema.mcp.unsupportedToolCount} of the tools returned by this server. You can review and allow access to the other tools below.
+            </Alert.Description>
           </Alert.Content>
         </Alert>
       )}
@@ -891,19 +946,32 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
             </Select>
           </div>
 
-          {toolResults.totalPages > 1 && (
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm text-muted" role="status">
                 {toolResults.start}–{toolResults.end} of {toolResults.total} tools
               </span>
-              <HeroPaginationNav
-                page={toolResults.page}
-                totalPages={toolResults.totalPages}
-                onPageChange={setToolPage}
-                ariaLabel="Tool list pagination"
-              />
+              {toolResults.totalPages > 1 && (
+                <HeroPaginationNav
+                  page={toolResults.page}
+                  totalPages={toolResults.totalPages}
+                  onPageChange={setToolPage}
+                  ariaLabel="Tool list pagination"
+                />
+              )}
             </div>
-          )}
+            <Button
+              variant="secondary"
+              className="ml-auto"
+              isPending={allowAllLoading}
+              isDisabled={!toolsToAllow.length || Object.values(savingApprovals).some(Boolean) || testLoading || saveLoading || oauthLoading}
+              onPress={onAllowAll}
+              aria-label="Allow all available tools across all pages"
+            >
+              {allowAllLoading && <ButtonSpinner />}
+              Allow all
+            </Button>
+          </div>
 
           <div className="flex flex-col gap-5">
             {toolResults.tools.map((tool) => (
@@ -912,7 +980,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
                 tool={tool}
                 approval={approvals[tool.name]}
                 needsReview={reviewRequired.has(tool.name)}
-                isSaving={savingApprovals[tool.name] === true}
+                isSaving={allowAllLoading || savingApprovals[tool.name] === true}
                 onChangeApproval={onChangeApproval}
               />
             ))}

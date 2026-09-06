@@ -1,21 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   getAiTools, placeAiChartPreview, promoteAiSession, respondAi,
 } from "../../../api/ai";
 import socketClient from "../../../modules/socketClient";
 import { selectUser } from "../../../slices/user";
+import {
+  clearInlineAiConversationKey, dismissAiConversation, setActiveAiConversation, setInlineAiConversationKey,
+  updateActiveAiConversation,
+} from "../../../slices/ui";
 import { isProgressForConversation, normalizeProgressEvent } from "../aiMessageUtils";
 
 function useAiChat({
   context = [],
-  persistence = "ephemeral",
+  persistence = "persistent",
   teamId,
 }) {
   const user = useSelector(selectUser);
+  const dispatch = useDispatch();
   const requestIdRef = useRef(0);
   const sessionIdRef = useRef(null);
+  const chatKeyRef = useRef(crypto.randomUUID());
   const savePromiseRef = useRef(null);
   const [aiConversationId, setAiConversationId] = useState(null);
   const [error, setError] = useState(null);
@@ -53,6 +59,15 @@ function useAiChat({
   useEffect(() => {
     if (!user?.id || !teamId) return undefined;
     let mounted = true;
+    const handleCreated = (data) => {
+      if (!data?.sessionId || data.sessionId !== sessionIdRef.current || String(data.teamId) !== String(teamId)) return;
+      socketClient.leaveConversation(sessionIdRef.current);
+      sessionIdRef.current = data.conversationId;
+      setAiConversationId(data.conversationId);
+      socketClient.joinConversation(data.conversationId);
+      dispatch(updateActiveAiConversation({ key: chatKeyRef.current, id: data.conversationId }));
+    };
+    socketClient.on("conversation-created", handleCreated);
 
     (async () => {
       try {
@@ -85,6 +100,8 @@ function useAiChat({
       mounted = false;
       requestIdRef.current += 1;
       socketClient.off("ai-progress", handleProgress);
+      socketClient.off("conversation-created", handleCreated);
+      dispatch(clearInlineAiConversationKey(chatKeyRef.current));
       if (sessionIdRef.current) {
         socketClient.leaveConversation(sessionIdRef.current);
       }
@@ -96,12 +113,21 @@ function useAiChat({
     if (!question || isLoading || !teamId) return null;
     const requestId = ++requestIdRef.current;
     const activeSessionId = ensureSessionId();
+    const chatKey = chatKeyRef.current;
+    dispatch(setActiveAiConversation({
+      key: chatKey, id: aiConversationId, userId: user.id, teamId,
+      title: question.slice(0, 100), busy: true,
+    }));
+    dispatch(setInlineAiConversationKey(chatKey));
     setError(null);
     setIsLoading(true);
     setProgressEvents([]);
     setMessages((current) => [...current, { content: question, role: "user" }]);
     await joinProgressRoom(activeSessionId);
-    if (requestId !== requestIdRef.current) return null;
+    if (requestId !== requestIdRef.current) {
+      dispatch(dismissAiConversation(chatKey));
+      return null;
+    }
     try {
       const response = await respondAi({
         aiConversationId,
@@ -111,11 +137,14 @@ function useAiChat({
         sessionId: activeSessionId,
         teamId,
       });
-      if (requestId !== requestIdRef.current) return null;
       const orchestration = response.orchestration;
+      dispatch(updateActiveAiConversation({
+        key: chatKey, id: orchestration.aiConversationId || aiConversationId, busy: false,
+      }));
+      if (requestId !== requestIdRef.current) return null;
       setAiConversationId(orchestration.aiConversationId || aiConversationId);
-      if (orchestration.sessionId) {
-        sessionIdRef.current = orchestration.sessionId;
+      if (orchestration.aiConversationId || orchestration.sessionId) {
+        sessionIdRef.current = orchestration.aiConversationId || orchestration.sessionId;
         setSessionId(orchestration.sessionId);
       }
       setMessages((current) => [
@@ -131,6 +160,7 @@ function useAiChat({
       ]);
       return orchestration;
     } catch (requestError) {
+      dispatch(updateActiveAiConversation({ key: chatKey, busy: false }));
       if (requestId !== requestIdRef.current) return null;
       setError(requestError.message);
       setMessages((current) => [
@@ -156,11 +186,15 @@ function useAiChat({
     joinProgressRoom,
     persistence,
     teamId,
+    dispatch,
+    user.id,
   ]);
 
   const clear = useCallback(() => {
     savePromiseRef.current = null;
     requestIdRef.current += 1;
+    dispatch(clearInlineAiConversationKey(chatKeyRef.current));
+    chatKeyRef.current = crypto.randomUUID();
     if (sessionIdRef.current) {
       socketClient.leaveConversation(sessionIdRef.current);
     }
@@ -177,12 +211,17 @@ function useAiChat({
     if (!pendingAction?.actionId || isLoading || !teamId) return null;
     const requestId = ++requestIdRef.current;
     const activeSessionId = ensureSessionId();
+    const chatKey = chatKeyRef.current;
+    dispatch(updateActiveAiConversation({ key: chatKey, busy: true }));
     setError(null);
     setIsLoading(true);
     setProgressEvents([]);
     setMessages((current) => [...current, { content: "Confirm this change", role: "user" }]);
     await joinProgressRoom(activeSessionId);
-    if (requestId !== requestIdRef.current) return null;
+    if (requestId !== requestIdRef.current) {
+      dispatch(updateActiveAiConversation({ key: chatKey, busy: false }));
+      return null;
+    }
     try {
       const response = await respondAi({
         action: {
@@ -215,6 +254,7 @@ function useAiChat({
       ]);
       return null;
     } finally {
+      dispatch(updateActiveAiConversation({ key: chatKey, busy: false }));
       if (requestId === requestIdRef.current) {
         setIsLoading(false);
         setProgressEvents([]);

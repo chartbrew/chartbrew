@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getMcpToolPage } from "./mcp-tool-list.js";
+import { getMcpToolPage, getMcpToolsToAllow } from "./mcp-tool-list.js";
+
+test("allow all covers every page, skips destructive tools, and includes limited or changed approvals", () => {
+  const tools = Array.from({ length: 23 }, (_, id) => ({ name: `tool_${id}` }));
+  tools[0].annotations = { destructiveHint: true };
+  tools[3].contractFingerprint = "changed";
+  const approvals = {
+    tool_1: { ask: true, datasets: true },
+    tool_2: { ask: true, datasets: false },
+    tool_3: { ask: true, datasets: true, contractFingerprint: "old" },
+  };
+  assert.deepEqual(getMcpToolsToAllow(tools, approvals), tools.slice(2));
+  assert.deepEqual(getMcpToolsToAllow([], approvals), []);
+});
 
 test("tool pages cover the full list without changing tools or approvals", () => {
   const tools = Array.from({ length: 250 }, (_, id) => ({ name: `tool_${id}` }));

@@ -66,6 +66,16 @@ const MAX_SESSION_CHARACTERS = 100000;
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ACTION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+function isPlaceholderTitle(title) {
+  return !title?.trim() || /^(saved conversation|new conversation|quick action|untitled conversation)$/i.test(title.trim());
+}
+
+function getConversationTitle(title, question) {
+  if (!isPlaceholderTitle(title)) return title;
+  const text = typeof question === "string" ? question.replace(/\s+/g, " ").trim() : "";
+  return text.length > 120 ? `${text.slice(0, 117).trimEnd()}…` : text || "Untitled conversation";
+}
+
 function validateSessionId(sessionId) {
   if (!sessionId) return crypto.randomUUID();
   if (!SESSION_ID_PATTERN.test(sessionId)) {
@@ -251,6 +261,7 @@ async function getOrchestration(
   aiConversationId,
   userId,
   context = null,
+  clientSessionId = null,
 ) {
   const access = await getObservationAccess(teamId, userId);
   const requestedContext = Array.isArray(context)
@@ -273,13 +284,15 @@ async function getOrchestration(
     conversation = await db.AiConversation.create({
       team_id: teamId,
       user_id: userId,
-      title: "New Conversation", // Will be updated by orchestrator
+      title: getConversationTitle(null, question),
       status: "active",
     });
 
     // Emit conversation ID to user's room immediately so they can join before orchestration
     socketManager.emitToUser(userId, "conversation-created", {
-      conversationId: conversation.id
+      conversationId: conversation.id,
+      teamId,
+      sessionId: clientSessionId,
     });
   }
 
@@ -323,6 +336,11 @@ async function getOrchestration(
   if (Array.isArray(context)) {
     await replaceAiConversationContext(conversation.id, teamId, validatedContext);
   }
+
+  // Keep the question even if the response fails or the user leaves the page.
+  await db.AiMessage.create({
+    conversation_id: conversation.id, role: "user", content: question, sequence: messages.length,
+  });
 
   try {
     const roleBoundary = await runDeterministicWorkspaceRequest({
@@ -382,20 +400,6 @@ async function getOrchestration(
       sessionId: getAiSessionBinding("conversation", conversation.id),
     });
 
-    // Extract title from AI response for new conversations
-    let finalMessage = resolvedOrchestration.message;
-    let extractedTitle = null;
-
-    if (!conversation || conversation.message_count === 0) {
-      // Try to extract title from the first markdown header in the response
-      const titleMatch = resolvedOrchestration.message?.match(/^#{1,6}\s+(.+)$/m);
-      if (titleMatch) {
-        extractedTitle = titleMatch[1].trim();
-        // Remove the title line from the response (including newline)
-        finalMessage = resolvedOrchestration.message.replace(/^#{1,6}\s+.+\n?/, "").trim();
-      }
-    }
-
     // Get the starting sequence number (0 for new conversations, or continue from existing)
     const existingMessageCount = await db.AiMessage.count({
       where: { conversation_id: conversation.id }
@@ -407,7 +411,7 @@ async function getOrchestration(
     });
     const newMessages = resolvedOrchestration.conversationHistory.slice(
       currentTurnStart >= 0 ? currentTurnStart : fullHistory.length
-    );
+    ).filter((msg, index) => !(index === 0 && msg.role === "user" && msg.content === question));
     const messagePromises = newMessages.map((msg, index) => {
       const messageData = {
         conversation_id: conversation.id,
@@ -465,24 +469,20 @@ async function getOrchestration(
       message_count: resolvedOrchestration.conversationHistory.filter((msg) => msg.role === "user").length,
       status: "active",
       error_message: null,
+      title: getConversationTitle(conversation.title, messages.find((msg) => msg.role === "user")?.content || question),
     };
-
-    // Update title if extracted
-    if (extractedTitle) {
-      updateData.title = extractedTitle;
-    }
 
     await conversation.update(updateData);
 
     return {
       ...resolvedOrchestration,
-      message: finalMessage,
       aiConversationId: conversation.id,
     };
   } catch (error) {
     // Update conversation status on error
     await conversation.update({
       status: "error",
+      message_count: messages.filter((msg) => msg.role === "user").length + 1,
       error_message: "Chartbrew could not complete this request. Try again.",
     });
 
@@ -825,7 +825,7 @@ async function respond({
   aiConversationId,
   context,
   message,
-  persistence = "ephemeral",
+  persistence = "persistent",
   sessionId,
   teamId,
   userId,
@@ -874,6 +874,7 @@ async function respond({
       aiConversationId,
       userId,
       context,
+      sessionId ? validateSessionId(sessionId) : null,
     );
     return {
       ...orchestration,
@@ -1026,7 +1027,7 @@ async function promoteSession({ sessionId, teamId, userId }) {
     source: "app",
     status: "active",
     team_id: teamId,
-    title: "Saved conversation",
+    title: getConversationTitle(null, session.history?.find((message) => message.role === "user")?.content),
     user_id: userId,
   });
   const history = trimSessionHistory(session.history);
@@ -1079,6 +1080,10 @@ async function getConversations(teamId, userId, limit = 20, offset = 0) {
 
   // Compute token totals from AiUsage for each conversation
   const conversationsWithUsage = await Promise.all(conversations.map(async (conv) => {
+    const firstQuestion = isPlaceholderTitle(conv.title) ? await db.AiMessage.findOne({
+      where: { conversation_id: conv.id, role: "user" },
+      attributes: ["content"], order: [["sequence", "ASC"]],
+    }) : null;
     const usageStats = await db.AiUsage.findAll({
       where: { conversation_id: conv.id },
       attributes: [
@@ -1093,7 +1098,7 @@ async function getConversations(teamId, userId, limit = 20, offset = 0) {
 
     return {
       id: conv.id,
-      title: conv.title,
+      title: getConversationTitle(conv.title, firstQuestion?.content),
       source: conv.source,
       status: conv.status,
       message_count: conv.message_count,
@@ -1178,6 +1183,7 @@ async function getConversation(conversationId, teamId, userId) {
   // Return conversation with messages and usage stats
   return {
     ...conversation.toJSON(),
+    title: getConversationTitle(conversation.title, messages.find((message) => message.role === "user")?.content),
     context: serializeAiContext(activeContext.context),
     contextNotice: activeContext.removedCount > 0
       ? "This item is no longer available. Select another item."
@@ -1291,6 +1297,7 @@ async function getAiUsage(teamId, startDate, endDate) {
 }
 
 module.exports = {
+  getConversationTitle,
   applyDirectMetricInstruction,
   getOrchestration,
   placeChartPreview,

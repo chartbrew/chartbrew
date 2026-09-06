@@ -1,5 +1,5 @@
 import {
-  beforeAll, describe, expect, it
+  beforeAll, describe, expect, it, vi
 } from "vitest";
 
 import { testDbManager } from "../helpers/index.js";
@@ -135,5 +135,82 @@ describe("AI conversation ownership", () => {
     await expect(
       socketManager.canJoinConversation(owner.id, sessionId)
     ).resolves.toBe(false);
+  });
+
+  it("identifies a new saved conversation with its team and originating chat request", async () => {
+    const { owner, team } = await createOwnedConversation(models);
+    await models.TeamRole.update({ role: "projectViewer" }, { where: { user_id: owner.id, team_id: team.id } });
+    const sessionId = "11111111-1111-4111-8111-111111111111";
+    const emit = vi.spyOn(socketManager, "emitToUser");
+    try {
+      const result = await AiController.respond({
+        teamId: team.id, userId: owner.id, sessionId,
+        message: "Create a dashboard",
+      });
+      expect(emit).toHaveBeenCalledWith(owner.id, "conversation-created", {
+        conversationId: result.aiConversationId, teamId: team.id, sessionId,
+      });
+      const saved = await AiController.getConversation(result.aiConversationId, team.id, owner.id);
+      expect(saved.title).toBe("Create a dashboard");
+      expect(saved.full_history.filter((message) => message.role === "user")).toEqual([
+        { role: "user", content: "Create a dashboard" },
+      ]);
+      await AiController.respond({
+        teamId: team.id, userId: owner.id, aiConversationId: result.aiConversationId,
+        message: "Create a chart",
+      });
+      const continued = await AiController.getConversation(result.aiConversationId, team.id, owner.id);
+      expect(continued.title).toBe(saved.title);
+      expect(continued.full_history.filter((message) => message.role === "user")).toHaveLength(2);
+    } finally {
+      emit.mockRestore();
+    }
+  });
+
+  it("shows a useful name for old generic titles in the list and the open chat", async () => {
+    const { owner, team, conversation } = await createOwnedConversation(models);
+    await conversation.update({ title: "Saved conversation" });
+    expect((await AiController.getConversation(conversation.id, team.id, owner.id)).title)
+      .toBe("Summarize private revenue notes");
+    expect((await AiController.getConversations(team.id, owner.id))[0].title)
+      .toBe("Summarize private revenue notes");
+    await conversation.update({ title: "Revenue review" });
+    expect((await AiController.getConversations(team.id, owner.id))[0].title).toBe("Revenue review");
+  });
+
+  it("names a promoted Home session from its first question", async () => {
+    const { owner, team } = await createOwnedConversation(models);
+    const runtimeCache = require("../../modules/runtimeCache");
+    const { getObservationAccess } = require("../../modules/observations/access");
+    const { getWorkspaceAccessEnvelope } = require("../../modules/workspaceContext/accessEnvelope");
+    const envelope = await getWorkspaceAccessEnvelope(await getObservationAccess(team.id, owner.id));
+    const sessionId = "11111111-1111-4111-8111-111111111111";
+    await runtimeCache.setAiSession({
+      teamId: team.id, userId: owner.id, sessionId,
+      payload: { accessVersion: envelope.accessVersion, context: [], messageCount: 1, history: [
+        { role: "user", content: "Show visits by country" },
+        { role: "assistant", content: "# Next steps\nConnect your data source." },
+      ] },
+    });
+    const result = await AiController.promoteSession({ teamId: team.id, userId: owner.id, sessionId });
+    const saved = await models.AiConversation.findByPk(result.aiConversationId);
+    expect(saved.title).toBe("Show visits by country");
+  });
+
+  it("keeps the question and title when a response fails", async () => {
+    const { owner, team } = await createOwnedConversation(models);
+    await models.TeamRole.update({ role: "projectViewer" }, { where: { user_id: owner.id, team_id: team.id } });
+    const count = vi.spyOn(models.AiMessage, "count").mockRejectedValueOnce(new Error("Response unavailable"));
+    try {
+      await expect(AiController.respond({ teamId: team.id, userId: owner.id, message: "Create a chart" }))
+        .rejects.toThrow("Response unavailable");
+      const saved = await models.AiConversation.findOne({ where: { team_id: team.id, title: "Create a chart" } });
+      expect(saved.status).toBe("error");
+      expect(saved.message_count).toBe(1);
+      const messages = await models.AiMessage.findAll({ where: { conversation_id: saved.id } });
+      expect(messages.map((message) => message.content)).toEqual(["Create a chart"]);
+    } finally {
+      count.mockRestore();
+    }
   });
 });
