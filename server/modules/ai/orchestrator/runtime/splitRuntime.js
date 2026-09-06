@@ -397,6 +397,7 @@ async function runSplitWorkspaceRequest({
   fallbackRunner = runDeterministicWorkspaceRequest,
   history = [],
   options = {},
+  personalMemory = null,
   pendingActionClearer = clearPendingActions,
   policy = getWorkspaceOrchestratorPolicy(),
   question,
@@ -440,7 +441,7 @@ async function runSplitWorkspaceRequest({
 
   const buildManifest = (facts, resultStatus) => buildContextManifest({
     characterCount: budget.snapshot().contextCharacters,
-    context: getManifestContext(facts, activity),
+    context: { ...getManifestContext(facts, activity), ...(personalMemory ? { memory: personalMemory.map(() => null) } : {}) },
     externalProviderUsed,
     modelRoleCalls: roleCalls,
     projectIds: getProjectIds(facts),
@@ -509,6 +510,7 @@ async function runSplitWorkspaceRequest({
         plan,
         responseFocus,
       });
+      if (personalMemory) synthesisEnvelope.personalMemory = personalMemory;
       assertNoForbiddenExternalData(synthesisEnvelope);
       externalProviderUsed = true;
       roleCalls.synthesis += 1;
@@ -562,6 +564,7 @@ async function runSplitWorkspaceRequest({
       taskCatalog: getTaskCatalog(allowedToolNames),
       visibleProjectIds: envelope.visibleProjectIds,
     });
+    if (personalMemory) plannerEnvelope.personalMemory = personalMemory;
     externalProviderUsed = true;
     roleCalls.planner += 1;
     const plannerCall = await callProviderRole({
@@ -739,6 +742,7 @@ async function runSplitWorkspaceRequest({
       plan,
       responseFocus,
     });
+    if (personalMemory) synthesisEnvelope.personalMemory = personalMemory;
     const currentPendingIds = pendingActions.map((action) => action.actionId);
     assertNoForbiddenExternalData(synthesisEnvelope, { pendingActionIds: currentPendingIds });
     roleCalls.synthesis += 1;

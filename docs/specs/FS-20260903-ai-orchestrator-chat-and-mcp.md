@@ -253,7 +253,8 @@ endpoint.
 
 Rules:
 
-- Memory is personal by default.
+- Memory is personal and scoped to the current user and team. All team members can manage their own
+  memory in AI settings; team controls remain admin-only.
 - A memory is at most 500 characters.
 - A user can store at most 50 memories and 8,000 total characters.
 - Store memory with the same encrypted-field utility used for other private values.
@@ -261,7 +262,8 @@ Rules:
 - Include memory only when the existing external AI context policy permits it.
 - Do not expose memory through the Chartbrew MCP server in version 1.
 
-AI settings has a **Memory** section. The user can list, edit, delete, and delete all memory. Each item
+AI settings has a **Memory** section. The user can add, list, edit, delete, and delete all memory. Edit
+and delete use colored icon-only buttons. Each item
 shows its text and last update time. Destructive actions use the current confirmation pattern. Deletion
 affects the next Ask turn.
 
@@ -586,6 +588,18 @@ See [PostHog's setup and authentication documentation](https://posthog.com/docs/
 - Add `/remember` command handling.
 - Add encrypted personal memory CRUD.
 - Add the AI settings section and external context policy check.
+
+Implemented: `/remember` works in Home, saved conversations, and temporary sessions without a model
+call. Settings lists personal memories with add, edit, delete, and delete-all controls. Per-member database
+locks enforce the count and text limits. Memory changes use the existing audit log without retaining
+the memory text there. Apply migration `20260906120000-create-ai-memory.js` with
+`cd server && npm run db:migrate`.
+
+The existing **Allow feedback and memory with external AI** platform setting controls memory use.
+When it is off, memory stays available to its owner in settings but is not added to external requests.
+Memory is read again for each Ask turn, placed in untrusted user context, and excluded from stored
+model context. Historical `/remember` command text is redacted during replay so edits and deletion
+take effect on the next turn. Original chat messages remain visible in conversation history.
 
 ### Phase 6: Chartbrew MCP server
 

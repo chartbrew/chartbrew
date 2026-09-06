@@ -1,6 +1,17 @@
 import { API_HOST } from "../config/settings";
 import { getAuthToken } from "../modules/auth";
 
+export async function requestAiMemory(teamId, { method = "GET", id, text } = {}) {
+  const response = await fetch(`${API_HOST}/ai/memory${id ? `/${encodeURIComponent(id)}` : ""}?teamId=${teamId}`, {
+    method,
+    headers: { "Authorization": `Bearer ${getAuthToken()}`, "Content-Type": "application/json" },
+    ...(["POST", "PATCH"].includes(method) ? { body: JSON.stringify({ teamId, text }) } : {}),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Could not update memory. Try again.");
+  return data;
+}
+
 export async function getAiAvailability(teamId) {
   const token = getAuthToken();
   const params = new URLSearchParams({ teamId: String(teamId) });

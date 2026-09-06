@@ -15,6 +15,7 @@ import PlatformSettings from "./PlatformSettings";
 import BusinessProfileSettings from "./BusinessProfileSettings";
 import TeamMembers from "./TeamMembers";
 import TeamAiSettings from "./TeamAiSettings";
+import AiMemorySettings from "./AiMemorySettings";
 
 function SettingsPage({ children, title, wide = false }) {
   return (
@@ -106,11 +107,12 @@ function ManageTeam() {
       />
       <Route
         path="team/ai"
-        element={canManageTeam ? (
+        element={(
           <SettingsPage title="AI settings">
-            <TeamAiSettings />
+            {canManageTeam && <TeamAiSettings />}
+            <AiMemorySettings key={`${team.id}:${user.id}`} />
           </SettingsPage>
-        ) : <Navigate replace to="/settings/profile" />}
+        )}
       />
       <Route
         path="team/api-keys"

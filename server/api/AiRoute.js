@@ -2,6 +2,7 @@ const rateLimit = require("express-rate-limit");
 
 const db = require("../models/models");
 const connectionSetup = require("../modules/ai/connectionSetup");
+const memory = require("../modules/ai/memory");
 const {
   getOrchestration,
   placeChartPreview,
@@ -119,7 +120,8 @@ module.exports = (app) => {
       return res.status(400).json({ error: "teamId and user ID are required" });
     }
     const localRoute = routeWorkspaceRequest({ action, message });
-    const canUseLocalWorkspaceRoute = ["executor", "fast_path"].includes(localRoute?.mode)
+    const canUseLocalWorkspaceRoute = memory.isRememberCommand(message)
+      || ["executor", "fast_path"].includes(localRoute?.mode)
       || localRoute?.intent === "workspace_follow_up"
       || Boolean(getRoleBoundaryMessage(req.aiTeamRole.role, message));
     if (getWorkspaceOrchestratorPolicy().enabled
@@ -220,7 +222,8 @@ module.exports = (app) => {
     }
 
     const localRoute = routeWorkspaceRequest({ message: question });
-    const canUseLocalWorkspaceRoute = localRoute?.mode === "fast_path"
+    const canUseLocalWorkspaceRoute = memory.isRememberCommand(question)
+      || localRoute?.mode === "fast_path"
       || localRoute?.intent === "workspace_follow_up"
       || Boolean(getRoleBoundaryMessage(req.aiTeamRole.role, question));
     if (getWorkspaceOrchestratorPolicy().enabled
@@ -238,6 +241,44 @@ module.exports = (app) => {
       return sendAiError(res, error);
     }
   });
+
+  app.route("/ai/memory")
+    .all(apiLimiter(60), verifyToken, checkAccess)
+    .get(async (req, res) => {
+      try {
+        return res.json({
+          memories: await memory.listMemories(req.query.teamId, req.user.id),
+          sharingEnabled: req.aiTeamEnabled && getWorkspaceOrchestratorPolicy().enabled
+            && getWorkspaceOrchestratorPolicy().externalLearningContextEnabled,
+        });
+      } catch (error) { return sendAiError(res, error); }
+    })
+    .post(async (req, res) => {
+      try {
+        const result = await memory.changeMemory({ teamId: req.body.teamId, userId: req.user.id, text: req.body.text });
+        return res.status(201).json({ memory: result });
+      } catch (error) { return sendAiError(res, error); }
+    })
+    .delete(async (req, res) => {
+      try {
+        await memory.changeMemory({ teamId: req.query.teamId, userId: req.user.id, remove: true });
+        return res.json({ success: true });
+      } catch (error) { return sendAiError(res, error); }
+    });
+  app.route("/ai/memory/:memoryId")
+    .all(apiLimiter(60), verifyToken, checkAccess)
+    .patch(async (req, res) => {
+      try {
+        const result = await memory.changeMemory({ teamId: req.body.teamId, userId: req.user.id, id: req.params.memoryId, text: req.body.text });
+        return res.json({ memory: result });
+      } catch (error) { return sendAiError(res, error); }
+    })
+    .delete(async (req, res) => {
+      try {
+        await memory.changeMemory({ teamId: req.query.teamId, userId: req.user.id, id: req.params.memoryId, remove: true });
+        return res.json({ success: true });
+      } catch (error) { return sendAiError(res, error); }
+    });
 
   // Get available tools
   app.get("/ai/tools", apiLimiter(10), verifyToken, checkAccess, checkAdminAccess, async (req, res) => {

@@ -3,6 +3,9 @@ const ACTION_LABELS = {
   "kpi_review.update": "Updated a KPI review",
   "metric_monitor.create": "Created a watched metric",
   "metric_monitor.update": "Updated a watched metric",
+  "memory.create": "Saved a personal memory",
+  "memory.update": "Updated a personal memory",
+  "memory.delete": "Deleted personal memory",
 };
 
 const FIELD_LABELS = {
@@ -28,6 +31,7 @@ const SECTION_LABELS = {
   datasets: "dataset details",
   kpiReviews: "KPI reviews",
   learning: "feedback and corrections",
+  memory: "personal memory",
   recommendations: "metric suggestions",
   watches: "watched metrics",
 };

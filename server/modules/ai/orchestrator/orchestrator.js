@@ -15,6 +15,7 @@
 const OpenAI = require("openai");
 const { Op } = require("sequelize");
 const db = require("../../../models/models");
+const { MEMORY_INSTRUCTIONS, getMemoryContext, redactMemoryCommand } = require("../memory");
 const socketManager = require("../../socketManager");
 const { sanitizeSnippet } = require("../../updateAudit");
 const { buildContextManifest } = require("../../workspaceContext/contextManifest");
@@ -2327,7 +2328,7 @@ async function orchestrate(
 
   // Sanitize conversation history to ensure OpenAI API compliance
   // This removes any assistant messages with tool_calls that don't have complete tool responses
-  const sanitizedHistory = sanitizeConversationHistory(conversationHistory);
+  const sanitizedHistory = sanitizeConversationHistory(conversationHistory.map(redactMemoryCommand));
 
   // Emit initial processing event
   if (conversation?.id) {
@@ -2391,12 +2392,15 @@ async function orchestrate(
       "Never invent a metric value. State when the available evidence cannot answer the question.",
     ].join(" ")
     : buildSystemPrompt(semanticLayer, conversation);
-  const systemPrompt = Array.isArray(allowedToolNames)
+  const scopedSystemPrompt = Array.isArray(allowedToolNames)
     ? `${baseSystemPrompt}\n\n## Authorized capability scope\nOnly use these tools for this user: ${allowedToolNames.join(", ")}. Do not describe or propose unavailable connection, schema, query-generation, or creation actions.`
     : baseSystemPrompt;
+  const systemPrompt = `${scopedSystemPrompt}\n\n${MEMORY_INSTRUCTIONS}`;
   const modelName = openAiModel || "gpt-5.4-nano";
   const persistedMessages = [...sanitizedHistory];
   const modelMessages = sanitizedHistory.filter((message) => message.role !== "system");
+  const personalMemory = await getMemoryContext(teamId, userId);
+  if (personalMemory) modelMessages.push({ role: "user", content: JSON.stringify({ personalMemory }) });
 
   if (aiAccessMode === AI_ACCESS_MODES.FULL && semanticLayer.projects.length > 0) {
     modelMessages.push({
@@ -2463,6 +2467,7 @@ async function orchestrate(
   const manifestContext = {
     connections: semanticLayer.connections.map(() => null),
     dashboards: semanticLayer.projects.map(() => null),
+    ...(personalMemory ? { memory: personalMemory.map(() => null) } : {}),
   };
   const manifestProjectIds = semanticLayer.projects.map((project) => project.id);
   let serverToolCallCount = 0;
@@ -2803,6 +2808,7 @@ async function orchestrateWorkspaceSplit({ access, history, options, question })
     client: openaiClient,
     history,
     options,
+    personalMemory: await getMemoryContext(access.teamId, access.userId),
     question,
     toolRunner: callTool,
   });

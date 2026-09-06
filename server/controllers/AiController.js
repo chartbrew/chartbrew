@@ -16,6 +16,7 @@ const {
 } = require("../modules/ai/orchestrator/runtime/deterministicRouter");
 const { getAiRoleScope } = require("../modules/ai/orchestrator/rolePolicy");
 const db = require("../models/models");
+const { runMemoryCommand, redactMemoryCommand } = require("../modules/ai/memory");
 const runtimeCache = require("../modules/runtimeCache");
 const socketManager = require("../modules/socketManager");
 const {
@@ -330,7 +331,7 @@ async function getOrchestration(
     if (msg.tool_calls) messageObj.tool_calls = msg.tool_calls;
     if (msg.tool_name) messageObj.name = msg.tool_name;
     if (msg.tool_call_id) messageObj.tool_call_id = msg.tool_call_id;
-    return messageObj;
+    return redactMemoryCommand(messageObj);
   });
 
   if (Array.isArray(context)) {
@@ -343,7 +344,8 @@ async function getOrchestration(
   });
 
   try {
-    const roleBoundary = await runDeterministicWorkspaceRequest({
+    const memoryResult = await runMemoryCommand({ question, teamId, userId, history: fullHistory });
+    const roleBoundary = memoryResult || await runDeterministicWorkspaceRequest({
       access,
       history: fullHistory,
       question,
@@ -918,7 +920,10 @@ async function respond({
     userId,
     getAiSessionBinding("session", resolvedSessionId)
   );
-  const roleBoundary = await runDeterministicWorkspaceRequest({
+  const memoryResult = await runMemoryCommand({
+    question: `${message}`.trim(), teamId, userId, history: existingSession?.history || [],
+  });
+  const roleBoundary = memoryResult || await runDeterministicWorkspaceRequest({
     access,
     history: existingSession?.history || [],
     question: `${message}`.trim(),

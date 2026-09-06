@@ -155,7 +155,7 @@ function SettingsSidebar() {
           className="flex gap-1 overflow-x-auto p-2 mt-2 md:flex-1 md:flex-col md:gap-4 md:overflow-y-auto md:px-3 md:py-2"
         >
           <SettingsGroup items={ACCOUNT_ITEMS} label="Account" />
-          {canManageTeam ? <SettingsGroup items={TEAM_ITEMS} label="Team" /> : null}
+          <SettingsGroup items={canManageTeam ? TEAM_ITEMS : TEAM_ITEMS.filter((item) => item.path === "/settings/team/ai")} label="Team" />
           {user.admin === true ? <SettingsGroup items={PLATFORM_ITEMS} label="Platform" /> : null}
         </nav>
       </div>
