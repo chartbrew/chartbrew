@@ -185,6 +185,11 @@ For a native source, show a **Set up connection** action. For a verified MCP pro
 connection card with **Connect with OAuth**. Only create the inactive connection when the user presses
 the action. Activate it after OAuth callback validation and successful MCP discovery.
 
+In the MCP connection form, selecting OAuth changes the new connection's main action to **Save and
+connect**. This action saves the inactive connection and starts OAuth without a second click. If OAuth
+cannot start, keep the saved connection available for retry. Existing connections keep a separate
+reconnect action. Chat must reuse this save-then-start sequence and the existing source OAuth action.
+
 The OAuth state includes a signed conversation reference. After OAuth, return the user to the same
 conversation. The connection card changes to Connected and offers **Continue request**. Do not send a
 new model request without a user action.
@@ -494,6 +499,7 @@ or work-step tables.
 
 - Extend `list_connections` with connection setup options.
 - Add native and verified MCP setup results.
+- Reuse the MCP form's combined save-and-connect flow for chat OAuth setup.
 - Add OAuth return to the saved conversation.
 - Add role and approval handling.
 
@@ -558,6 +564,8 @@ Do not start the next phase until the current phase tests pass. Each phase can m
 - Installed native source wins over an MCP suggestion when both support the provider.
 - Only verified MCP endpoints can produce the OAuth action.
 - Pressing OAuth creates an inactive connection.
+- Saving a new MCP connection with OAuth starts sign-in without another click.
+- A failed save must not start OAuth; a failed OAuth start must allow retry on the saved connection.
 - Failed or abandoned OAuth does not leave an active connection.
 - OAuth returns to the same saved conversation.
 - A non-admin cannot approve an MCP tool.

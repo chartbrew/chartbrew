@@ -39,6 +39,7 @@ import {
   testSavedConnection,
 } from "../../slices/connection";
 import { selectTeam } from "../../slices/team";
+import { saveAndStartMcpOAuth } from "./mcp-oauth";
 
 const AUTH_OPTIONS = [
   { id: "none", label: "No authentication" },
@@ -482,6 +483,8 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
   };
 
   const onSave = async () => {
+    if (saveLoading || oauthLoading) return false;
+    if (authenticationType === "oauth" && !editConnection?.id) return onStartOAuth();
     if (!validate()) return false;
     setSaveLoading(true);
     try {
@@ -492,18 +495,20 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
   };
 
   const onStartOAuth = async () => {
-    if (!editConnection?.id || !validate()) return;
+    if (saveLoading || oauthLoading || !validate()) return;
     setOauthLoading(true);
     try {
-      const saved = await onComplete(buildConnection({ includeApprovals: !editConnection?.id }));
-      if (!saved) return;
-      const action = await dispatch(runSourceAction({
-        team_id: team.id,
-        connection_id: editConnection.id,
-        action: "startOAuth",
-      }));
-      if (action.payload?.url) window.location.assign(action.payload.url);
-      else setErrors({ oauth: action.payload?.error || "OAuth could not start." });
+      const url = await saveAndStartMcpOAuth({
+        save: () => onComplete(buildConnection({ includeApprovals: !editConnection?.id })),
+        startOAuth: async (connectionId) => dispatch(runSourceAction({
+          team_id: team.id,
+          connection_id: connectionId,
+          action: "startOAuth",
+        })).unwrap(),
+      });
+      window.location.assign(url);
+    } catch (error) {
+      setErrors({ oauth: error.message || "OAuth could not start. Try again." });
     } finally {
       setOauthLoading(false);
     }
@@ -745,13 +750,11 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
           {authenticationType === "oauth" && (
             <div className="flex flex-wrap items-center gap-3">
               {editConnection?.id ? (
-                <Button variant="outline" isPending={oauthLoading} onPress={onStartOAuth}>
+                <Button variant="outline" isDisabled={saveLoading} isPending={oauthLoading} onPress={onStartOAuth}>
                   {oauthLoading ? <ButtonSpinner /> : null}
                   {editConnection?.authentication?.hasToken ? "Reconnect OAuth" : "Connect with OAuth"}
                 </Button>
-              ) : (
-                <p className="text-sm text-muted">Save this connection, then connect with OAuth.</p>
-              )}
+              ) : null}
               {editConnection?.authentication?.hasToken && (
                 <div className="flex flex-row items-center gap-1 text-success">
                   <LuCircleCheck size={16} />
@@ -767,15 +770,16 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
             <Button
               variant="tertiary"
               isPending={testLoading}
-              isDisabled={authenticationType === "oauth" && !editConnection?.authentication?.hasToken}
+              isDisabled={saveLoading || oauthLoading
+                || authenticationType === "oauth" && !editConnection?.authentication?.hasToken}
               onPress={onTest}
             >
               {testLoading ? <ButtonSpinner /> : <LuRefreshCw />}
               Test and load tools
             </Button>
-            <Button variant="primary" isPending={saveLoading} onPress={onSave}>
-              {saveLoading && <ButtonSpinner />}
-              Save connection
+            <Button variant="primary" isPending={saveLoading || oauthLoading} onPress={onSave}>
+              {(saveLoading || oauthLoading) && <ButtonSpinner />}
+              {authenticationType === "oauth" && !editConnection?.id ? "Save and connect" : "Save connection"}
             </Button>
           </div>
           {testResult && (
