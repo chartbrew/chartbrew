@@ -16,6 +16,7 @@ function useAiChat({
   const user = useSelector(selectUser);
   const requestIdRef = useRef(0);
   const sessionIdRef = useRef(null);
+  const savePromiseRef = useRef(null);
   const [aiConversationId, setAiConversationId] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,7 +107,7 @@ function useAiChat({
         aiConversationId,
         context,
         message: question,
-        persistence,
+        persistence: aiConversationId ? "persistent" : persistence,
         sessionId: activeSessionId,
         teamId,
       });
@@ -121,6 +122,7 @@ function useAiChat({
         ...current,
         {
           chartPreviews: orchestration.chartPreviews || [],
+          connectionOptions: orchestration.connectionOptions || [],
           content: orchestration.message,
           pendingAction: orchestration.pendingAction,
           role: "assistant",
@@ -157,6 +159,7 @@ function useAiChat({
   ]);
 
   const clear = useCallback(() => {
+    savePromiseRef.current = null;
     requestIdRef.current += 1;
     if (sessionIdRef.current) {
       socketClient.leaveConversation(sessionIdRef.current);
@@ -187,7 +190,7 @@ function useAiChat({
           type: "confirm_pending_action",
         },
         aiConversationId,
-        persistence,
+        persistence: aiConversationId ? "persistent" : persistence,
         sessionId: activeSessionId,
         teamId,
       });
@@ -223,7 +226,7 @@ function useAiChat({
     const chartPreview = await placeAiChartPreview({
       action,
       aiConversationId,
-      persistence,
+      persistence: aiConversationId ? "persistent" : persistence,
       sessionId: sessionIdRef.current,
       teamId,
     });
@@ -245,14 +248,18 @@ function useAiChat({
   }, [sendMessage]);
 
   const save = useCallback(async () => {
+    if (aiConversationId) return { aiConversationId };
+    if (savePromiseRef.current) return savePromiseRef.current;
     if (!sessionId || !teamId) return null;
     try {
-      const result = await promoteAiSession(teamId, sessionId);
+      savePromiseRef.current = promoteAiSession(teamId, sessionId);
+      const result = await savePromiseRef.current;
       setAiConversationId(result.aiConversationId);
       setSessionId(null);
-      sessionIdRef.current = null;
+      sessionIdRef.current = result.aiConversationId;
       return result;
     } catch (saveError) {
+      savePromiseRef.current = null;
       setError(saveError.message);
       setMessages((current) => [
         ...current,
@@ -264,7 +271,7 @@ function useAiChat({
       ]);
       return null;
     }
-  }, [sessionId, teamId]);
+  }, [aiConversationId, sessionId, teamId]);
 
   return {
     aiConversationId,

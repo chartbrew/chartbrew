@@ -21,6 +21,8 @@ const {
 } = require("../../sources/plugins/mcp/mcp.policy");
 const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
 const mcpOauth = require("../../sources/plugins/mcp/mcp.oauth");
+const jwt = require("jsonwebtoken");
+const settings = require("../../settings-dev");
 const {
   applyVariables,
   applyVariablesToValue,
@@ -1120,6 +1122,28 @@ describe("MCP source integration contracts", () => {
       connection: { authentication: { type: "oauth" } },
       user: { isEditor: false },
     })).rejects.toMatchObject({ code: "MCP_ADMIN_REQUIRED", statusCode: 403 });
+  });
+
+  it("accepts only a current signed conversation return for this connection and team", () => {
+    const payload = { connectionId: 8, teamId: 4, conversationId: "saved-chat" };
+    const state = jwt.sign(payload, settings.secret, { audience: "mcp-chat-return", expiresIn: "30m" });
+    const connection = { id: 8, team_id: 4, authentication: { state } };
+    expect(mcpOauth.getReturnConversation({ connection, state })).toBe("saved-chat");
+    expect(mcpOauth.getReturnConversation({ connection, state: `${state}bad` })).toBeNull();
+    expect(mcpOauth.getReturnConversation({ connection: { ...connection, id: 9 }, state })).toBeNull();
+    expect(mcpOauth.getReturnConversation({ connection: { ...connection, team_id: 5 }, state })).toBeNull();
+    const expired = jwt.sign(payload, settings.secret, { audience: "mcp-chat-return", expiresIn: -1 });
+    expect(mcpOauth.getReturnConversation({ connection: { ...connection, authentication: { state: expired } }, state: expired })).toBeNull();
+  });
+
+  it("rejects an unavailable conversation before starting OAuth", async () => {
+    const find = vi.spyOn(db.AiConversation, "findOne").mockResolvedValue(null);
+    await expect(mcpOauth.startOAuth({
+      connection: { id: 8, team_id: 4, authentication: { type: "oauth" } },
+      user: { id: 3, isEditor: true }, params: { conversationId: "other-chat" },
+    })).rejects.toMatchObject({ code: "MCP_CHAT_UNAVAILABLE" });
+    expect(find).toHaveBeenCalledWith({ where: { id: "other-chat", team_id: 4, user_id: 3 } });
+    find.mockRestore();
   });
 
   it("requires an owner or admin to update tool approvals", async () => {

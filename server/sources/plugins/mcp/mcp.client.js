@@ -10,6 +10,7 @@ const {
   sanitizeMcpClientError,
 } = require("./mcp.policy");
 const { createMcpSafeFetch } = require("./mcp.safeFetch");
+const { getMcpEndpoint } = require("./mcp.toolSelection");
 
 function getAuthentication(connection) {
   return connection?.authentication && typeof connection.authentication === "object"
@@ -35,7 +36,9 @@ function getRequestHeaders(connection, authentication) {
 }
 
 async function createMcpClient(connection, context = {}) {
-  const endpoint = normalizeEndpoint(connection?.host);
+  const endpoint = getMcpEndpoint({
+    host: normalizeEndpoint(connection?.host), options: connection?.options, schema: connection?.schema,
+  }, context);
   const authentication = getAuthentication(connection);
   const safeFetch = createMcpSafeFetch({
     teamId: connection?.team_id || context.teamId,

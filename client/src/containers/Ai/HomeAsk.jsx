@@ -200,6 +200,8 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
           />
         )}
         messages={chat.messages}
+        conversationId={chat.aiConversationId}
+        onEnsureSaved={chat.save}
         onAtTyped={() => setIsContextPickerOpen(true)}
         onChangeAction={onChangeAction}
         onChartAction={onChartAction}

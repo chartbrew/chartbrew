@@ -3,10 +3,26 @@ import test from "node:test";
 
 import {
   getChartToolMessageInfo,
+  getOperationSummary,
   groupAiMessages,
   isProgressForConversation,
   normalizeProgressEvent,
 } from "./aiMessageUtils.js";
+
+test("summarizes connection checks for both live and saved conversations", () => {
+  assert.equal(getOperationSummary([{ name: "list_connections", status: "complete" }]), "Checked available connections");
+  assert.equal(getOperationSummary([{ name: "list_connections", type: "call" }]), "Checked available connections");
+});
+
+test("keeps connection card references when a saved conversation is grouped", () => {
+  const option = { name: "PostHog", provider_id: "posthog", state: "mcp_oauth_setup", connection_id: 8 };
+  const groups = groupAiMessages([
+    { role: "tool", name: "list_connections", content: JSON.stringify({ options: [option] }) },
+    { role: "assistant", content: "Connect your data source to continue." },
+  ]);
+  assert.equal(groups.length, 1);
+  assert.deepEqual(groups[0].items[0].parsed.content.options, [option]);
+});
 
 test("restores a temporary chart preview from saved tool history", () => {
   const parsed = getChartToolMessageInfo({

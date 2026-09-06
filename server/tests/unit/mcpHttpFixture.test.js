@@ -42,7 +42,7 @@ function jsonResponse(payload) {
   });
 }
 
-function createFixtureHandler({ legacy = false, paginate = false, auth = null } = {}) {
+function createFixtureHandler({ legacy = false, paginate = false, auth = null, largeCatalog = false } = {}) {
   const factory = () => {
     const server = new McpServer({
       name: "Chartbrew fixture",
@@ -87,6 +87,15 @@ function createFixtureHandler({ legacy = false, paginate = false, auth = null } 
       return new Response("Unauthorized", { status: 401 });
     }
     const body = request.method === "POST" ? await request.clone().json().catch(() => null) : null;
+    if (largeCatalog && body?.method === "tools/list") {
+      return jsonResponse({ jsonrpc: "2.0", id: body.id, result: {
+        resultType: "complete", ttlMs: 0, cacheScope: "private",
+        tools: Array.from({ length: 300 }, (_, id) => ({
+          name: id === 299 ? "visitor_countries" : `list_invoices_${id}`,
+          inputSchema: INPUT_SCHEMA, annotations: { readOnlyHint: true },
+        })),
+      } });
+    }
     if (legacy && body?.method === "server/discover") {
       return jsonResponse({
         jsonrpc: "2.0",
@@ -269,13 +278,30 @@ describe("MCP HTTP fixture", () => {
         subType: "mcp",
         host: fixture.endpoint,
         authentication: { type: "none" },
-        options: { mcp: {} },
+        options: { mcp: { toolQuery: "unrelated visitor question" } },
       };
       const discovery = await discoverMcpConnection(connection, { loadIcon: false });
       expect(discovery.tools.map((tool) => tool.name)).toEqual([
         "fixture_tool",
         "second_fixture_tool",
       ]);
+      expect(discovery.omittedToolCount).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
+  it("loads a useful subset from a large third-party server without auto-approval", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const fixture = await startFixture({ largeCatalog: true });
+    try {
+      const discovery = await discoverMcpConnection({
+        host: fixture.endpoint, authentication: { type: "none" },
+        options: { mcp: { toolQuery: "visitor countries" } },
+      }, { loadIcon: false });
+      expect(discovery.tools.map((tool) => tool.name)).toEqual(["visitor_countries"]);
+      expect(discovery.omittedToolCount).toBe(299);
+      expect(discovery.allowedTools).toEqual({});
     } finally {
       await fixture.close();
     }

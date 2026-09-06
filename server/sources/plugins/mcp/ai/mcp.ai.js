@@ -4,6 +4,7 @@ const db = require("../../../../models/models");
 const { withMcpClient } = require("../mcp.client");
 const { MCP_LIMITS } = require("../mcp.constants");
 const { isToolReadOnly, trimText } = require("../mcp.policy");
+const { scoreTool } = require("../mcp.toolSelection");
 const mcpProtocol = require("../mcp.protocol");
 
 const openAiKey = process.env.NODE_ENV === "production"
@@ -146,29 +147,6 @@ function listResources({ connection, query, names, question } = {}) {
     total: tools.length,
     truncated: index.length > CATALOG_INDEX_LIMIT,
     resources: index.slice(0, CATALOG_INDEX_LIMIT).map(summarizeTool),
-  };
-}
-
-function tokenize(value) {
-  return new Set(String(value || "").toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length > 2));
-}
-
-function scoreTool(tool, question) {
-  const query = String(question || "").trim().toLowerCase();
-  const haystack = `${tool.name} ${tool.title || ""} ${tool.description || ""}`.toLowerCase();
-  const questionTokens = tokenize(question);
-  const nameTokens = tokenize(`${tool.name} ${tool.title || ""}`);
-  const descriptionTokens = tokenize(tool.description || "");
-  let descriptionScore = 0;
-  let nameScore = 0;
-  questionTokens.forEach((token) => {
-    if (nameTokens.has(token)) nameScore += 1;
-    if (descriptionTokens.has(token)) descriptionScore += 1;
-  });
-  const phraseScore = query && haystack.includes(query) ? 8 : 0;
-  return {
-    score: (nameScore * 4) + descriptionScore + phraseScore,
-    strongMatch: nameScore > 0,
   };
 }
 

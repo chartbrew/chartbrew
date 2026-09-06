@@ -66,6 +66,8 @@ function ObservationInvestigation({ observationId, teamId }) {
         id={`observation-${observationId}-ask`}
         isLoading={chat.isLoading}
         messages={chat.messages}
+        conversationId={chat.aiConversationId}
+        onEnsureSaved={chat.save}
         onChangeAction={onChangeAction}
         onChartAction={onChartAction}
         onConfirmAction={onConfirmAction}

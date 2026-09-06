@@ -12,6 +12,7 @@ const {
   attachContextManifest,
   collectRecentSourceContext,
   getChartPreviewsFromToolResults,
+  getConnectionOptionsFromToolResults,
   getWorkSummaryFromMessages,
   getConnectionInspectionToolChoice,
   getVisualizationToolChoice,
@@ -21,6 +22,15 @@ const {
   buildSelectedContextMessage,
   availableTools,
 } = require("../../modules/ai/orchestrator/orchestrator");
+
+it("returns connection cards from tool results without claiming setup is complete", () => {
+  const option = { state: "mcp_oauth_setup", provider_id: "posthog", name: "PostHog" };
+  const toolResults = [{ name: "list_connections", content: JSON.stringify({ options: [option] }) }];
+  expect(getConnectionOptionsFromToolResults(toolResults)).toEqual([option]);
+  expect(getConnectionOptionsFromToolResults([...toolResults, ...toolResults])).toEqual([option]);
+  expect(buildFallbackAssistantMessage({ toolResults })).toContain("I cannot access the requested data from PostHog yet.");
+  expect(buildFallbackAssistantMessage({ toolResults })).toContain("setup or approval");
+});
 
 describe("orchestrator Responses API adapters", () => {
   it("converts stored chat-style history into Responses API input items", () => {
@@ -208,6 +218,14 @@ describe("orchestrator Responses API adapters", () => {
     })).toBe("auto");
   });
 
+  it("allows an explanation when connection setup blocks chart creation", () => {
+    for (const state of ["native_setup", "mcp_oauth_setup", "manual_mcp_setup", "admin_required", "unsupported"]) {
+      expect(getVisualizationToolChoice({ required: true, connectionOptions: [{ state }] })).toBe("auto");
+    }
+    expect(getVisualizationToolChoice({ required: true, connectionOptions: [{ state: "connected" }] })).toBe("required");
+    expect(getVisualizationToolChoice({ required: true, connectionOptions: [{ state: "connected", needs_approval: true }] })).toBe("auto");
+  });
+
   it("returns bounded chart references for authenticated preview loading", () => {
     const previews = getChartPreviewsFromToolResults([{
       name: "create_temporary_chart",
@@ -267,6 +285,17 @@ describe("orchestrator Responses API adapters", () => {
     }]);
     expect(JSON.stringify(summary)).not.toContain("secret");
     expect(JSON.stringify(summary)).not.toContain("email");
+  });
+
+  it("reports only executed work from the current turn", () => {
+    const call = (id) => ({ role: "assistant", tool_calls: [{ id, function: { name: "list_connections" } }] });
+    const result = (id, content) => ({ role: "tool", tool_call_id: id, content: JSON.stringify(content) });
+    expect(getWorkSummaryFromMessages([
+      call("old"), result("old", { error: "Unavailable" }),
+      { role: "user", content: "Check again" },
+      call("new"), result("new", { connections: [], options: [{ state: "mcp_oauth_setup" }] }),
+      call("not_executed"),
+    ])).toEqual([{ name: "list_connections", status: "complete" }]);
   });
 
   it("builds a fallback dashboard creation message with a dashboard link", () => {
@@ -488,6 +517,8 @@ describe("orchestrator Responses API adapters", () => {
   });
 
   it("forces connection inspection when the user names a saved provider", () => {
+    expect(getConnectionInspectionToolChoice("I added the connection for Google Analytics. Check connections again and continue my original request.", []))
+      .toEqual({ type: "function", name: "list_connections" });
     expect(getConnectionInspectionToolChoice(
       "Check PostHog for visitors",
       [{ name: "PostHog MCP", type: "mcp" }]

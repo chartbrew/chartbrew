@@ -39,7 +39,7 @@ export function getToolDisplayName(toolName, displayNames = {}) {
 
 export function getOperationSummary(operations, displayNames = {}) {
   const calledTools = operations
-    .filter((operation) => operation.type === "call")
+    .filter((operation) => operation.type === "call" || operation.status)
     .map((operation) => operation.name);
   const uniqueTools = Array.from(new Set(calledTools));
   const visibleTools = uniqueTools.slice(0, 3).map((toolName) => getToolDisplayName(toolName, displayNames));

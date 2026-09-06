@@ -182,7 +182,7 @@ If the request needs a provider with no usable connection, Ask resolves the next
 5. A clear unsupported result.
 
 For a native source, show a **Set up connection** action. For a verified MCP provider, show a compact
-connection card with **Connect with OAuth**. Only create the inactive connection when the user presses
+connection card with **Connect [provider]**. Only create the inactive connection when the user presses
 the action. Activate it after OAuth callback validation and successful MCP discovery.
 
 In the MCP connection form, selecting OAuth changes the new connection's main action to **Save and
@@ -190,9 +190,23 @@ connect**. This action saves the inactive connection and starts OAuth without a 
 cannot start, keep the saved connection available for retry. Existing connections keep a separate
 reconnect action. Chat must reuse this save-then-start sequence and the existing source OAuth action.
 
-The OAuth state includes a signed conversation reference. After OAuth, return the user to the same
-conversation. The connection card changes to Connected and offers **Continue request**. Do not send a
-new model request without a user action.
+The OAuth state includes a signed conversation reference. After OAuth, open the connection page for
+tool approval and keep the chat closed. Keep the conversation and team IDs in the route query for a
+later conversation bubble. Do not build that bubble or send a new model request in this phase.
+
+Show the full discovered tool list when it contains 250 tools or fewer, regardless of Tool focus.
+Only larger lists use matching against the saved user question plus basic schema, documentation,
+and query helpers. Check the actual list during each bounded discovery; do not pre-filter discovery
+using a fixed provider shortlist. For later calls, documented provider URL filters can use the
+selected tool names. Keep explicit user URL filters unchanged. Keep existing approved tools, do not
+auto-approve new tools, and keep response, schema, page, and catalog byte limits. A large tool count
+alone must not fail setup. Show Tool focus only when tools were omitted; users can change it and
+save to reload the selection.
+Render 10 tools per page in the connection form. Search and hint filters apply to the full discovered
+list before pagination and return to page 1 when changed. Keep approvals when switching pages.
+Use one **Allow access** toggle per tool to enable or disable both Ask and Datasets together. Save
+approval changes under a connection row lock so concurrent changes cannot overwrite each other.
+Preserve older limited approvals until the user changes them; do not silently expand access.
 
 Owners and admins can approve MCP tools for Ask. Other roles see **Ask an admin** when approval is
 required. The model cannot approve a tool.
@@ -497,11 +511,27 @@ or work-step tables.
 
 ### Phase 4: connection setup
 
-- Extend `list_connections` with connection setup options.
-- Add native and verified MCP setup results.
-- Reuse the MCP form's combined save-and-connect flow for chat OAuth setup.
-- Add OAuth return to the saved conversation.
-- Add role and approval handling.
+- [x] Extend `list_connections` with connection setup options, provider matching, and capability filtering.
+- [x] Add server-side native and verified MCP setup results. The first catalog entry is PostHog.
+- [x] Render setup results in both chat surfaces as separate connection cards, not quick replies.
+- [x] Match chart previews with a gray outer frame and an inner surface. Use source logos and explain which service connects to Chartbrew, whether it uses MCP, and what happens next. Keep primary link-button text readable.
+- [x] Explain missing access before setup cards and stop requiring chart tools while setup is needed. Work summaries include only completed tool calls from the current turn, with failures kept visible.
+- [x] Reuse the MCP form's combined save-and-connect flow for chat OAuth setup.
+- [x] Return OAuth to the connection page for tool approval, with the saved conversation reference in the URL and chat closed.
+- [x] Complete role and approval handling in the setup cards. Lookup restricts connection
+  details to team owners/admins and excludes inactive or unapproved MCP connections from ready results.
+
+The connection card saves an unsaved chat, creates an inactive connection, and starts OAuth without a
+model request. Repeated clicks reuse the conversation's connection. OAuth opens the connection page
+for tool approval. The chat stays saved and closed. Opening the chat later refreshes its connection
+card; only the user can choose Continue request.
+Native and manual setup also open the existing form in a new tab, so the chat stays available.
+After the user opens setup, show a secondary **I added the connection** button on the card. It sends
+a normal chat message that makes the agent check connections again before continuing the original
+request. The button does not grant permissions or mark the connection as ready.
+The existing MCP form still provides save-and-connect. PostHog setup uses its documented individual-tool
+mode and read-only filter; these do not replace Chartbrew's own tool approval checks.
+See [PostHog's setup and authentication documentation](https://posthog.com/docs/model-context-protocol/faq).
 
 ### Phase 5: explicit memory
 
@@ -567,7 +597,8 @@ Do not start the next phase until the current phase tests pass. Each phase can m
 - Saving a new MCP connection with OAuth starts sign-in without another click.
 - A failed save must not start OAuth; a failed OAuth start must allow retry on the saved connection.
 - Failed or abandoned OAuth does not leave an active connection.
-- OAuth returns to the same saved conversation.
+- OAuth opens the connection page and retains the signed conversation reference without opening chat.
+- Large catalogs select relevant tools and basic helpers without granting permissions or dropping approved tools.
 - A non-admin cannot approve an MCP tool.
 
 ### Memory

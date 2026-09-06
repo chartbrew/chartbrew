@@ -95,6 +95,7 @@ function Main(props) {
   const feedbackModal = useSelector(selectFeedbackModalOpen);
   const aiModalOpen = useSelector(selectAiModalOpen);
   const teamsRef = useRef(null);
+  const oauthReturnRef = useRef(null);
 
   const { isDark } = useTheme();
   const location = useLocation();
@@ -171,7 +172,8 @@ function Main(props) {
 
       if (selectedTeam) {
         dispatch(saveActiveTeam(selectedTeam));
-        if (shouldResumeOnboarding(selectedTeam, user.id) && location.pathname !== "/start") {
+        if (shouldResumeOnboarding(selectedTeam, user.id) && location.pathname !== "/start"
+          && !new URLSearchParams(location.search).has("aiConversationId")) {
           navigate(`/start?team=${selectedTeam.id}`, { replace: true });
           return;
         }
@@ -180,6 +182,20 @@ function Main(props) {
       }
     }
   }, [teams]);
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const conversationId = query.get("aiConversationId");
+    const returnTeam = teams?.find((item) => String(item.id) === query.get("aiTeamId"));
+    if (!conversationId || !returnTeam || !user?.id) return;
+    const returnKey = `${user.id}:${location.pathname}${location.search}`;
+    if (oauthReturnRef.current === returnKey) return;
+    oauthReturnRef.current = returnKey;
+    if (String(team?.id) !== String(returnTeam.id)) {
+      dispatch(saveActiveTeam(returnTeam));
+    }
+    dispatch(hideAiModal());
+  }, [dispatch, location.pathname, location.search, team?.id, teams, user?.id]);
 
   return (
     <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>

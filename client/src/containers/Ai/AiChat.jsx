@@ -9,6 +9,7 @@ import { useDispatch } from "react-redux";
 import { getChart } from "../../slices/chart";
 import AiComposer from "./AiComposer";
 import AiChartPreview from "./AiChartPreview";
+import AiConnectionCard from "./AiConnectionCard";
 import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiProgress from "./AiProgress";
 import AiToolOperations from "./AiToolOperations";
@@ -34,6 +35,8 @@ function AiChat({
   isLoading,
   messages,
   onSave,
+  onEnsureSaved,
+  conversationId,
   onChangeAction,
   onChartAction,
   onConfirmAction,
@@ -129,7 +132,7 @@ function AiChat({
                 );
               }
               const parsed = parseAiMessage(message);
-              const suggestionActions = parsed.type === "message_with_suggestions" ? (
+              const suggestionActions = parsed.type === "message_with_suggestions" && !message.connectionOptions?.length ? (
                 <div className="mt-3 flex flex-row flex-wrap gap-2">
                   {parsed.suggestions.map((suggestion) => (
                     <Button
@@ -183,6 +186,17 @@ function AiChat({
                     content={parsed.content || "I need a little more information to answer that."}
                     isError={message.isError}
                   />
+                  {(message.connectionOptions || []).map((option) => (
+                    <AiConnectionCard
+                      key={option.provider_id || option.connection_id || option.source_id || option.name}
+                      option={option}
+                      teamId={teamId}
+                      conversationId={conversationId}
+                      onEnsureSaved={onEnsureSaved}
+                      onContinue={onSubmit}
+                      isLoading={isLoading}
+                    />
+                  ))}
                   {(message.chartPreviews || []).map((preview) => {
                     const chartState = chartStates[getChartPreviewKey(preview)] || {};
                     return (
@@ -260,6 +274,8 @@ AiChat.propTypes = {
     workSummary: PropTypes.arrayOf(PropTypes.object),
   })).isRequired,
   onSave: PropTypes.func,
+  onEnsureSaved: PropTypes.func,
+  conversationId: PropTypes.string,
   onChangeAction: PropTypes.func.isRequired,
   onChartAction: PropTypes.func,
   onConfirmAction: PropTypes.func.isRequired,

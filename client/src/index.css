@@ -4,11 +4,11 @@ body {
   /* background-color: #F1F5F9; */
 }
 
-a {
+a:not(.button) {
   color: #048BDE;
 }
 
-a:hover {
+a:not(.button):hover {
   color: #cf6b4e;
 }
 

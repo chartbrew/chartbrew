@@ -1157,9 +1157,11 @@ function AiModal({ isOpen, onClose }) {
                                 onChartAction={_onChartAction}
                                 onConfirmAction={_onConfirmPendingAction}
                                 onSuggestionClick={_onSuggestionClick}
+                                onContinue={_onAskAi}
                                 isLoading={isLoading}
                                 selectedContext={selectedContext}
                                 teamId={team.id}
+                                conversationId={conversation.id}
                               />
                             ))}
                             {pendingActions.map((pendingAction) => (

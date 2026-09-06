@@ -2,6 +2,7 @@ const net = require("net");
 
 const { MCP_LIMITS } = require("./mcp.constants");
 const { withMcpClient } = require("./mcp.client");
+const { selectTools } = require("./mcp.toolSelection");
 const {
   createMcpError,
   fingerprint,
@@ -318,14 +319,11 @@ async function discoverMcpConnection(connection, options = {}) {
   return withMcpClient(connection, async (client, session) => {
     const listResult = await client.listTools(undefined, { cacheMode: "refresh" });
     const rawTools = Array.isArray(listResult?.tools) ? listResult.tools : [];
-    if (rawTools.length > MCP_LIMITS.maxTools) {
-      throw createMcpError(
-        "MCP_TOO_MANY_TOOLS",
-        `This MCP server exposes more than ${MCP_LIMITS.maxTools} tools.`
-      );
-    }
-
-    const tools = rawTools.map(sanitizeTool).sort((a, b) => a.name.localeCompare(b.name));
+    const requestedApprovals = options.allowedTools || connection?.schema?.mcp?.allowedTools || {};
+    const tools = selectTools(rawTools, {
+      question: connection.options?.mcp?.toolQuery,
+      allowedTools: requestedApprovals,
+    }).map(sanitizeTool).sort((a, b) => a.name.localeCompare(b.name));
     const resources = await listContextResources(client);
     const protocolEra = client.getProtocolEra() || "legacy";
     const serverInfo = client.getServerVersion() || {};
@@ -346,6 +344,7 @@ async function discoverMcpConnection(connection, options = {}) {
       instructions: trimText(client.getInstructions(), 4000),
       resources,
       tools,
+      omittedToolCount: rawTools.length - tools.length,
       catalogCache: getCatalogCache(listResult, protocolEra),
       discoveredAt: new Date().toISOString(),
     };
@@ -366,9 +365,6 @@ async function discoverMcpConnection(connection, options = {}) {
       throw createMcpError("MCP_CATALOG_TOO_LARGE", "The MCP tool catalog is too large to save.");
     }
 
-    const requestedApprovals = options.allowedTools
-      || connection?.schema?.mcp?.allowedTools
-      || {};
     const approvalReview = getApprovalReview(tools, requestedApprovals);
     return {
       ...discovery,
@@ -376,7 +372,7 @@ async function discoverMcpConnection(connection, options = {}) {
       reviewRequired: approvalReview.changedTools,
       removedTools: approvalReview.removedTools,
     };
-  });
+  }, { discoverTools: true });
 }
 
 module.exports = {

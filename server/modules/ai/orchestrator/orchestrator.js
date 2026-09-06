@@ -216,6 +216,7 @@ const TEAM_SCOPED_TOOLS = new Set([
 ]);
 
 const USER_SCOPED_TOOLS = new Set([
+  "list_connections",
   "create_dashboard",
   "create_dashboard_from_template",
   "get_workspace_activity",
@@ -502,16 +503,18 @@ async function availableTools() {
     {
       name: "list_connections",
       displayName: "Find data sources",
-      description: `List AI-orchestrator-supported source connections (${supportedSourceList}) available to the project/user context. Use this when the user names a provider because that provider can be connected through an MCP server.`,
+      description: `Find accessible connections and setup options for supported sources (${supportedSourceList}). Pass provider when the user names a service or has_more is true. Existing connections take priority over native setup, then verified MCP OAuth, then manual setup. Results do not establish whether a source contains the requested metric; inspect its data before use.`,
       parameters: {
         type: "object",
         properties: {
           project_id: { type: "string" },
+          provider: { type: "string", description: "Service or connection name, for example PostHog or Google Analytics. Omit to find available sources." },
+          capability: { type: "string", enum: ["query", "schema", "tools"], description: "Required data capability, if known." },
           scope: { type: "string", enum: ["all", "dashboard", "recent"], default: "all" }
         },
         required: []
       }
-      // returns: { connections: [{ id, type, subType, source_id, source_name, name }] }
+      // Returns at most five connections and five setup options, without credentials or schemas.
     },
     {
       name: "get_schema",
@@ -1431,7 +1434,7 @@ ${ENTITY_CREATION_RULES}
 - Create source-backed charts directly in known dashboards with one tool call
 - Create full dashboards from source-owned template bundles when the user asks for a starter dashboard or dashboard pack
 - Create temporary charts when no project is specified, then move them to dashboards upon user confirmation
-- Inform users when they request unsupported data sources that these will be available when the corresponding source plugin declares AI query support
+- Offer the setup options returned by list_connections when the requested source is not connected
 - Only suggest actions that correspond to these tools - no exports, sharing features, or other unimplemented functionality
 
 ## Core Principle: Take Initiative
@@ -1439,7 +1442,7 @@ ${ENTITY_CREATION_RULES}
 
 - **Infer context automatically**: For connections and data sources, use context from the conversation. If only one connection exists or is obvious from context, use it automatically.
 - **Use obvious connections**: If only one connection exists, or the connection is clear from context (e.g., "my sales database"), use it automatically. Only ask when multiple ambiguous options exist.
-- **Inspect named providers**: A provider named by the user can be the name of an MCP connection. Call list_connections before you say that a named provider is unsupported or unavailable.
+- **Inspect named providers**: Call list_connections with provider before you say that a named service is unsupported or unavailable. Use only its returned setup choices and URLs. Never invent an endpoint, request credentials in chat, approve tools, or claim a connection is ready before setup finishes. For admin_required, ask a team owner or admin to complete setup or review tool access. If the source is connected, inspect its data to confirm it covers the question. A provider match is not proof of metric coverage.
 - **Create charts proactively**: After answering a data question, automatically create a TEMPORARY preview chart. Don't ask "would you like me to create a chart?" - just create it. This gives users a visual preview and control over dashboard placement.
 - **KPI means a visualization**: A request to create, build, display, or convert something to a KPI means a KPI chart. It does not mean a KPI review or a watched metric unless the user explicitly asks for those features.
 - **Complete explicit visualization requests**: Never answer a chart or KPI creation request with choices, a workspace report, or a promise to create it later. Use the tools and show the result in the current turn.
@@ -1575,6 +1578,7 @@ Format all responses using markdown to improve readability:
 
 ## Quick-Reply Suggestions (User Response Shortcuts)
 When you ask the user a question or offer choices, emit a structured suggestions block that the UI will parse into clickable quick replies.
+Connection setup is an exception: list_connections setup options render as Chartbrew connection cards with direct actions. Explain what the lookup found, why the requested data is not accessible yet, and what setup is needed before you can build the requested charts. Use a short paragraph in plain language, not internal labels such as "native setup". Distinguish a missing connection from an existing connection that needs sign-in or tool approval. Only describe providers and capabilities confirmed by the tool; "analytics" alone does not mean Google Analytics. For MCP OAuth, explain that the card connects the provider account to Chartbrew through the provider's MCP server, saves this conversation, and opens provider sign-in. For native setup, explain that the card opens Chartbrew setup in a new tab. Do not emit connection setup quick replies, manual navigation instructions, or ask the user to say "connect". Wait for setup rather than repeating the same lookup or claiming data analysis is complete. The model never creates or authenticates a connection.
 
 **CRITICAL**: These are NOT tool calls. They are simulated user responses that continue the conversation naturally.
 
@@ -1991,11 +1995,15 @@ function stripTemporaryChartSuggestions(content = "", toolResults = []) {
     .trim();
 }
 
-function getVisualizationToolChoice({ blocked, complete, required }) {
-  return required && !complete && !blocked ? "required" : "auto";
+function getVisualizationToolChoice({ blocked, complete, required, connectionOptions = [] }) {
+  const needsConnection = connectionOptions.some((option) => option.state !== "connected" || option.needs_approval);
+  return required && !complete && !blocked && !needsConnection ? "required" : "auto";
 }
 
 function getConnectionInspectionToolChoice(question, connections = []) {
+  if (/\bI added the connection\b/i.test(String(question || ""))) {
+    return { type: "function", name: "list_connections" };
+  }
   const ignoredTokens = new Set([
     "analytics",
     "api",
@@ -2049,19 +2057,32 @@ function getChartPreviewsFromToolResults(toolResults = []) {
   return [...previewsByChartId.values()];
 }
 
+function getConnectionOptionsFromToolResults(toolResults = []) {
+  const options = new Map();
+  toolResults.filter((result) => result.name === "list_connections").forEach((result) => {
+    const content = parseToolResultContent(result.content);
+    (content?.options || []).forEach((option) => {
+      if (option.state === "connected" && !option.provider_id) return;
+      options.set(option.provider_id || option.connection_id || option.source_id || option.name, option);
+    });
+  });
+  return [...options.values()].slice(0, 5);
+}
+
 function getWorkSummaryFromMessages(messages = []) {
-  const results = new Map(messages.filter((message) => message.role === "tool").map((message) => {
+  const turnMessages = messages.slice(messages.findLastIndex((message) => message.role === "user") + 1);
+  const results = new Map(turnMessages.filter((message) => message.role === "tool").map((message) => {
     const content = parseToolResultContent(message.content);
     return [message.tool_call_id, content?.error ? "failed" : "complete"];
   }));
   const activities = new Map();
-  messages.filter((message) => message.role === "assistant").forEach((message) => {
+  turnMessages.filter((message) => message.role === "assistant").forEach((message) => {
     (message.tool_calls || []).forEach((toolCall) => {
       const name = toolCall.function?.name;
-      if (!name) return;
+      if (!name || !results.has(toolCall.id)) return;
       activities.set(name, {
         name,
-        status: results.get(toolCall.id) || "failed",
+        status: results.get(toolCall.id),
       });
     });
   });
@@ -2095,6 +2116,13 @@ function getPendingActionFromToolResults(toolResults = []) {
 }
 
 function buildFallbackAssistantMessage({ toolResults = [], snapshots = [] } = {}) {
+  const connectionOptions = getConnectionOptionsFromToolResults(toolResults);
+  if (connectionOptions.length > 0) {
+    const needsSetup = connectionOptions.filter((option) => option.state !== "connected" || option.needs_approval);
+    if (!needsSetup.length) return "Your data source is connected. Continue your request so I can check its data and build your charts.";
+    const names = [...new Set(needsSetup.map((option) => option.name))].join(", ");
+    return `I cannot access the requested data from ${names} yet. The connection options below show what setup or approval is needed. Once that is complete, return here so I can check the available data and build your charts.`;
+  }
   const dashboardLinks = getCreatedDashboardLinks(toolResults);
   if (dashboardLinks.length > 0) {
     return appendDashboardLinksToAssistantMessage(
@@ -2459,6 +2487,7 @@ async function orchestrate(
         blocked: visualizationActionBlocked,
         complete: visualizationActionComplete,
         required: requiresVisualizationAction,
+        connectionOptions: getConnectionOptionsFromToolResults(allToolResults),
       }),
       parallel_tool_calls: true,
       reasoning: {
@@ -2749,6 +2778,7 @@ async function orchestrate(
   const contextManifest = createContextManifest("validated");
   return {
     chartPreviews: getChartPreviewsFromToolResults(allToolResults),
+    connectionOptions: getConnectionOptionsFromToolResults(allToolResults),
     contextManifest,
     message: assistantMessage.content,
     conversationHistory: persistedMessages,
@@ -2794,6 +2824,7 @@ module.exports = {
   getConnectionInspectionToolChoice,
   getVisualizationToolChoice,
   getChartPreviewsFromToolResults,
+  getConnectionOptionsFromToolResults,
   getWorkSummaryFromMessages,
   sanitizeToolError,
   buildUsageRecordFromResponse,

@@ -202,6 +202,22 @@ export async function promoteAiSession(teamId, sessionId) {
   return response.json();
 }
 
+export async function getAiConnectionSetup({ teamId, conversationId, providerId, create = false }) {
+  const payload = { teamId, conversationId, providerId };
+  const query = create ? "" : `?${new URLSearchParams(payload)}`;
+  const response = await fetch(`${API_HOST}/ai/connections/setup${query}`, {
+    method: create ? "POST" : "GET",
+    headers: {
+      Authorization: `Bearer ${getAuthToken()}`,
+      "Content-Type": "application/json",
+    },
+    ...(create ? { body: JSON.stringify(payload) } : {}),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "The connection could not be prepared. Try again.");
+  return data;
+}
+
 export async function deleteAiConversation(conversationId, teamId) {
   const token = getAuthToken();
   const url = `${API_HOST}/ai/conversations/${conversationId}?teamId=${teamId}`;

@@ -154,6 +154,10 @@ async function prepareConnectionData({ connection, existingConnection = null, us
     },
   };
   delete normalized.options.mcp.allowPrivateHost;
+  if (normalized.options.mcp.toolQuery != null
+    && (typeof normalized.options.mcp.toolQuery !== "string" || normalized.options.mcp.toolQuery.length > 2000)) {
+    throw createMcpError("MCP_INVALID_CONFIGURATION", "Keep the tool focus under 2,000 characters.");
+  }
 
   if (authentication.type === "oauth" && !authentication.accessToken) {
     return {
@@ -215,7 +219,7 @@ function redactConnection({ connection }) {
         : [],
     },
     options: {
-      mcp: {},
+      mcp: { toolQuery: value.options?.mcp?.toolQuery || "" },
     },
   };
 }
@@ -303,33 +307,35 @@ async function completeOAuth(options) {
 
 async function updateToolApproval({ connection, params, user }) {
   authorizeConnectionWrite({ user });
-  const plain = await getSavedConnection(connection);
-  if (!plain?.id) {
+  if (!connection?.id) {
     throw createMcpError(
       "MCP_CONNECTION_REQUIRED",
       "Save this connection before updating tool permissions."
     );
   }
-  const result = applyToolApproval(
-    plain.schema?.mcp?.tools,
-    plain.schema?.mcp?.allowedTools,
-    String(params?.toolName || "").trim(),
-    {
-      datasets: params?.datasets,
-      ask: params?.ask,
-    },
-    user
-  );
-  await db.Connection.update({
-    schema: {
-      ...(plain.schema || {}),
-      mcp: {
-        ...(plain.schema?.mcp || {}),
-        allowedTools: result.allowedTools,
-      },
-    },
-  }, { where: { id: plain.id, team_id: plain.team_id } });
-  return result;
+  if (typeof params?.enabled !== "boolean") {
+    throw createMcpError("MCP_INVALID_APPROVAL", "Choose whether to allow this tool.", 400);
+  }
+  return db.sequelize.transaction(async (transaction) => {
+    const saved = await db.Connection.findOne({
+      where: { id: connection.id, team_id: connection.team_id },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!saved) throw createMcpError("MCP_CONNECTION_NOT_FOUND", "This connection is no longer available.", 404);
+    const schema = saved.schema || {};
+    const result = applyToolApproval(
+      schema.mcp?.tools,
+      schema.mcp?.allowedTools,
+      String(params.toolName || "").trim(),
+      { datasets: params.enabled, ask: params.enabled },
+      user
+    );
+    await saved.update({
+      schema: { ...schema, mcp: { ...schema.mcp, allowedTools: result.allowedTools } },
+    }, { transaction });
+    return result;
+  });
 }
 
 function oauthClientMetadata({ connection }) {
@@ -407,12 +413,13 @@ async function executeTool(connection, dataRequest, approvalUse = "datasets") {
       && catalogExpiresAt > Date.now()
       && Array.isArray(connection?.schema?.mcp?.tools);
     const tools = hasFreshCatalog
-      ? connection.schema.mcp.tools.map(sanitizeTool)
-      : (await client.listTools(undefined, { cacheMode: "refresh" })).tools.map(sanitizeTool);
-    const tool = tools.find((item) => item.name === config.tool.name);
-    if (!tool) {
+      ? connection.schema.mcp.tools
+      : (await client.listTools(undefined, { cacheMode: "refresh" })).tools;
+    const rawTool = tools.find((item) => item.name === config.tool.name);
+    if (!rawTool) {
       throw createMcpError("MCP_TOOL_NOT_FOUND", "The selected MCP tool is no longer available.", 404);
     }
+    const tool = sanitizeTool(rawTool);
     assertToolApproved(connection, tool, approvalUse);
     if (config.tool.contractFingerprint !== tool.contractFingerprint) {
       throw createMcpError("MCP_TOOL_CHANGED", "This MCP tool changed after the dataset was saved.", 409);
@@ -533,6 +540,7 @@ module.exports = {
     updateToolApproval,
   },
   completeOAuth,
+  oauthReturnConversation: mcpOauth.getReturnConversation,
   getDefaultDataRequest,
   getBuilderMetadata,
   getSavedConnection,

@@ -1,6 +1,7 @@
 const rateLimit = require("express-rate-limit");
 
 const db = require("../models/models");
+const connectionSetup = require("../modules/ai/connectionSetup");
 const {
   getOrchestration,
   placeChartPreview,
@@ -163,6 +164,27 @@ module.exports = (app) => {
       return sendAiError(res, error);
     }
   });
+
+  app.route("/ai/connections/setup")
+    .all(apiLimiter(20), verifyToken, checkAccess)
+    .get(async (req, res) => {
+      try {
+        const option = await connectionSetup({
+          teamId: req.query.teamId, conversationId: req.query.conversationId,
+          providerId: req.query.providerId, userId: req.user.id,
+        });
+        return res.json(option);
+      } catch (error) { return sendAiError(res, error); }
+    })
+    .post(async (req, res) => {
+      try {
+        const option = await connectionSetup({
+          teamId: req.body.teamId, conversationId: req.body.conversationId,
+          providerId: req.body.providerId, userId: req.user.id, create: true,
+        });
+        return res.json(option);
+      } catch (error) { return sendAiError(res, error); }
+    });
 
   app.post(
     "/ai/sessions/:sessionId/promote",

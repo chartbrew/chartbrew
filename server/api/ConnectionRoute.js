@@ -763,9 +763,15 @@ module.exports = (app) => {
   */
   app.get("/team/:team_id/connections/:connection_id/mcp/oauth/callback", async (req, res) => {
     const redirectBase = String(settings.client || "").replace(/\/+$/, "");
+    let conversationId = null;
     const redirectToConnection = (status) => {
       if (!redirectBase) return null;
-      return `${redirectBase}/connections/${req.params.connection_id}?mcpOAuth=${status}`;
+      const query = new URLSearchParams({ mcpOAuth: status });
+      if (conversationId) {
+        query.set("aiConversationId", conversationId);
+        query.set("aiTeamId", req.params.team_id);
+      }
+      return `${redirectBase}/connections/${req.params.connection_id}?${query}`;
     };
 
     try {
@@ -775,6 +781,7 @@ module.exports = (app) => {
       );
       const source = getSourceForConnection(connection);
       assertSourceServerEnabled(source);
+      conversationId = source.backend.oauthReturnConversation?.({ connection, state: req.query.state }) || null;
       if (typeof source.backend?.completeOAuth !== "function") {
         return res.status(400).send({ error: "This connection does not support OAuth." });
       }

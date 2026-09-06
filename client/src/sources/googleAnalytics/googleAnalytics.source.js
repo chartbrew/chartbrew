@@ -7,6 +7,7 @@ const googleAnalyticsSource = {
   subType: "googleAnalytics",
   name: "Google Analytics",
   category: "analytics",
+  setupDescription: "Connect Google Analytics to Chartbrew to build charts from website traffic and events. Open setup, save the connection, then sign in with Google to grant access.",
   capabilities: {
     ai: {
       canGenerateDatasets: true,
