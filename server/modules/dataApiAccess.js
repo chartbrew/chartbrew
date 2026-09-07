@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 
 const TEAM_WIDE_ROLES = new Set(["teamOwner", "teamAdmin"]);
 const PROJECT_ROLES = new Set(["projectAdmin", "projectEditor", "projectViewer"]);
-const DATA_API_SCOPES = new Set(["data:read", "data:refresh"]);
+const DATA_API_SCOPES = new Set(["data:read", "data:refresh", "charts:preview", "datasets:write"]);
 
 function normalizeProjectIds(value) {
   if (!Array.isArray(value)) return [];
@@ -97,13 +97,18 @@ async function findAccessibleDataset(db, access, teamId, datasetId) {
   });
   if (!dataset) return null;
 
+  return canReadDataset(access, dataset) ? dataset : null;
+}
+
+function canReadDataset(access, dataset) {
+  if (dataset.team_id !== access.teamId) return false;
   const datasetProjectIds = normalizeProjectIds(dataset.project_ids);
   if (datasetProjectIds.length === 0) {
-    return TEAM_WIDE_ROLES.has(access.role) && access.allProjects ? dataset : null;
+    return TEAM_WIDE_ROLES.has(access.role) && access.allProjects;
   }
 
   const effectiveProjects = new Set(access.projectIds);
-  return datasetProjectIds.some((projectId) => effectiveProjects.has(projectId)) ? dataset : null;
+  return datasetProjectIds.some((projectId) => effectiveProjects.has(projectId));
 }
 
 async function validateKeyProjectIds(db, teamId, projectIds) {
@@ -129,6 +134,7 @@ module.exports = {
   PROJECT_ROLES,
   TEAM_WIDE_ROLES,
   buildDataApiAccess,
+  canReadDataset,
   findAccessibleChart,
   findAccessibleDataset,
   getEffectiveProjectIds,

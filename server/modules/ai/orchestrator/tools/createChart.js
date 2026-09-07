@@ -220,7 +220,7 @@ async function createChart(payload) {
     // Take a snapshot of the chart for visualization
     let snapshot = null;
     try {
-      snapshot = await chartController.takeSnapshot(chart.id);
+      if (!payload.skipSnapshot) snapshot = await chartController.takeSnapshot(chart.id);
     } catch (snapshotError) {
       // Ignore snapshot errors - chart creation was successful
     }

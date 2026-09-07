@@ -49,6 +49,8 @@
     "@google-analytics/admin": "^9.0.0",
     "@google-analytics/data": "^5.1.0",
     "@modelcontextprotocol/client": "^2.0.0",
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
     "@react-email/components": "^1.0.11",
     "@react-email/render": "^2.0.5",
     "@slack/web-api": "^7.0.0",
@@ -117,8 +119,6 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.0.0",
-    "@modelcontextprotocol/node": "^2.0.0",
-    "@modelcontextprotocol/server": "^2.0.0",
     "@playwright/test": "^1.48.2",
     "@vitest/coverage-v8": "^4.1.7",
     "@vitest/ui": "^4.1.7",

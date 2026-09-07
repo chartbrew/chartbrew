@@ -69,7 +69,7 @@ The current implementation provides a useful base but has these limits:
 | Connections | Ask can use existing connections. It does not provide a guided missing-provider setup. | Add a deterministic connection resolver and a connection setup result. |
 | Memory | Workspace learning is inferred from product activity. Free-form memory is not stored. | Add explicit personal memory with full user control. |
 | Outbound MCP | The MCP source plugin connects Chartbrew to remote MCP servers. | Reuse its verified-provider and OAuth rules in the connection setup flow. |
-| Inbound MCP | The Data API and MCP server packages exist. Chartbrew does not expose an MCP server. | Add one stateless, read-only MCP endpoint with four tools. |
+| Inbound MCP | The Data API and MCP server packages exist. | Add one stateless MCP endpoint with six tools and separate write permissions. |
 
 ## User Experience
 
@@ -406,7 +406,7 @@ Add a stateless Streamable HTTP MCP endpoint to the current Express server. Use 
 tool order.
 
 The private alpha accepts a manually created Chartbrew API key. The public release requires bearer
-authorization with OAuth and read-only scopes. Both paths build the same project and team access object
+authorization with OAuth and explicit scopes. Both paths build the same project and team access object
 before a tool runs. Do not call the public MCP work complete until protected-resource metadata, PKCE,
 token audience validation, refresh, and revocation tests pass.
 
@@ -414,13 +414,19 @@ Use these scopes:
 
 - `data:read`: search entity metadata and read current chart or dataset data.
 - `data:refresh`: permit `refresh: true` for a data tool.
+- `charts:preview`: create temporary charts, without adding them to a dashboard.
+- `datasets:write`: save a validated source request as a dataset.
+
+For the private alpha, source exploration and chart creation require a team owner or administrator
+and an all-project key. The current raw-source and temporary-chart paths are team-wide. Selected-project
+keys can use the four existing-data tools. Do not grant existing keys either new write permission.
 
 Do not add a separate scope for every tool. Limit the OAuth grant to selected teams and projects.
 Filter `tools/list` by granted scope where required.
 
 ### Version 1 tools
 
-Expose four tools in this order:
+Expose six tools in this order:
 
 #### `search_workspace`
 
@@ -440,7 +446,8 @@ dataset rows, chart configuration, connection secrets, or hidden metadata.
 #### `get_workspace_activity`
 
 Return recent changes and metric evaluations for one permitted team. Reuse the current workspace
-activity projection and its data minimization rules. Inputs are team, optional date range, and limit.
+activity projection and its data minimization rules. Inputs are optional project, date range, and limit.
+The key supplies the team; callers cannot override it.
 
 #### `run_dataset`
 
@@ -451,6 +458,28 @@ row cap, byte cap, and cache policy.
 
 Read one permitted chart through the existing Data API chart path. Accept the existing chart filter,
 variable, and refresh inputs.
+
+#### `create_chart_preview`
+
+Create a temporary chart from an accessible dataset, using explicit field paths and chart type.
+Check the dataset rows and numeric value field before creation. Return chart and dataset references
+with signed-in Chartbrew links. An optional bounded PNG lets agents display the preview directly.
+Image failure must not undo a created chart. Never create a public snapshot or place the chart in a
+dashboard through this tool. Do not create an Ask conversation or call a model.
+
+#### `explore_data`
+
+Use one tool with three explicit operations:
+
+- `inspect`: list connections, then inspect one source's tables or approved tools.
+- `preview`: execute a bounded read-only request and return its rows.
+- `save`: validate and preview the request, then save it as a dataset in a permitted dashboard.
+
+Reuse source plugin execution. The private alpha supports PostgreSQL, MySQL, and approved read-only
+MCP tools. Other sources return an unsupported result; existing datasets remain readable. SQL uses
+the shared query guard and a database read-only transaction. Source credentials must also be read-only.
+MCP execution retains tool approval and live contract checks. Do not call the internal AI planner.
+Do not save an empty, invalid, or timed-out preview. Dataset and request creation must be atomic.
 
 Each tool returns a short text result for compatibility and the useful data in `structuredContent`.
 Keep error codes stable and user-safe. Never return stack traces or credentials.
@@ -604,10 +633,11 @@ take effect on the next turn. Original chat messages remain visible in conversat
 ### Phase 6: Chartbrew MCP server
 
 - Add the stateless endpoint and API-key authorization for a private alpha.
-- Add the four read-only tools over existing access and data modules.
+- Add four existing-data tools, temporary chart creation, and source exploration with dataset creation.
+- Keep write permissions separate and off by default; retain team and project access checks.
 - Add the tool context budget test and protocol tests.
 - Add OAuth and its protocol tests before a public release.
-- Publish setup instructions for Chartbrew Cloud and self-hosted Chartbrew.
+- Publish private-alpha setup instructions; document public OAuth as unfinished.
 
 Do not start the next phase until the current phase tests pass. Each phase can merge on its own.
 
@@ -681,5 +711,8 @@ Do not start the next phase until the current phase tests pass. Each phase can m
 - Search and data output obey item and byte caps.
 - Timeouts, invalid IDs, and inaccessible entities return stable safe errors.
 - `structuredContent` has the declared output shape.
-- No write tool or connection credential is available.
+- Write scopes are off by default; dataset saves and chart previews require their explicit scopes.
+- No tool exposes connection credentials, calls the model, or creates a public chart snapshot.
+- Empty and timed-out source previews do not create datasets; failed database writes roll back.
+- Chart creation validates rows and value fields; optional image failure preserves the chart link.
 - The same chart and dataset request produces the same bounded data result through Data API and MCP.

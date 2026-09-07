@@ -12,6 +12,31 @@ const {
   failConnectorAudit,
 } = require("../connectorRuntime");
 const externalDbConnection = require("./externalDbConnection");
+const { normalizeSqlQuery } = require("./readOnlyQuery");
+
+async function exploreReadOnly({ connection, operation, query, search = "", names = [], limit = 20 }) {
+  if (operation === "inspect") {
+    const schema = connection.schema || await getSchema({ connection });
+    const tables = schema.tables || Object.keys(schema.description || {});
+    const matches = tables.filter((table) => typeof table === "string"
+      && (!names.length || names.includes(table)) && table.toLowerCase().includes(search.toLowerCase()));
+    return { resources: matches.slice(0, limit).map((name) => ({ name, fields: schema.description?.[name] || [] })), truncated: matches.length > limit };
+  }
+  const validatedQuery = normalizeSqlQuery(query);
+  let sqlDb;
+  try {
+    sqlDb = await externalDbConnection(connection);
+    const rows = await sqlDb.transaction({ readOnly: true }, async (transaction) => {
+      // Sequelize's readOnly option selects a replica; enforce read-only execution on the database too.
+      await sqlDb.query(connection.type === "mysql" ? "START TRANSACTION READ ONLY" : "SET TRANSACTION READ ONLY", { transaction });
+      return sqlDb.query(`SELECT * FROM (${validatedQuery}) AS chartbrew_preview LIMIT ${limit}`,
+        { type: Sequelize.QueryTypes.SELECT, transaction });
+    });
+    return { rows, dataRequest: { query: validatedQuery, method: "GET" } };
+  } finally {
+    await closeSqlConnection(sqlDb);
+  }
+}
 
 async function closeSqlConnection(sqlDb) {
   if (!sqlDb) {
@@ -209,6 +234,7 @@ async function runChartQuery({ connection, query }) {
 }
 
 module.exports = {
+  exploreReadOnly,
   applyVariables({ dataRequest, variables, escapeBackslash }) {
     return applySqlVariables(dataRequest, variables, { escapeBackslash });
   },

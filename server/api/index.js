@@ -17,6 +17,7 @@ const observation = require("./ObservationRoute");
 const platform = require("./PlatformSettingsRoute");
 const dataApi = require("./DataApiRoute");
 const chartImage = require("./ChartImageRoute");
+const mcp = require("./McpRoute");
 
 module.exports = {
   team,
@@ -38,4 +39,5 @@ module.exports = {
   platform,
   dataApi,
   chartImage,
+  mcp,
 };

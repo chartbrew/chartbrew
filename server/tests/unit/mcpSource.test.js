@@ -78,6 +78,26 @@ function createConnection(tool, approval = {}) {
 }
 
 describe("MCP source policy", () => {
+  it("exposes usable inbound exploration details and refuses unapproved dataset tools", async () => {
+    const { backend } = require("../../sources/plugins/mcp/mcp.plugin");
+    const tool = createTool();
+    const connection = createConnection(tool);
+    const catalog = await backend.exploreReadOnly({ connection, operation: "inspect", names: [tool.name], limit: 1 });
+    expect(catalog.resources[0]).toMatchObject({ id: tool.name, contractFingerprint: tool.contractFingerprint, inputSchema: tool.inputSchema });
+    const configuration = { source: "mcp", tool: { name: tool.name, contractFingerprint: catalog.resources[0].contractFingerprint },
+      arguments: {}, output: { mode: "auto", path: [] } };
+    const preview = vi.spyOn(mcpAi, "previewConfiguration").mockResolvedValue({ status: "ok", rows: [{ visits: 4 }] });
+    try {
+      expect((await backend.exploreReadOnly({ connection, operation: "preview", configuration, limit: 1 })).dataRequest.configuration).toMatchObject(configuration);
+      expect(preview).toHaveBeenCalledOnce();
+      connection.schema.mcp.allowedTools[tool.name].datasets = false;
+      expect((await backend.exploreReadOnly({ connection, operation: "save", configuration })).status).toBe("invalid");
+      connection.schema.mcp.allowedTools[tool.name].ask = false;
+      expect((await backend.exploreReadOnly({ connection, operation: "inspect", names: [tool.name] })).resources).toEqual([]);
+      expect(preview).toHaveBeenCalledOnce();
+    } finally { preview.mockRestore(); }
+  });
+
   it("creates stable tool fingerprints and retains matching approvals", () => {
     const tool = createTool();
     const sameTool = createTool();
