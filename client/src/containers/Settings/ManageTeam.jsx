@@ -16,6 +16,7 @@ import BusinessProfileSettings from "./BusinessProfileSettings";
 import TeamMembers from "./TeamMembers";
 import TeamAiSettings from "./TeamAiSettings";
 import AiMemorySettings from "./AiMemorySettings";
+import AuthorizedApps from "./AuthorizedApps";
 
 function SettingsPage({ children, title, wide = false }) {
   return (
@@ -73,6 +74,7 @@ function ManageTeam() {
 
   return (
     <Routes>
+      <Route path="authorized-apps" element={<SettingsPage title="Authorized apps"><AuthorizedApps /></SettingsPage>} />
       <Route index element={<Navigate replace to={defaultPath} />} />
       <Route
         path="profile"

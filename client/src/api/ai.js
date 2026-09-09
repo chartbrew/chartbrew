@@ -1,6 +1,15 @@
 import { API_HOST } from "../config/settings";
 import { getAuthToken } from "../modules/auth";
 
+export async function getChartPreview(chartId) {
+  const response = await fetch(`${API_HOST}/chart-previews/${encodeURIComponent(chartId)}`, {
+    headers: { Authorization: `Bearer ${getAuthToken()}` },
+  });
+  const data = await response.json();
+  if (!response.ok) throw Object.assign(new Error(data.message || "The preview could not load"), { status: response.status });
+  return { ...data.chart, preview: data.parsed };
+}
+
 export async function requestAiMemory(teamId, { method = "GET", id, text } = {}) {
   const response = await fetch(`${API_HOST}/ai/memory${id ? `/${encodeURIComponent(id)}` : ""}?teamId=${teamId}`, {
     method,

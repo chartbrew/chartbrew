@@ -4,6 +4,7 @@ import { Button } from "@heroui/react";
 
 import AiChartPreview from "./AiChartPreview";
 import AiConnectionCard from "./AiConnectionCard";
+import AiDataRecoveryCard from "./AiDataRecoveryCard";
 import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiToolOperations from "./AiToolOperations";
 import { AiAnswer, AiUserPrompt } from "./AiTranscript";
@@ -55,6 +56,7 @@ function AiMessageGroup({
 
   const operations = [];
   const connectionOptions = new Map();
+  const dataRecoveries = new Map();
   let finalMessage = null;
   let suggestions = [];
   let actionPreview = null;
@@ -68,6 +70,8 @@ function AiMessageGroup({
       }));
     } else if (parsed.type === "tool_result") {
       operations.push({ data: parsed.content, name: parsed.name, type: "result" });
+      const recovery = parsed.content?.recovery;
+      if (recovery) dataRecoveries.set(`${recovery.action}:${recovery.datasetId || recovery.connectionId || recovery.code}`, recovery);
       if (parsed.name === "list_connections") {
         (parsed.content.options || []).forEach((option) => {
           if (option.state === "connected" && !option.provider_id) return;
@@ -105,6 +109,9 @@ function AiMessageGroup({
                 onContinue={onContinue}
                 isLoading={isLoading}
               />
+            ))}
+            {[...dataRecoveries.entries()].map(([key, recovery]) => (
+              <AiDataRecoveryCard key={key} recovery={recovery} onContinue={onContinue} isLoading={isLoading} />
             ))}
             {suggestions.length > 0 && !connectionOptions.size ? (
               <div className="mt-3 flex flex-row flex-wrap gap-2">

@@ -108,6 +108,10 @@ async function createChart(payload) {
           visualization: visualization || chartSpec.visualization,
           chartSpec,
           formula: formula ?? chartSpec.formula,
+        }).catch((error) => {
+          error.datasetId = dataset.id;
+          error.connectionId = connection.id;
+          throw error;
         });
         resolvedXAxis = aligned.xAxis;
         yAxis = aligned.yAxis ?? yAxis;
@@ -137,6 +141,11 @@ async function createChart(payload) {
         fill: chartSpec.fill || false,
         multiFill: chartSpec.multiFill || false,
         pointRadius: pointRadius || chartSpec.pointRadius || 0,
+        sort: chartSpec.sort,
+        maxRecords: chartSpec.maxRecords,
+        excludedFields: chartSpec.excludedFields,
+        columnsOrder: chartSpec.columnsOrder,
+        configuration: seriesConfiguration ?? chartSpec.configuration,
       },
       encoding: encoding || chartSpec.encoding,
       goal: chartSpec.goal,
@@ -215,7 +224,7 @@ async function createChart(payload) {
         goal: chartSpec.goal,
         configuration: seriesConfiguration ?? chartSpec.configuration ?? {}
       }]
-    }, null); // No user for AI-created charts
+    }, null, { waitForData: true }); // A returned AI preview must have prepared data.
 
     // Take a snapshot of the chart for visualization
     let snapshot = null;
@@ -255,7 +264,7 @@ async function createChart(payload) {
         : null,
     };
   } catch (error) {
-    throw new Error(`Chart creation failed: ${error.message}`);
+    throw new Error(`Chart creation failed: ${error.message}`, { cause: error });
   }
 }
 

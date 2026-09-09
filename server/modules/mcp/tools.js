@@ -1,3 +1,6 @@
+const { getReadyPresets, getMarkDefinition } = require("../../visualization/registry");
+const { AGGREGATIONS } = require("../../visualization/spec");
+
 const id = { type: "integer", minimum: 1 };
 const text = { type: "string", minLength: 1, maxLength: 200 };
 const limit = { type: "integer", minimum: 1, maximum: 50, default: 20 };
@@ -31,8 +34,26 @@ const TOOLS = [
   }, ["projectId", "chartId"]),
   tool("create_chart_preview", "Create a temporary chart from an accessible dataset. Does not place it in a dashboard. Requires a team-admin key with all-project access.", {
     datasetId: id, name: text,
-    type: { enum: ["line", "bar", "pie", "doughnut", "table", "kpi"] },
-    xAxis: text, yAxis: text,
+    type: { enum: getReadyPresets().filter((preset) => getMarkDefinition(preset.mark)?.bindingRequired !== false).map((preset) => preset.id),
+      description: "Chartbrew chart type. Use horizontalBar for horizontal bars; xAxis stays the category and yAxis the numeric value." },
+    xAxis: text, yAxis: text, dateField: text, dateFormat: text,
+    yAxisOperation: { enum: [...AGGREGATIONS], default: "none" },
+    legend: text, displayLegend: { type: "boolean" }, dataLabels: { type: "boolean" },
+    horizontal: { type: "boolean" }, stacked: { type: "boolean" }, includeZeros: { type: "boolean" },
+    timeInterval: { enum: ["second", "minute", "hour", "day", "week", "month", "year"] },
+    xLabelTicks: { enum: ["default", "half", "third", "fourth", "showAll"] },
+    pointRadius: { type: "integer", minimum: 0, maximum: 50 },
+    fill: { type: "boolean" }, multiFill: { type: "boolean" },
+    datasetColor: { type: "string", pattern: "^#[0-9a-fA-F]{6}$" },
+    fillColor: { type: "string", pattern: "^#[0-9a-fA-F]{6}$" },
+    sort: { enum: ["asc", "desc"] }, maxRecords: { type: "integer", minimum: 1, maximum: 10000 },
+    mode: { enum: ["chart", "kpichart"] }, showGrowth: { type: "boolean" }, invertGrowth: { type: "boolean" },
+    subType: { enum: ["AddTimeseries"] }, goal: { type: "integer" },
+    minValue: { type: "number" }, maxValue: { type: "number" },
+    ranges: { type: "array", maxItems: 20, items: { type: "object", additionalProperties: false,
+      properties: { min: { type: "number" }, max: { type: "number" }, label: text, color: { type: "string", pattern: "^#[0-9a-fA-F]{6}$" } }, required: ["min", "max"] } },
+    excludedFields: { type: "array", maxItems: 100, items: text },
+    columnsOrder: { type: "array", maxItems: 100, items: text },
     includeImage: { type: "boolean", default: false },
   }, ["datasetId", "name", "type"], "charts:preview"),
   tool("explore_data", "Inspect sources or preview a read-only request; save creates a dataset and requires datasets:write. Requires a team-admin key with all-project access. Never assumes field meanings.", {

@@ -1306,7 +1306,7 @@ describe("Source AI harness", () => {
         dataset_id: 99,
         yAxis: "root[].conversion_rate",
       })],
-    }), null);
+    }), null, { waitForData: true });
     expect(result).toMatchObject({
       chart_created: true,
       chart_id: 55,

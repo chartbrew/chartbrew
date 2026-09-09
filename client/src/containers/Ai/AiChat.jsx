@@ -4,12 +4,11 @@ import React, {
 import PropTypes from "prop-types";
 import { Button, ScrollShadow } from "@heroui/react";
 import { LuBookmark } from "react-icons/lu";
-import { useDispatch } from "react-redux";
-
-import { getChart } from "../../slices/chart";
+import { getChartPreview } from "../../api/ai";
 import AiComposer from "./AiComposer";
 import AiChartPreview from "./AiChartPreview";
 import AiConnectionCard from "./AiConnectionCard";
+import AiDataRecoveryCard from "./AiDataRecoveryCard";
 import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiProgress from "./AiProgress";
 import AiToolOperations from "./AiToolOperations";
@@ -55,7 +54,6 @@ function AiChat({
   framed = false,
   fill = false,
 }) {
-  const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
   const loadedPreviewCountRef = useRef(0);
   const [chartStates, setChartStates] = useState({});
@@ -76,10 +74,7 @@ function AiChat({
     fetchedChartsRef.current.add(key);
     setChartStates((current) => setChartPreviewLoading(current, key));
     try {
-      const chart = await dispatch(getChart({
-        chart_id: preview.chartId,
-        project_id: preview.projectId,
-      })).unwrap();
+      const chart = await getChartPreview(preview.chartId);
       setChartStates((current) => (
         chart
           ? setChartPreviewLoaded(current, key, chart)
@@ -87,12 +82,12 @@ function AiChat({
       ));
     } catch (error) {
       setChartStates((current) => (
-        error.message === "Chart not found"
+        [403, 404].includes(error.status)
           ? setChartPreviewUnavailable(current, key)
           : setChartPreviewFailed(current, key)
       ));
     }
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     const previousCount = loadedPreviewCountRef.current;
@@ -196,6 +191,9 @@ function AiChat({
                       onContinue={onSubmit}
                       isLoading={isLoading}
                     />
+                  ))}
+                  {(message.dataRecoveries || []).map((recovery, recoveryIndex) => (
+                    <AiDataRecoveryCard key={recoveryIndex} recovery={recovery} onContinue={onSubmit} isLoading={isLoading} />
                   ))}
                   {(message.chartPreviews || []).map((preview) => {
                     const chartState = chartStates[getChartPreviewKey(preview)] || {};

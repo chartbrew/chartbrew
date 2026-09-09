@@ -180,7 +180,7 @@ export const removeChart = createAsyncThunk(
 
 export const runQuery = createAsyncThunk(
   "chart/runQuery",
-  async ({ project_id, chart_id, noSource, skipParsing, getCache, filters, variables }) => {
+  async ({ project_id, chart_id, noSource, skipParsing, getCache, filters, variables }, { rejectWithValue }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/project/${project_id}/chart/${chart_id}/query?no_source=${noSource || false}&skip_parsing=${skipParsing || false}`;
     const method = "POST";
@@ -202,7 +202,7 @@ export const runQuery = createAsyncThunk(
     const responseJson = await response.json();
 
     if (response.status >= 400) {
-      throw new Error(responseJson.message);
+      return rejectWithValue({ message: responseJson.message || "The chart could not be updated. Try again.", recovery: responseJson.recovery });
     }
 
     return responseJson;
@@ -898,6 +898,7 @@ export const chartSlice = createSlice({
               return {
                 ...chart,
                 ...action.payload,
+                refreshError: null,
                 loading: false,
               };
             }
@@ -912,6 +913,7 @@ export const chartSlice = createSlice({
           if (chart.id === action.meta.arg.chart_id) {
             return {
               ...chart,
+              refreshError: action.payload?.recovery || { message: action.payload?.message || "The chart could not be updated. Try again." },
               loading: false,
             };
           }

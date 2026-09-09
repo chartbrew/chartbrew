@@ -235,7 +235,7 @@ async function createDashboardChart(payload) {
         goal: spec.goal,
         configuration: seriesConfiguration ?? spec.configuration ?? {}
       }]
-    }, null);
+    }, null, { waitForData: true });
 
     let snapshot = null;
     try {
@@ -267,7 +267,7 @@ async function createDashboardChart(payload) {
         : null,
     };
   } catch (error) {
-    throw new Error(`Dashboard chart creation failed: ${error.message}`);
+    throw new Error(`Dashboard chart creation failed: ${error.message}`, { cause: error });
   }
 }
 

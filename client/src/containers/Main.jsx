@@ -41,6 +41,8 @@ import { Button, Modal } from "@heroui/react";
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
 const Login = lazy(() => import("./Login"));
+const McpConsent = lazy(() => import("./McpConsent"));
+const ChartPreviewPage = lazy(() => import("./Ai/ChartPreviewPage"));
 const ManageTeam = lazy(() => import("./Settings/ManageTeam"));
 const UserInvite = lazy(() => import("./UserInvite"));
 const PublicDashboard = lazy(() => import("./PublicDashboard/PublicDashboard"));
@@ -60,6 +62,12 @@ import NoAccessPage from "../components/NoAccessPage";
 import { shouldResumeOnboarding } from "./Onboarding/onboardingState";
 
 function authenticatePage() {
+  const preview = window.location.pathname.match(/^\/previews\/([1-9]\d*)$/);
+  if (preview) {
+    window.location.href = `/login?preview=${preview[1]}`;
+    return false;
+  }
+  if (window.location.pathname === "/oauth/consent") return false;
   if (window.location.pathname === "/login") {
     return false;
   } else if (window.location.pathname === "/signup") {
@@ -173,7 +181,8 @@ function Main(props) {
 
       if (selectedTeam) {
         dispatch(saveActiveTeam(selectedTeam));
-        if (shouldResumeOnboarding(selectedTeam, user.id) && location.pathname !== "/start"
+        if (shouldResumeOnboarding(selectedTeam, user.id) && location.pathname !== "/start" && location.pathname !== "/oauth/consent"
+          && !new URLSearchParams(location.search).has("oauthRequest")
           && !new URLSearchParams(location.search).has("aiConversationId")) {
           navigate(`/start?team=${selectedTeam.id}`, { replace: true });
           return;
@@ -295,6 +304,8 @@ function Main(props) {
               <Route exact path="/start" element={<Onboarding />} />
               <Route exact path="/google-auth" element={<GoogleAuth />} />
               <Route exact path="/login" element={<Login />} />
+              <Route path="/oauth/consent" element={<McpConsent />} />
+              <Route path="/previews/:chartId" element={<ChartPreviewPage />} />
               <Route exact path="/user" element={<UserDashboard />} />
               <Route
                 exact
@@ -353,10 +364,10 @@ function Main(props) {
         </Modal.Container>
       </Modal.Backdrop>
 
-      {team?.id && (
+      {team?.id && pathname !== "/oauth/consent" && (
         <AiModal key={`${user?.id}:${team.id}`} isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
       )}
-      <ActiveConversationBar />
+      {pathname !== "/oauth/consent" ? <ActiveConversationBar /> : null}
 
       <Toaster
         position="top-center"

@@ -35,6 +35,7 @@ function AiChartPreview({
   selectedContext,
   teamId,
 }) {
+  parsed = { ...parsed, ...chartData?.preview };
   const { contains } = useFilter({ sensitivity: "base" });
   const isTemporary = parsed.type === "chart_temporary" || parsed.visibility === "temporary";
   const title = parsed.chartName || chartData?.name || "Generated chart";
@@ -118,12 +119,12 @@ function AiChartPreview({
         <div className="flex min-w-0 items-center gap-2.5">
           <LuChartNoAxesColumnIncreasing className="shrink-0 text-accent" size={18} aria-hidden />
           <div className="min-w-0">
-            {isTemporary || isUnavailable ? (
+            {isUnavailable ? (
               <p className="truncate text-sm font-semibold text-foreground">{title}</p>
             ) : (
               <Link
                 className="inline-flex max-w-full min-w-0 gap-1.5 text-sm font-semibold"
-                href={`/dashboard/${parsed.projectId}/chart/${parsed.chartId}/edit`}
+                href={isTemporary ? `/previews/${parsed.chartId}` : `/dashboard/${parsed.projectId}/chart/${parsed.chartId}/edit`}
                 rel="noreferrer"
                 target="_blank"
               >

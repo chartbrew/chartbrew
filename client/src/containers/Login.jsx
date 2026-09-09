@@ -25,6 +25,7 @@ import {
 } from "../slices/user";
 import { addTeamMember } from "../slices/team";
 import { required, email as validateEmail } from "../config/validations";
+import { oauthReturnPath } from "../modules/oauthReturn";
 
 function Login() {
   const [loading, setLoading] = useState(false);
@@ -53,7 +54,7 @@ function Login() {
       const resp = await dispatch(relog());
 
       if (!resp.error && resp.payload?.id) {
-        navigate("/");
+        navigate(oauthReturnPath(window.location.search));
       }
     };
 
@@ -154,7 +155,7 @@ function Login() {
     }
 
     setLoading(false);
-    navigate("/");
+    navigate(oauthReturnPath(window.location.search));
   };
 
   const onValidateToken = async (e) => {
@@ -202,7 +203,7 @@ function Login() {
     }
 
     setLoading(false);
-    navigate("/");
+    navigate(oauthReturnPath(window.location.search));
   };
 
   return (

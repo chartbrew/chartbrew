@@ -3,7 +3,7 @@ const OpenAI = require("openai");
 const db = require("../../../../models/models");
 const { withMcpClient } = require("../mcp.client");
 const { MCP_LIMITS } = require("../mcp.constants");
-const { isToolReadOnly, trimText } = require("../mcp.policy");
+const { createMcpError, isToolReadOnly, trimText } = require("../mcp.policy");
 const { scoreTool } = require("../mcp.toolSelection");
 const mcpProtocol = require("../mcp.protocol");
 const { getFieldValue } = require("../../../../visualization/fieldPath");
@@ -904,6 +904,7 @@ function validateConfiguration(configuration, { connection } = {}) {
   const base = mcpProtocol.validateConfiguration(configuration, { tool });
   if (!tool) {
     base.errors.push("The selected MCP tool is not approved for Ask.");
+    base.recovery = createMcpError("MCP_TOOL_NOT_APPROVED", "Tool access is required.").recovery;
     base.valid = false;
     return base;
   }
@@ -913,6 +914,7 @@ function validateConfiguration(configuration, { connection } = {}) {
   } catch (error) {
     base.errors.push(error.message);
     base.valid = false;
+    base.recovery = error.recovery;
   }
   return base;
 }
@@ -1044,12 +1046,12 @@ function alignChartBindings({
     if (!field || aggregate === "count") return;
     const values = rows.map((row) => getFieldValue(row, field)).filter((value) => value != null);
     if (!values.length || !values.every(isNumericValue)) {
-      throw new Error(`Chart measure ${field} does not select numeric values. Inspect the preview and source documentation, then select a single numeric field (including an explicit tuple index if needed), or query named scalar columns. Do not substitute another metric.`);
+      throw createMcpError("MCP_CHART_FIELDS_INVALID", `Chart measure ${field} does not select numeric values. Inspect the preview and source documentation, then select a single numeric field (including an explicit tuple index if needed), or query named scalar columns. Do not substitute another metric.`);
     }
   });
   const suggested = suggestChartBindings(rows, { type });
   if (type !== "table" && !encodings.length && !requestedYAxis && !suggested?.yAxis) {
-    throw new Error("Select a numeric chart measure from the preview. Nested values need an explicit field or tuple index with verified meaning.");
+    throw createMcpError("MCP_CHART_FIELDS_INVALID", "Select a numeric chart measure from the preview. Nested values need an explicit field or tuple index with verified meaning.");
   }
   const keys = Object.keys(firstObjectRow(rows) || {});
   if (!suggested || !keys.length) {
@@ -1086,10 +1088,10 @@ function previewWarnings(rows, suggestedBindings) {
 }
 
 async function previewConfiguration({ connection, configuration, rowLimit = 25 } = {}) {
-  const validation = validateConfiguration(configuration, { connection });
+  const savedConnection = await mcpProtocol.getSavedConnection(connection);
+  const validation = validateConfiguration(configuration, { connection: savedConnection });
   if (!validation.valid) return { status: "invalid", ...validation };
 
-  const savedConnection = await mcpProtocol.getSavedConnection(connection);
   const execution = await mcpProtocol._private.executeTool(
     savedConnection,
     { configuration: validation.configuration },

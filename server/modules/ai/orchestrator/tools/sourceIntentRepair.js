@@ -175,7 +175,11 @@ async function alignSourceChartBindings(source, payload = {}) {
       configuration: payload.configuration,
       rowLimit: 25,
     });
-    if (preview?.status !== "ok") throw new Error(preview?.message || "Check the source configuration and preview its data before creating a chart.");
+    if (preview?.status !== "ok") {
+      const error = new Error(preview?.recovery?.message || preview?.message || "Check the source configuration and preview its data before creating a chart.");
+      error.recovery = preview?.recovery;
+      throw error;
+    }
     rows = preview.rows;
   }
 

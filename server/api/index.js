@@ -18,6 +18,7 @@ const platform = require("./PlatformSettingsRoute");
 const dataApi = require("./DataApiRoute");
 const chartImage = require("./ChartImageRoute");
 const mcp = require("./McpRoute");
+const mcpOAuth = require("./McpOAuthRoute");
 
 module.exports = {
   team,
@@ -40,4 +41,5 @@ module.exports = {
   dataApi,
   chartImage,
   mcp,
+  mcpOAuth,
 };

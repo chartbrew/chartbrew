@@ -131,7 +131,7 @@ async function runQuery(payload) {
       await drCacheController.remove(tempDataRequest.id);
     }
   } catch (error) {
-    throw new Error(`Query execution failed: ${error.message}`);
+    throw new Error(`Query execution failed: ${error.message}`, { cause: error });
   }
 }
 

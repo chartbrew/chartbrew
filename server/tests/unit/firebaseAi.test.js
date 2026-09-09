@@ -238,7 +238,7 @@ describe("Firebase source AI layers", () => {
         yAxis: "root[]._id",
         yAxisOperation: "count",
       })],
-    }), null);
+    }), null, { waitForData: true });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,

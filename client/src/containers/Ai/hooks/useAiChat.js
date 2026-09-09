@@ -152,6 +152,7 @@ function useAiChat({
         {
           chartPreviews: orchestration.chartPreviews || [],
           connectionOptions: orchestration.connectionOptions || [],
+          dataRecoveries: orchestration.dataRecoveries || [],
           content: orchestration.message,
           pendingAction: orchestration.pendingAction,
           role: "assistant",

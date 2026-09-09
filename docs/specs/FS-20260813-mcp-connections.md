@@ -156,7 +156,8 @@ descriptions, safe icons, input and output schemas, annotations, and timestamps.
 
 Approval is stored per tool for Datasets and Ask. A title, icon, schema, description, or risk
 change does not turn those permissions off. Saving the connection must not overwrite approvals that
-were already persisted. Datasets still fail if their saved tool contract no longer matches.
+were already persisted. Saved fingerprints are diagnostic metadata, not execution gates. Do not
+ask users to accept routine tool updates. New tools remain off; destructive tools cannot run.
 
 Use `ttlMs` and `cacheScope` when the server provides them, within Chartbrew cache limits. Legacy
 catalogs use a short private cache. Refresh discovery on a connection test, explicit refresh, stale
@@ -196,7 +197,7 @@ Store a tool call in `DataRequest.configuration`:
 }
 ```
 
-The shared executor checks team and project scope, use approval, current fingerprints, and input
+The shared executor checks team and project scope, use approval, and the current input
 schema. It applies variables without changing unbound types, calls `tools/call`, validates
 `structuredContent` against `outputSchema` when present, selects the safe result path, and returns
 data through the current cache, transform, field detection, and Dataset runtime.
@@ -264,8 +265,10 @@ policy. Extend the cross-source AI harness to prove that MCP uses only generic `
 - Ask can answer from an approved preview and create a normal dataset or chart from it.
 - Manual and Ask flows persist the same configuration and call the same executor.
 - Scheduled calls never run tools that need input, tasks, write access, or renewed scopes.
-- Tool contract changes fail closed for saved datasets and show a clear review action. Connection
-  Datasets and Ask permissions stay as the user left them.
+- Changed tools keep existing access. Validate saved inputs, structured results, and field mappings
+  on execution. Real incompatibilities show **Fix dataset**, not a tool-update approval. Sign-in and
+  permission failures point to the connection. Timeouts offer retry. Keep the last successful chart
+  data and show its date when refresh fails. Do not blame a tool change without evidence.
 - Credentials, raw metadata, and result content do not leak through UI, logs, audits, or LLM context.
 - Existing source behavior does not change.
 

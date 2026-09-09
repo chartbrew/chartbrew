@@ -539,7 +539,11 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
       }));
       const payload = action.payload;
       if (payload?.status?.statusCode >= 400) {
-        setRunError(typeof payload.response === "string" ? payload.response : JSON.stringify(payload.response));
+        let failure = payload.response;
+        if (typeof failure === "string") {
+          try { failure = JSON.parse(failure); } catch (_error) { /* Older servers can return plain text. */ }
+        }
+        setRunError(failure?.recovery?.message || failure?.error || "The request failed. Check the request values and try again.");
         setPreviewRows(null);
         return;
       }

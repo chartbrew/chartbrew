@@ -206,7 +206,7 @@ async function discoverAndCall(endpoint, connectionOverrides = {}, output = { mo
       source: "mcp",
       tool: {
         name: tool.name,
-        contractFingerprint: tool.contractFingerprint,
+        contractFingerprint: "saved-before-the-tool-description-changed",
       },
       arguments: { limit: 2 },
       output,
@@ -252,6 +252,22 @@ describe("MCP HTTP fixture", () => {
       expect(result.data).toEqual([{ id: 1 }, { id: 2 }]);
     } finally {
       await fixture.close();
+    }
+  });
+
+  it("checks current inputs, outputs, and field mappings instead of saved fingerprints", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    for (const [changes, output, code] of [
+      [{ inputSchema: { ...INPUT_SCHEMA, required: ["limit", "project"], properties: { ...INPUT_SCHEMA.properties, project: { type: "string" } } } }, {}, "MCP_INVALID_ARGUMENTS"],
+      [{ outputSchema: { type: "object", required: ["countries"], properties: { countries: { type: "array" } } } }, {}, "MCP_INVALID_RESULT"],
+      [{}, { fields: { country: ["missing_country"] } }, "MCP_OUTPUT_PATH_NOT_FOUND"],
+    ]) {
+      const fixture = await startFixture({ tools: [{ name: "fixture_tool", inputSchema: INPUT_SCHEMA, annotations: { readOnlyHint: true }, ...changes }] });
+      try {
+        await expect(discoverAndCall(fixture.endpoint, {}, output)).rejects.toMatchObject({ code, recovery: { action: "dataset" } });
+      } finally {
+        await fixture.close();
+      }
     }
   });
 

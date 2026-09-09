@@ -6,10 +6,10 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 
-import { getAiConversation, getAiConversations, getAiTools, placeAiChartPreview, respondAi, deleteAiConversation, searchAiContext } from "../../api/ai";
+import { getAiConversation, getAiConversations, getAiTools, getChartPreview, placeAiChartPreview, respondAi, deleteAiConversation, searchAiContext } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
-import { getChart, selectCharts } from "../../slices/chart";
+import { selectCharts } from "../../slices/chart";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
@@ -176,45 +176,20 @@ function AiModal({ isOpen, onClose }) {
   };
 
   // Function to fetch chart data when a chart is created
-  const fetchChartData = async (chartId, projectId) => {
+  const fetchChartData = async (chartId) => {
     try {
-      const result = await dispatch(getChart({
-        project_id: projectId,
-        chart_id: chartId
-      }));
-
-      if (result?.payload) {
-        setChartLoadErrors((current) => {
-          if (!current[chartId]) return current;
-          const next = { ...current };
-          delete next[chartId];
-          return next;
-        });
-        setCreatedCharts(prevCharts => {
-          // Check if chart already exists
-          const existingIndex = prevCharts.findIndex(c => c.id === result.payload.id);
-          if (existingIndex >= 0) {
-            // Update existing chart
-            const updatedCharts = [...prevCharts];
-            updatedCharts[existingIndex] = result.payload;
-            return updatedCharts;
-          } else {
-            // Add new chart
-            return [...prevCharts, result.payload];
-          }
-        });
-        return result.payload;
-      }
-      setChartLoadErrors((current) => ({
-        ...current,
-        [chartId]: result?.meta?.requestStatus === "fulfilled"
-          || result?.error?.message === "Chart not found"
-          ? "unavailable"
-          : "failed",
-      }));
+      const chart = await getChartPreview(chartId);
+      setChartLoadErrors((current) => {
+        const next = { ...current };
+        delete next[chartId];
+        return next;
+      });
+      setCreatedCharts((current) => current.some((item) => item.id === chart.id)
+        ? current.map((item) => item.id === chart.id ? chart : item)
+        : [...current, chart]);
+      return chart;
     } catch (error) {
-      console.error("Failed to fetch chart data:", error);
-      toast.error("Failed to load chart data");
+      setChartLoadErrors((current) => ({ ...current, [chartId]: [403, 404].includes(error.status) ? "unavailable" : "failed" }));
     }
     return null;
   };
@@ -242,17 +217,17 @@ function AiModal({ isOpen, onClose }) {
         .filter(Boolean);
 
       // Fetch charts that haven't been loaded yet (for both create and update, including temporary)
-      for (const { chartId, projectId } of chartMessages) {
+      for (const { chartId } of chartMessages) {
         if (!fetchedChartsRef.current.has(chartId)) {
           fetchedChartsRef.current.add(chartId);
-          await fetchChartData(chartId, projectId);
+          await fetchChartData(chartId);
         }
       }
 
       // Refresh charts that were updated
-      for (const { chartId, projectId, isUpdate } of chartMessages) {
+      for (const { chartId, isUpdate } of chartMessages) {
         if (isUpdate && fetchedChartsRef.current.has(chartId)) {
-          await fetchChartData(chartId, projectId);
+          await fetchChartData(chartId);
         }
       }
     };
@@ -739,6 +714,7 @@ function AiModal({ isOpen, onClose }) {
       teamId: team.id,
     });
     const updatedConversation = await getAiConversation(conversation.id, team.id);
+    await fetchChartData(chartPreview.chartId);
     if (updatedConversation?.conversation) {
       applyLoadedConversation(updatedConversation.conversation);
     }

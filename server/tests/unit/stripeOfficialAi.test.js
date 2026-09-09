@@ -1003,7 +1003,7 @@ describe("Stripe Official AI layer", () => {
         yAxis: "root[].value",
         formula: "{val / 100}",
       })],
-    }), null);
+    }), null, { waitForData: true });
     expect(result).toMatchObject({
       chart_id: 456,
       dataset_id: 99,

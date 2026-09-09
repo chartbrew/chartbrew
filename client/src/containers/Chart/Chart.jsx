@@ -11,6 +11,7 @@ import {
   Label,
   ListBox,
   Spinner,
+  Alert,
 } from "@heroui/react";
 import {
   LuBell, LuCalendarClock, LuCheck, LuChevronDown, LuEllipsis, LuFileDown,
@@ -657,6 +658,24 @@ function Chart(props) {
             ? "relative h-full border-none bg-transparent shadow-none"
             : `relative h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
         >
+          {chart.refreshError && !isPublic && (
+            <Alert status="warning" className="shrink-0">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Chart could not be updated</Alert.Title>
+                <Alert.Description>
+                  {chart.refreshError.message}
+                  {chart.render && chart.preparedDataUpdatedAt ? ` Showing data from ${moment(chart.preparedDataUpdatedAt).format("lll")}.` : ""}
+                </Alert.Description>
+                {chart.refreshError.action === "dataset" && chart.refreshError.datasetId && _canAccess("projectEditor") ? (
+                  <Button className="mt-2" size="sm" variant="secondary"
+                    render={(buttonProps) => <a {...buttonProps} href={`/datasets/${encodeURIComponent(chart.refreshError.datasetId)}`} target="_blank" rel="noopener noreferrer" />}>
+                    Fix dataset
+                  </Button>
+                ) : null}
+              </Alert.Content>
+            </Alert>
+          )}
           {showChartTitle && !embedded && (
             <Card.Header className="min-w-0 pb-0 pr-8 flex flex-row items-center">
               <div className="min-w-0 flex-1" title={chart.name}>

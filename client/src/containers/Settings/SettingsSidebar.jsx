@@ -23,6 +23,10 @@ const ACCOUNT_ITEMS = [{
   icon: LuUser,
   label: "Profile",
   path: "/settings/profile",
+}, {
+  icon: LuShieldCheck,
+  label: "Authorized apps",
+  path: "/settings/authorized-apps",
 }];
 
 const TEAM_ITEMS = [{

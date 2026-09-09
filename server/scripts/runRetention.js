@@ -2,6 +2,7 @@ const db = require("../models/models");
 const { cleanupExpiredRuns } = require("../modules/updateAudit");
 const { cleanupObservationData } = require("../modules/observations/retention");
 const { cleanupWorkspaceLearning } = require("../modules/workspaceContext/retention");
+const { cleanupExpiredGrants } = require("../modules/mcp/oauth");
 
 function readOption(name) {
   const prefix = `--${name}=`;
@@ -15,7 +16,7 @@ function hasFlag(name) {
 
 async function run() {
   const category = readOption("category") || "all";
-  if (!["all", "observations", "update-runs", "workspace-learning"].includes(category)) {
+  if (!["all", "observations", "update-runs", "workspace-learning", "mcp-oauth"].includes(category)) {
     throw new Error(`Unknown retention category: ${category}`);
   }
 
@@ -27,6 +28,7 @@ async function run() {
       maxRuntimeSeconds: process.env.CB_DATA_RETENTION_MAX_RUNTIME_SECONDS,
     };
     const report = {};
+    if (["all", "mcp-oauth"].includes(category)) report.mcpOAuth = await cleanupExpiredGrants(sharedOptions);
     if (["all", "update-runs"].includes(category)) {
       report.updateRuns = await cleanupExpiredRuns({
         ...sharedOptions,

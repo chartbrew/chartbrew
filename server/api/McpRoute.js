@@ -1,7 +1,7 @@
 const rateLimit = require("express-rate-limit");
 const { McpServer, createMcpHandler, fromJsonSchema } = require("@modelcontextprotocol/server");
 const { toNodeHandler } = require("@modelcontextprotocol/node");
-const verifyDataApiKey = require("../modules/verifyDataApiKey");
+const { verifyMcpAuth } = require("./McpOAuthRoute");
 const { getDataApiLimits } = require("../modules/dataApiLimits");
 const { DataApiError, ensureRequestId, sendDataApiError } = require("../modules/dataApiResponse");
 const { TOOLS } = require("../modules/mcp/tools");
@@ -25,7 +25,7 @@ module.exports = (app) => {
       return sendDataApiError(req, res, new DataApiError("REQUEST_TOO_LARGE"));
     }
     return next();
-  }, authLimit, verifyDataApiKey(), keyLimit, async (req, res) => {
+  }, authLimit, verifyMcpAuth, keyLimit, async (req, res) => {
     const handler = createMcpHandler(() => {
       const server = new McpServer({ name: "Chartbrew", version: "1.0.0" });
       for (const { inputSchema, outputSchema, name, description, annotations } of TOOLS.filter((tool) => req.apiKeyAccess.scopes.includes(tool.scope))) {

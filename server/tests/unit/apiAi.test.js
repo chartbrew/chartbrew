@@ -265,7 +265,7 @@ describe("Generic API AI layer", () => {
         templateBindingId: "binding-1",
         xAxis: "root[]",
       })],
-    }), null);
+    }), null, { waitForData: true });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,
@@ -325,7 +325,7 @@ describe("Generic API AI layer", () => {
       chartDatasetConfigs: [expect.objectContaining({
         xAxis: "root[]",
       })],
-    }), null);
+    }), null, { waitForData: true });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,

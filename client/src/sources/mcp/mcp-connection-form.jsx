@@ -178,7 +178,7 @@ function getInitialConnection(editConnection) {
   };
 }
 
-function McpToolRow({ tool, approval, needsReview, isSaving, onChangeApproval }) {
+function McpToolRow({ tool, approval, isSaving, onChangeApproval }) {
   const isDestructive = tool.annotations?.destructiveHint === true;
   const isReadOnlyHint = tool.annotations?.readOnlyHint === true;
   const required = tool.inputSchema?.required || [];
@@ -220,12 +220,9 @@ function McpToolRow({ tool, approval, needsReview, isSaving, onChangeApproval })
               {isDestructive && (
                 <Chip size="sm" variant="soft" color="danger">Not available</Chip>
               )}
-              {needsReview && !isDestructive && (
-                <Chip size="sm" variant="soft" color="warning">Needs review</Chip>
-              )}
             </div>
             {!isDestructive && (
-              <div className="flex shrink-0 flex-wrap items-center gap-5">
+              <div className="ml-auto flex shrink-0 flex-wrap items-center gap-5">
                 <Switch
                   aria-label={`Allow access to ${tool.name}`}
                   isDisabled={isSaving}
@@ -343,9 +340,6 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
   const toolResults = getMcpToolPage(tools, { search: toolSearch, hintFilter: toolHintFilter, page: toolPage });
   const approvals = connection.schema?.mcp?.allowedTools || {};
   const toolsToAllow = getMcpToolsToAllow(tools, approvals);
-  const reviewRequired = new Set(
-    (connection.schema?.mcp?.reviewRequired || []).map((item) => item.name)
-  );
   const allowedCount = tools.filter((tool) => {
     const approval = approvals[tool.name];
     return approval?.datasets === true || approval?.ask === true;
@@ -575,7 +569,23 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
     connectionRef.current = nextConnection;
     setConnection(nextConnection);
 
-    if (!editConnection?.id || !team?.id) return;
+    const finishApproval = (approval) => {
+      setConnection((latest) => {
+        const updated = {
+          ...latest,
+          schema: { ...latest.schema, mcp: {
+            ...latest.schema.mcp,
+            allowedTools: { ...latest.schema.mcp.allowedTools, [tool.name]: approval },
+          } },
+        };
+        connectionRef.current = updated;
+        return updated;
+      });
+    };
+    if (!editConnection?.id || !team?.id) {
+      finishApproval(nextApproval);
+      return;
+    }
 
     const persist = async () => {
       const action = await dispatch(runSourceAction({
@@ -590,6 +600,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
       if (!action.payload?.approval) {
         throw new Error(action.payload?.error || action.payload?.message || "Could not update tool permissions");
       }
+      finishApproval(action.payload.approval);
       toast.success(`Access ${enabled ? "enabled" : "disabled"} for ${tool.title || tool.name}`);
     };
 
@@ -648,8 +659,6 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
         schema: { ...current.schema, mcp: {
           ...current.schema.mcp,
           allowedTools: result.allowedTools,
-          reviewRequired: (current.schema.mcp.reviewRequired || [])
-            .filter((item) => !toolsToAllow.some((tool) => tool.name === item.name)),
         } },
       }));
       toast.success("Access enabled for all available tools");
@@ -979,7 +988,6 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
                 key={tool.name}
                 tool={tool}
                 approval={approvals[tool.name]}
-                needsReview={reviewRequired.has(tool.name)}
                 isSaving={allowAllLoading || savingApprovals[tool.name] === true}
                 onChangeApproval={onChangeApproval}
               />
@@ -997,7 +1005,6 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
 McpToolRow.propTypes = {
   tool: PropTypes.object.isRequired,
   approval: PropTypes.object,
-  needsReview: PropTypes.bool,
   isSaving: PropTypes.bool,
   onChangeApproval: PropTypes.func.isRequired,
 };

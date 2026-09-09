@@ -10,6 +10,32 @@ describe("ChartController background updates", () => {
     vi.restoreAllMocks();
   });
 
+  it("waits for AI preview data and propagates refresh failures", async () => {
+    const controller = new ChartController();
+    const chart = { id: 123, project_id: 77 };
+    vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
+    vi.spyOn(db.Chart, "create").mockResolvedValue(chart);
+    vi.spyOn(controller, "syncLegacyVisualization").mockResolvedValue();
+    const findChart = vi.spyOn(controller, "findById").mockResolvedValue(chart);
+    let finishUpdate;
+    const update = vi.spyOn(controller, "updateChartData").mockReturnValue(new Promise((resolve) => {
+      finishUpdate = resolve;
+    }));
+
+    const creation = controller.createWithChartDatasetConfigs({ project_id: 77 }, null, { waitForData: true });
+    await vi.waitFor(() => expect(update).toHaveBeenCalledWith(123, null, { getCache: true }));
+    expect(findChart).not.toHaveBeenCalled();
+    finishUpdate();
+    await expect(creation).resolves.toEqual(chart);
+
+    const failure = new Error("Source data is unavailable");
+    update.mockRejectedValue(failure);
+    findChart.mockClear();
+    await expect(controller.createWithChartDatasetConfigs({ project_id: 77 }, null, { waitForData: true }))
+      .rejects.toBe(failure);
+    expect(findChart).not.toHaveBeenCalled();
+  });
+
   it("attaches a rejection handler to background chart updates after chart creation", async () => {
     const controller = new ChartController();
     const chart = {

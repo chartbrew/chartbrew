@@ -2,11 +2,33 @@ const crypto = require("crypto");
 
 const { MCP_AUTH_TYPES, MCP_LIMITS, MCP_RESERVED_HEADERS } = require("./mcp.constants");
 
+const RECOVERY = {
+  MCP_INVALID_ARGUMENTS: ["dataset", "The saved request does not match the inputs this tool accepts. Check the dataset request."],
+  MCP_INVALID_TOOL_SCHEMA: ["connection", "The tool definition is not valid. Check the connection or contact the provider."],
+  MCP_INVALID_RESULT: ["dataset", "The tool returned data that does not match its declared format. Check the dataset response."],
+  MCP_UNSUPPORTED_RESULT: ["dataset", "The tool did not return data Chartbrew can use. Check the dataset response or choose another tool."],
+  MCP_OUTPUT_PATH_NOT_FOUND: ["dataset", "The tool response does not contain a field this dataset needs. Check the dataset field mapping."],
+  MCP_INVALID_OUTPUT_VALUE: ["dataset", "The tool returned a value this dataset cannot use. Check the dataset field mapping."],
+  MCP_CHART_FIELDS_INVALID: ["dataset", "The dataset does not contain the numeric values this chart needs. Check its fields before creating a preview."],
+  MCP_TOOL_NOT_FOUND: ["dataset", "The selected tool is no longer available. Choose another tool in the dataset request."],
+  MCP_TOOL_ERROR: ["dataset", "The source could not complete the saved request. Test the request in the dataset."],
+  MCP_RECONNECT_REQUIRED: ["connection", "This connection needs you to sign in again."],
+  MCP_APPROVE_ACCESS: ["connection", "This connection needs additional access. Open the connection to continue."],
+  MCP_TOOL_NOT_APPROVED: ["connection", "Access to this tool is not enabled. Check tool access in the connection."],
+  MCP_TOOL_NOT_READ_ONLY: ["connection", "This tool is no longer available for read-only use. Check the connection."],
+  MCP_TIMEOUT: ["retry", "The source did not respond in time. Try again."],
+  MCP_REQUEST_FAILED: ["retry", "The source request failed. Try again. If it still fails, check the connection."],
+};
+
 function createMcpError(code, message, statusCode = 400, details = {}) {
   const error = new Error(message);
   error.code = code;
   error.statusCode = statusCode;
   Object.assign(error, details);
+  if (RECOVERY[code]) {
+    const [action, safeMessage] = RECOVERY[code];
+    error.recovery = { code, action, message: safeMessage };
+  }
   return error;
 }
 
@@ -95,7 +117,15 @@ function sanitizeMcpClientError(error, options = {}) {
   const name = String(error?.name || "").toLowerCase();
   const code = String(error?.code || "").toLowerCase();
   const statusCode = Number(error?.statusCode || error?.status || options.httpError?.status);
-  if (name.includes("insufficientscope") || code.includes("insufficient_scope")) {
+  if (error?.code === -32602 && /^Tool .* has an invalid outputSchema:/.test(error.message)) {
+    return createMcpError("MCP_INVALID_TOOL_SCHEMA", "The tool output definition is not valid.");
+  }
+  // The SDK validates structured results against the current tool output schema.
+  if ([-32600, -32602].includes(error?.code)
+    && /^(Structured content does not match|Failed to validate structured content|Tool .* has an output schema but did not return structured content)/.test(error.message)) {
+    return createMcpError("MCP_INVALID_RESULT", "The tool returned data in an unexpected format.");
+  }
+  if (name.includes("insufficientscope") || code.includes("insufficient_scope") || statusCode === 403) {
     return createMcpError(
       "MCP_APPROVE_ACCESS",
       "Approve access for this MCP connection, then try again.",
@@ -347,25 +377,11 @@ function applyToolApproval(tools, allowedTools, toolName, updates, user) {
   };
 }
 
-function getApprovalReview(tools, requested = {}) {
+function getRemovedTools(tools, requested = {}) {
   const currentToolNames = new Set(tools.map((tool) => tool.name));
-  const changedTools = tools.reduce((result, tool) => {
-    const approval = requested?.[tool.name];
-    if (!approval) return result;
-    if (tool.annotations?.destructiveHint === true) {
-      result.push({ name: tool.name, reason: "not_available" });
-    } else if (
-      approval.contractFingerprint !== tool.contractFingerprint
-      || approval.riskFingerprint !== tool.riskFingerprint
-    ) {
-      result.push({ name: tool.name, reason: "changed" });
-    }
-    return result;
-  }, []);
-  const removedTools = Object.keys(requested || {})
+  return Object.keys(requested || {})
     .filter((name) => !currentToolNames.has(name))
     .sort();
-  return { changedTools, removedTools };
 }
 
 function assertToolApproved(connection, tool, use) {
@@ -385,7 +401,7 @@ module.exports = {
   canonicalize,
   createMcpError,
   fingerprint,
-  getApprovalReview,
+  getRemovedTools,
   isToolReadOnly,
   mergeApprovals,
   normalizeAuthentication,

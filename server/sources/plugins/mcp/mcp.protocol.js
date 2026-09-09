@@ -18,7 +18,7 @@ const {
   applyToolApproval,
   assertToolApproved,
   createMcpError,
-  getApprovalReview,
+  getRemovedTools,
   mergeApprovals,
   normalizeAuthentication,
   normalizeEndpoint,
@@ -69,7 +69,10 @@ async function getSavedConnection(connection) {
   if (plain.authentication?.type === "oauth" && plain.authentication?.accessToken) {
     const expiresAt = Date.parse(plain.authentication.expiresAt || "");
     if (Number.isFinite(expiresAt) && expiresAt <= Date.now() + 60000) {
-      return mcpOauth.refreshOAuth(plain);
+      return mcpOauth.refreshOAuth(plain).catch((error) => {
+        error.connectionId = plain.id;
+        throw error;
+      });
     }
   }
   return plain;
@@ -230,12 +233,10 @@ async function attachPersistedApprovals(discovery, connectionId, fallbackApprova
     const latest = await db.Connection.findByPk(connectionId);
     allowedTools = toPlain(latest)?.schema?.mcp?.allowedTools || allowedTools;
   }
-  const approvalReview = getApprovalReview(discovery.tools, allowedTools);
   return {
     ...discovery,
     allowedTools: mergeApprovals(discovery.tools, allowedTools),
-    reviewRequired: approvalReview.changedTools,
-    removedTools: approvalReview.removedTools,
+    removedTools: getRemovedTools(discovery.tools, allowedTools),
   };
 }
 
@@ -386,7 +387,7 @@ function getConfiguration(dataRequest = {}) {
   };
 }
 
-function validateConfiguration(configuration, options = {}) {
+function validateConfiguration(configuration) {
   const config = getConfiguration({ configuration });
   const errors = [];
   try {
@@ -396,10 +397,6 @@ function validateConfiguration(configuration, options = {}) {
   }
   if (configuration?.source !== "mcp") errors.push("The data source must be MCP.");
   if (!config.tool.name) errors.push("Choose an MCP tool.");
-  if (!config.tool.contractFingerprint) errors.push("The MCP tool approval is missing.");
-  if (options.tool && config.tool.contractFingerprint !== options.tool.contractFingerprint) {
-    errors.push("The MCP tool changed after this dataset was saved.");
-  }
   return { valid: errors.length === 0, errors, configuration: config };
 }
 
@@ -433,9 +430,6 @@ async function executeTool(connection, dataRequest, approvalUse = "datasets") {
     }
     const tool = sanitizeTool(rawTool);
     assertToolApproved(connection, tool, approvalUse);
-    if (config.tool.contractFingerprint !== tool.contractFingerprint) {
-      throw createMcpError("MCP_TOOL_CHANGED", "This MCP tool changed after the dataset was saved.", 409);
-    }
     validateArguments(tool, config.arguments);
 
     const result = await client.callTool({
@@ -470,22 +464,23 @@ async function runDataRequest({
 }) {
   const startedAt = Date.now();
   const savedConnection = await getSavedConnection(connection);
-  if (getCache && savedConnection.id && dataRequest?.id) {
-    const cached = await checkAndGetCache(savedConnection.id, dataRequest);
-    if (cached) {
-      // Cached rows already have output selection and field mapping applied.
-      await completeConnectorAudit(auditContext, {
-        cacheHit: true,
-        connectionType: "mcp",
-        durationMs: Date.now() - startedAt,
-        ...serializeResponsePreview(cached.responseData),
-      });
-      return cached;
-    }
-  }
-
   const requestToRun = processedDataRequest || dataRequest;
   try {
+    const savedTool = savedConnection.schema?.mcp?.tools?.find((tool) => tool.name === getConfiguration(dataRequest).tool.name);
+    if (savedTool) assertToolApproved(savedConnection, savedTool, "datasets");
+    if (getCache && savedTool && savedConnection.id && dataRequest?.id) {
+      const cached = await checkAndGetCache(savedConnection.id, dataRequest);
+      if (cached) {
+        // Cached rows already have output selection and field mapping applied.
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "mcp",
+          durationMs: Date.now() - startedAt,
+          ...serializeResponsePreview(cached.responseData),
+        });
+        return cached;
+      }
+    }
     const execution = await executeTool(savedConnection, requestToRun, "datasets");
     const dataToCache = {
       dataRequest,
@@ -510,6 +505,8 @@ async function runDataRequest({
     });
     return dataToCache;
   } catch (error) {
+    error.connectionId = savedConnection.id;
+    error.datasetId = dataRequest?.dataset_id;
     await failConnectorAudit(auditContext, error, "connection", {
       cacheHit: false,
       connectionType: "mcp",

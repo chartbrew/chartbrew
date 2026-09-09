@@ -6,7 +6,7 @@ const { selectTools } = require("./mcp.toolSelection");
 const {
   createMcpError,
   fingerprint,
-  getApprovalReview,
+  getRemovedTools,
   mergeApprovals,
   sanitizeTool,
   trimText,
@@ -381,12 +381,10 @@ async function discoverMcpConnection(connection, options = {}) {
       throw createMcpError("MCP_CATALOG_TOO_LARGE", "The MCP tool catalog is too large to save.");
     }
 
-    const approvalReview = getApprovalReview(tools, requestedApprovals);
     return {
       ...discovery,
       allowedTools: mergeApprovals(tools, requestedApprovals),
-      reviewRequired: approvalReview.changedTools,
-      removedTools: approvalReview.removedTools,
+      removedTools: getRemovedTools(tools, requestedApprovals),
     };
   }, { discoverTools: true });
 }

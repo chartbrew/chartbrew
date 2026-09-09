@@ -96,7 +96,7 @@ async function createDataset(payload) {
       intent_repair: repairedPayload.intentRepair,
     };
   } catch (error) {
-    throw new Error(`Dataset creation failed: ${error.message}`);
+    throw new Error(`Dataset creation failed: ${error.message}`, { cause: error });
   }
 }
 

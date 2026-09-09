@@ -16,6 +16,8 @@ const { alignSourceChartBindings } = require("../../modules/ai/orchestrator/tool
 const { normalizeToolResult, selectToolOutput } = require("../../sources/plugins/mcp/mcp.normalize");
 const {
   applyToolApproval,
+  createMcpError,
+  getRemovedTools,
   assertToolApproved,
   mergeApprovals,
   normalizeCustomHeaders,
@@ -23,6 +25,7 @@ const {
   sanitizeTool,
 } = require("../../sources/plugins/mcp/mcp.policy");
 const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
+const { getDataRecovery } = require("../../modules/dataRecovery");
 const mcpOauth = require("../../sources/plugins/mcp/mcp.oauth");
 const jwt = require("jsonwebtoken");
 const settings = require("../../settings-dev");
@@ -221,6 +224,34 @@ describe("MCP source policy", () => {
     const tool = createTool();
     const connection = createConnection(tool, { contractFingerprint: "old" });
     expect(assertToolApproved(connection, tool, "datasets")).toMatchObject({ datasets: true });
+  });
+
+  it("keeps compatible saved requests without granting access to new or destructive tools", () => {
+    const tool = createTool();
+    const connection = createConnection(tool, { contractFingerprint: "old" });
+    for (const contractFingerprint of ["old", ""]) {
+      expect(mcpProtocol.validateConfiguration({ source: "mcp", tool: { name: tool.name, contractFingerprint }, arguments: {} }, { tool }).valid).toBe(true);
+    }
+    expect(getRemovedTools([tool], { ...connection.schema.mcp.allowedTools, removed: {} })).toEqual(["removed"]);
+    expect(() => assertToolApproved(connection, createTool({ name: "new_tool" }), "datasets")).toThrow("not approved");
+    expect(() => assertToolApproved(connection, createTool({ annotations: { destructiveHint: true } }), "datasets")).toThrow("read-only");
+    connection.schema.mcp.allowedTools[tool.name].datasets = false;
+    expect(() => assertToolApproved(connection, tool, "datasets")).toThrow("not approved");
+  });
+
+  it("keeps safe recovery details through wrapped failures without exposing source text", () => {
+    for (const [code, action] of [["MCP_INVALID_ARGUMENTS", "dataset"], ["MCP_INVALID_RESULT", "dataset"],
+      ["MCP_OUTPUT_PATH_NOT_FOUND", "dataset"], ["MCP_RECONNECT_REQUIRED", "connection"],
+      ["MCP_TOOL_NOT_APPROVED", "connection"], ["MCP_TIMEOUT", "retry"], ["MCP_TOOL_ERROR", "dataset"]]) {
+      const source = createMcpError(code, "private SQL and credentials");
+      source.datasetId = 12;
+      source.connectionId = 8;
+      const recovery = getDataRecovery(new Error("preview failed", { cause: source }));
+      expect(recovery).toMatchObject({ code, action, datasetId: 12, connectionId: 8 });
+      expect(JSON.stringify(recovery)).not.toContain("private SQL");
+    }
+    expect(getDataRecovery(new Error("unknown failure"))).toBeNull();
+    expect(sanitizeMcpClientError({ status: 403 }).recovery.action).toBe("connection");
   });
 
   it("applies a tool approval without matching the previous fingerprints", () => {
@@ -455,13 +486,18 @@ describe("MCP result and variable handling", () => {
   it("does not apply saved mappings again to cached dataset rows", async () => {
     const cache = require("../../controllers/DataRequestCacheController");
     const connection = { ...createConnection(createTool()), id: 42 };
-    const request = { id: 19, configuration: { output: { fields: { left: ["right"], right: ["left"] } } } };
+    const request = { id: 19, dataset_id: 12, configuration: { source: "mcp", tool: { name: "list_orders" }, output: { fields: { left: ["right"], right: ["left"] } } } };
     const rows = [{ left: 1, right: 2 }];
     const saved = vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
     const cached = vi.spyOn(cache, "findLast").mockResolvedValue({ connection_id: 42, dataRequest: request, responseData: { data: rows } });
     try {
       const result = await mcpProtocol.runDataRequest({ connection, dataRequest: request, getCache: true });
       expect(result.responseData.data).toEqual(rows);
+      connection.schema.mcp.allowedTools.list_orders.datasets = false;
+      await expect(mcpProtocol.runDataRequest({ connection, dataRequest: request, getCache: true })).rejects.toMatchObject({
+        code: "MCP_TOOL_NOT_APPROVED", datasetId: 12, connectionId: 42,
+      });
+      expect(cached).toHaveBeenCalledOnce();
     } finally {
       cached.mockRestore();
       saved.mockRestore();
@@ -1275,6 +1311,34 @@ describe("MCP source integration contracts", () => {
       params: { toolName: "list_orders", datasets: true },
       user: { isEditor: false },
     })).rejects.toMatchObject({ code: "MCP_ADMIN_REQUIRED", statusCode: 403 });
+  });
+
+  it("saves single and bulk access changes under a row lock", async () => {
+    const tool = createTool();
+    const other = createTool({ name: "other_tool" });
+    const saved = {
+      ...createConnection(tool),
+      update: vi.fn().mockResolvedValue(undefined),
+    };
+    saved.schema.mcp.tools.push(other);
+    const transaction = { LOCK: { UPDATE: "UPDATE" } };
+    const transact = vi.spyOn(db.sequelize, "transaction").mockImplementation((run) => run(transaction));
+    const find = vi.spyOn(db.Connection, "findOne").mockResolvedValue(saved);
+    try {
+      const invoke = (params) => mcpProtocol.actions.updateToolApproval({
+        connection: { id: 8, team_id: 4 }, user: { id: 3, isEditor: true }, params,
+      });
+      const result = await invoke({ toolName: tool.name, enabled: true });
+      expect(result.approval).toMatchObject({ ask: true, datasets: true, contractFingerprint: tool.contractFingerprint });
+      expect(find).toHaveBeenCalledWith({ where: { id: 8, team_id: 4 }, transaction, lock: "UPDATE" });
+      await invoke({ toolNames: [tool.name, other.name], enabled: false });
+      expect(saved.update.mock.calls[1][0].schema.mcp.allowedTools[tool.name].ask).toBe(false);
+      saved.update.mockRejectedValueOnce(new Error("Save failed"));
+      await expect(invoke({ toolName: tool.name, enabled: true })).rejects.toThrow("Save failed");
+    } finally {
+      transact.mockRestore();
+      find.mockRestore();
+    }
   });
 
   it("uses a public HTTPS OAuth client metadata URL when available", () => {

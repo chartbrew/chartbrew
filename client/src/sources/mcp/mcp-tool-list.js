@@ -2,9 +2,7 @@ const TOOLS_PER_PAGE = 10;
 
 export function getMcpToolsToAllow(tools, approvals = {}) {
   return tools.filter((tool) => tool.annotations?.destructiveHint !== true
-    && (approvals[tool.name]?.ask !== true || approvals[tool.name]?.datasets !== true
-      || approvals[tool.name]?.contractFingerprint !== tool.contractFingerprint
-      || approvals[tool.name]?.riskFingerprint !== tool.riskFingerprint));
+    && (approvals[tool.name]?.ask !== true || approvals[tool.name]?.datasets !== true));
 }
 
 function toolMatchesHintFilter(tool, filterId) {

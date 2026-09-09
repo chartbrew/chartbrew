@@ -237,6 +237,17 @@ Add **Allow all** beside pagination. It applies to all available tools across al
 excludes tools marked as destructive, and saves the explicit tool selection in one transaction.
 Preserve older limited approvals until the user changes them; do not silently expand access.
 
+Routine tool updates do not require approval and do not block saved datasets on fingerprint changes.
+Check current inputs, declared structured output, selected fields, and numeric chart values. Keep new
+tools off and block destructive tools. Do not silently expand OAuth scopes or tool permissions.
+Return safe, distinct errors for invalid requests, invalid results, missing fields, unavailable tools,
+sign-in, access, and timeouts. Chat shows **Fix dataset**, **Open connection**, or **Try again** as
+appropriate. After opening a repair action, **Continue request** checks fresh data before continuing.
+Do not repeat the failed call or change metric meaning to force success. Keep last successful chart
+data after a failed refresh, with a visible warning and the data date. Reuse refresh history and the
+active conversation; do not add another approval state machine. A definition change alone is not
+proof that it caused a data failure.
+
 Owners and admins can approve MCP tools for Ask. Other roles see **Ask an admin** when approval is
 required. The model cannot approve a tool.
 
@@ -421,8 +432,28 @@ For the private alpha, source exploration and chart creation require a team owne
 and an all-project key. The current raw-source and temporary-chart paths are team-wide. Selected-project
 keys can use the four existing-data tools. Do not grant existing keys either new write permission.
 
-Do not add a separate scope for every tool. Limit the OAuth grant to selected teams and projects.
+Do not add a separate scope for every tool. Limit each OAuth grant to one selected team and its allowed projects.
 Filter `tools/list` by granted scope where required.
+
+### OAuth and teams
+
+- Keep OAuth in the existing API process. Use a canonical public MCP URL, with an optional hostname
+  override for a reverse proxy. Require HTTPS in production; do not trust request Host headers.
+- Show Chartbrew sign-in, the requesting app's name and return host, one team selector, and the
+  requested permissions. App names are unverified. Require explicit consent; do not auto-approve.
+- Request all four permissions by default. Honor explicit requests for fewer permissions. Users can
+  remove optional requested permissions, but cannot add unrequested ones or expand existing grants.
+- Team owners and administrators can approve team-wide access. Other members can approve only
+  existing-data access to their current dashboards. Check live membership and access on every call.
+- A grant never follows the active team in the Chartbrew UI. Another team requires another consent.
+  Include the authorized team in OAuth tool results. Do not add a team-switching tool.
+- Add account-level **Authorized apps**, with app name, team, permissions, and removal of access.
+- Use protected-resource and authorization-server metadata, exact registered redirect URLs, S256 PKCE,
+  resource/audience binding, short-lived access tokens, single-use codes, refresh rotation, replay
+  revocation, and persistent grants. Keep MCP tokens separate from Chartbrew login tokens.
+- Initial client registration uses dynamic registration for public and confidential clients. Client ID
+  metadata documents and cross-origin browser-only harnesses remain outside this initial release.
+- Keep request expiry and grant cleanup in the existing retention command. Do not log OAuth secrets.
 
 ### Version 1 tools
 
@@ -478,7 +509,7 @@ Use one tool with three explicit operations:
 Reuse source plugin execution. The private alpha supports PostgreSQL, MySQL, and approved read-only
 MCP tools. Other sources return an unsupported result; existing datasets remain readable. SQL uses
 the shared query guard and a database read-only transaction. Source credentials must also be read-only.
-MCP execution retains tool approval and live contract checks. Do not call the internal AI planner.
+MCP execution retains tool approval and current request/result validation. Do not call the internal AI planner.
 Do not save an empty, invalid, or timed-out preview. Dataset and request creation must be atomic.
 
 Each tool returns a short text result for compatibility and the useful data in `structuredContent`.
@@ -632,12 +663,13 @@ take effect on the next turn. Original chat messages remain visible in conversat
 
 ### Phase 6: Chartbrew MCP server
 
-- Add the stateless endpoint and API-key authorization for a private alpha.
-- Add four existing-data tools, temporary chart creation, and source exploration with dataset creation.
-- Keep write permissions separate and off by default; retain team and project access checks.
-- Add the tool context budget test and protocol tests.
-- Add OAuth and its protocol tests before a public release.
-- Publish private-alpha setup instructions; document public OAuth as unfinished.
+- [x] Add the stateless endpoint and API-key authorization for a private alpha.
+- [x] Add four existing-data tools, temporary chart creation, and source exploration with dataset creation.
+- [x] Keep write permissions separate and off by default; retain team and project access checks.
+- [x] Add the tool context budget test and protocol tests.
+- [x] Add one-team OAuth consent, app revocation, and security protocol tests.
+- [x] Publish API-key and OAuth setup instructions, including deployment requirements and client limits.
+- [ ] Check the deployed endpoint with each supported external harness before public release.
 
 Do not start the next phase until the current phase tests pass. Each phase can merge on its own.
 
@@ -674,6 +706,7 @@ Do not start the next phase until the current phase tests pass. Each phase can m
 - An updated chart reloads in the active chat without a page refresh.
 - Placement changes Preview to Saved and preserves the dashboard selection after reload.
 - A deleted preview or saved chart shows Unavailable instead of a loading state.
+- MCP and chat preview links open `/previews/:chartId` using the browser session. Sign-in returns to this page. It reuses the interactive chart and dashboard selector, checks team and dataset access, and remains valid after placement. MCP can also return a PNG. Short-lived link tokens are deferred.
 - Saved chart and dashboard links open the correct routes in a new tab.
 - Direct actions cannot cross team or project boundaries.
 - Live activity uses an accessible status region.

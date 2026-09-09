@@ -18,6 +18,7 @@ const db = require("../../../models/models");
 const { MEMORY_INSTRUCTIONS, getMemoryContext, redactMemoryCommand } = require("../memory");
 const socketManager = require("../../socketManager");
 const { sanitizeSnippet } = require("../../updateAudit");
+const { getDataRecovery } = require("../../dataRecovery");
 const { buildContextManifest } = require("../../workspaceContext/contextManifest");
 const {
   CHARTBREW_AI_DISABLED_MESSAGE,
@@ -1320,11 +1321,13 @@ async function callTool(name, payload) {
         throw new Error(`Tool ${name} not found`);
     }
   } catch (error) {
-    throw new Error(`Tool ${name} execution failed: ${sanitizeToolError(error)}`);
+    throw new Error(`Tool ${name} execution failed: ${sanitizeToolError(error)}`, { cause: error });
   }
 }
 
 function sanitizeToolError(error) {
+  const recovery = getDataRecovery(error);
+  if (recovery) return recovery.message;
   return sanitizeSnippet(error?.message || error || "Tool execution failed", 1000) || "Tool execution failed";
 }
 
@@ -1583,6 +1586,8 @@ Format all responses using markdown to improve readability:
 ## Quick-Reply Suggestions (User Response Shortcuts)
 When you ask the user a question or offer choices, emit a structured suggestions block that the UI will parse into clickable quick replies.
 Connection setup is an exception: list_connections setup options render as Chartbrew connection cards with direct actions. Explain what the lookup found, why the requested data is not accessible yet, and what setup is needed before you can build the requested charts. Use a short paragraph in plain language, not internal labels such as "native setup". Distinguish a missing connection from an existing connection that needs sign-in or tool approval. Only describe providers and capabilities confirmed by the tool; "analytics" alone does not mean Google Analytics. For MCP OAuth, explain that the card connects the provider account to Chartbrew through the provider's MCP server, saves this conversation, and opens provider sign-in. For native setup, explain that the card opens Chartbrew setup in a new tab. Do not emit connection setup quick replies, manual navigation instructions, or ask the user to say "connect". Wait for setup rather than repeating the same lookup or claiming data analysis is complete. The model never creates or authenticates a connection.
+
+Data recovery: when a tool returns recovery, explain its message in plain language. Chartbrew displays the repair action; do not duplicate it as a quick reply or request tool-update approval. Do not repeat the same failed request or change the meaning of its query to force a result. After the user chooses Continue request, check the affected dataset or connection again with fresh data before continuing. Keep last successful chart data clearly separate from a successful refresh. A changed tool definition alone does not prove that it caused a failure.
 
 **CRITICAL**: These are NOT tool calls. They are simulated user responses that continue the conversation naturally.
 
@@ -2063,6 +2068,15 @@ function getChartPreviewsFromToolResults(toolResults = []) {
   return [...previewsByChartId.values()];
 }
 
+function getDataRecoveriesFromToolResults(toolResults = []) {
+  const recoveries = new Map();
+  toolResults.forEach((result) => {
+    const recovery = parseToolResultContent(result.content)?.recovery;
+    if (recovery) recoveries.set(`${recovery.action}:${recovery.datasetId || recovery.connectionId || recovery.code}`, recovery);
+  });
+  return [...recoveries.values()];
+}
+
 function getConnectionOptionsFromToolResults(toolResults = []) {
   const options = new Map();
   toolResults.filter((result) => result.name === "list_connections").forEach((result) => {
@@ -2122,6 +2136,8 @@ function getPendingActionFromToolResults(toolResults = []) {
 }
 
 function buildFallbackAssistantMessage({ toolResults = [], snapshots = [] } = {}) {
+  const recoveries = getDataRecoveriesFromToolResults(toolResults);
+  if (recoveries.length) return recoveries.map((recovery) => recovery.message).join("\n\n");
   const connectionOptions = getConnectionOptionsFromToolResults(toolResults);
   if (connectionOptions.length > 0) {
     const needsSetup = connectionOptions.filter((option) => option.state !== "connected" || option.needs_approval);
@@ -2666,7 +2682,8 @@ async function orchestrate(
             role: "tool",
             name: toolName,
             content: JSON.stringify({
-              error: safeError
+              error: safeError,
+              recovery: getDataRecovery(error),
             })
           };
         }
@@ -2789,6 +2806,7 @@ async function orchestrate(
   return {
     chartPreviews: getChartPreviewsFromToolResults(allToolResults),
     connectionOptions: getConnectionOptionsFromToolResults(allToolResults),
+    dataRecoveries: getDataRecoveriesFromToolResults(allToolResults),
     contextManifest,
     message: assistantMessage.content,
     conversationHistory: persistedMessages,

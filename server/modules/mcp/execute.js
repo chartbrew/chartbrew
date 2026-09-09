@@ -13,6 +13,7 @@ const { isSourceServerEnabled } = require("../../sources/sourceAvailability");
 const createTemporaryChart = require("../ai/orchestrator/tools/createTemporaryChart");
 const { TOOLS } = require("./tools");
 const { getFieldValue, selectRows } = require("../../visualization/fieldPath");
+const { getDataRecovery } = require("../dataRecovery");
 
 const dataController = new DataApiController();
 const datasetController = new DatasetController();
@@ -109,28 +110,33 @@ async function createPreview(req, args) {
   requireSourceAccess(access);
   const dataset = await findAccessibleDataset(db, access, access.teamId, args.datasetId);
   if (!dataset) throw new DataApiError("RESOURCE_NOT_FOUND");
-  if (args.type !== "table" && (!args.yAxis || (args.type !== "kpi" && !args.xAxis))) throw new DataApiError("INVALID_REQUEST");
+  if (args.type !== "table" && (!args.yAxis || (!["kpi", "avg", "gauge"].includes(args.type) && !args.xAxis))) throw new DataApiError("INVALID_REQUEST");
+  if ((args.minValue !== undefined && args.maxValue !== undefined && args.minValue >= args.maxValue)
+    || args.ranges?.some((range) => range.min >= range.max)) throw new DataApiError("INVALID_REQUEST");
   const data = await dataController.datasetData({ id: req.id, method: "POST", apiKeyAccess: access, body: {},
     params: { team_id: String(access.teamId), dataset_id: String(dataset.id) } });
   const rows = selectRows(data.body.data, [args.xAxis, args.yAxis]);
   if (!rows.length) return { result: { status: "not_created", message: "This dataset has no rows to chart. Check its data and filters first." } };
   if (args.type !== "table") {
     const values = rows.map((row) => getFieldValue(row, args.yAxis)).filter((value) => value != null);
-    if (!values.length || values.some((value) => !["number", "string"].includes(typeof value) || String(value).trim() === "" || !Number.isFinite(Number(value)))) {
+    const countsValues = ["count", "count_unique"].includes(args.yAxisOperation) && args.type !== "avg";
+    if (!values.length || (!countsValues && values.some((value) => !["number", "string"].includes(typeof value) || String(value).trim() === "" || !Number.isFinite(Number(value))))) {
       return { result: { status: "not_created", message: "Select a numeric value field from run_dataset before creating this chart." } };
     }
     if (args.xAxis && rows.every((row) => getFieldValue(row, args.xAxis) == null)) throw new DataApiError("INVALID_REQUEST");
   }
-  const preview = await createTemporaryChart({ team_id: access.teamId, dataset_id: dataset.id,
-    name: args.name, type: args.type, xAxis: args.xAxis, yAxis: args.yAxis, skipSnapshot: true });
+  const { datasetId, includeImage, ...chartOptions } = args;
+  if (chartOptions.type === "bar" && chartOptions.horizontal) chartOptions.type = "horizontalBar";
+  const preview = await createTemporaryChart({ ...chartOptions, spec: chartOptions,
+    team_id: access.teamId, dataset_id: datasetId, skipSnapshot: true });
   const result = { status: "preview", chart: { id: preview.chart_id, name: preview.name, type: preview.type,
-    url: clientLink(`/dashboard/${preview.project_id}/chart/${preview.chart_id}/edit`) },
+    url: clientLink(`/previews/${preview.chart_id}`) },
   dataset: { id: dataset.id, name: dataset.name, url: clientLink(`/datasets/${dataset.id}`) } };
   let image;
-  if (args.includeImage) {
+  if (includeImage) {
     try {
       const png = await withExecutionDeadline(({ signal }) => imageController.render({ id: req.id,
-        user: { id: access.userId }, params: { chart_id: String(preview.chart_id), project_id: String(preview.project_id) }, body: {},
+        user: { id: access.userId }, params: { chart_id: String(preview.chart_id), project_id: String(preview.project_id) }, body: { version: 1, layout: "chartOnly" },
       }, { signal }));
       if (png.length <= 1024 * 1024) image = { type: "image", mimeType: "image/png", data: png.toString("base64") };
       else result.imageUnavailable = true;
@@ -162,19 +168,29 @@ async function execute(req, name, args) {
 async function callMcpTool(req, name, args) {
   const access = req.apiKeyAccess;
   const definition = TOOLS.find((item) => item.name === name);
-  const trace = await startRun({ triggerType: "mcp", entityType: "mcp_tool", apiKeyId: access.apiKeyId,
-    teamId: access.teamId, summary: { tool: name, requestId: req.id } });
+  const summary = { tool: name, requestId: req.id, userId: access.userId, oauthGrantId: access.oauthGrantId };
+  const trace = await startRun({ triggerType: "mcp", entityType: "mcp_tool", apiKeyId: access.oauthGrantId ? null : access.apiKeyId,
+    teamId: access.teamId, summary });
   try {
     if (!definition || !access.scopes.includes(definition.scope)) throw new DataApiError("API_KEY_SCOPE_REQUIRED");
     const { result, image } = await execute(req, name, args);
+    if (access.teamName) result.team = { id: access.teamId, name: access.teamName };
     const response = { content: [{ type: "text", text: `${name}: ${result.status || "complete"}.` }], structuredContent: { result } };
     if (image) response.content.push(image);
     serializeDataApiResponse(response);
-    await completeRun(trace, { status: "success", summary: { tool: name } });
+    await completeRun(trace, { status: "success", summary });
     return response;
   } catch (error) {
-    const safe = error instanceof DataApiError ? error : new DataApiError(error?.code === "EXECUTION_TIMEOUT" ? "EXECUTION_TIMEOUT" : "DATA_UNAVAILABLE");
-    await failRun(trace, safe, { stage: "mcp", summary: { tool: name, errorCode: safe.code } });
+    const recovery = getDataRecovery(error);
+    const safe = error instanceof DataApiError ? error : new DataApiError(error?.code === "EXECUTION_TIMEOUT" ? "EXECUTION_TIMEOUT" : "DATA_UNAVAILABLE", { cause: error });
+    await failRun(trace, safe, { stage: "mcp", summary: { ...summary, errorCode: recovery?.code || safe.code } });
+    if (recovery) {
+      let url = null;
+      if (recovery.action === "dataset" && recovery.datasetId) url = clientLink(`/datasets/${recovery.datasetId}`);
+      else if (recovery.action === "connection" && recovery.connectionId) url = clientLink(`/connections/${recovery.connectionId}`);
+      return { isError: true, content: [{ type: "text", text: `${recovery.code}: ${recovery.message}${url ? ` ${url}` : ""}` }],
+        structuredContent: { result: { status: "failed", recovery: { ...recovery, url } } } };
+    }
     return { isError: true, content: [{ type: "text", text: `${safe.code}: ${safe.message}` }] };
   }
 }

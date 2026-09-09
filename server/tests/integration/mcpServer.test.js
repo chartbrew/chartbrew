@@ -8,7 +8,10 @@ const TeamController = require("../../controllers/TeamController");
 const DatasetController = require("../../controllers/DatasetController");
 const ChartController = require("../../controllers/ChartController");
 const ChartImageController = require("../../controllers/ChartImageController");
+const { normalizeImageRequest } = require("../../modules/chartImage/imageRequest");
+const { createMcpError } = require("../../sources/plugins/mcp/mcp.policy");
 const { getSourceById } = require("../../sources");
+const { getReadyPresets, getMarkDefinition } = require("../../visualization/registry");
 
 describe("Chartbrew MCP private server", () => {
   let db;
@@ -51,6 +54,8 @@ describe("Chartbrew MCP private server", () => {
       "search_workspace", "get_workspace_activity", "run_dataset", "get_chart_data", "create_chart_preview", "explore_data",
     ]);
     expect(JSON.stringify(list.body.result).length).toBeLessThanOrEqual(8000);
+    expect(list.body.result.tools.find((tool) => tool.name === "create_chart_preview").inputSchema.properties.type.enum)
+      .toEqual(getReadyPresets().filter((preset) => getMarkDefinition(preset.mark)?.bindingRequired !== false).map((preset) => preset.id));
     await db.Apikey.update({ scopes: ["data:read"] }, { where: { id: key.id } });
     const readList = await rpc("tools/list", {});
     expect(readList.body.result.tools.some((tool) => tool.name === "create_chart_preview")).toBe(false);
@@ -147,14 +152,69 @@ describe("Chartbrew MCP private server", () => {
     vi.spyOn(DatasetController.prototype, "runRequest").mockResolvedValue({ data: [{ country: "UK", visitors: 10 }] });
     vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue({});
     const snapshot = vi.spyOn(ChartController.prototype, "takeSnapshot");
-    vi.spyOn(ChartImageController.prototype, "render").mockResolvedValue(Buffer.from("test PNG"));
-    const result = await call("create_chart_preview", { datasetId: dataset.id, name: "Visits", type: "bar", xAxis: "root[].country", yAxis: "root[].visitors", includeImage: true });
+    vi.spyOn(ChartImageController.prototype, "render").mockImplementation(async (req) => {
+      expect(normalizeImageRequest(req.body)).toMatchObject({ version: 1, layout: "chartOnly" });
+      return Buffer.from("test PNG");
+    });
+    const result = await call("create_chart_preview", { datasetId: dataset.id, name: "Visits", type: "bar", horizontal: true,
+      xAxis: "root[].country", yAxis: "root[].visitors", includeImage: true, displayLegend: false, dataLabels: true,
+      datasetColor: "#4285F4", sort: "desc", maxRecords: 10, minValue: 0, maxValue: 100, yAxisOperation: "sum" });
     expect(result.body.result.structuredContent.result.status).toBe("preview");
     const chart = await db.Chart.findByPk(result.body.result.structuredContent.result.chart.id, { include: [db.Project] });
     expect(chart.Project.ghost).toBe(true);
+    expect(result.body.result.structuredContent.result.chart.url).toMatch(new RegExp(`/previews/${chart.id}$`));
+    expect(chart.type).toBe("horizontalBar");
+    expect(chart.visualization.layers[0]).toMatchObject({ mark: "horizontalBar", orientation: "horizontal",
+      encoding: { category: { field: "root[].country" }, value: { field: "root[].visitors", aggregate: "sum" } },
+      style: { color: "#4285F4" }, transforms: [{ type: "sort", direction: "desc", role: "value" }, { type: "limit", count: 10 }] });
+    expect(chart.visualization.settings).toMatchObject({ dataLabels: true, legend: { visible: false }, minValue: 0, maxValue: 100 });
     expect(result.body.result.content[1]).toMatchObject({ type: "image", mimeType: "image/png" });
     expect(snapshot).not.toHaveBeenCalled();
     expect(await db.AiConversation.count()).toBe(0);
     expect(await db.AiUsage.count()).toBe(0);
+  });
+
+  it("creates every released dataset chart type and keeps the selected options", async () => {
+    const { call, dataset } = await fixture();
+    vi.spyOn(DatasetController.prototype, "runRequest").mockResolvedValue({ data: [{ country: "UK", visitors: 10, date: "2026-09-01" }] });
+    vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue({});
+    const presets = getReadyPresets().filter((preset) => getMarkDefinition(preset.mark)?.bindingRequired !== false);
+    for (const preset of presets) {
+      const metric = ["kpi", "avg", "gauge"].includes(preset.id);
+      const result = await call("create_chart_preview", { datasetId: dataset.id, name: preset.label || preset.id, type: preset.id,
+        ...(!metric ? { xAxis: preset.id === "matrix" ? "root[].date" : "root[].country" } : {}), yAxis: "root[].visitors",
+        displayLegend: false, dataLabels: true, includeZeros: false, pointRadius: 3, fill: true,
+        timeInterval: "month", stacked: true, minValue: 0, maxValue: 100,
+        ranges: [{ min: 0, max: 100, label: "Visits", color: "#4285F4" }] });
+      expect(result.body.result.structuredContent?.result.status).toBe("preview");
+      const chart = await db.Chart.findByPk(result.body.result.structuredContent.result.chart.id);
+      expect(chart.type).toBe(preset.id);
+      expect(chart.visualization.layers[0].mark).toBe(preset.mark);
+      expect(chart.visualization.settings).toMatchObject({ dataLabels: true, includeZeros: false, timeInterval: "month", legend: { visible: false } });
+    }
+    for (const overrides of [{ type: "scatter" }, { type: "markdown" }, { minValue: 10, maxValue: 0 },
+      { ranges: [{ min: 10, max: 0 }] }, { horizontal: "yes" }, { datasetColor: "not-a-color" }, { spec: { project_id: 999 } }]) {
+      const before = await db.Chart.count();
+      const result = await call("create_chart_preview", { datasetId: dataset.id, name: "Invalid", type: "bar",
+        xAxis: "root[].country", yAxis: "root[].visitors", ...overrides });
+      expect(result.body.result?.isError || Boolean(result.body.error)).toBe(true);
+      expect(await db.Chart.count()).toBe(before);
+    }
+    const count = await call("create_chart_preview", { datasetId: dataset.id, name: "Country count", type: "kpi",
+      yAxis: "root[].country", yAxisOperation: "count_unique" });
+    expect(count.body.result.structuredContent?.result.status).toBe("preview");
+  });
+
+  it("returns a safe dataset repair action for a source failure and creates no empty preview", async () => {
+    const { call, dataset } = await fixture();
+    const failure = createMcpError("MCP_INVALID_ARGUMENTS", "secret query contents");
+    failure.datasetId = dataset.id;
+    vi.spyOn(DatasetController.prototype, "runRequest").mockRejectedValue(failure);
+    const before = await db.Chart.count();
+    const response = await call("create_chart_preview", { datasetId: dataset.id, name: "Visits", type: "bar", xAxis: "root[].country", yAxis: "root[].visitors" });
+    expect(response.body.result.isError).toBe(true);
+    expect(response.body.result.structuredContent.result.recovery).toMatchObject({ code: "MCP_INVALID_ARGUMENTS", action: "dataset", datasetId: dataset.id });
+    expect(JSON.stringify(response.body)).not.toContain("secret query");
+    expect(await db.Chart.count()).toBe(before);
   });
 });
