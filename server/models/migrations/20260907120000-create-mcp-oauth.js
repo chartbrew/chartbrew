@@ -2,7 +2,10 @@ const S = require("sequelize");
 
 module.exports = {
   async up(q) {
-    const timestamps = { createdAt: { type: S.DATE, allowNull: false }, updatedAt: { type: S.DATE, allowNull: false } };
+    const timestamps = {
+      createdAt: { type: S.DATE, allowNull: false },
+      updatedAt: { type: S.DATE, allowNull: false },
+    };
     await q.createTable("McpOAuthClient", {
       id: { type: S.STRING(64), primaryKey: true, allowNull: false },
       name: { type: S.STRING(80), allowNull: false },
@@ -13,7 +16,12 @@ module.exports = {
     });
     await q.createTable("McpOAuthGrant", {
       id: { type: S.UUID, primaryKey: true, allowNull: false },
-      client_id: { type: S.STRING(64), allowNull: false, references: { model: "McpOAuthClient", key: "id" }, onDelete: "CASCADE" },
+      client_id: {
+        type: S.STRING(64),
+        allowNull: false,
+        references: { model: "McpOAuthClient", key: "id" },
+        onDelete: "CASCADE",
+      },
       user_id: { type: S.INTEGER, references: { model: "User", key: "id" }, onDelete: "CASCADE" },
       team_id: { type: S.INTEGER, references: { model: "Team", key: "id" }, onDelete: "CASCADE" },
       redirectUri: { type: S.TEXT, allowNull: false },
@@ -34,7 +42,12 @@ module.exports = {
     await q.addIndex("McpOAuthGrant", ["expiresAt"]);
     await q.createTable("McpOAuthRefresh", {
       id: { type: S.STRING(64), primaryKey: true, allowNull: false },
-      grant_id: { type: S.UUID, allowNull: false, references: { model: "McpOAuthGrant", key: "id" }, onDelete: "CASCADE" },
+      grant_id: {
+        type: S.UUID,
+        allowNull: false,
+        references: { model: "McpOAuthGrant", key: "id" },
+        onDelete: "CASCADE",
+      },
       usedAt: { type: S.DATE },
       ...timestamps,
     });

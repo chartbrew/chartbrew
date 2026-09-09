@@ -13,6 +13,7 @@ import {
   LuUser,
   LuUsers,
 } from "react-icons/lu";
+import { VscMcp } from "react-icons/vsc";
 
 import canAccess from "../../config/canAccess";
 import { cn } from "../../modules/utils";
@@ -24,9 +25,9 @@ const ACCOUNT_ITEMS = [{
   label: "Profile",
   path: "/settings/profile",
 }, {
-  icon: LuShieldCheck,
-  label: "Authorized apps",
-  path: "/settings/authorized-apps",
+  icon: VscMcp,
+  label: "MCP",
+  path: "/settings/mcp",
 }];
 
 const TEAM_ITEMS = [{

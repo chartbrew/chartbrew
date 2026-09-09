@@ -10,8 +10,12 @@ function getDataRecovery(error) {
         code: cause.recovery.code,
         action: cause.recovery.action,
         message: cause.recovery.message,
-        ...(Number.isSafeInteger(Number(datasetId)) && Number(datasetId) > 0 ? { datasetId: Number(datasetId) } : {}),
-        ...(Number.isSafeInteger(Number(connectionId)) && Number(connectionId) > 0 ? { connectionId: Number(connectionId) } : {}),
+        ...(Number.isSafeInteger(Number(datasetId)) && Number(datasetId) > 0
+          ? { datasetId: Number(datasetId) }
+          : {}),
+        ...(Number.isSafeInteger(Number(connectionId)) && Number(connectionId) > 0
+          ? { connectionId: Number(connectionId) }
+          : {}),
       };
     }
   }

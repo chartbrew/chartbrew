@@ -17,13 +17,29 @@ describe("Preview placement transaction", () => {
     const team = await db.Team.create({ name: "Preview team" });
     const projects = [];
     for (const name of ["Preview", "First", "Second"]) {
-      projects.push(await db.Project.create({ team_id: team.id, name, brewName: name, ghost: name === "Preview" }));
+      projects.push(
+        await db.Project.create({
+          team_id: team.id,
+          name,
+          brewName: name,
+          ghost: name === "Preview",
+        })
+      );
     }
-    const chart = await db.Chart.create({ project_id: projects[0].id, name: "Countries", type: "bar" });
-    const dataset = await db.Dataset.create({ team_id: team.id, name: "Countries", project_ids: [] });
+    const chart = await db.Chart.create({
+      project_id: projects[0].id,
+      name: "Countries",
+      type: "bar",
+    });
+    const dataset = await db.Dataset.create({
+      team_id: team.id,
+      name: "Countries",
+      project_ids: [],
+    });
     await db.ChartDatasetConfig.create({ chart_id: chart.id, dataset_id: dataset.id });
     const refresh = vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue(null);
-    const place = (project) => moveChart({ chart_id: chart.id, target_project_id: project.id, team_id: team.id });
+    const place = (project) =>
+      moveChart({ chart_id: chart.id, target_project_id: project.id, team_id: team.id });
     return { projects, chart, dataset, refresh, place };
   }
 
@@ -40,7 +56,10 @@ describe("Preview placement transaction", () => {
     const { projects, chart, dataset, refresh, place } = await fixture();
     const observed = [];
     refresh.mockImplementation(async () => {
-      observed.push([(await db.Chart.findByPk(chart.id)).project_id, (await db.Dataset.findByPk(dataset.id)).project_ids]);
+      observed.push([
+        (await db.Chart.findByPk(chart.id)).project_id,
+        (await db.Dataset.findByPk(dataset.id)).project_ids,
+      ]);
     });
     const results = await Promise.allSettled([place(projects[1]), place(projects[2])]);
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);

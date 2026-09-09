@@ -13,7 +13,13 @@ datasets, and create temporary charts. It does not run the Chartbrew AI model or
 4. The agent receives access to that team only. Changing the active team in Chartbrew does not
    change the authorization. Connect again to authorize another team, if the agent supports
    multiple connections to the same MCP URL.
-5. Use **Settings → Authorized apps** to remove an app's access. This also stops its refresh tokens.
+5. Use **Settings → MCP** for setup instructions and connected clients. Remove access there to stop
+   an app and its refresh tokens. The list covers your authorizations across teams, not your teammates'.
+
+The setup page reads the published MCP resource URL, so commands also use `CB_MCP_PUBLIC_URL` when
+configured. It includes Codex, Claude Code, Claude, ChatGPT, Cursor, and generic-client instructions.
+Cloud clients cannot reach a localhost URL directly; use a public HTTPS endpoint. These instructions
+do not replace per-client compatibility tests. API keys remain in **Team settings → API keys**.
 
 OAuth discovery and the authentication challenge advertise all four permissions: `data:read`,
 `data:refresh`, `charts:preview`, and `datasets:write`. Requests without a scope show all four on the

@@ -447,7 +447,9 @@ Filter `tools/list` by granted scope where required.
   existing-data access to their current dashboards. Check live membership and access on every call.
 - A grant never follows the active team in the Chartbrew UI. Another team requires another consent.
   Include the authorized team in OAuth tool results. Do not add a team-switching tool.
-- Add account-level **Authorized apps**, with app name, team, permissions, and removal of access.
+- Add account-level **MCP** settings with the published server URL, client setup instructions, and
+  a connected-client table showing app name, team, permissions, and removal of access. Keep the old
+  Authorized apps route as a redirect. API keys remain in their existing team settings page.
 - Use protected-resource and authorization-server metadata, exact registered redirect URLs, S256 PKCE,
   resource/audience binding, short-lived access tokens, single-use codes, refresh rotation, replay
   revocation, and persistent grants. Keep MCP tokens separate from Chartbrew login tokens.
