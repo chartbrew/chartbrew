@@ -188,7 +188,7 @@ describe("Chartbrew MCP private server", () => {
     const { call, connection } = await fixture();
     const details = testDbManager.getConnectionDetails();
     await connection.update({
-      type: "mysql",
+      type: details.dialect,
       host: details.host,
       port: String(details.port),
       dbName: details.database,

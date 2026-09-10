@@ -252,7 +252,7 @@ describe("AI orchestrator dashboard template tool", () => {
         dataset_id: 301,
         yAxis: "root[].total_users",
       })],
-    }), null);
+    }), null, { waitForData: true });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,
