@@ -1,8 +1,8 @@
 const db = require("../../../../models/models");
+const { findSourceForConnection, getSources } = require("../../../../sources");
+const { isSourceServerEnabled } = require("../../../../sources/sourceAvailability");
 const {
-  getOrchestratorSources,
-  getSupportedConnectionTypes,
-  getSupportedSourceForConnection,
+  sourceSupportsOrchestrator,
 } = require("../sourceSupport");
 const { createHttpError, getObservationAccess } = require("../../../observations/access");
 const mcpProviders = require("../../../../sources/plugins/mcp/mcp.providers");
@@ -34,6 +34,8 @@ function supportsCapability(source, capability) {
 }
 
 function getSetupOptions(provider, capability, sources) {
+  if (!provider) return [];
+
   const nativeSources = sources.filter((source) => source.id !== "mcp"
     && matchesProvider(provider, source.id, source.name, source.type, source.subType)
     && supportsCapability(source, capability));
@@ -43,6 +45,7 @@ function getSetupOptions(provider, capability, sources) {
       source_id: source.id,
       name: source.name,
       setup_url: `/connections/new?type=${encodeURIComponent(source.id)}`,
+      ...(!sourceSupportsOrchestrator(source) ? { note: "Set up this source and its dataset in the connection and dataset pages. AI cannot query this source directly." } : {}),
     }));
   }
   if (sources.some((source) => source.id === "mcp")) {
@@ -66,7 +69,7 @@ function getSetupOptions(provider, capability, sources) {
 }
 
 async function listConnections(payload) {
-  const { project_id, team_id, user_id, provider, capability } = payload;
+  const { project_id, team_id, user_id, provider, capability, scope = "all" } = payload;
   const normalizedTeamId = normalizeTeamId(team_id);
   if ((provider != null && (typeof provider !== "string" || !normalizeName(provider) || provider.length > 100))
     || (capability != null && !["query", "schema", "tools"].includes(capability))) {
@@ -81,15 +84,16 @@ async function listConnections(payload) {
   if (!access.canConfigureTeam) {
     return { connections: [], options: [{ state: "admin_required", name: provider || "Data source" }] };
   }
-  const sources = getOrchestratorSources();
   const whereClause = {
     team_id: normalizedTeamId,
   };
 
-  // If project_id is provided, filter by connections used in that project
   if (project_id) {
     await requireProjectForTeam(project_id, normalizedTeamId);
+  }
 
+  if (scope === "dashboard") {
+    if (!project_id) throw createHttpError("Specify a dashboard to filter its connections.", 400);
     const datasets = await db.Dataset.findAll({
       where: {
         team_id: normalizedTeamId,
@@ -126,10 +130,7 @@ async function listConnections(payload) {
   }
 
   const connections = await db.Connection.findAll({
-    where: {
-      ...whereClause,
-      type: getSupportedConnectionTypes()
-    },
+    where: whereClause,
     attributes: ["id", "type", "subType", "name", "active", "host", "schema"],
     order: [["createdAt", "DESC"]],
   });
@@ -137,14 +138,16 @@ async function listConnections(payload) {
   const filteredConnections = connections
     .map((conn) => ({
       connection: conn,
-      source: getSupportedSourceForConnection(conn),
+      source: findSourceForConnection(conn),
     }))
     .filter(({ connection, source }) => source
+      && isSourceServerEnabled(source)
       && supportsCapability(source, capability)
       && matchesProvider(provider, connection.name, source.id, source.name, source.type, source.subType,
         source.id === "mcp" ? getMcpProvider(connection.host)?.name : null));
 
   const usableConnections = filteredConnections.filter(({ connection, source }) => connection.active
+    && sourceSupportsOrchestrator(source)
     && (source.id !== "mcp" || source.backend.ai.getCapabilities({ connection }).approvedToolCount > 0));
   // Existing sources win over new setup. Do not claim metric coverage from a provider match alone.
   let options;
@@ -155,6 +158,16 @@ async function listConnections(payload) {
   } else if (filteredConnections.length) {
     options = filteredConnections.slice(0, 5).map(({ connection, source }) => {
       const providerEntry = source.id === "mcp" ? getMcpProvider(connection.host) : null;
+      if (!sourceSupportsOrchestrator(source)) {
+        return {
+          state: "native_setup",
+          connection_id: connection.id,
+          source_id: source.id,
+          name: connection.name,
+          setup_url: `/connections/${connection.id}`,
+          note: "This connection already exists. Configure its dataset in Chartbrew; AI cannot query this source directly.",
+        };
+      }
       let state = "native_setup";
       if (connection.active) state = "admin_required";
       else if (providerEntry) state = "mcp_oauth_setup";
@@ -169,7 +182,9 @@ async function listConnections(payload) {
       };
     });
   } else {
-    options = getSetupOptions(provider, capability, sources);
+    const setupSources = getSources().filter((source) => isSourceServerEnabled(source)
+      && source.availability?.ui?.canCreateConnections !== false);
+    options = getSetupOptions(provider, capability, setupSources);
   }
 
   return {
@@ -182,6 +197,10 @@ async function listConnections(payload) {
       name: connection.name,
     })),
     options,
+    ...(!provider && !filteredConnections.length ? {
+      message: "No matching connection is available. Ask where the relevant data lives, then check that provider. The user can also browse sources.",
+      setup_url: "/connections/new",
+    } : {}),
     ...(usableConnections.length > 5 ? { has_more: true } : {}),
   };
 }

@@ -15,7 +15,6 @@ const {
   getConnectionOptionsFromToolResults,
   getWorkSummaryFromMessages,
   getConnectionInspectionToolChoice,
-  getVisualizationToolChoice,
   sanitizeToolError,
   buildUsageRecordFromResponse,
   buildSystemPrompt,
@@ -219,27 +218,6 @@ describe("orchestrator Responses API adapters", () => {
     expect(prompt).toContain("bare \"yes\" without a destination");
     expect(prompt).toContain("needs_structured_data");
     expect(prompt).not.toContain("One attempt only");
-  });
-
-  it("requires a tool until an explicit visualization action finishes", () => {
-    expect(getVisualizationToolChoice({
-      blocked: false,
-      complete: false,
-      required: true,
-    })).toBe("required");
-    expect(getVisualizationToolChoice({
-      blocked: false,
-      complete: true,
-      required: true,
-    })).toBe("auto");
-  });
-
-  it("allows an explanation when connection setup blocks chart creation", () => {
-    for (const state of ["native_setup", "mcp_oauth_setup", "manual_mcp_setup", "admin_required", "unsupported"]) {
-      expect(getVisualizationToolChoice({ required: true, connectionOptions: [{ state }] })).toBe("auto");
-    }
-    expect(getVisualizationToolChoice({ required: true, connectionOptions: [{ state: "connected" }] })).toBe("required");
-    expect(getVisualizationToolChoice({ required: true, connectionOptions: [{ state: "connected", needs_approval: true }] })).toBe("auto");
   });
 
   it("returns bounded chart references for authenticated preview loading", () => {

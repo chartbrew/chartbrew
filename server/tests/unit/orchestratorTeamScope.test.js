@@ -55,10 +55,9 @@ describe("AI orchestrator team scope", () => {
     const result = await listConnections({ team_id: 7, user_id: 3 });
 
     expect(db.Connection.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
+      where: {
         team_id: 7,
-        type: expect.any(Array),
-      }),
+      },
     }));
     expect(result).toMatchObject({
       connections: [{

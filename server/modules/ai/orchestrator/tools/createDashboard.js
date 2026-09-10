@@ -31,6 +31,14 @@ async function createDashboard(payload) {
     throw new Error("User does not belong to the specified team");
   }
 
+  const [connections, datasets] = await Promise.all([
+    db.Connection.count({ where: { team_id: normalizedTeamId, active: true } }),
+    db.Dataset.count({ where: { team_id: normalizedTeamId, draft: false } }),
+  ]);
+  if (!connections && !datasets) {
+    throw new Error("Connect a data source or prepare a dataset before creating a dashboard. Help the user get data first.");
+  }
+
   const project = await projectController.create(Number(user_id), {
     team_id: normalizedTeamId,
     name,

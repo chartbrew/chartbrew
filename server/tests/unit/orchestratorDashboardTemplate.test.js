@@ -163,7 +163,9 @@ describe("AI orchestrator dashboard template tool", () => {
     });
   });
 
-  it("creates an empty dashboard for mixed-source orchestration", async () => {
+  it("creates a dashboard for mixed-source orchestration when data is available", async () => {
+    vi.spyOn(db.Connection, "count").mockResolvedValue(1);
+    vi.spyOn(db.Dataset, "count").mockResolvedValue(0);
     vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({
       role: "teamOwner",
       projects: [],
@@ -252,7 +254,7 @@ describe("AI orchestrator dashboard template tool", () => {
         dataset_id: 301,
         yAxis: "root[].total_users",
       })],
-    }), null);
+    }), null, { waitForData: true });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,

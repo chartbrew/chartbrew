@@ -12,27 +12,8 @@ const {
 
 // Check if question is about capabilities/what the AI can do
 function isCapabilityQuestion(question) {
-  const capabilityPatterns = [
-    /what can you do/i,
-    /what do you do/i,
-    /help/i,
-    /capabilities/i,
-    /what are your/i,
-    /how can you help/i,
-    /what can you help/i,
-    /tell me about yourself/i,
-    /introduce yourself/i,
-    /who are you/i,
-    /what is chartbrew/i,
-    /how does this work/i,
-    /how do you work/i,
-    /what features/i,
-    /what can i ask/i,
-    /what questions/i,
-    /show me what/i
-  ];
-
-  return capabilityPatterns.some((pattern) => pattern.test(question.trim()));
+  return /^(what can you do|what do you do|what are your capabilities|capabilities|tell me about yourself|introduce yourself|who are you|what is chartbrew|how do you work)[?!.]*$/i
+    .test(String(question || "").trim());
 }
 
 // Generate capability response without AI call

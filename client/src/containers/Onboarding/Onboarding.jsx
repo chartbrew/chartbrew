@@ -117,7 +117,7 @@ function Onboarding() {
     const refreshedTeam = teamsAction.payload?.find((team) => team.id === targetTeam.id)
       || action.payload;
     dispatch(saveActiveTeam(refreshedTeam));
-    window.location.href = "/connections/new";
+    window.location.href = "/";
   };
 
   if (loading || (!isNewTeam && !owningTeam)) {

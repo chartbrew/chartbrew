@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Chip, Spinner, Table,
@@ -37,6 +37,7 @@ import {
 import canAccess from "../../config/canAccess";
 import HomeDiscover from "./HomeDiscover";
 import HomeOnboarding from "./HomeOnboarding";
+import { getHomeSuggestions } from "./homeOnboardingState";
 import {
   buildHomeActivityRows,
   removeHomeActivityItem,
@@ -176,6 +177,9 @@ function Home() {
   const [data, setData] = useState(null);
   const [digests, setDigests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refreshHome = useCallback(() => setRefreshKey((current) => current + 1), []);
   const [recommendationCount, setRecommendationCount] = useState(0);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [resolvingId, setResolvingId] = useState(null);
@@ -184,28 +188,41 @@ function Home() {
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    if (!team?.id) return;
+    if (!team?.id) return undefined;
+    let active = true;
     setLoading(true);
+    setLoadError(false);
     Promise.allSettled([
       getHome(team.id),
       getObservationDigests(team.id),
       getMonitorRecommendations(team.id),
     ])
       .then(([homeResult, subscriptionsResult, recommendationsResult]) => {
+        if (!active) return;
         if (homeResult.status === "rejected") throw homeResult.reason;
         const home = homeResult.value;
         const subscriptions = subscriptionsResult.status === "fulfilled"
           ? subscriptionsResult.value
           : [];
-        setData(home);
+        setData({ ...home, teamId: team.id });
         setDigests(subscriptions);
         setRecommendationCount(recommendationsResult.status === "fulfilled"
           ? recommendationsResult.value.length
           : 0);
       })
-      .catch((error) => toast.error(error.message))
-      .finally(() => setLoading(false));
-  }, [team?.id]);
+      .catch(() => { if (active) setLoadError(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [team?.id, refreshKey]);
+
+  useEffect(() => {
+    window.addEventListener("focus", refreshHome);
+    window.addEventListener("cb:activity-updated", refreshHome);
+    return () => {
+      window.removeEventListener("focus", refreshHome);
+      window.removeEventListener("cb:activity-updated", refreshHome);
+    };
+  }, [refreshHome]);
 
   useEffect(() => {
     setOnboardingDismissed(false);
@@ -221,7 +238,16 @@ function Home() {
     });
   };
 
-  if (loading || !data) {
+  if ((!data || data.teamId !== team?.id) && loadError && !loading) {
+    return (
+      <div className="flex min-h-80 flex-col items-center justify-center gap-3" role="alert">
+        <p>Home could not load. Try again.</p>
+        <Button onPress={refreshHome} variant="secondary">Retry</Button>
+      </div>
+    );
+  }
+
+  if (!data || data.teamId !== team?.id) {
     return (
       <div className="flex min-h-80 items-center justify-center">
         <Spinner aria-label="Loading Home" />
@@ -229,6 +255,8 @@ function Home() {
     );
   }
 
+  const foundationInProgress = !data.content?.hasChart;
+  const suggestions = getHomeSuggestions(data);
   const needsAttention = data.needsAttention
     || data.observations.filter((observation) => observation.impact !== "positive");
   const notableChanges = data.notableChanges
@@ -244,7 +272,7 @@ function Home() {
     recommendationCount,
   });
   const activityRows = buildHomeActivityRows({
-    dataHealth: showNeedsAttention && data.dataHealth.showOnHome
+    dataHealth: data.dataHealth.count > 0
       ? data.dataHealth.items
       : [],
     needsAttention: showNeedsAttention ? needsAttention : [],
@@ -291,12 +319,25 @@ function Home() {
             transition={HOME_TRANSITION}
           >
             <HomeGreeting
-              subtitle={`Here is what is moving across ${team.name}`}
+              subtitle="What are we exploring today?"
               title={`Good to see you, ${user?.name?.split(" ")[0] || "there"}.`}
             />
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {!isChatFocused && showOnboarding && foundationInProgress ? (
+        <section aria-label="Get started">
+          <HomeOnboarding onboarding={data.onboarding} onDismiss={dismissOnboarding} />
+        </section>
+      ) : null}
+
+      {loadError ? (
+        <div className="flex items-center gap-3" role="alert">
+          <p>Home could not update.</p>
+          <Button onPress={refreshHome} size="sm" variant="secondary">Retry</Button>
+        </div>
+      ) : null}
 
       <motion.div
         className={isChatFocused
@@ -313,12 +354,15 @@ function Home() {
             focused={isChatFocused}
             key={team.id}
             onFocusChange={setIsChatFocused}
+            onContentChange={refreshHome}
+            suggestions={suggestions}
+            hasContent={Boolean(data.content?.hasConnection || data.content?.hasDataset || data.content?.hasChart)}
             teamId={team.id}
           />
         </div>
 
         <AnimatePresence initial={false} mode="popLayout">
-          {!isChatFocused ? (
+          {!isChatFocused && !foundationInProgress ? (
             <motion.div
               animate={{ opacity: 1, y: 0 }}
               className="hidden w-80 shrink-0 self-start lg:block xl:w-90"
@@ -334,7 +378,7 @@ function Home() {
 
       {!isChatFocused ? (
         <>
-          {showOnboarding ? (
+          {showOnboarding && !foundationInProgress ? (
             <section aria-label="Get started">
               <HomeOnboarding onboarding={data.onboarding} onDismiss={dismissOnboarding} />
             </section>
@@ -463,6 +507,7 @@ function Home() {
         </section>
           ) : null}
 
+          {data.dashboards.length > 0 || !showOnboarding ? (
           <section aria-labelledby="dashboards-heading">
         <SectionHeading
           action={(
@@ -514,9 +559,11 @@ function Home() {
           </div>
         ) : (
           <div className="rounded-3xl border border-divider bg-surface px-4 py-5">
-            <p className="font-medium">No dashboards available</p>
+            <p className="font-medium">No dashboards are available to you yet</p>
             <p className="mt-1 text-sm text-foreground-500">
-              Dashboards you create or can access will appear here.
+              {data.content?.canConfigureTeam
+                ? "Create a dashboard to get started."
+                : "Ask a team administrator for dashboard access."}
             </p>
             <Button className="mt-3" onPress={() => navigate("/dashboards")} size="sm" variant="secondary">
               Browse dashboards
@@ -524,15 +571,11 @@ function Home() {
           </div>
         )}
           </section>
+          ) : null}
 
           {digests.length === 0
-            && ![
-              "connect_data",
-              "create_dataset",
-              "waiting_for_metrics",
-              "waiting_for_setup",
-              "watch_metric",
-            ].includes(data.setupState) ? (
+            && data.hasWatchedMetric
+            && ["active", "no_important_changes"].includes(data.setupState) ? (
             <div className="flex flex-col items-start gap-3 rounded-3xl border border-divider bg-surface px-4 py-4 md:flex-row md:items-center">
               <div className="min-w-0 flex-1">
                 <p className="font-medium">Get a KPI review</p>

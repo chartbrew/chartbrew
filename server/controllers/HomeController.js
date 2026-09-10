@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const ObservationController = require("./ObservationController");
+const { isDatasetVisible } = require("../modules/workspaceContext/workspaceContextService");
 const {
   PROJECT_EDITOR_ROLES,
   getProjectScope,
@@ -228,11 +229,17 @@ function buildHomeOnboarding({
 
 class HomeController {
   async getOnboarding(access, monitorCount) {
-    if (!access.canConfigureTeam) return null;
     const [connectionCount, datasetCount, memberCount, projects] = await Promise.all([
-      db.Connection.count({ where: { team_id: access.teamId } }),
-      db.Dataset.count({ where: { draft: false, team_id: access.teamId } }),
-      db.TeamRole.count({ where: { team_id: access.teamId } }),
+      access.canConfigureTeam
+        ? db.Connection.count({ where: { team_id: access.teamId } })
+        : null,
+      access.allProjects
+        ? db.Dataset.count({ where: { draft: false, team_id: access.teamId } })
+        : db.Dataset.findAll({
+          attributes: ["project_ids"],
+          where: { draft: false, team_id: access.teamId },
+        }).then((items) => items.filter((dataset) => isDatasetVisible(dataset, access)).length),
+      access.canConfigureTeam ? db.TeamRole.count({ where: { team_id: access.teamId } }) : 0,
       db.Project.findAll({
         attributes: ["id", "public", "updateSchedule"],
         include: [{
@@ -242,7 +249,7 @@ class HomeController {
           where: { draft: false },
         }],
         order: [["id", "ASC"]],
-        where: { ghost: false, team_id: access.teamId },
+        where: { ghost: false, team_id: access.teamId, ...getProjectScope(access, "id") },
       }),
     ]);
     return buildHomeOnboarding({
@@ -448,18 +455,20 @@ class HomeController {
     });
     const attention = prioritizeHomeAttention(visibleObservations, dataHealth.count);
     const observations = attention.observations;
-    const onboarding = await this.getOnboarding(access, monitors.length);
+    const setup = await this.getOnboarding(access, monitors.length);
+    const content = {
+      canConfigureTeam: access.canConfigureTeam,
+      hasConnection: access.canConfigureTeam ? setup.milestones.connection : null,
+      hasDataset: setup.milestones.dataset,
+      hasChart: setup.milestones.chart,
+    };
     let setupState = "active";
     if (monitors.length === 0) {
-      const [connectionCount, datasetCount] = await Promise.all([
-        db.Connection.count({ where: { team_id: access.teamId } }),
-        db.Dataset.count({ where: { draft: false, team_id: access.teamId } }),
-      ]);
       if (!(access.allProjects || PROJECT_EDITOR_ROLES.has(access.role))) {
         setupState = "waiting_for_metrics";
-      } else if (connectionCount === 0) {
-        setupState = access.canConfigureTeam ? "connect_data" : "waiting_for_setup";
-      } else if (datasetCount === 0) {
+      } else if (access.canConfigureTeam && !content.hasConnection) {
+        setupState = "connect_data";
+      } else if (!content.hasDataset) {
         setupState = "create_dataset";
       } else {
         setupState = "watch_metric";
@@ -485,7 +494,8 @@ class HomeController {
       observations,
       needsAttention: attention.needsAttention,
       notableChanges: attention.notableChanges,
-      onboarding,
+      content,
+      onboarding: access.canConfigureTeam ? setup : null,
       setupState,
       hasWatchedMetric: monitors.length > 0,
       unreadCount: unreadChanges + dataHealth.count,
