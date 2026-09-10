@@ -87,6 +87,18 @@ class TeamController {
     const transaction = await db.sequelize.transaction();
 
     try {
+      const conversations = await db.AiConversation.findAll({
+        attributes: ["id"],
+        where: { team_id: teamId },
+        transaction,
+      });
+      await db.AiMessage.destroy({
+        where: { conversation_id: { [Op.in]: conversations.map((conversation) => conversation.id) } },
+        transaction,
+      });
+      await db.AiUsage.destroy({ where: { team_id: teamId }, transaction });
+      await db.AiConversation.destroy({ where: { team_id: teamId }, transaction });
+
       // Delete all related models with team_id
       await db.PinnedDashboard.destroy({ where: { team_id: teamId }, transaction });
       await db.SavedQuery.destroy({ where: { team_id: teamId }, transaction });

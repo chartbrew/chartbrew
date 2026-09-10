@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Separator } from "@heroui/react";
-
+import { Button, Separator } from "@heroui/react";
+import { useNavigate } from "react-router";
+import { LuArrowRight } from "react-icons/lu";
+import { VscMcp } from "react-icons/vsc";
 
 import WebhookIntegrationsList from "./components/WebhookIntegrationsList";
 import {
@@ -12,6 +14,7 @@ import SlackIntegrationsList from "./components/SlackIntegrationsList";
 
 function Integrations() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const team = useSelector(selectTeam);
   const initRef = useRef(false);
@@ -48,6 +51,30 @@ function Integrations() {
         <SlackIntegrationsList
           teamId={team?.id}
         />
+        <div className="h-8" />
+        <Separator />
+        <div className="h-8" />
+
+        <section className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <VscMcp aria-hidden size={24} />
+              Connect your AI app with MCP
+            </h2>
+            <p className="max-w-2xl text-sm text-muted">
+              Use Chartbrew data in Codex, Claude, and other AI apps. Find setup guides and
+              manage connected clients in MCP settings.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onPress={() => navigate("/settings/mcp")}
+          >
+            Open MCP settings
+            <LuArrowRight aria-hidden />
+          </Button>
+        </section>
       </div>
     </div>
   );

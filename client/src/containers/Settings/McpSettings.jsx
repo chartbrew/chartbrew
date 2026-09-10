@@ -131,10 +131,59 @@ export default function McpSettings() {
 
   return (
     <div className="flex min-w-0 flex-col gap-8">
-      <p className="-mt-3 max-w-2xl text-muted">
-        Use Chartbrew data in your AI apps. Explore data sources, create datasets, and build chart
-        previews.
-      </p>
+      <Surface className="min-w-0 rounded-3xl border border-divider p-4 sm:p-6">
+        <div className="flex flex-wrap gap-8">
+          <section className="min-w-0 flex-1 basis-64">
+            <h2 className="text-lg font-semibold">What you can do</h2>
+            <ul className="mt-4 space-y-3 text-sm">
+              {[
+                "Find dashboards, charts, and datasets",
+                "Read and refresh data to answer questions",
+                "Explore connected sources and create datasets",
+                "Create chart previews to review in Chartbrew",
+                "Review recent changes and metric updates",
+              ].map((capability) => (
+                <li key={capability} className="flex items-start gap-2">
+                  <LuCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-accent" />
+                  <span>{capability}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-sm text-muted">
+              Available actions depend on the permissions you approve.
+            </p>
+          </section>
+
+          <section className="min-w-0 flex-1 basis-72">
+            <h3 className="text-sm font-semibold">Try asking your AI app</h3>
+            <ul className="mt-4 divide-y divide-divider">
+              {[
+                "Find my website traffic dataset and create a horizontal bar chart preview of the top 10 countries by visitors.",
+                "Show me recent changes to my dashboards and summarize which metrics need attention.",
+              ].map((prompt, index) => (
+                <li key={prompt} className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
+                  <p className="min-w-0 flex-1 text-sm leading-relaxed">“{prompt}”</p>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="secondary"
+                    aria-label={
+                      copied?.value === prompt ? "Prompt copied" : `Copy example prompt ${index + 1}`
+                    }
+                    onPress={() => copy(prompt)}
+                  >
+                    {copied?.value === prompt ? <LuCheck aria-hidden /> : <LuCopy aria-hidden />}
+                    <span className="sr-only" aria-live="polite">
+                      {copied?.value === prompt ? "Prompt copied" : ""}
+                    </span>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </Surface>
+
       <Surface className="min-w-0 rounded-3xl border border-divider p-4 sm:p-6">
         <h2 className="text-lg font-semibold">Connect an app</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
