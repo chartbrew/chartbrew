@@ -508,7 +508,7 @@ function setupRealtimeDbToolRuntime() {
 
 function setupMcpToolRuntime() {
   vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
-    data: [{ content: "visitors\n42" }],
+    data: [{ visitors: 42 }],
     tool: { name: "execute-sql" },
   });
 }
@@ -1168,6 +1168,33 @@ describe("Source AI harness", () => {
     expect(replay.finalStatus !== "needs_more_context" || !usedTools.has("create_chart")).toBe(true);
   });
 
+  it.each([
+    { data: [{ content: "visitors: current: 2363; top pages: /, /tools" }], type: "table", error: "response text, not chart-ready values" },
+    { data: [{ column_0: "/", column_1: [899, 0], column_5: 0.23 }], type: "bar", error: "does not select numeric values" },
+  ])("blocks unusable MCP $type charts before writes for new and reused datasets", async ({ data, type, error }) => {
+    const fixture = compactToolFixtures.find((item) => item.sourceId === "mcp");
+    const connection = { ...toolHarnessConnections.mcp, id: 42, team_id: 7 };
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+    vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+      data,
+    });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({ id: 77, team_id: 7, ghost: true });
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({
+      id: 99, team_id: 7, project_ids: [], DataRequests: [{ id: 1001, connection_id: 42, configuration: fixture.previewConfiguration }],
+    });
+    const datasetWrite = vi.spyOn(DatasetController.prototype, "createWithDataRequests");
+    const chartWrite = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs");
+    for (const source of [{ connection_id: 42, configuration: fixture.previewConfiguration }, { dataset_id: 99 }]) {
+      await expect(createTemporaryChart({
+        ...source, team_id: 7, name: "Analytics", type,
+        xAxis: "root[].column_0", yAxis: "root[].column_5",
+        ...(type === "bar" ? { encoding: { category: { field: "root[].column_0", type: "nominal" }, value: { field: "root[].column_1", type: "quantitative" } } } : {}),
+      })).rejects.toThrow(error);
+    }
+    expect(datasetWrite).not.toHaveBeenCalled();
+    expect(chartWrite).not.toHaveBeenCalled();
+  });
+
   it("persists safe CDC bindings for temporary chart table payloads", async () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
       id: 42,
@@ -1279,7 +1306,7 @@ describe("Source AI harness", () => {
         dataset_id: 99,
         yAxis: "root[].conversion_rate",
       })],
-    }), null);
+    }), null, { waitForData: true });
     expect(result).toMatchObject({
       chart_created: true,
       chart_id: 55,

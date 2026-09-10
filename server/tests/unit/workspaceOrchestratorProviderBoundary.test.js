@@ -274,6 +274,7 @@ describe("workspace orchestrator provider boundary", () => {
       pendingActionClearer: vi.fn(),
       policy: getPolicy(),
       question: "Tell me more about the workspace results",
+      personalMemory: ["Use weekly totals."],
       toolRunner,
     });
 
@@ -292,6 +293,11 @@ describe("workspace orchestrator provider boundary", () => {
     const workerToolInput = parseRequestEnvelope(requests[1]);
     const workerOutputInput = parseRequestEnvelope(requests[2]);
     const synthesisInput = parseRequestEnvelope(requests[3]);
+    expect(plannerInput.personalMemory).toEqual(["Use weekly totals."]);
+    expect(synthesisInput.personalMemory).toEqual(plannerInput.personalMemory);
+    expect(workerToolInput).not.toHaveProperty("personalMemory");
+    expect(JSON.stringify(result.conversationHistory)).not.toContain("Use weekly totals.");
+    expect(result.contextManifest.contextSections).toContain("memory");
 
     expect(JSON.stringify(plannerInput)).not.toContain("Revenue");
     expect(plannerInput).not.toHaveProperty("facts");

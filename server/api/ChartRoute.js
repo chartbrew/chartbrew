@@ -2,6 +2,7 @@ const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
 
 const ChartController = require("../controllers/ChartController");
+const { getPreview, placePreview } = require("../controllers/ChartPreviewController");
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const SharePolicyController = require("../controllers/SharePolicyController");
@@ -13,6 +14,7 @@ const alertController = require("../controllers/AlertController");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 const db = require("../models/models");
 const { startRun } = require("../modules/updateAudit");
+const { getDataRecovery } = require("../modules/dataRecovery");
 const {
   isOutboundPolicyError,
   serializeOutboundPolicyError,
@@ -32,6 +34,26 @@ module.exports = (app) => {
   const chartController = new ChartController();
   const projectController = new ProjectController();
   const teamController = new TeamController();
+
+  app.route("/chart-previews/:chart_id")
+    .all(apiLimiter(30), verifyToken, (_req, res, next) => {
+      res.set("Cache-Control", "private, no-store");
+      next();
+    })
+    .get(async (req, res) => {
+      try {
+        return res.json(await getPreview(req.params.chart_id, req.user.id));
+      } catch (error) {
+        return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "The preview could not load. Try again." });
+      }
+    })
+    .post(async (req, res) => {
+      try {
+        return res.json(await placePreview(req.params.chart_id, req.body.targetProjectId, req.user.id));
+      } catch (error) {
+        return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "The chart could not be placed. Try again." });
+      }
+    });
 
   const sendPolicyError = (res, error) => {
     if (!isOutboundPolicyError(error)) return false;
@@ -200,6 +222,9 @@ module.exports = (app) => {
       // check if the chart is part of the right project
       if (chartId && projectId) {
         const chart = await chartController.findById(req.params.chart_id);
+        if (!chart) {
+          return res.status(404).json({ message: "Chart not found" });
+        }
         if (chart.project_id.toString() !== projectId.toString()) {
           return res.status(403).json({ message: "Access denied" });
         }
@@ -668,7 +693,8 @@ module.exports = (app) => {
       if (`${error}` === "413" && error.message === "413") {
         return res.status(413).send(`${error}`);
       }
-      return res.status(400).send(`${(error && error.message) || error}`);
+      const recovery = getDataRecovery(error);
+      return res.status(400).json({ message: recovery?.message || "The chart could not be updated. Try again.", ...(recovery ? { recovery } : {}) });
     }
   });
   // --------------------------------------------------------

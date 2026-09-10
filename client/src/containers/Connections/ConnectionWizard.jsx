@@ -132,13 +132,14 @@ function ConnectionWizard() {
   const _onAddNewConnection = (data, files) => {
     if (params.connectionId !== "new") {
       return dispatch(saveConnection({ team_id: team.id, connection: data }))
-        .then(async () => {
+        .then(async (savedConnection) => {
+          if (savedConnection.error || !savedConnection.payload?.id) return false;
           if (files) {
             await dispatch(addFilesToConnection({ team_id: team.id, connection_id: params.connectionId, files }));
           }
 
           toast.success("Connection saved successfully");
-          return true;
+          return savedConnection.payload;
         })
         .catch(() => {
           return false;
@@ -150,7 +151,7 @@ function ConnectionWizard() {
         connection: { ...data, team_id: team.id }
       }))
       .then(async (createdConnection) => {
-        if (createdConnection.error) {
+        if (createdConnection.error || !createdConnection.payload?.id) {
           return false;
         }
 
@@ -160,8 +161,9 @@ function ConnectionWizard() {
 
         const createdSource = getSourcePlugin(data.subType || data.type);
         if (data.type === "googleAnalytics" || createdSource?.capabilities?.nextSteps?.connectionAfterCreate) {
+          setNewConnection(createdConnection.payload);
           navigate(`/connections/${createdConnection.payload.id}`);
-          return true;
+          return createdConnection.payload;
         }
 
         setSelectedType("");
@@ -170,7 +172,7 @@ function ConnectionWizard() {
         const resp = await dispatch(getConnection({ team_id: team.id, connection_id: createdConnection.payload.id }));
         setConnectionToEdit(resp.payload);
 
-        return true;
+        return createdConnection.payload;
       })
       .catch(() => {
         return false;

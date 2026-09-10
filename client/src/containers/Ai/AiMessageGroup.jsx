@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import { Button } from "@heroui/react";
 
 import AiChartPreview from "./AiChartPreview";
+import AiConnectionCard from "./AiConnectionCard";
+import AiDataRecoveryCard from "./AiDataRecoveryCard";
 import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiToolOperations from "./AiToolOperations";
 import { AiAnswer, AiUserPrompt } from "./AiTranscript";
@@ -12,8 +14,14 @@ function AiMessageGroup({
   group,
   groupIndex,
   createdCharts,
+  chartLoadErrors,
   toolDisplayNames,
+  teamId,
+  conversationId,
+  selectedContext,
+  onChartAction,
   onSuggestionClick,
+  onContinue,
   onChangeAction,
   onConfirmAction,
   completedActionIds,
@@ -33,12 +41,22 @@ function AiMessageGroup({
     const chartData = createdCharts.find((chart) => `${chart.id}` === `${parsed.chartId}`);
     return (
       <div className="mx-auto mb-6 w-full max-w-3xl px-4">
-        <AiChartPreview chartData={chartData} parsed={parsed} />
+        <AiChartPreview
+          chartData={chartData}
+          isUnavailable={chartLoadErrors[parsed.chartId] === "unavailable"}
+          loadError={chartLoadErrors[parsed.chartId] === "failed"}
+          onChartAction={onChartAction}
+          parsed={parsed}
+          selectedContext={selectedContext}
+          teamId={teamId}
+        />
       </div>
     );
   }
 
   const operations = [];
+  const connectionOptions = new Map();
+  const dataRecoveries = new Map();
   let finalMessage = null;
   let suggestions = [];
   let actionPreview = null;
@@ -52,6 +70,14 @@ function AiMessageGroup({
       }));
     } else if (parsed.type === "tool_result") {
       operations.push({ data: parsed.content, name: parsed.name, type: "result" });
+      const recovery = parsed.content?.recovery;
+      if (recovery) dataRecoveries.set(`${recovery.action}:${recovery.datasetId || recovery.connectionId || recovery.code}`, recovery);
+      if (parsed.name === "list_connections") {
+        (parsed.content.options || []).forEach((option) => {
+          if (option.state === "connected" && !option.provider_id) return;
+          connectionOptions.set(option.provider_id || option.connection_id || option.source_id || option.name, option);
+        });
+      }
     } else if (parsed.type === "action_preview") {
       actionPreview = parsed.action;
     } else if (parsed.type === "message_with_suggestions") {
@@ -69,7 +95,25 @@ function AiMessageGroup({
       <AiAnswer
         after={(
           <>
-            {suggestions.length > 0 ? (
+            <AiToolOperations
+              groupIndex={groupIndex}
+              operations={operations}
+              toolDisplayNames={toolDisplayNames}
+            />
+            {[...connectionOptions.values()].map((option) => (
+              <AiConnectionCard
+                key={option.provider_id || option.connection_id || option.source_id || option.name}
+                option={option}
+                teamId={teamId}
+                conversationId={conversationId}
+                onContinue={onContinue}
+                isLoading={isLoading}
+              />
+            ))}
+            {[...dataRecoveries.entries()].map(([key, recovery]) => (
+              <AiDataRecoveryCard key={key} recovery={recovery} onContinue={onContinue} isLoading={isLoading} />
+            ))}
+            {suggestions.length > 0 && !connectionOptions.size ? (
               <div className="mt-3 flex flex-row flex-wrap gap-2">
                 {suggestions.map((suggestion) => (
                   <Button
@@ -97,11 +141,6 @@ function AiMessageGroup({
             ) : null}
           </>
         )}
-        before={<AiToolOperations
-          groupIndex={groupIndex}
-          operations={operations}
-          toolDisplayNames={toolDisplayNames}
-        />}
         content={finalMessage?.content || "Work completed."}
         isError={finalMessage?.isError}
       />
@@ -119,8 +158,14 @@ AiMessageGroup.propTypes = {
   }).isRequired,
   groupIndex: PropTypes.number.isRequired,
   createdCharts: PropTypes.arrayOf(PropTypes.object).isRequired,
+  chartLoadErrors: PropTypes.object.isRequired,
   toolDisplayNames: PropTypes.object.isRequired,
+  teamId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  conversationId: PropTypes.string,
+  selectedContext: PropTypes.shape({ multiSelect: PropTypes.array }).isRequired,
+  onChartAction: PropTypes.func.isRequired,
   onSuggestionClick: PropTypes.func.isRequired,
+  onContinue: PropTypes.func.isRequired,
   onChangeAction: PropTypes.func.isRequired,
   onConfirmAction: PropTypes.func.isRequired,
   completedActionIds: PropTypes.instanceOf(Set).isRequired,

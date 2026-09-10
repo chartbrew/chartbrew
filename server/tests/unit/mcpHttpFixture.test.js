@@ -19,6 +19,7 @@ const { discoverMcpConnection, loadServerIcon } = require("../../sources/plugins
 const { createMcpSafeFetch } = require("../../sources/plugins/mcp/mcp.safeFetch");
 const mcpOauth = require("../../sources/plugins/mcp/mcp.oauth");
 const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
+const { MCP_LIMITS } = require("../../sources/plugins/mcp/mcp.constants");
 
 const PNG_1X1 = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -42,7 +43,7 @@ function jsonResponse(payload) {
   });
 }
 
-function createFixtureHandler({ legacy = false, paginate = false, auth = null } = {}) {
+function createFixtureHandler({ legacy = false, paginate = false, auth = null, largeCatalog = false, tools = null } = {}) {
   const factory = () => {
     const server = new McpServer({
       name: "Chartbrew fixture",
@@ -87,6 +88,20 @@ function createFixtureHandler({ legacy = false, paginate = false, auth = null } 
       return new Response("Unauthorized", { status: 401 });
     }
     const body = request.method === "POST" ? await request.clone().json().catch(() => null) : null;
+    if (tools && body?.method === "tools/list") {
+      return jsonResponse({ jsonrpc: "2.0", id: body.id, result: {
+        resultType: "complete", ttlMs: 0, cacheScope: "private", tools,
+      } });
+    }
+    if (largeCatalog && body?.method === "tools/list") {
+      return jsonResponse({ jsonrpc: "2.0", id: body.id, result: {
+        resultType: "complete", ttlMs: 0, cacheScope: "private",
+        tools: Array.from({ length: 300 }, (_, id) => ({
+          name: id === 299 ? "visitor_countries" : `list_invoices_${id}`,
+          inputSchema: INPUT_SCHEMA, annotations: { readOnlyHint: true },
+        })),
+      } });
+    }
     if (legacy && body?.method === "server/discover") {
       return jsonResponse({
         jsonrpc: "2.0",
@@ -160,7 +175,7 @@ async function startRawServer(handler) {
   };
 }
 
-async function discoverAndCall(endpoint, connectionOverrides = {}) {
+async function discoverAndCall(endpoint, connectionOverrides = {}, output = { mode: "auto", path: [] }) {
   const baseConnection = {
     type: "mcp",
     subType: "mcp",
@@ -191,10 +206,10 @@ async function discoverAndCall(endpoint, connectionOverrides = {}) {
       source: "mcp",
       tool: {
         name: tool.name,
-        contractFingerprint: tool.contractFingerprint,
+        contractFingerprint: "saved-before-the-tool-description-changed",
       },
       arguments: { limit: 2 },
-      output: { mode: "auto", path: [] },
+      output,
     },
   });
   return { discovery, result };
@@ -203,6 +218,20 @@ async function discoverAndCall(endpoint, connectionOverrides = {}) {
 describe("MCP HTTP fixture", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  it("applies saved field mappings on each remote tool call", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const fixture = await startFixture();
+    try {
+      const output = { fields: { record_id: ["id"] } };
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const { result } = await discoverAndCall(fixture.endpoint, {}, output);
+        expect(result.data).toEqual([{ record_id: 1 }, { record_id: 2 }]);
+      }
+    } finally {
+      await fixture.close();
+    }
   });
 
   it("discovers and calls a modern Streamable HTTP server", async () => {
@@ -223,6 +252,22 @@ describe("MCP HTTP fixture", () => {
       expect(result.data).toEqual([{ id: 1 }, { id: 2 }]);
     } finally {
       await fixture.close();
+    }
+  });
+
+  it("checks current inputs, outputs, and field mappings instead of saved fingerprints", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    for (const [changes, output, code] of [
+      [{ inputSchema: { ...INPUT_SCHEMA, required: ["limit", "project"], properties: { ...INPUT_SCHEMA.properties, project: { type: "string" } } } }, {}, "MCP_INVALID_ARGUMENTS"],
+      [{ outputSchema: { type: "object", required: ["countries"], properties: { countries: { type: "array" } } } }, {}, "MCP_INVALID_RESULT"],
+      [{}, { fields: { country: ["missing_country"] } }, "MCP_OUTPUT_PATH_NOT_FOUND"],
+    ]) {
+      const fixture = await startFixture({ tools: [{ name: "fixture_tool", inputSchema: INPUT_SCHEMA, annotations: { readOnlyHint: true }, ...changes }] });
+      try {
+        await expect(discoverAndCall(fixture.endpoint, {}, output)).rejects.toMatchObject({ code, recovery: { action: "dataset" } });
+      } finally {
+        await fixture.close();
+      }
     }
   });
 
@@ -269,13 +314,68 @@ describe("MCP HTTP fixture", () => {
         subType: "mcp",
         host: fixture.endpoint,
         authentication: { type: "none" },
-        options: { mcp: {} },
+        options: { mcp: { toolQuery: "unrelated visitor question" } },
       };
       const discovery = await discoverMcpConnection(connection, { loadIcon: false });
       expect(discovery.tools.map((tool) => tool.name)).toEqual([
         "fixture_tool",
         "second_fixture_tool",
       ]);
+      expect(discovery.omittedToolCount).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
+  it("loads a useful subset from a large third-party server without auto-approval", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const fixture = await startFixture({ largeCatalog: true });
+    try {
+      const discovery = await discoverMcpConnection({
+        host: fixture.endpoint, authentication: { type: "none" },
+        options: { mcp: { toolQuery: "visitor countries" } },
+      }, { loadIcon: false });
+      expect(discovery.tools.map((tool) => tool.name)).toEqual(["visitor_countries"]);
+      expect(discovery.omittedToolCount).toBe(299);
+      expect(discovery.allowedTools).toEqual({});
+    } finally {
+      await fixture.close();
+    }
+  });
+
+  it("keeps usable tools when other definitions are unsafe, without weakening approvals or execution checks", async () => {
+    vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
+    const oversized = { type: "object", description: "x".repeat(MCP_LIMITS.maxSchemaBytes) };
+    const deep = Array.from({ length: MCP_LIMITS.maxSchemaDepth + 1 })
+      .reduce((schema) => ({ type: "object", properties: { child: schema } }), { type: "string" });
+    const tools = [
+      { name: "fixture_tool", inputSchema: INPUT_SCHEMA, annotations: { readOnlyHint: true } },
+      { name: "query-trends", inputSchema: oversized },
+      { name: "large-output", inputSchema: INPUT_SCHEMA, outputSchema: oversized },
+      { name: "deep-input", inputSchema: deep },
+      { name: "external-input", inputSchema: { type: "object", $ref: "https://example.com/schema" } },
+    ];
+    const fixture = await startFixture({ tools });
+    try {
+      const connection = { host: fixture.endpoint, authentication: { type: "none" } };
+      const discovery = await discoverMcpConnection(connection, {
+        loadIcon: false,
+        allowedTools: { "query-trends": { ask: true, datasets: true, confirmedReadOnly: true } },
+      });
+      expect(discovery.tools.map((tool) => tool.name)).toEqual(["fixture_tool"]);
+      expect(discovery.unsupportedToolCount).toBe(4);
+      expect(discovery.omittedToolCount).toBe(0);
+      expect(discovery.allowedTools).toEqual({});
+      expect(discovery.removedTools).toContain("query-trends");
+      const { result } = await discoverAndCall(fixture.endpoint);
+      expect(result.data).toEqual([{ id: 1 }, { id: 2 }]);
+      await expect(mcpProtocol._private.executeTool(connection, {
+        configuration: { tool: { name: "query-trends" }, arguments: {} },
+      })).rejects.toMatchObject({ code: "MCP_SCHEMA_TOO_LARGE" });
+
+      tools.shift();
+      await expect(discoverMcpConnection(connection, { loadIcon: false }))
+        .rejects.toMatchObject({ code: "MCP_NO_USABLE_TOOLS" });
     } finally {
       await fixture.close();
     }

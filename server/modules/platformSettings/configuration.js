@@ -18,9 +18,9 @@ const PLATFORM_SETTING_DEFINITIONS = Object.freeze([
   {
     key: "workspaceOrchestrator.externalLearningContextEnabled",
     group: "aiControls",
-    label: "Allow feedback with external AI",
-    description: "Use relevant feedback and corrections in external AI answers.",
-    help: "This permission is separate from workspace data access because feedback can contain additional business context.",
+    label: "Allow feedback and memory with external AI",
+    description: "Use relevant feedback, corrections, and personal memory in external AI answers.",
+    help: "This permission is separate from workspace data access because feedback and memory can contain additional business context.",
     requiresProvider: true,
     type: "boolean",
   },

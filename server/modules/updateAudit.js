@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const { getDataRecovery } = require("./dataRecovery");
 const {
   isOutboundPolicyError,
   serializeOutboundPolicyError,
@@ -556,7 +557,8 @@ async function failRun(traceContext, error, options = {}) {
 
   const normalizedError = normalizeError(error, options.stage || "unknown");
   const finishedAt = options.finishedAt || new Date();
-  const summary = sanitizePayload(options.summary || null);
+  const recovery = getDataRecovery(error);
+  const summary = sanitizePayload(recovery ? { ...options.summary, dataRecovery: recovery } : options.summary || null);
   const payload = sanitizePayload({
     ...options.payload,
     ...normalizedError,

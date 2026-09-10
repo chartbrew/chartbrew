@@ -24,10 +24,15 @@ function setChartPreviewFailed(state, key) {
   return { ...state, [key]: { chart: null, error: true } };
 }
 
+function setChartPreviewUnavailable(state, key) {
+  return { ...state, [key]: { chart: null, error: false, unavailable: true } };
+}
+
 export {
   getChartPreviewKey,
   setChartPreviewFailed,
   setChartPreviewLoaded,
   setChartPreviewLoading,
+  setChartPreviewUnavailable,
   shouldLoadChartPreview,
 };

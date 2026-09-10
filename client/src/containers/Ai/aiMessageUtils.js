@@ -39,7 +39,7 @@ export function getToolDisplayName(toolName, displayNames = {}) {
 
 export function getOperationSummary(operations, displayNames = {}) {
   const calledTools = operations
-    .filter((operation) => operation.type === "call")
+    .filter((operation) => operation.type === "call" || operation.status)
     .map((operation) => operation.name);
   const uniqueTools = Array.from(new Set(calledTools));
   const visibleTools = uniqueTools.slice(0, 3).map((toolName) => getToolDisplayName(toolName, displayNames));
@@ -148,22 +148,29 @@ export function getChartToolMessageInfo(message) {
   }
 
   const content = parseJson(message.content);
-  if (!content?.chart_id || !["create_chart", "update_chart", "create_temporary_chart", "update_dataset"].includes(message.name)) {
+  if (!content?.chart_id || ![
+    "create_chart",
+    "move_chart_to_dashboard",
+    "update_chart",
+    "create_temporary_chart",
+    "update_dataset",
+  ].includes(message.name)) {
     return null;
   }
 
-  const isTemporary = content.visibility === "temporary" ||
-    message.name === "create_temporary_chart" ||
-    content.is_temporary ||
-    content.ghost_project_id;
+  const isTemporary = content.visibility
+    ? content.visibility === "temporary"
+    : message.name === "create_temporary_chart" || content.is_temporary || content.ghost_project_id;
 
   return {
     type: isTemporary ? "chart_temporary" : message.name === "create_chart" ? "chart_created" : "chart_updated",
     toolName: message.name,
     chartId: content.chart_id,
     chartName: content.chart_name || content.name,
-    chartType: content.type,
-    projectId: content.project_id || content.ghost_project_id,
+    chartType: content.chart_type || content.type,
+    dashboard: content.dashboard || null,
+    datasets: content.datasets || [],
+    projectId: content.new_project_id || content.project_id || content.ghost_project_id,
     dashboardUrl: content.dashboard_url,
     chartUrl: content.chart_url,
     isTemporary,
@@ -287,6 +294,30 @@ export function groupAiMessages(messages) {
     const parsed = parseAiMessage(message);
     const item = { message, parsed };
     const isChartMessage = parsed.type === "chart_created" || parsed.type === "chart_updated" || parsed.type === "chart_temporary";
+
+    if (isChartMessage && parsed.toolName === "move_chart_to_dashboard") {
+      const previousChart = groups.findLast((group) => (
+        ["chart_created", "chart_updated", "chart_temporary"].includes(group.type)
+        && `${group.items[0].parsed.chartId}` === `${parsed.chartId}`
+      ));
+      if (previousChart) {
+        previousChart.type = parsed.type;
+        previousChart.items = [item];
+        if (!currentGroup || currentGroup.type !== "assistant") {
+          currentGroup = { type: "assistant", items: [] };
+          groups.push(currentGroup);
+        }
+        currentGroup.items.push({
+          message,
+          parsed: {
+            content: parsed.content,
+            name: parsed.toolName,
+            type: "tool_result",
+          },
+        });
+        return;
+      }
+    }
 
     if (message.role === "user" || isChartMessage) {
       groups.push({

@@ -56,19 +56,24 @@ function ObservationInvestigation({ observationId, teamId }) {
     return chat.confirmAction(action);
   };
 
+  const onChartAction = (action) => {
+    return chat.runChartAction(action);
+  };
+
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <AiChat
         id={`observation-${observationId}-ask`}
         isLoading={chat.isLoading}
         messages={chat.messages}
+        conversationId={chat.aiConversationId}
+        onEnsureSaved={chat.save}
         onChangeAction={onChangeAction}
+        onChartAction={onChartAction}
         onConfirmAction={onConfirmAction}
-        onSave={chat.save}
         onSubmit={onSubmit}
         placeholder="Ask a follow-up about this change"
         progressEvents={chat.progressEvents}
-        showSave={Boolean(chat.sessionId)}
         status={(
           <AiAvailabilityStatus
             availability={availability}
@@ -81,6 +86,7 @@ function ObservationInvestigation({ observationId, teamId }) {
           "Which accessible dataset can explain this?",
         ]}
         toolDisplayNames={chat.toolDisplayNames}
+        teamId={teamId}
       />
       <AiAccessNotice
         availability={availability}

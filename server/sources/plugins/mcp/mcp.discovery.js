@@ -2,10 +2,11 @@ const net = require("net");
 
 const { MCP_LIMITS } = require("./mcp.constants");
 const { withMcpClient } = require("./mcp.client");
+const { selectTools } = require("./mcp.toolSelection");
 const {
   createMcpError,
   fingerprint,
-  getApprovalReview,
+  getRemovedTools,
   mergeApprovals,
   sanitizeTool,
   trimText,
@@ -318,14 +319,26 @@ async function discoverMcpConnection(connection, options = {}) {
   return withMcpClient(connection, async (client, session) => {
     const listResult = await client.listTools(undefined, { cacheMode: "refresh" });
     const rawTools = Array.isArray(listResult?.tools) ? listResult.tools : [];
-    if (rawTools.length > MCP_LIMITS.maxTools) {
-      throw createMcpError(
-        "MCP_TOO_MANY_TOOLS",
-        `This MCP server exposes more than ${MCP_LIMITS.maxTools} tools.`
-      );
+    const requestedApprovals = options.allowedTools || connection?.schema?.mcp?.allowedTools || {};
+    const selectedTools = selectTools(rawTools, {
+      question: connection.options?.mcp?.toolQuery,
+      allowedTools: requestedApprovals,
+    });
+    const tools = [];
+    selectedTools.forEach((tool) => {
+      try {
+        tools.push(sanitizeTool(tool));
+      } catch (error) {
+        // Reject this tool, not the other tools in the connection. Execution still validates each tool.
+        if (!["MCP_SCHEMA_TOO_LARGE", "MCP_SCHEMA_TOO_DEEP", "MCP_EXTERNAL_SCHEMA_REFERENCE", "MCP_INVALID_TOOL"].includes(error.code)) {
+          throw error;
+        }
+      }
+    });
+    if (selectedTools.length && !tools.length) {
+      throw createMcpError("MCP_NO_USABLE_TOOLS", "Chartbrew cannot use the tools returned by this server. Choose different tools on the server and load them again.");
     }
-
-    const tools = rawTools.map(sanitizeTool).sort((a, b) => a.name.localeCompare(b.name));
+    tools.sort((a, b) => a.name.localeCompare(b.name));
     const resources = await listContextResources(client);
     const protocolEra = client.getProtocolEra() || "legacy";
     const serverInfo = client.getServerVersion() || {};
@@ -346,6 +359,8 @@ async function discoverMcpConnection(connection, options = {}) {
       instructions: trimText(client.getInstructions(), 4000),
       resources,
       tools,
+      omittedToolCount: rawTools.length - selectedTools.length,
+      unsupportedToolCount: selectedTools.length - tools.length,
       catalogCache: getCatalogCache(listResult, protocolEra),
       discoveredAt: new Date().toISOString(),
     };
@@ -366,17 +381,12 @@ async function discoverMcpConnection(connection, options = {}) {
       throw createMcpError("MCP_CATALOG_TOO_LARGE", "The MCP tool catalog is too large to save.");
     }
 
-    const requestedApprovals = options.allowedTools
-      || connection?.schema?.mcp?.allowedTools
-      || {};
-    const approvalReview = getApprovalReview(tools, requestedApprovals);
     return {
       ...discovery,
       allowedTools: mergeApprovals(tools, requestedApprovals),
-      reviewRequired: approvalReview.changedTools,
-      removedTools: approvalReview.removedTools,
+      removedTools: getRemovedTools(tools, requestedApprovals),
     };
-  });
+  }, { discoverTools: true });
 }
 
 module.exports = {

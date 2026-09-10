@@ -77,6 +77,12 @@ async function createTemporaryChartFromDataset(payload, normalizedTeamId) {
   return {
     ...chartResult,
     data_request_id: await getDatasetDataRequestId(dataset),
+    datasets: [{
+      id: dataset.id,
+      name: dataset.name || dataset.legend || "Dataset",
+      projectId: (dataset.project_ids || [])[0] || null,
+    }],
+    dashboard: null,
     ghost_project_id: ghostProject.id,
     is_temporary: true,
     project_id: ghostProject.id,
@@ -162,7 +168,13 @@ async function createTemporaryChart(payload) {
         chartType, xAxis, yAxis, spec
       }),
       yAxis: yAxis ?? spec.yAxis,
+      yAxisOperation: yAxisOperation ?? spec.yAxisOperation,
       dateField: dateField ?? spec.dateField,
+      transform,
+      encoding: encoding || spec.encoding,
+      visualization: visualization || spec.visualization,
+      chartSpec: spec,
+      formula: formula ?? spec.formula,
     });
     const resolvedXAxis = alignedBindings.xAxis;
     yAxis = alignedBindings.yAxis ?? yAxis;
@@ -300,7 +312,7 @@ async function createTemporaryChart(payload) {
         goal: spec.goal,
         configuration: seriesConfiguration ?? spec.configuration ?? {}
       }]
-    }, null);
+    }, null, { waitForData: true });
 
     // Take a snapshot of the temporary chart for visualization
     let snapshot = null;
@@ -316,12 +328,18 @@ async function createTemporaryChart(payload) {
       chart_id: chart.id,
       dataset_id: dataset.id,
       data_request_id: dataRequestId,
+      datasets: [{
+        id: dataset.id,
+        name: dataset.name || dataset.legend || "Dataset",
+        projectId: null,
+      }],
+      dashboard: null,
       name: chart.name,
       type: chart.type,
       project_id: ghostProject.id,
       is_temporary: true,
       visibility: "temporary",
-      chart_url: `${clientUrl}/dashboard/${ghostProject.id}/chart/${chart.id}/edit`,
+      chart_url: `${clientUrl}/previews/${chart.id}`,
       snapshot,
       snapshot_status: snapshot ? "available" : "unavailable",
       snapshot_note: snapshot
@@ -333,7 +351,7 @@ async function createTemporaryChart(payload) {
         : null,
     };
   } catch (error) {
-    throw new Error(`Temporary chart creation failed: ${error.message}`);
+    throw new Error(`Temporary chart creation failed: ${error.message}`, { cause: error });
   }
 }
 

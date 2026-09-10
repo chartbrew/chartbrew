@@ -249,7 +249,6 @@ function SchemaField({ name, onChange, required, schema, value }) {
                 else nextValue[childName] = childValue;
                 onChange(nextValue);
               }}
-              panel={panel}
               required={(schema.required || []).includes(childName)}
               schema={childSchema}
               value={objectValue[childName]}
@@ -540,7 +539,11 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
       }));
       const payload = action.payload;
       if (payload?.status?.statusCode >= 400) {
-        setRunError(typeof payload.response === "string" ? payload.response : JSON.stringify(payload.response));
+        let failure = payload.response;
+        if (typeof failure === "string") {
+          try { failure = JSON.parse(failure); } catch (_error) { /* Older servers can return plain text. */ }
+        }
+        setRunError(failure?.recovery?.message || failure?.error || "The request failed. Check the request values and try again.");
         setPreviewRows(null);
         return;
       }
@@ -554,12 +557,11 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
     }
   };
 
-  const renderFields = (fields, panel = false) => fields.map(([name, schema, required]) => (
+  const renderFields = (fields) => fields.map(([name, schema, required]) => (
     <SchemaField
       key={name}
       name={name}
       onChange={(value) => updateArgument(name, value)}
-      panel={panel}
       required={required}
       schema={schema}
       value={configuration.arguments?.[name]}
@@ -771,7 +773,7 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
                       <Disclosure.Body className="flex flex-col gap-4 border-t border-divider px-4 pb-4 pt-4">
                         {!advanced && fieldGroups.extra.length > 0 ? (
                           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {renderFields(fieldGroups.extra, true)}
+                            {renderFields(fieldGroups.extra)}
                           </div>
                         ) : null}
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -921,7 +923,6 @@ ArgumentsExample.propTypes = {
 SchemaField.propTypes = {
   name: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
-  panel: PropTypes.bool,
   required: PropTypes.bool,
   schema: PropTypes.object.isRequired,
   value: PropTypes.any,

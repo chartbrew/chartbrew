@@ -20,34 +20,39 @@ describe("AI orchestrator team scope", () => {
   });
 
   it("scopes list_connections to the calling team", async () => {
+    vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({ role: "teamOwner" });
     vi.spyOn(db.Connection, "findAll").mockResolvedValue([
       {
         id: 12,
+        active: true,
         type: "postgres",
         subType: null,
         name: "Primary DB",
       },
       {
         id: 13,
+        active: true,
         type: "clickhouse",
         subType: "clickhouse",
         name: "Events Warehouse",
       },
       {
         id: 14,
+        active: true,
         type: "api",
         subType: null,
         name: "Generic API",
       },
       {
         id: 15,
+        active: true,
         type: "api",
         subType: "stripe",
         name: "Legacy Stripe",
       },
     ]);
 
-    const result = await listConnections({ team_id: 7 });
+    const result = await listConnections({ team_id: 7, user_id: 3 });
 
     expect(db.Connection.findAll).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({
@@ -55,7 +60,7 @@ describe("AI orchestrator team scope", () => {
         type: expect.any(Array),
       }),
     }));
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       connections: [{
         id: 12,
         type: "postgres",

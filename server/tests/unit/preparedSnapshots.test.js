@@ -5,6 +5,8 @@ import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 const db = require("../../models/models");
+const ChartController = require("../../controllers/ChartController");
+const runtimeCache = require("../../modules/runtimeCache");
 const migration = require("../../models/migrations/20260820090000-add-chart-prepared-data");
 const {
   compilePreparedRender,
@@ -156,6 +158,30 @@ describe("prepared snapshots", () => {
       version: 1,
     });
     expect(rendered.render.configuration.content).toBe("Prepared content");
+  });
+
+  it("keeps the last chart data and its date when refresh history contains a source failure", async () => {
+    const preparedData = buildPreparedData();
+    const recovery = { code: "MCP_OUTPUT_PATH_NOT_FOUND", action: "dataset", datasetId: 12, message: "Check the dataset field mapping." };
+    vi.spyOn(db.Chart, "unscoped").mockReturnValue({ findOne: vi.fn().mockResolvedValue({
+      preparedData, preparedDataUpdatedAt: preparedData.generatedAt,
+      preparedDataVisualizationFingerprint: "v", preparedDataSourceFingerprint: "s",
+    }) });
+    const history = vi.spyOn(db.UpdateRun, "findOne").mockResolvedValue({ summary: { dataRecovery: recovery } });
+    vi.spyOn(runtimeCache, "buildChartFingerprints").mockResolvedValue({ visualization: "v", source: "s" });
+    const chart = { id: 42, type: "markdown", visualization: {
+      version: 2, status: "ready", settings: {}, layers: [{ id: "notes", mark: "markdown", status: "ready", encoding: {} }],
+    } };
+    const controller = new ChartController();
+    const failed = await controller.hydratePreparedChart(chart, { refresh: false });
+    expect(failed.render.configuration.content).toBe("Prepared content");
+    expect(failed.render.stale).toBe(true);
+    expect(failed.preparedDataUpdatedAt).toBe(preparedData.generatedAt);
+    expect(failed.refreshError).toEqual(recovery);
+    history.mockResolvedValue(null);
+    const recovered = await controller.hydratePreparedChart(chart, { refresh: false });
+    expect(recovered.render.stale).toBe(false);
+    expect(recovered.refreshError).toBeNull();
   });
 
   it("returns ECharts with renderer-neutral metadata", () => {

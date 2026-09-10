@@ -30,6 +30,8 @@ function ApiKeys() {
   const [allProjects, setAllProjects] = useState(true);
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [allowRefresh, setAllowRefresh] = useState(false);
+  const [allowPreviews, setAllowPreviews] = useState(false);
+  const [allowDatasets, setAllowDatasets] = useState(false);
   const [createError, setCreateError] = useState("");
 
   const dispatch = useDispatch();
@@ -66,6 +68,8 @@ function ApiKeys() {
     setAllProjects(true);
     setSelectedProjects([]);
     setAllowRefresh(false);
+    setAllowPreviews(false);
+    setAllowDatasets(false);
     setCreateError("");
     setCreateMode(true);
   };
@@ -91,7 +95,8 @@ function ApiKeys() {
       team_id: team.id,
       key: {
         name: newKey,
-        scopes: allowRefresh ? ["data:read", "data:refresh"] : ["data:read"],
+        scopes: ["data:read", ...(allowRefresh ? ["data:refresh"] : []),
+          ...(allowPreviews && allProjects ? ["charts:preview"] : []), ...(allowDatasets && allProjects ? ["datasets:write"] : [])],
         allProjects,
         projectIds: allProjects ? [] : selectedProjects,
       },
@@ -396,6 +401,19 @@ function ApiKeys() {
                       Refresh data from sources
                     </Checkbox.Content>
                   </Checkbox>
+                  <Checkbox isSelected={allowPreviews && allProjects} isDisabled={!allProjects} onChange={setAllowPreviews} variant="secondary">
+                    <Checkbox.Content>
+                      <Checkbox.Control className="size-4 shrink-0"><Checkbox.Indicator /></Checkbox.Control>
+                      Create chart previews
+                    </Checkbox.Content>
+                  </Checkbox>
+                  <Checkbox isSelected={allowDatasets && allProjects} isDisabled={!allProjects} onChange={setAllowDatasets} variant="secondary">
+                    <Checkbox.Content>
+                      <Checkbox.Control className="size-4 shrink-0"><Checkbox.Indicator /></Checkbox.Control>
+                      Create datasets
+                    </Checkbox.Content>
+                  </Checkbox>
+                  {!allProjects && <p className="text-sm text-muted">Chart previews and dataset creation require access to all projects.</p>}
                 </div>
               </Modal.Body>
               <Modal.Footer>

@@ -8,6 +8,11 @@ function normalizeTerms(query) {
   )].slice(0, 20);
 }
 
+function getPathScopeTerms(value) {
+  return [...`${value || ""}`.toLowerCase().matchAll(/(?:^|[\s(])(\/[a-z0-9][a-z0-9/_-]*)/g)]
+    .flatMap((match) => normalizeTerms(match[1]));
+}
+
 function buildSearchText(dataset, profile) {
   const values = [
     dataset.name,
@@ -28,6 +33,9 @@ function scoreDataset(dataset, profile, query) {
   if (terms.length === 0) return { score: 0, reasons: [] };
 
   const name = `${dataset.name || dataset.legend || ""}`.toLowerCase();
+  if (getPathScopeTerms(name).some((term) => !terms.includes(term))) {
+    return { score: 0, reasons: ["scope_mismatch"] };
+  }
   const summary = `${profile?.dataset?.summary || ""}`.toLowerCase();
   const fields = Object.keys(profile?.fields || {}).join(" ").toLowerCase();
   const usage = (profile?.usage?.analyses || [])

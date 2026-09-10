@@ -10,9 +10,14 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const db = require("../../models/models");
 const mcpAi = require("../../sources/plugins/mcp/ai/mcp.ai");
+const { buildAiVisualization } = require("../../visualization/aiVisualization");
+const { VisualizationEngine } = require("../../visualization/VisualizationEngine");
+const { alignSourceChartBindings } = require("../../modules/ai/orchestrator/tools/sourceIntentRepair");
 const { normalizeToolResult, selectToolOutput } = require("../../sources/plugins/mcp/mcp.normalize");
 const {
   applyToolApproval,
+  createMcpError,
+  getRemovedTools,
   assertToolApproved,
   mergeApprovals,
   normalizeCustomHeaders,
@@ -20,7 +25,10 @@ const {
   sanitizeTool,
 } = require("../../sources/plugins/mcp/mcp.policy");
 const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
+const { getDataRecovery } = require("../../modules/dataRecovery");
 const mcpOauth = require("../../sources/plugins/mcp/mcp.oauth");
+const jwt = require("jsonwebtoken");
+const settings = require("../../settings-dev");
 const {
   applyVariables,
   applyVariablesToValue,
@@ -73,6 +81,26 @@ function createConnection(tool, approval = {}) {
 }
 
 describe("MCP source policy", () => {
+  it("exposes usable inbound exploration details and refuses unapproved dataset tools", async () => {
+    const { backend } = require("../../sources/plugins/mcp/mcp.plugin");
+    const tool = createTool();
+    const connection = createConnection(tool);
+    const catalog = await backend.exploreReadOnly({ connection, operation: "inspect", names: [tool.name], limit: 1 });
+    expect(catalog.resources[0]).toMatchObject({ id: tool.name, contractFingerprint: tool.contractFingerprint, inputSchema: tool.inputSchema });
+    const configuration = { source: "mcp", tool: { name: tool.name, contractFingerprint: catalog.resources[0].contractFingerprint },
+      arguments: {}, output: { mode: "auto", path: [] } };
+    const preview = vi.spyOn(mcpAi, "previewConfiguration").mockResolvedValue({ status: "ok", rows: [{ visits: 4 }] });
+    try {
+      expect((await backend.exploreReadOnly({ connection, operation: "preview", configuration, limit: 1 })).dataRequest.configuration).toMatchObject(configuration);
+      expect(preview).toHaveBeenCalledOnce();
+      connection.schema.mcp.allowedTools[tool.name].datasets = false;
+      expect((await backend.exploreReadOnly({ connection, operation: "save", configuration })).status).toBe("invalid");
+      connection.schema.mcp.allowedTools[tool.name].ask = false;
+      expect((await backend.exploreReadOnly({ connection, operation: "inspect", names: [tool.name] })).resources).toEqual([]);
+      expect(preview).toHaveBeenCalledOnce();
+    } finally { preview.mockRestore(); }
+  });
+
   it("creates stable tool fingerprints and retains matching approvals", () => {
     const tool = createTool();
     const sameTool = createTool();
@@ -196,6 +224,34 @@ describe("MCP source policy", () => {
     const tool = createTool();
     const connection = createConnection(tool, { contractFingerprint: "old" });
     expect(assertToolApproved(connection, tool, "datasets")).toMatchObject({ datasets: true });
+  });
+
+  it("keeps compatible saved requests without granting access to new or destructive tools", () => {
+    const tool = createTool();
+    const connection = createConnection(tool, { contractFingerprint: "old" });
+    for (const contractFingerprint of ["old", ""]) {
+      expect(mcpProtocol.validateConfiguration({ source: "mcp", tool: { name: tool.name, contractFingerprint }, arguments: {} }, { tool }).valid).toBe(true);
+    }
+    expect(getRemovedTools([tool], { ...connection.schema.mcp.allowedTools, removed: {} })).toEqual(["removed"]);
+    expect(() => assertToolApproved(connection, createTool({ name: "new_tool" }), "datasets")).toThrow("not approved");
+    expect(() => assertToolApproved(connection, createTool({ annotations: { destructiveHint: true } }), "datasets")).toThrow("read-only");
+    connection.schema.mcp.allowedTools[tool.name].datasets = false;
+    expect(() => assertToolApproved(connection, tool, "datasets")).toThrow("not approved");
+  });
+
+  it("keeps safe recovery details through wrapped failures without exposing source text", () => {
+    for (const [code, action] of [["MCP_INVALID_ARGUMENTS", "dataset"], ["MCP_INVALID_RESULT", "dataset"],
+      ["MCP_OUTPUT_PATH_NOT_FOUND", "dataset"], ["MCP_RECONNECT_REQUIRED", "connection"],
+      ["MCP_TOOL_NOT_APPROVED", "connection"], ["MCP_TIMEOUT", "retry"], ["MCP_TOOL_ERROR", "dataset"]]) {
+      const source = createMcpError(code, "private SQL and credentials");
+      source.datasetId = 12;
+      source.connectionId = 8;
+      const recovery = getDataRecovery(new Error("preview failed", { cause: source }));
+      expect(recovery).toMatchObject({ code, action, datasetId: 12, connectionId: 8 });
+      expect(JSON.stringify(recovery)).not.toContain("private SQL");
+    }
+    expect(getDataRecovery(new Error("unknown failure"))).toBeNull();
+    expect(sanitizeMcpClientError({ status: 403 }).recovery.action).toBe("connection");
   });
 
   it("applies a tool approval without matching the previous fingerprints", () => {
@@ -408,6 +464,56 @@ describe("MCP result and variable handling", () => {
     const value = { payload: { records: [{ id: 1 }] } };
     expect(selectToolOutput(value, { mode: "path", path: "payload.records" }))
       .toEqual([{ id: 1 }]);
+  });
+
+  it("maps nested MCP values into named scalar columns without guessing tuple positions", async () => {
+    const output = { mode: "auto", fields: { page: ["column_0"], visitors: ["column_1", "0"], previous: ["column_1", "1"] } };
+    expect(selectToolOutput([["/", [899, 0]], ["/pricing", [218, null]]], output))
+      .toEqual([{ page: "/", visitors: 899, previous: 0 }, { page: "/pricing", visitors: 218, previous: null }]);
+    const tool = createTool();
+    const plan = await mcpAi.planDataset({ connection: createConnection(tool), overrides: { toolName: tool.name, output } });
+    expect(plan.configuration.output.fields).toEqual(output.fields);
+    expect(plan.outputFields).toEqual(["root[].page", "root[].visitors", "root[].previous"]);
+    expect(mcpProtocol.validateConfiguration(plan.configuration).configuration.output.fields).toEqual(output.fields);
+    expect(() => selectToolOutput([["/", [899, 0]]], { fields: { visitors: ["column_1"] } })).toThrow("single value");
+    expect(() => selectToolOutput([["/", [899, 0]]], { fields: { visitors: ["missing"] } })).toThrow("not found");
+    for (const fields of [{ visitors: ["__proto__"] }, JSON.parse("{\"__proto__\":[\"id\"]}"), { visitors: "column_1.0" }]) {
+      expect(mcpProtocol.validateConfiguration({ ...plan.configuration, output: { fields } }).valid).toBe(false);
+      expect(() => selectToolOutput([], { fields })).toThrow("valid name and field path");
+    }
+  });
+
+  it("does not apply saved mappings again to cached dataset rows", async () => {
+    const cache = require("../../controllers/DataRequestCacheController");
+    const connection = { ...createConnection(createTool()), id: 42 };
+    const request = { id: 19, dataset_id: 12, configuration: { source: "mcp", tool: { name: "list_orders" }, output: { fields: { left: ["right"], right: ["left"] } } } };
+    const rows = [{ left: 1, right: 2 }];
+    const saved = vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+    const cached = vi.spyOn(cache, "findLast").mockResolvedValue({ connection_id: 42, dataRequest: request, responseData: { data: rows } });
+    try {
+      const result = await mcpProtocol.runDataRequest({ connection, dataRequest: request, getCache: true });
+      expect(result.responseData.data).toEqual(rows);
+      connection.schema.mcp.allowedTools.list_orders.datasets = false;
+      await expect(mcpProtocol.runDataRequest({ connection, dataRequest: request, getCache: true })).rejects.toMatchObject({
+        code: "MCP_TOOL_NOT_APPROVED", datasetId: 12, connectionId: 42,
+      });
+      expect(cached).toHaveBeenCalledOnce();
+    } finally {
+      cached.mockRestore();
+      saved.mockRestore();
+    }
+  });
+
+  it("checks mapped rows with the chart engine and rejects empty rendered results", async () => {
+    const source = { backend: { ai: mcpAi } };
+    const rows = selectToolOutput([["/", [899, 0]]], { fields: { page: ["column_0"], visitors: ["column_1", "0"] } });
+    const payload = { rows, type: "bar", xAxis: "root[].page", yAxis: "root[].visitors" };
+    await expect(alignSourceChartBindings(source, payload)).resolves.toMatchObject({ yAxis: "root[].visitors" });
+    await expect(alignSourceChartBindings(source, { ...payload, rows: [{ page: "/", visitors: 0 }] })).resolves.toBeTruthy();
+    const visualization = buildAiVisualization({ chart: { type: "bar" }, cdc: payload });
+    visualization.layers[0].transforms = [{ type: "filter", field: "root[].visitors", operator: "gt", value: 1000 }];
+    await expect(alignSourceChartBindings(source, { ...payload, visualization })).rejects.toThrow("no usable values");
+    await expect(alignSourceChartBindings(source, { ...payload, rows: [] })).rejects.toThrow("No rows");
   });
 
   it("turns HogQL column/result tuples into object rows", () => {
@@ -997,12 +1103,41 @@ describe("MCP source integration contracts", () => {
       rows: [{ day: "2026-07-15", visitors: 12 }, { day: "2026-07-16", visitors: 18 }],
       type: "line",
       xAxis: "root[].page",
-      yAxis: "root[].count",
+      yAxis: "root[].visitors",
     })).toMatchObject({
       xAxis: "root[].day",
       yAxis: "root[].visitors",
       dateField: "root[].day",
     });
+  });
+
+  it("requires scalar measures and keeps explicit nested tuple selections", () => {
+    const rows = [{ column_0: "/", column_1: [899, 0], column_5: 0.23 }];
+    const chart = { rows, type: "bar", xAxis: "root[].column_0" };
+    expect(mcpAi.suggestChartBindings(rows)).toBeNull();
+    expect(() => mcpAi.alignChartBindings({ ...chart, yAxis: "root[].column_1" }))
+      .toThrow("does not select numeric values");
+    expect(() => mcpAi.alignChartBindings({ ...chart, yAxis: "root[].visitors" }))
+      .toThrow("does not select numeric values");
+    expect(() => mcpAi.alignChartBindings(chart)).toThrow("Select a numeric chart measure");
+    expect(mcpAi.alignChartBindings({ ...chart, yAxis: "root[].column_1[0]" }).yAxis)
+      .toBe("root[].column_1[0]");
+    const bindings = mcpAi.alignChartBindings({ ...chart, yAxis: "root[].column_1[0]" });
+    const prepared = new VisualizationEngine({
+      chart: { id: 1, type: "bar", visualization: buildAiVisualization({ chart: { type: "bar" }, cdc: bindings }) },
+      datasets: [{ data: rows, options: { id: "binding-1" } }],
+    }).prepare().preparedData;
+    expect(prepared.results[0].rows[0]).toMatchObject({ category: "/", value: 899 });
+    expect(mcpAi.alignChartBindings({ ...chart, yAxis: "root[].column_1[1]" }).yAxis)
+      .toBe("root[].column_1[1]");
+    expect(() => mcpAi.alignChartBindings({
+      ...chart,
+      yAxis: "root[].column_5",
+      encoding: { value: { field: "root[].column_1", type: "quantitative" } },
+    })).toThrow("does not select numeric values");
+    expect(() => mcpAi.alignChartBindings({
+      ...chart, yAxis: "root[].column_0", yAxisOperation: "count",
+    })).not.toThrow();
   });
 
   it("returns suggestedBindings from an MCP preview", async () => {
@@ -1031,6 +1166,32 @@ describe("MCP source integration contracts", () => {
         xAxis: "root[].pathname",
         yAxis: "root[].visitors",
       });
+    } finally {
+      executeSpy.mockRestore();
+    }
+  });
+
+  it("requires structured data instead of suggesting a chart of response text", async () => {
+    const tool = createTool();
+    const connection = createConnection(tool);
+    const executeSpy = vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+      data: [{ content: "visitors: current: 2363, previous: 2540; top pages: /, /tools" }], tool,
+    });
+    try {
+      const preview = await mcpAi.previewConfiguration({
+        connection,
+        configuration: {
+          source: "mcp", tool: { name: tool.name, contractFingerprint: tool.contractFingerprint },
+          arguments: {}, output: { mode: "auto", path: [] },
+        },
+      });
+      expect(preview.status).toBe("needs_structured_data");
+      expect(preview.suggestedBindings).toBeNull();
+      expect(preview.message).toContain("approved tool");
+      expect(mcpAi.suggestChartBindings([{ name: "Home", category: "Page" }], { type: "table" }))
+        .toEqual({ xAxis: "root[]" });
+      expect(mcpAi.suggestChartBindings([{ visitors: 2363 }], { type: "kpi" }))
+        .toEqual({ xAxis: "root[].visitors", yAxis: "root[].visitors" });
     } finally {
       executeSpy.mockRestore();
     }
@@ -1122,12 +1283,62 @@ describe("MCP source integration contracts", () => {
     })).rejects.toMatchObject({ code: "MCP_ADMIN_REQUIRED", statusCode: 403 });
   });
 
+  it("accepts only a current signed conversation return for this connection and team", () => {
+    const payload = { connectionId: 8, teamId: 4, conversationId: "saved-chat" };
+    const state = jwt.sign(payload, settings.secret, { audience: "mcp-chat-return", expiresIn: "30m" });
+    const connection = { id: 8, team_id: 4, authentication: { state } };
+    expect(mcpOauth.getReturnConversation({ connection, state })).toBe("saved-chat");
+    expect(mcpOauth.getReturnConversation({ connection, state: `${state}bad` })).toBeNull();
+    expect(mcpOauth.getReturnConversation({ connection: { ...connection, id: 9 }, state })).toBeNull();
+    expect(mcpOauth.getReturnConversation({ connection: { ...connection, team_id: 5 }, state })).toBeNull();
+    const expired = jwt.sign(payload, settings.secret, { audience: "mcp-chat-return", expiresIn: -1 });
+    expect(mcpOauth.getReturnConversation({ connection: { ...connection, authentication: { state: expired } }, state: expired })).toBeNull();
+  });
+
+  it("rejects an unavailable conversation before starting OAuth", async () => {
+    const find = vi.spyOn(db.AiConversation, "findOne").mockResolvedValue(null);
+    await expect(mcpOauth.startOAuth({
+      connection: { id: 8, team_id: 4, authentication: { type: "oauth" } },
+      user: { id: 3, isEditor: true }, params: { conversationId: "other-chat" },
+    })).rejects.toMatchObject({ code: "MCP_CHAT_UNAVAILABLE" });
+    expect(find).toHaveBeenCalledWith({ where: { id: "other-chat", team_id: 4, user_id: 3 } });
+    find.mockRestore();
+  });
+
   it("requires an owner or admin to update tool approvals", async () => {
     await expect(mcpProtocol.actions.updateToolApproval({
       connection: { schema: { mcp: { tools: [] } } },
       params: { toolName: "list_orders", datasets: true },
       user: { isEditor: false },
     })).rejects.toMatchObject({ code: "MCP_ADMIN_REQUIRED", statusCode: 403 });
+  });
+
+  it("saves single and bulk access changes under a row lock", async () => {
+    const tool = createTool();
+    const other = createTool({ name: "other_tool" });
+    const saved = {
+      ...createConnection(tool),
+      update: vi.fn().mockResolvedValue(undefined),
+    };
+    saved.schema.mcp.tools.push(other);
+    const transaction = { LOCK: { UPDATE: "UPDATE" } };
+    const transact = vi.spyOn(db.sequelize, "transaction").mockImplementation((run) => run(transaction));
+    const find = vi.spyOn(db.Connection, "findOne").mockResolvedValue(saved);
+    try {
+      const invoke = (params) => mcpProtocol.actions.updateToolApproval({
+        connection: { id: 8, team_id: 4 }, user: { id: 3, isEditor: true }, params,
+      });
+      const result = await invoke({ toolName: tool.name, enabled: true });
+      expect(result.approval).toMatchObject({ ask: true, datasets: true, contractFingerprint: tool.contractFingerprint });
+      expect(find).toHaveBeenCalledWith({ where: { id: 8, team_id: 4 }, transaction, lock: "UPDATE" });
+      await invoke({ toolNames: [tool.name, other.name], enabled: false });
+      expect(saved.update.mock.calls[1][0].schema.mcp.allowedTools[tool.name].ask).toBe(false);
+      saved.update.mockRejectedValueOnce(new Error("Save failed"));
+      await expect(invoke({ toolName: tool.name, enabled: true })).rejects.toThrow("Save failed");
+    } finally {
+      transact.mockRestore();
+      find.mockRestore();
+    }
   });
 
   it("uses a public HTTPS OAuth client metadata URL when available", () => {

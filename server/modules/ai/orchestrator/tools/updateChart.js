@@ -420,8 +420,9 @@ async function updateChart(payload) {
       is_temporary: isTemporary,
       visibility: isTemporary ? "temporary" : "dashboard",
       ghost_project_id: isTemporary ? updatedChart.project_id : null,
-      dashboard_url: `${global.clientUrl}/${normalizedTeamId}/${updatedChart.project_id}/dashboard`,
-      chart_url: `${global.clientUrl}/${normalizedTeamId}/${updatedChart.project_id}/chart/${updatedChart.id}/edit`,
+      dashboard_url: isTemporary ? null : `${global.clientUrl}/dashboard/${updatedChart.project_id}`,
+      chart_url: isTemporary ? `${global.clientUrl}/previews/${updatedChart.id}`
+        : `${global.clientUrl}/dashboard/${updatedChart.project_id}/chart/${updatedChart.id}/edit`,
       snapshot,
       updated_fields: {
         chart: Object.keys(chartUpdates),
@@ -429,7 +430,7 @@ async function updateChart(payload) {
       }
     };
   } catch (error) {
-    throw new Error(`Chart update failed: ${error.message}`);
+    throw new Error(`Chart update failed: ${error.message}`, { cause: error });
   }
 }
 

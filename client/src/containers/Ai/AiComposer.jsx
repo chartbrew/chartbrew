@@ -20,14 +20,12 @@ function AiComposer({
   suggestions = [],
   showEnterHint = false,
   rows = 4,
-  layout = "stacked",
   framed = false,
   fill = false,
 }) {
   const [draftQuestion, setDraftQuestion] = useState("");
   const fallbackRef = useRef(null);
   const composerRef = inputRef || fallbackRef;
-  const isInline = layout === "inline";
   const hasContent = draftQuestion.trim()
     || selectedContext.multiSelect.length > 0
     || selectedContext.singleSelect;
@@ -130,8 +128,6 @@ function AiComposer({
     >
       {!framed && suggestionChips}
 
-      {isInline && leadingContent ? leadingContent : null}
-
       <div className={fill ? "min-h-0 flex-1" : undefined}>
       <TextField
         aria-label={placeholder}
@@ -141,68 +137,37 @@ function AiComposer({
         name={name}
       >
         <Label className="sr-only">{placeholder}</Label>
-        {isInline ? (
-          <InputGroup className="w-full rounded-3xl shadow-none" fullWidth variant="secondary">
-            {leadingControl ? (
-              <InputGroup.Prefix className="shrink-0 ps-1.5 pe-0">
-                {leadingControl}
-              </InputGroup.Prefix>
-            ) : null}
-            <InputGroup.Input
-              className="min-w-0 flex-1"
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              ref={composerRef}
-              value={draftQuestion}
-            />
-            <InputGroup.Suffix className="shrink-0 gap-1.5 pe-1.5 ps-0">
+        <InputGroup
+          className={framed
+            ? `relative flex flex-col items-stretch gap-2 overflow-visible rounded-[1.25rem] border-transparent bg-surface py-2 shadow-none${fill ? " h-full" : ""}`
+            : "flex flex-col gap-2 rounded-3xl py-2"}
+          fullWidth
+          variant={framed ? "secondary" : "primary"}
+        >
+          {leadingContent ? (
+            <div className="flex w-full shrink-0 flex-col items-start gap-2 px-3 pt-1">
+              {leadingContent}
+            </div>
+          ) : null}
+          <InputGroup.TextArea
+            className={framed
+              ? `w-full resize-none px-3.5 py-0${fill ? " min-h-0 flex-1" : ""}`
+              : "w-full resize-none px-3.5 py-0"}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            ref={composerRef}
+            rows={fill ? 8 : rows}
+            value={draftQuestion}
+          />
+          <div className="flex w-full shrink-0 items-center gap-2 px-3 py-0">
+            {leadingControl}
+            <div className="ms-auto flex items-center gap-1.5">
               {status}
               {sendButton}
-            </InputGroup.Suffix>
-          </InputGroup>
-        ) : (
-          <InputGroup
-            className={framed
-              ? `relative flex flex-col items-stretch gap-2 overflow-visible rounded-[1.25rem] border-transparent bg-surface py-2 shadow-none${fill ? " h-full" : ""}`
-              : "flex flex-col gap-2 rounded-3xl py-2"}
-            fullWidth
-            variant={framed ? "secondary" : "primary"}
-          >
-            {leadingContent || leadingControl ? (
-              <InputGroup.Prefix className="flex w-full flex-col items-start gap-2 px-3 py-0">
-                {leadingControl}
-                {leadingContent}
-              </InputGroup.Prefix>
-            ) : null}
-            <InputGroup.TextArea
-              className={framed
-                ? `w-full resize-none px-3.5 pb-10 pt-0${fill ? " h-full min-h-0" : ""}`
-                : "w-full resize-none px-3.5 py-0"}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              ref={composerRef}
-              rows={fill ? 8 : rows}
-              value={draftQuestion}
-            />
-            {framed ? (
-              <div className="absolute bottom-2 right-3 z-10 flex items-center gap-1.5">
-                {status}
-                {sendButton}
-              </div>
-            ) : (
-              <InputGroup.Suffix className="flex w-full items-center gap-2 px-3 py-0">
-                <div className="ms-auto">
-                  <div className="flex items-center gap-1.5">
-                    {status}
-                    {sendButton}
-                  </div>
-                </div>
-              </InputGroup.Suffix>
-            )}
-          </InputGroup>
-        )}
+            </div>
+          </div>
+        </InputGroup>
       </TextField>
       </div>
 
@@ -210,7 +175,7 @@ function AiComposer({
     </form>
   );
 
-  if (!framed || isInline) return form;
+  if (!framed) return form;
 
   return (
     <div className={fill
@@ -240,7 +205,6 @@ AiComposer.propTypes = {
   suggestions: PropTypes.arrayOf(PropTypes.string),
   showEnterHint: PropTypes.bool,
   rows: PropTypes.number,
-  layout: PropTypes.oneOf(["stacked", "inline"]),
   framed: PropTypes.bool,
   fill: PropTypes.bool,
 };

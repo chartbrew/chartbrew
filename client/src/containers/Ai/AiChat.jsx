@@ -4,13 +4,14 @@ import React, {
 import PropTypes from "prop-types";
 import { Button, ScrollShadow } from "@heroui/react";
 import { LuBookmark } from "react-icons/lu";
-import { useDispatch } from "react-redux";
-
-import { getChart } from "../../slices/chart";
+import { getChartPreview } from "../../api/ai";
 import AiComposer from "./AiComposer";
 import AiChartPreview from "./AiChartPreview";
+import AiConnectionCard from "./AiConnectionCard";
+import AiDataRecoveryCard from "./AiDataRecoveryCard";
 import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiProgress from "./AiProgress";
+import AiToolOperations from "./AiToolOperations";
 import { AiAnswer, AiUserPrompt } from "./AiTranscript";
 import { getCompletedActionIds, parseAiMessage } from "./aiMessageUtils";
 import useChatAutoScroll from "./hooks/useChatAutoScroll";
@@ -19,6 +20,7 @@ import {
   setChartPreviewFailed,
   setChartPreviewLoaded,
   setChartPreviewLoading,
+  setChartPreviewUnavailable,
   shouldLoadChartPreview,
 } from "./chartPreviewState";
 
@@ -32,20 +34,28 @@ function AiChat({
   isLoading,
   messages,
   onSave,
+  onEnsureSaved,
+  conversationId,
   onChangeAction,
+  onChartAction,
   onConfirmAction,
   onSubmit,
   placeholder = "Ask a question about your data",
   progressEvents = [],
+  selectedContext = EMPTY_CONTEXT,
   showSave = false,
   suggestions = [],
   status,
   toolDisplayNames = {},
+  teamId,
+  leadingContent,
+  leadingControl,
+  onAtTyped,
   framed = false,
   fill = false,
 }) {
-  const dispatch = useDispatch();
   const fetchedChartsRef = useRef(new Set());
+  const loadedPreviewCountRef = useRef(0);
   const [chartStates, setChartStates] = useState({});
   const completedActionIds = getCompletedActionIds(messages);
   const chartPreviews = useMemo(() => messages.flatMap((message) => (
@@ -64,23 +74,33 @@ function AiChat({
     fetchedChartsRef.current.add(key);
     setChartStates((current) => setChartPreviewLoading(current, key));
     try {
-      const chart = await dispatch(getChart({
-        chart_id: preview.chartId,
-        project_id: preview.projectId,
-      })).unwrap();
-      setChartStates((current) => setChartPreviewLoaded(current, key, chart));
-    } catch (_error) {
-      setChartStates((current) => setChartPreviewFailed(current, key));
+      const chart = await getChartPreview(preview.chartId);
+      setChartStates((current) => (
+        chart
+          ? setChartPreviewLoaded(current, key, chart)
+          : setChartPreviewUnavailable(current, key)
+      ));
+    } catch (error) {
+      setChartStates((current) => (
+        [403, 404].includes(error.status)
+          ? setChartPreviewUnavailable(current, key)
+          : setChartPreviewFailed(current, key)
+      ));
     }
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
-    chartPreviews.forEach((preview) => loadChartPreview(preview));
+    const previousCount = loadedPreviewCountRef.current;
+    chartPreviews.forEach((preview, index) => {
+      loadChartPreview(preview, index >= previousCount);
+    });
+    loadedPreviewCountRef.current = chartPreviews.length;
   }, [chartPreviews, loadChartPreview]);
 
   useEffect(() => {
     if (messages.length > 0) return;
     fetchedChartsRef.current.clear();
+    loadedPreviewCountRef.current = 0;
     setChartStates({});
   }, [messages.length]);
 
@@ -92,7 +112,9 @@ function AiChat({
       {messages.length > 0 ? (
         <ScrollShadow
           aria-live="polite"
-          className="min-w-0 max-h-[34rem] pr-3 [scrollbar-gutter:stable]"
+          className={fill
+            ? "min-h-0 min-w-0 flex-1 pr-3 [scrollbar-gutter:stable]"
+            : "min-w-0 max-h-[34rem] pr-3 [scrollbar-gutter:stable]"}
           orientation="vertical"
           ref={containerRef}
           size={28}
@@ -105,7 +127,7 @@ function AiChat({
                 );
               }
               const parsed = parseAiMessage(message);
-              const suggestionActions = parsed.type === "message_with_suggestions" ? (
+              const suggestionActions = parsed.type === "message_with_suggestions" && !message.connectionOptions?.length ? (
                 <div className="mt-3 flex flex-row flex-wrap gap-2">
                   {parsed.suggestions.map((suggestion) => (
                     <Button
@@ -137,6 +159,13 @@ function AiChat({
                     ) : null}
                     after={(
                       <>
+                        {message.workSummary?.length > 0 ? (
+                          <AiToolOperations
+                            groupIndex={index}
+                            operations={message.workSummary}
+                            toolDisplayNames={toolDisplayNames}
+                          />
+                        ) : null}
                         {message.chartPreviews?.length > 0 ? null : suggestionActions}
                         {parsed.type === "message_with_action" ? (
                           <AiActionPreviewCard
@@ -152,15 +181,32 @@ function AiChat({
                     content={parsed.content || "I need a little more information to answer that."}
                     isError={message.isError}
                   />
+                  {(message.connectionOptions || []).map((option) => (
+                    <AiConnectionCard
+                      key={option.provider_id || option.connection_id || option.source_id || option.name}
+                      option={option}
+                      teamId={teamId}
+                      conversationId={conversationId}
+                      onEnsureSaved={onEnsureSaved}
+                      onContinue={onSubmit}
+                      isLoading={isLoading}
+                    />
+                  ))}
+                  {(message.dataRecoveries || []).map((recovery, recoveryIndex) => (
+                    <AiDataRecoveryCard key={recoveryIndex} recovery={recovery} onContinue={onSubmit} isLoading={isLoading} />
+                  ))}
                   {(message.chartPreviews || []).map((preview) => {
                     const chartState = chartStates[getChartPreviewKey(preview)] || {};
                     return (
                       <AiChartPreview
                         chartData={chartState.chart}
+                        isUnavailable={chartState.unavailable}
                         key={`${preview.chartId}-${preview.projectId}`}
                         loadError={chartState.error}
+                        onChartAction={onChartAction}
                         onRetry={() => loadChartPreview(preview, true)}
                         parsed={{
+                          ...preview,
                           chartId: preview.chartId,
                           chartName: preview.chartName,
                           projectId: preview.projectId,
@@ -169,6 +215,8 @@ function AiChat({
                             : "chart_created",
                           visibility: preview.visibility,
                         }}
+                        selectedContext={selectedContext}
+                        teamId={teamId}
                       />
                     );
                   })}
@@ -188,16 +236,22 @@ function AiChat({
         </ScrollShadow>
       ) : null}
 
-      <div className={fill ? "flex min-h-0 flex-1 flex-col" : undefined}>
+      <div className={fill && messages.length === 0
+        ? "flex min-h-0 flex-1 flex-col"
+        : undefined}
+      >
         <AiComposer
-          fill={fill}
+          fill={fill && messages.length === 0}
           framed={framed}
           id={id}
           isLoading={isLoading}
+          leadingContent={leadingContent}
+          leadingControl={leadingControl}
           name={`${id}-question`}
+          onAtTyped={onAtTyped}
           onSubmitQuestion={onSubmit}
           placeholder={placeholder}
-          selectedContext={EMPTY_CONTEXT}
+          selectedContext={selectedContext}
           showEnterHint={messages.length > 0}
           status={status}
           suggestions={suggestions}
@@ -215,17 +269,29 @@ AiChat.propTypes = {
     content: PropTypes.string,
     isError: PropTypes.bool,
     role: PropTypes.string,
+    workSummary: PropTypes.arrayOf(PropTypes.object),
   })).isRequired,
   onSave: PropTypes.func,
+  onEnsureSaved: PropTypes.func,
+  conversationId: PropTypes.string,
   onChangeAction: PropTypes.func.isRequired,
+  onChartAction: PropTypes.func,
   onConfirmAction: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   progressEvents: PropTypes.arrayOf(PropTypes.object),
+  selectedContext: PropTypes.shape({
+    multiSelect: PropTypes.array.isRequired,
+    singleSelect: PropTypes.object,
+  }),
   showSave: PropTypes.bool,
   suggestions: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.node,
   toolDisplayNames: PropTypes.object,
+  teamId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  leadingContent: PropTypes.node,
+  leadingControl: PropTypes.node,
+  onAtTyped: PropTypes.func,
   framed: PropTypes.bool,
   fill: PropTypes.bool,
 };

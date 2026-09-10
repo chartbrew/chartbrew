@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 const { auth } = require("@modelcontextprotocol/client");
 
 const db = require("../../../models/models");
@@ -7,6 +8,19 @@ const { createMcpSafeFetch } = require("./mcp.safeFetch");
 const { createMcpError, sanitizeMcpClientError } = require("./mcp.policy");
 
 const refreshes = new Map();
+const settings = process.env.NODE_ENV === "production" ? require("../../../settings") : require("../../../settings-dev");
+
+function getReturnConversation({ connection, state }) {
+  if (!state || state !== connection.authentication?.state) return null;
+  try {
+    const payload = jwt.verify(state, settings.secret, { algorithms: ["HS256"], audience: "mcp-chat-return" });
+    if (String(payload.connectionId) !== String(connection.id)
+      || String(payload.teamId) !== String(connection.team_id)) return null;
+    return payload.conversationId;
+  } catch (_) {
+    return null;
+  }
+}
 
 function getApiBaseUrl() {
   const value = process.env.NODE_ENV === "production"
@@ -155,7 +169,7 @@ async function runOauth(connection, options = {}) {
   }
 }
 
-async function startOAuth({ connection, user }) {
+async function startOAuth({ connection, user, params = {} }) {
   if (!user?.isEditor) {
     throw createMcpError("MCP_ADMIN_REQUIRED", "Only team owners and admins can manage MCP OAuth.", 403);
   }
@@ -163,9 +177,19 @@ async function startOAuth({ connection, user }) {
   if (plain.authentication?.type !== "oauth") {
     throw createMcpError("MCP_OAUTH_NOT_SELECTED", "Select OAuth on this MCP connection first.");
   }
+  let state = crypto.randomBytes(32).toString("hex");
+  if (params.conversationId) {
+    const conversation = await db.AiConversation.findOne({
+      where: { id: params.conversationId, team_id: plain.team_id, user_id: user.id },
+    });
+    if (!conversation) throw createMcpError("MCP_CHAT_UNAVAILABLE", "Save this conversation before connecting.", 404);
+    state = jwt.sign({
+      conversationId: conversation.id, connectionId: plain.id, teamId: plain.team_id, nonce: state,
+    }, settings.secret, { algorithm: "HS256", audience: "mcp-chat-return", expiresIn: "30m" });
+  }
   plain.authentication = {
     ...plain.authentication,
-    state: crypto.randomBytes(32).toString("hex"),
+    state,
     codeVerifier: "",
   };
   const result = await runOauth(plain, { forceReauthorization: true });
@@ -248,6 +272,7 @@ module.exports = {
   getCallbackUrl,
   getClientMetadata,
   getClientMetadataUrl,
+  getReturnConversation,
   refreshOAuth,
   startOAuth,
 };

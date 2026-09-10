@@ -3,9 +3,26 @@ import test from "node:test";
 
 import {
   getChartToolMessageInfo,
+  getOperationSummary,
+  groupAiMessages,
   isProgressForConversation,
   normalizeProgressEvent,
 } from "./aiMessageUtils.js";
+
+test("summarizes connection checks for both live and saved conversations", () => {
+  assert.equal(getOperationSummary([{ name: "list_connections", status: "complete" }]), "Checked available connections");
+  assert.equal(getOperationSummary([{ name: "list_connections", type: "call" }]), "Checked available connections");
+});
+
+test("keeps connection card references when a saved conversation is grouped", () => {
+  const option = { name: "PostHog", provider_id: "posthog", state: "mcp_oauth_setup", connection_id: 8 };
+  const groups = groupAiMessages([
+    { role: "tool", name: "list_connections", content: JSON.stringify({ options: [option] }) },
+    { role: "assistant", content: "Connect your data source to continue." },
+  ]);
+  assert.equal(groups.length, 1);
+  assert.deepEqual(groups[0].items[0].parsed.content.options, [option]);
+});
 
 test("restores a temporary chart preview from saved tool history", () => {
   const parsed = getChartToolMessageInfo({
@@ -37,7 +54,44 @@ test("restores a saved chart from persistent tool history", () => {
   });
   assert.equal(parsed.type, "chart_created");
   assert.equal(parsed.projectId, 78);
-  assert.equal(parsed.isTemporary, undefined);
+  assert.equal(parsed.isTemporary, false);
+});
+
+test("restores one saved chart after a preview is added to a dashboard", () => {
+  const groups = groupAiMessages([{
+    content: JSON.stringify({
+      chart_id: 44,
+      ghost_project_id: 77,
+      name: "Trial conversion",
+      visibility: "temporary",
+    }),
+    name: "create_temporary_chart",
+    role: "tool",
+  }, {
+    content: "",
+    role: "assistant",
+    tool_calls: [{
+      function: { arguments: "{}", name: "move_chart_to_dashboard" },
+      id: "move_44",
+    }],
+  }, {
+    content: JSON.stringify({
+      chart_id: 44,
+      chart_name: "Trial conversion",
+      new_project_id: 88,
+      visibility: "dashboard",
+    }),
+    name: "move_chart_to_dashboard",
+    role: "tool",
+    tool_call_id: "move_44",
+  }, {
+    content: "Added Trial conversion to Growth.",
+    role: "assistant",
+  }]);
+  const chartGroups = groups.filter((group) => group.type.startsWith("chart_"));
+  assert.equal(chartGroups.length, 1);
+  assert.equal(chartGroups[0].items[0].parsed.projectId, 88);
+  assert.equal(chartGroups[0].items[0].parsed.visibility, "dashboard");
 });
 
 test("normalizes socket progress events and scopes them to the active chat", () => {

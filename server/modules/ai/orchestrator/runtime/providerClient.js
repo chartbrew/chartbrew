@@ -1,5 +1,6 @@
 const { assertNoForbiddenExternalData } = require("./egressBoundary");
 const { buildJsonSchemaFormat } = require("./responseSchemas");
+const { MEMORY_INSTRUCTIONS } = require("../../memory");
 
 const ROLE_INSTRUCTIONS = Object.freeze({
   planner: [
@@ -180,7 +181,8 @@ async function callProviderRole({
       role: "user",
       type: "message",
     }],
-    instructions: ROLE_INSTRUCTIONS[role],
+    instructions: envelope.personalMemory
+      ? `${ROLE_INSTRUCTIONS[role]} ${MEMORY_INSTRUCTIONS}` : ROLE_INSTRUCTIONS[role],
     max_output_tokens: reservation.maximumOutputTokens,
     model,
     reasoning: { effort: reasoningEffort },

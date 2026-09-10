@@ -30,6 +30,8 @@ const {
 const {
   getWorkspaceAccessEnvelope,
 } = require("../../modules/workspaceContext/accessEnvelope");
+const { getObservationAccess } = require("../../modules/observations/access");
+const runtimeCache = require("../../modules/runtimeCache");
 const {
   readWorkspaceContext,
 } = require("../../modules/workspaceContext/workspaceContextService");
@@ -62,6 +64,41 @@ async function createUserAccess(models, role = "teamOwner", projects = null) {
   return {
     project, team, token, user,
   };
+}
+
+async function createPersistentChartPreview(models, seeded) {
+  const ghostProject = await models.Project.create(projectFactory.build({
+    ghost: true,
+    team_id: seeded.team.id,
+  }));
+  const chart = await models.Chart.create({
+    draft: false,
+    name: "Preview chart",
+    project_id: ghostProject.id,
+    type: "bar",
+  });
+  const conversation = await models.AiConversation.create({
+    message_count: 1,
+    status: "active",
+    team_id: seeded.team.id,
+    title: "Chart preview",
+    user_id: seeded.user.id,
+  });
+  await models.AiMessage.create({
+    content: JSON.stringify({
+      chart_id: chart.id,
+      chart_name: chart.name,
+      chart_type: chart.type,
+      ghost_project_id: ghostProject.id,
+      is_temporary: true,
+      visibility: "temporary",
+    }),
+    conversation_id: conversation.id,
+    role: "tool",
+    sequence: 0,
+    tool_name: "create_temporary_chart",
+  });
+  return { chart, conversation, ghostProject };
 }
 
 async function createObservation(models, { project, team }) {
@@ -235,6 +272,202 @@ describe("workspace orchestrator routes", () => {
       .expect(404);
 
     expect(response.body.error).toBe("This chat has expired");
+  });
+
+  it("places a chart preview without creating chat turns", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+    const preview = await createPersistentChartPreview(models, seeded);
+    await models.AiMessage.create({
+      content: JSON.stringify({
+        chart_id: preview.chart.id,
+        chart_name: preview.chart.name,
+        chart_type: "doughnut",
+        project_id: preview.ghostProject.id,
+        visibility: "temporary",
+      }),
+      conversation_id: preview.conversation.id,
+      role: "tool",
+      sequence: 1,
+      tool_name: "update_chart",
+    });
+
+    const place = () => request(app)
+      .post("/ai/chart-previews/place")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        action: {
+          chartId: preview.chart.id,
+          targetProjectId: seeded.project.id,
+          type: "add_preview_to_dashboard",
+        },
+        aiConversationId: preview.conversation.id,
+        persistence: "persistent",
+        teamId: seeded.team.id,
+      });
+    const response = await place().expect(200);
+
+    expect(response.body.chartPreview).toEqual(expect.objectContaining({
+      chartId: preview.chart.id,
+      dashboard: { id: seeded.project.id, name: seeded.project.name },
+      visibility: "dashboard",
+    }));
+    await preview.chart.reload();
+    expect(preview.chart.project_id).toBe(seeded.project.id);
+
+    const saved = await request(app)
+      .get(`/ai/conversations/${preview.conversation.id}?teamId=${seeded.team.id}`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .expect(200);
+    expect(saved.body.conversation.full_history).toHaveLength(2);
+    expect(saved.body.conversation.full_history[0]).toEqual(expect.objectContaining({
+      name: "create_temporary_chart",
+      role: "tool",
+    }));
+    saved.body.conversation.full_history.forEach((message) => {
+      expect(JSON.parse(message.content)).toEqual(expect.objectContaining({
+        chart_id: preview.chart.id,
+        new_project_id: seeded.project.id,
+        visibility: "dashboard",
+      }));
+    });
+    expect(saved.body.conversation.message_count).toBe(1);
+    await place().expect(200);
+  });
+
+  it("keeps an ephemeral chart placement when the chat is saved", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+    const ghostProject = await models.Project.create(projectFactory.build({
+      ghost: true,
+      team_id: seeded.team.id,
+    }));
+    const chart = await models.Chart.create({
+      draft: false,
+      name: "Preview chart",
+      project_id: ghostProject.id,
+      type: "bar",
+    });
+    const sessionId = crypto.randomUUID();
+    const access = await getObservationAccess(seeded.team.id, seeded.user.id);
+    const envelope = await getWorkspaceAccessEnvelope(access);
+    await runtimeCache.setAiSession({
+      payload: {
+        accessVersion: envelope.accessVersion,
+        context: [],
+        history: [{ content: "Show a chart", role: "user" }, {
+          content: JSON.stringify({
+            chart_id: chart.id,
+            chart_name: chart.name,
+            chart_type: chart.type,
+            ghost_project_id: ghostProject.id,
+            is_temporary: true,
+            visibility: "temporary",
+          }),
+          name: "create_temporary_chart",
+          role: "tool",
+        }],
+        messageCount: 1,
+      },
+      sessionId,
+      teamId: seeded.team.id,
+      userId: seeded.user.id,
+    });
+
+    await request(app)
+      .post("/ai/chart-previews/place")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        action: {
+          chartId: chart.id,
+          targetProjectId: seeded.project.id,
+          type: "add_preview_to_dashboard",
+        },
+        persistence: "ephemeral",
+        sessionId,
+        teamId: seeded.team.id,
+      })
+      .expect(200);
+
+    const promoted = await request(app)
+      .post(`/ai/sessions/${sessionId}/promote`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({ teamId: seeded.team.id })
+      .expect(200);
+    const saved = await request(app)
+      .get(`/ai/conversations/${promoted.body.aiConversationId}?teamId=${seeded.team.id}`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .expect(200);
+    const previewMessage = saved.body.conversation.full_history.find(
+      (message) => message.name === "create_temporary_chart"
+    );
+
+    expect(JSON.parse(previewMessage.content)).toEqual(expect.objectContaining({
+      chart_id: chart.id,
+      new_project_id: seeded.project.id,
+      visibility: "dashboard",
+    }));
+  });
+
+  it("does not let a viewer place a chart preview", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models, "projectViewer");
+    const teamRole = await models.TeamRole.findOne({
+      where: { team_id: seeded.team.id, user_id: seeded.user.id },
+    });
+    await teamRole.update({ projects: [seeded.project.id] });
+    const preview = await createPersistentChartPreview(models, seeded);
+
+    const response = await request(app)
+      .post("/ai/chart-previews/place")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        action: {
+          chartId: preview.chart.id,
+          targetProjectId: seeded.project.id,
+          type: "add_preview_to_dashboard",
+        },
+        aiConversationId: preview.conversation.id,
+        persistence: "persistent",
+        teamId: seeded.team.id,
+      })
+      .expect(403);
+
+    expect(response.body.error).toBe(
+      "You do not have permission to add charts to this dashboard"
+    );
+    await preview.chart.reload();
+    expect(preview.chart.project_id).toBe(preview.ghostProject.id);
+  });
+
+  it("does not place a chart preview in another team's dashboard", async () => {
+    const app = await createTestApp();
+    require("../../api/AiRoute.js")(app);
+    const seeded = await createUserAccess(models);
+    const other = await createUserAccess(models);
+    const preview = await createPersistentChartPreview(models, seeded);
+
+    const response = await request(app)
+      .post("/ai/chart-previews/place")
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({
+        action: {
+          chartId: preview.chart.id,
+          targetProjectId: other.project.id,
+          type: "add_preview_to_dashboard",
+        },
+        aiConversationId: preview.conversation.id,
+        persistence: "persistent",
+        teamId: seeded.team.id,
+      })
+      .expect(404);
+
+    expect(response.body.error).toBe("Choose an available dashboard");
+    await preview.chart.reload();
+    expect(preview.chart.project_id).toBe(preview.ghostProject.id);
   });
 
   it("answers a stored workspace summary without an external model key", async () => {

@@ -5,6 +5,7 @@ const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const DatasetController = require("../controllers/DatasetController");
 const ConnectionController = require("../controllers/ConnectionController");
+const { getDataRecovery } = require("../modules/dataRecovery");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -253,7 +254,8 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
 
-        return res.status(400).json({ error: error.message });
+        const recovery = getDataRecovery(error);
+        return res.status(400).json({ error: recovery?.message || error.message, ...(recovery ? { recovery } : {}) });
       });
   });
   // -------------------------------------------------

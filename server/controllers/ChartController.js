@@ -1,5 +1,6 @@
 const { nanoid } = require("nanoid");
 const { v4: uuid } = require("uuid");
+const { Op } = require("sequelize");
 
 const { calculateChartLayout, ensureCompleteLayout, DEFAULT_CHART_LAYOUT } = require("../modules/chartLayoutEngine");
 const {
@@ -251,6 +252,15 @@ class ChartController {
     if (!chart) return chart;
 
     const snapshot = await loadPreparedSnapshot(chart.id, options);
+    // Reuse refresh history; keep the last successful snapshot when a source fails.
+    const failedRefresh = snapshot?.updatedAt ? await db.UpdateRun.findOne({
+      attributes: ["summary", "finishedAt"],
+      where: { chartId: chart.id, entityType: "chart", status: "failed", finishedAt: { [Op.gt]: snapshot.updatedAt } },
+      order: [["finishedAt", "DESC"]],
+    }).catch(() => null) : null;
+    const refreshError = failedRefresh?.summary?.dataRecovery || null;
+    if (chart.setDataValue) chart.setDataValue("refreshError", refreshError);
+    else chart.refreshError = refreshError;
     const refreshKey = `prepared-snapshot-refresh:${chart.id}`;
     const refresh = () => this.updateChartData(chart.id, null, {
       finalizeRun: false,
@@ -302,7 +312,7 @@ class ChartController {
       runtimeCache.triggerBackgroundRefresh(refreshKey, refresh);
     }
 
-    const stale = migratedHorizontalSnapshot
+    const stale = Boolean(refreshError) || migratedHorizontalSnapshot
       || snapshot.sourceFingerprint !== fingerprints.source;
     let renderedChart;
     try {
@@ -1839,7 +1849,7 @@ class ChartController {
    * @returns {Promise<Object>} Created chart with all chart dataset configs
    */
   async createWithChartDatasetConfigs(data, user, options = {}) {
-    const { transaction, skipBackgroundUpdate = false } = options;
+    const { transaction, skipBackgroundUpdate = false, waitForData = false } = options;
     const {
       chartDatasetConfigs = [],
       ...chartData
@@ -1948,9 +1958,11 @@ class ChartController {
 
     await this.syncLegacyVisualization(chart.id, { transaction });
 
-    // Run the chart update in the background to populate the prepared snapshot.
+    // AI previews need the prepared snapshot before they can be returned or exported.
     if (!skipBackgroundUpdate) {
-      this.updateChartData(chart.id, user, {}).catch(() => null);
+      const update = this.updateChartData(chart.id, user, waitForData ? { getCache: true } : {});
+      if (waitForData) await update;
+      else update.catch(() => null);
     }
 
     // Return the full chart with all chart dataset configs

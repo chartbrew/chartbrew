@@ -1,3 +1,7 @@
+const { applyTransformation } = require("../../../dataTransformations");
+const { buildAiVisualization } = require("../../../../visualization/aiVisualization");
+const { VisualizationEngine } = require("../../../../visualization/VisualizationEngine");
+
 function repairSourceDatasetIntent(source, payload) {
   const repair = source.backend?.ai?.repairDatasetIntent?.({
     name: payload.name,
@@ -166,48 +170,56 @@ async function alignSourceChartBindings(source, payload = {}) {
   let rows = payload.rows;
   const previewConfiguration = source.backend?.ai?.previewConfiguration;
   if (!Array.isArray(rows) && typeof previewConfiguration === "function" && payload.connection) {
-    try {
-      const preview = await previewConfiguration({
-        connection: payload.connection,
-        configuration: payload.configuration,
-        rowLimit: 25,
-      });
-      if (preview?.status === "ok" && Array.isArray(preview.rows)) {
-        rows = preview.rows;
-      }
-    } catch {
-      rows = null;
+    const preview = await previewConfiguration({
+      connection: payload.connection,
+      configuration: payload.configuration,
+      rowLimit: 25,
+    });
+    if (preview?.status !== "ok") {
+      const error = new Error(preview?.recovery?.message || preview?.message || "Check the source configuration and preview its data before creating a chart.");
+      error.recovery = preview?.recovery;
+      throw error;
     }
+    rows = preview.rows;
   }
 
   if (!Array.isArray(rows) || !rows.length) {
-    return {
-      xAxis: payload.xAxis,
-      yAxis: payload.yAxis,
-      dateField: payload.dateField,
-    };
+    throw new Error("No rows are available for this chart. Check the query and date range before creating a preview.");
   }
 
-  try {
-    const aligned = align({
-      rows,
-      type: payload.type,
-      xAxis: payload.xAxis,
-      yAxis: payload.yAxis,
-      dateField: payload.dateField,
-    });
-    return {
-      xAxis: aligned.xAxis ?? payload.xAxis,
-      yAxis: aligned.yAxis ?? payload.yAxis,
-      dateField: aligned.dateField ?? payload.dateField,
-    };
-  } catch {
-    return {
-      xAxis: payload.xAxis,
-      yAxis: payload.yAxis,
-      dateField: payload.dateField,
-    };
+  rows = applyTransformation(rows, payload.transform);
+  const aligned = align({
+    rows,
+    type: payload.type,
+    xAxis: payload.xAxis,
+    yAxis: payload.yAxis,
+    yAxisOperation: payload.yAxisOperation,
+    dateField: payload.dateField,
+    encoding: payload.encoding,
+    visualization: payload.visualization,
+  });
+  const visualization = buildAiVisualization({
+    chart: { ...payload.chartSpec, type: payload.type },
+    cdc: { ...payload.chartSpec, ...aligned, yAxisOperation: payload.yAxisOperation, formula: payload.formula },
+    encoding: payload.encoding,
+    visualization: payload.visualization,
+  });
+  // Creation binds these layers to the single dataset; use the same binding for the sample.
+  visualization.layers.forEach((layer) => { layer.bindingId = "binding-1"; });
+  const { preparedData } = new VisualizationEngine({
+    chart: { ...payload.chartSpec, type: payload.type, visualization },
+    datasets: [{ data: rows, options: { id: "binding-1" } }],
+  }).render();
+  if (!preparedData.results.length || preparedData.results.some((result) => !result.rows.length
+    || result.fields.filter((field) => field.role === "measure")
+      .some((field) => !result.rows.some((row) => Number.isFinite(row[field.key]))))) {
+    throw new Error("The chart preview has no usable values. Correct its query, output mapping, or chart fields and preview again before creating it.");
   }
+  return {
+    xAxis: aligned.xAxis ?? payload.xAxis,
+    yAxis: aligned.yAxis ?? payload.yAxis,
+    dateField: aligned.dateField ?? payload.dateField,
+  };
 }
 
 module.exports = {

@@ -28,6 +28,7 @@ function buildContextManifest({
       evaluations: count(activity.evaluations),
       health: count(activity.health || context.health),
       learning: count(context.learning),
+      memory: count(context.memory),
       observations: count(activity.changes),
     },
     manifestVersion: 1,

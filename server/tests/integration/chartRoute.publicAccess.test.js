@@ -85,6 +85,30 @@ describe("ChartRoute public access", () => {
     vi.restoreAllMocks();
   });
 
+  it("returns not found when an authenticated chart no longer exists", async () => {
+    const seeded = await seedPublicChart(models);
+    const user = await models.User.create(userFactory.build());
+    await models.TeamRole.create({
+      team_id: seeded.team.id,
+      user_id: user.id,
+      role: "teamAdmin",
+      projects: [],
+    });
+    const authToken = generateTestToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
+    await seeded.chart.destroy();
+
+    const response = await request(app)
+      .get(`/project/${seeded.project.id}/chart/${seeded.chart.id}`)
+      .set("Authorization", `Bearer ${authToken}`)
+      .expect(404);
+
+    expect(response.body).toEqual({ message: "Chart not found" });
+  });
+
   it("rejects forged private chart share tokens signed with the legacy secret", async () => {
     const seeded = await seedPublicChart(models, {
       projectOverrides: { public: false },
