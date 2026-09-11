@@ -13,7 +13,7 @@ describe("Signed-in chart previews", () => {
       name: "Countries",
       type: "bar",
       project_id: 10,
-      Project: { id: 10, team_id: 7, name: "Dashboard", ghost },
+      Project: { layoutRevision: 0, update: vi.fn(), id: 10, team_id: 7, name: "Dashboard", ghost },
       ChartDatasetConfigs: [{ Dataset: { id: 2, team_id: 7, project_ids: datasetProjects } }],
     };
     vi.spyOn(db.Chart, "findByPk").mockResolvedValue(chart);
@@ -64,7 +64,7 @@ describe("Signed-in chart previews", () => {
 
   it("places a preview and returns the saved dashboard on subsequent loads", async () => {
     const chart = setup();
-    const target = { id: 20, team_id: 7, name: "Visits", ghost: false };
+    const target = { layoutRevision: 0, update: vi.fn(), id: 20, team_id: 7, name: "Visits", ghost: false };
     vi.spyOn(db.Project, "findOne").mockResolvedValue(target);
     vi.spyOn(db.Project, "findByPk").mockImplementation(async (id) =>
       Number(id) === 20 ? target : chart.Project

@@ -445,17 +445,9 @@ describe("Stripe Official AI anti-hallucination harness", () => {
       id: 55,
       project_id: 77,
     });
-    vi.spyOn(db.Project, "findByPk")
-      .mockResolvedValueOnce({
-        id: 77,
-        team_id: 7,
-        ghost: true,
-      })
-      .mockResolvedValueOnce({
-        id: 13,
-        team_id: 7,
-        ghost: false,
-      });
+    vi.spyOn(db.Project, "findByPk").mockImplementation(async (id) => ({
+      id: Number(id), team_id: 7, ghost: Number(id) === 77, layoutRevision: 0, update: vi.fn(),
+    }));
     vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
     vi.spyOn(db.Chart, "update").mockResolvedValue([1]);
     vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([{ dataset_id: 1 }]);

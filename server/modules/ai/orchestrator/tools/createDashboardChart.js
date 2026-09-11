@@ -1,3 +1,6 @@
+const db = require("../../../../models/models");
+const { lockDashboard } = require("../../../dashboardLayout");
+const { appendCharts, breakpoints } = require("../../../../../shared/dashboard/layout.mjs");
 const DatasetController = require("../../../../controllers/DatasetController");
 const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
@@ -32,7 +35,7 @@ function resolveXAxis({
   return xAxis ?? spec.xAxis;
 }
 
-async function createDashboardChart(payload) {
+async function prepareDashboardChart(payload) {
   let {
     project_id, connection_id, name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal, xLabelTicks,
@@ -189,7 +192,7 @@ async function createDashboardChart(payload) {
       ? dataset.DataRequests[0].id
       : dataset.main_dr_id;
 
-    const chart = await chartController.createWithChartDatasetConfigs({
+    const chartData = {
       project_id,
       name: name || "AI Generated Chart",
       type: chartType,
@@ -235,40 +238,79 @@ async function createDashboardChart(payload) {
         goal: spec.goal,
         configuration: seriesConfiguration ?? spec.configuration ?? {}
       }]
-    }, null, { waitForData: true });
-
-    let snapshot = null;
-    try {
-      snapshot = await chartController.takeSnapshot(chart.id);
-    } catch (snapshotError) {
-      // Ignore snapshot errors - chart creation was successful.
-    }
+    };
 
     return {
-      status: "ok",
-      chart_created: true,
-      chart_id: chart.id,
-      dataset_id: dataset.id,
-      data_request_id: dataRequestId,
-      name: chart.name,
-      type: chart.type,
-      project_id: project.id,
-      visibility: "dashboard",
-      dashboard_url: `${clientUrl}/dashboard/${project.id}`,
-      chart_url: `${clientUrl}/dashboard/${project.id}/chart/${chart.id}/edit`,
-      snapshot,
-      snapshot_status: snapshot ? "available" : "unavailable",
-      snapshot_note: snapshot
-        ? null
-        : "The chart was created, but a rendered snapshot is not available yet.",
-      intent_repair: repairedPayload.intentRepair,
-      chart_sanitization: chartSanitization.accumulationRemoved
-        ? { removedAccumulation: true }
-        : null,
+      chartData,
+      finish: async (chart) => {
+        let snapshot = null;
+        try {
+          snapshot = await chartController.takeSnapshot(chart.id);
+        } catch (snapshotError) {
+          // Ignore snapshot errors - chart creation was successful.
+        }
+
+        return {
+          status: "ok",
+          chart_created: true,
+          chart_id: chart.id,
+          dataset_id: dataset.id,
+          data_request_id: dataRequestId,
+          name: chart.name,
+          type: chart.type,
+          project_id: project.id,
+          visibility: "dashboard",
+          dashboard_url: `${clientUrl}/dashboard/${project.id}`,
+          chart_url: `${clientUrl}/dashboard/${project.id}/chart/${chart.id}/edit`,
+          snapshot,
+          snapshot_status: snapshot ? "available" : "unavailable",
+          snapshot_note: snapshot
+            ? null
+            : "The chart was created, but a rendered snapshot is not available yet.",
+          intent_repair: repairedPayload.intentRepair,
+          chart_sanitization: chartSanitization.accumulationRemoved
+            ? { removedAccumulation: true }
+            : null,
+        };
+      },
     };
   } catch (error) {
     throw new Error(`Dashboard chart creation failed: ${error.message}`, { cause: error });
   }
+}
+
+async function createDashboardChart(payload) {
+  if (payload.additional_charts !== undefined && (!Array.isArray(payload.additional_charts)
+    || payload.additional_charts.length > 19 || payload.additional_charts.some((chart) => !chart || typeof chart !== "object" || Array.isArray(chart)))) {
+    throw new Error("Supply up to 19 additional charts in report order.");
+  }
+  const inputs = [payload, ...(payload.additional_charts || []).map((chart) => ({
+    ...chart, project_id: payload.project_id, team_id: payload.team_id,
+    original_question: payload.original_question,
+  }))];
+  const prepared = await Promise.all(inputs.map(prepareDashboardChart));
+  if (prepared.length === 1) {
+    const chart = await chartController.createWithChartDatasetConfigs(prepared[0].chartData, null, { waitForData: true });
+    return prepared[0].finish(chart);
+  }
+
+  const charts = await db.sequelize.transaction(async (transaction) => {
+    const { project, charts: existing } = await lockDashboard(payload.project_id, transaction);
+    const layouts = appendCharts(existing, prepared.map(({ chartData }, index) => ({ ...chartData, id: String(index) })), project.layoutCustom || breakpoints);
+    const created = [];
+    for (const [index, item] of prepared.entries()) {
+      // oxlint-disable-next-line no-await-in-loop
+      created.push(await chartController.createWithChartDatasetConfigs({
+        ...item.chartData, layout: layouts[String(index)],
+      }, null, { transaction, skipBackgroundUpdate: true, preserveLayout: true }));
+    }
+    return created;
+  });
+  const results = await Promise.all(charts.map(async (chart, index) => {
+    await chartController.updateChartData(chart.id, null, { getCache: true });
+    return prepared[index].finish(chart);
+  }));
+  return { ...results[0], charts: results };
 }
 
 module.exports = createDashboardChart;

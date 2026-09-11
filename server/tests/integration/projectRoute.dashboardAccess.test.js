@@ -2,6 +2,7 @@ import {
   beforeAll, describe, expect, it
 } from "vitest";
 import request from "supertest";
+import { getLayouts, getReportOrder, breakpoints } from "../../../shared/dashboard/layout.mjs";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createRequire } from "module";
@@ -105,6 +106,26 @@ describe("ProjectRoute legacy dashboard access", () => {
     const projectRoute = require("../../api/ProjectRoute.js");
     projectRoute(app);
     models = await getModels();
+  });
+
+  it("limits layout saves to dashboard editors and returns the saved revision", async () => {
+    const seeded = await seedDashboardAccessFixtures(models);
+    const charts = await models.Chart.findAll({ where: { project_id: seeded.allowedProject.id } });
+    const payload = { revision: 0, layouts: getLayouts(charts), order: getReportOrder(charts), custom: breakpoints };
+    const forbidden = await request(app).put(`/project/${seeded.restrictedProject.id}/layout`)
+      .set("Authorization", `Bearer ${seeded.token}`).send(payload);
+    expect(forbidden.status).toBe(403);
+    const saved = await request(app).put(`/project/${seeded.allowedProject.id}/layout`)
+      .set("Authorization", `Bearer ${seeded.token}`).send(payload);
+    expect(saved.status).toBe(200);
+    expect(saved.body.layoutRevision).toBe(1);
+    const stale = await request(app).put(`/project/${seeded.allowedProject.id}/layout`)
+      .set("Authorization", `Bearer ${seeded.token}`).send(payload);
+    expect(stale.status).toBe(409);
+    await models.TeamRole.update({ role: "projectViewer" }, { where: { team_id: seeded.allowedProject.team_id } });
+    const viewer = await request(app).put(`/project/${seeded.allowedProject.id}/layout`)
+      .set("Authorization", `Bearer ${seeded.token}`).send({ ...payload, revision: 1 });
+    expect(viewer.status).toBe(403);
   });
 
   it("blocks same-team users from reading a private dashboard outside their project scope", async () => {

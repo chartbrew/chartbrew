@@ -1,3 +1,4 @@
+import { getLayouts, getReportOrder, rowHeight } from "../../../../shared/dashboard/layout.mjs";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import PropTypes from "prop-types";
@@ -97,7 +98,6 @@ function Report({ editMode = false }) {
   const { setTheme, isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
-  const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(false);
   const cacheRefreshRef = useRef(false);
 
@@ -203,31 +203,7 @@ function Report({ editMode = false }) {
   }, [newChanges]);
 
   useEffect(() => {
-    if (charts && charts.length > 0 && !initLayoutRef.current) {
-      initLayoutRef.current = true;
-      // set the grid layout
-      const newLayouts = Object.keys(widthSize).reduce((acc, key) => {
-        acc[key] = [];
-        return acc;
-      }, {});
-
-      charts.forEach((chart) => {
-        if (chart.layout) {
-          Object.keys(chart.layout).forEach((key) => {
-            newLayouts[key].push({
-              i: chart.id.toString(),
-              x: chart.layout[key][0] || 0,
-              y: chart.layout[key][1] || 0,
-              w: chart.layout[key][2],
-              h: chart.layout[key][3],
-              minW: 2,
-            });
-          });
-        }
-      });
-
-      setLayouts(newLayouts);
-    }
+    setLayouts(getLayouts(charts));
   }, [charts]);
 
   useEffect(() => {
@@ -927,12 +903,12 @@ function Report({ editMode = false }) {
                   breakpoints={widthSize}
                   cols={cols}
                   margin={margin}
-                  onLayoutChange={() => {}}
-                  rowHeight={150}
+                  compactType={null}
+                  rowHeight={rowHeight}
                   isDraggable={false}
                   isResizable={false}
                 >
-                  {charts.filter((c) => !c.draft && c.onReport).map((chart) => (
+                  {getReportOrder(charts, project.layoutOrder).map((id) => charts.find((chart) => String(chart.id) === id)).filter((c) => !c.draft && c.onReport).map((chart) => (
                     <div key={chart.id}>
                       {chart.type === "markdown" ? (
                         <TextWidget

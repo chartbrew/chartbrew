@@ -46,7 +46,7 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - Required: project_id, dataset_id
 - **CRITICAL: Use the EXACT project specified by the user. Never create charts in other projects for validation or testing.**
 - **CRITICAL: Create the chart exactly once. Do not create test/validation charts first.**
-- Set draft=false, dashboardOrder=max+1
+- Set draft=false. Chartbrew appends charts in report order and sets their layout; do not supply dashboardOrder or layout coordinates.
 - name: string - chart name/title (optional)
 - legend: string - short legend for data points (separate from chart name, max 20-30 chars)
 - type: string - line|bar|pie|doughnut|radar|polar|table|kpi|avg|gauge|matrix
@@ -66,7 +66,7 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - maxValue: integer - cap max value (optional)
 - minValue: integer - cap min value (optional)
 - ranges: array - gauge ranges [{min, max, label, color}] (optional)
-- layout: object - grid layout {lg: [x,y,w,h], ...} (only required if the user specifies a layout, auto-calculated if not provided)
+- Placement is automatic. Manual layout changes use the dashboard layout editor.
 
 **Visualization and ChartDatasetConfig:**
 - Required ChartDatasetConfig fields: chart_id, dataset_id. The CDC binds reusable data to the chart; it does not own visual series.

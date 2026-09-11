@@ -17,6 +17,23 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    layoutOrder: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      get() {
+        const value = this.getDataValue("layoutOrder");
+        return typeof value === "string" ? JSON.parse(value) : value;
+      },
+    },
+    layoutCustom: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      get() {
+        const value = this.getDataValue("layoutCustom");
+        return typeof value === "string" ? JSON.parse(value) : value;
+      },
+    },
+    layoutRevision: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     name: {
       type: DataTypes.STRING,
     },

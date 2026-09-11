@@ -1,8 +1,9 @@
+const { getReportOrder, getLayouts, arrangeRows, deriveLayouts, breakpoints } = require("../../shared/dashboard/layout.mjs");
 const { nanoid } = require("nanoid");
 const { v4: uuid } = require("uuid");
 const { Op } = require("sequelize");
 
-const { calculateChartLayout, ensureCompleteLayout, DEFAULT_CHART_LAYOUT } = require("../modules/chartLayoutEngine");
+const { createPlacedChart, removePlacedChart, lockDashboard, saveMetadata } = require("../modules/dashboardLayout");
 const {
   buildChartRuntimeContext,
   getDatasetRuntimeFilters,
@@ -342,7 +343,7 @@ class ChartController {
   }
 
   create(data, user) {
-    return db.Chart.create(removeRuntimeChartFields(data))
+    return createPlacedChart(removeRuntimeChartFields(data))
       .then((chart) => {
         // delete chart cache
         if (user) {
@@ -377,7 +378,9 @@ class ChartController {
           { model: db.Alert },
           { model: db.SharePolicy, scope: { entity_type: "Chart" } },
         ],
-      }), db.Project.findByPk(projectId, { attributes: ["timezone"] })]);
+      }), db.Project.findByPk(projectId, { attributes: ["timezone", "layoutOrder"] })]);
+      const order = getReportOrder(charts, project?.layoutOrder);
+      charts.sort((a, b) => order.indexOf(String(a.id)) - order.indexOf(String(b.id)));
       return this.hydratePreparedCharts(charts, {
         refresh: true,
         timezone: project?.timezone,
@@ -499,6 +502,7 @@ class ChartController {
 
   update(id, data, user, justUpdates) {
     const chartUpdates = removeRuntimeChartFields(data);
+    ["layout", "dashboardOrder", "project_id"].forEach((field) => delete chartUpdates[field]);
 
     if (data.autoUpdate || data.autoUpdate === 0) {
       return db.Chart.update(chartUpdates, {
@@ -642,66 +646,39 @@ class ChartController {
       });
   }
 
-  changeDashboardOrder(selectedId, otherId) {
-    let selectedChart;
-    return this.findById(selectedId)
-      .then((chart) => {
-        selectedChart = chart;
-
-        if (otherId === "top") {
-          return db.Chart.findAll({
-            limit: 1,
-            order: [["dashboardOrder", "ASC"]],
-          });
-        }
-
-        if (otherId === "bottom") {
-          return db.Chart.findAll({
-            limit: 1,
-            order: [["dashboardOrder", "DESC"]],
-          });
-        }
-
-        return this.findById(otherId);
-      })
-      .then((other) => {
-        const updatePromises = [];
-        let otherChart = other;
-        if (otherId === "top") {
-          [otherChart] = other;
-          updatePromises.push(
-            this.update(selectedId, {
-              dashboardOrder: otherChart.dashboardOrder - 1,
-            }),
-          );
-        } else if (otherId === "bottom") {
-          [otherChart] = other;
-          updatePromises.push(
-            this.update(selectedId, {
-              dashboardOrder: otherChart.dashboardOrder + 1,
-            }),
-          );
-        } else {
-          updatePromises.push(this.update(selectedId, {
-            dashboardOrder: otherChart.dashboardOrder,
-          }));
-          updatePromises.push(this.update(otherChart.id, {
-            dashboardOrder: selectedChart.dashboardOrder,
-          }));
-        }
-
-        return Promise.all(updatePromises);
-      })
-      .then((values) => {
-        return values;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+  async changeDashboardOrder(selectedId, otherId) {
+    const chart = await db.Chart.findByPk(selectedId);
+    if (!chart) throw new Error("Chart not found");
+    return db.sequelize.transaction(async (transaction) => {
+      const { project, charts } = await lockDashboard(chart.project_id, transaction);
+      const order = getReportOrder(charts, project.layoutOrder);
+      const selected = String(selectedId);
+      const index = order.indexOf(selected);
+      const target = order.indexOf(String(otherId));
+      if (index < 0 || (target < 0 && !["top", "bottom"].includes(otherId))) throw new Error("Chart not found in dashboard");
+      if (otherId === "top" || otherId === "bottom") {
+        order.splice(index, 1);
+        order.splice(otherId === "top" ? 0 : order.length, 0, selected);
+      } else {
+        [order[index], order[target]] = [order[target], order[index]];
+      }
+      const layouts = getLayouts(charts);
+      const byId = new Map(layouts.lg.map((item) => [item.i, item]));
+      layouts.lg = arrangeRows(order.map((id) => byId.get(id)), "lg");
+      const next = deriveLayouts(layouts, order, project.layoutCustom || breakpoints);
+      await Promise.all(charts.map((item) => item.update({
+        layout: Object.fromEntries(breakpoints.map((bp) => {
+          const rect = next[bp].find((entry) => entry.i === String(item.id));
+          return [bp, [rect.x, rect.y, rect.w, rect.h]];
+        })),
+      }, { transaction })));
+      await saveMetadata(project, charts, transaction, { layoutOrder: order });
+      return charts;
+    });
   }
 
   remove(id) {
-    return db.Chart.destroy({ where: { id } })
+    return removePlacedChart(id)
       .then((response) => {
         return response;
       })
@@ -1849,6 +1826,17 @@ class ChartController {
    * @returns {Promise<Object>} Created chart with all chart dataset configs
    */
   async createWithChartDatasetConfigs(data, user, options = {}) {
+    if (!options.transaction) {
+      const chart = await db.sequelize.transaction((transaction) => this.createWithChartDatasetConfigs(data, user, {
+        ...options, transaction, skipBackgroundUpdate: true,
+      }));
+      if (!options.skipBackgroundUpdate) {
+        const update = this.updateChartData(chart.id, user, options.waitForData ? { getCache: true } : {});
+        if (options.waitForData) await update;
+        else update.catch(() => null);
+      }
+      return this.findById(chart.id);
+    }
     const { transaction, skipBackgroundUpdate = false, waitForData = false } = options;
     const {
       chartDatasetConfigs = [],
@@ -1880,30 +1868,9 @@ class ChartController {
       }
     });
 
-    // Auto-calculate layout if not provided
-    let finalLayout = cleanChartData.layout;
-    if (!finalLayout && cleanChartData.project_id) {
-      // Get existing charts for layout calculation
-      const existingCharts = await db.Chart.findAll({
-        where: { project_id: cleanChartData.project_id },
-        attributes: ["layout"],
-        transaction,
-      });
-
-      // Calculate layout automatically
-      const calculatedLayout = calculateChartLayout(existingCharts);
-      finalLayout = ensureCompleteLayout(calculatedLayout);
-    } else if (finalLayout) {
-      finalLayout = ensureCompleteLayout(finalLayout);
-    } else {
-      finalLayout = { ...DEFAULT_CHART_LAYOUT };
-    }
-
-    // Create the chart first
-    const chart = await db.Chart.create({
-      ...cleanChartData,
-      layout: finalLayout,
-    }, { transaction });
+    const chart = await createPlacedChart(cleanChartData, {
+      transaction, preserveLayout: options.preserveLayout === true,
+    });
 
     // Delete chart cache if user is provided
     if (user) {

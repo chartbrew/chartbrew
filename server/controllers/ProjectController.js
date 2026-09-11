@@ -1,3 +1,4 @@
+const { getReportOrder } = require("../../shared/dashboard/layout.mjs");
 const { cloneDeep } = require("lodash");
 const { validate: validateUuid, version: uuidVersion } = require("uuid");
 
@@ -48,6 +49,8 @@ class ProjectController {
 
   async hydrateProjectCharts(project, options = {}) {
     if (!project?.Charts?.length) return project;
+    const order = getReportOrder(project.Charts, project.layoutOrder);
+    project.Charts.sort((a, b) => order.indexOf(String(a.id)) - order.indexOf(String(b.id)));
     const ChartController = require("./ChartController"); // eslint-disable-line
     const chartController = new ChartController();
     const charts = await chartController.hydratePreparedCharts(project.Charts, {
@@ -132,6 +135,9 @@ class ProjectController {
     let newProject = {};
     const { transaction } = options;
     const projectData = await applyTeamBrandDefaults(data, { transaction });
+    projectData.layoutCustom = ["lg"];
+    projectData.layoutOrder = [];
+    projectData.layoutRevision = 0;
 
     return db.Project.create(projectData, { transaction })
       .then((project) => {

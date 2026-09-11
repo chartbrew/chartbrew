@@ -288,7 +288,7 @@ async function availableTools() {
   const queryGenerationDialectIds = getQueryGenerationDialectIds();
   const queryGenerationSourceIds = getQueryGenerationSourceIds();
 
-  return [
+  const tools = [
     {
       name: "get_workspace_activity",
       displayName: "Review workspace activity",
@@ -1218,6 +1218,15 @@ async function availableTools() {
       // returns: { chosen: { label, value } }
     }
   ];
+  const dashboardChart = tools.find((tool) => tool.name === "create_dashboard_chart");
+  const chartProperties = { ...dashboardChart.parameters.properties };
+  delete chartProperties.project_id;
+  dashboardChart.parameters.properties.additional_charts = {
+    type: "array", maxItems: 19,
+    description: "Remaining charts for this dashboard, in reading order. Submit a dashboard batch in one call so its charts are placed together. Each entry specifies its own connection and chart settings.",
+    items: { type: "object", properties: chartProperties, required: ["connection_id", "name"] },
+  };
+  return tools;
 }
 
 async function callTool(name, payload) {
@@ -1515,7 +1524,7 @@ ${ENTITY_CREATION_RULES}
    - If the user asks to create a new dashboard with a clear report goal and available data, use create_dashboard with a concise dashboard name. Never create an empty dashboard as an onboarding step.
    - Use the returned project_id as the destination for every requested chart
    - For source-owned templates such as Jira sprint health, call create_dashboard_from_template with dashboard.type="existing" and that project_id
-   - For database/query-based charts, use create_dashboard_chart so the dataset and chart are created in one operation
+   - For database/query-based charts, use create_dashboard_chart so the dataset and chart are created in one operation. For multiple charts in the same dashboard, submit the first chart plus additional_charts in reading order in one call. Chartbrew sets positions and sizes; do not supply layout coordinates.
    - For source-owned planned charts that are not covered by a template, use source_plan_dataset with mode="persist", then pass the planned configuration and chartSpec fields to create_dashboard_chart
    - Avoid source_get_capabilities and source_list_resources in this workflow unless a source_plan_dataset or template tool says more context is needed
    - Do not tell the user that brand-new dashboards cannot be created; create_dashboard is available for this
