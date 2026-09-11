@@ -558,9 +558,11 @@ export const projectSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(getProjects.pending, (state) => {
       state.loading = true;
+      state.error = false;
     })
     builder.addCase(getProjects.fulfilled, (state, action) => {
       state.loading = false;
+      state.error = false;
       state.data = action.payload;
     })
     builder.addCase(getProjects.rejected, (state) => {
