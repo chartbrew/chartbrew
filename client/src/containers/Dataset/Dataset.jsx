@@ -8,7 +8,7 @@ import {
 import { LuBookOpen, LuChartColumn, LuCheck, LuPencil } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
-import { createChart, createCdc, getProjectCharts, runQuery, updateChart } from "../../slices/chart";
+import { createChart, createCdc, runQuery, updateChart } from "../../slices/chart";
 import { getDataset, saveNewDataset, updateDataset } from "../../slices/dataset";
 import DatasetQuery from "./DatasetQuery";
 import { chartColors } from "../../config/colors";
@@ -17,9 +17,7 @@ import { selectUser } from "../../slices/user";
 import { getTeams, selectTeam } from "../../slices/team";
 import { getProjects, selectProjects } from "../../slices/project";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
-import getDashboardLayout from "../../modules/getDashboardLayout";
 import getDefaultCdcBindings from "../../modules/getDefaultCdcBindings";
-import { placeNewWidget } from "../../modules/autoLayout";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import DatasetIntelligenceModal from "./DatasetIntelligenceModal";
 
@@ -27,19 +25,6 @@ const defaultNewChart = {
   type: "line",
   subType: "lcTimeseries",
 };
-
-function getNewChartLayoutForProject(charts) {
-  const layouts = getDashboardLayout(charts);
-  const chartLayout = {};
-
-  Object.keys(layouts).forEach((bp) => {
-    const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
-    const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
-    chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
-  });
-
-  return chartLayout;
-}
 
 function Dataset() {
   const { contains } = useFilter({ sensitivity: "base" });
@@ -293,8 +278,6 @@ function Dataset() {
     setCreateChartFromDatasetLoading(true);
 
     try {
-      const charts = await dispatch(getProjectCharts({ project_id: projectId })).unwrap();
-      const chartLayout = getNewChartLayoutForProject(charts || []);
       const trimmedName = datasetName.trim() || getDatasetDisplayName(dataset) || "Untitled dataset";
       const defaultBindings = getDefaultCdcBindings(dataset);
 
@@ -303,7 +286,6 @@ function Dataset() {
         data: {
           ...defaultNewChart,
           name: trimmedName,
-          layout: chartLayout,
         },
       })).unwrap();
 

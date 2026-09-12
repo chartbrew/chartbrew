@@ -53,6 +53,21 @@ export const getProject = createAsyncThunk(
   }
 );
 
+export const saveDashboardLayout = createAsyncThunk(
+  "project/saveDashboardLayout",
+  async ({ projectId, data }, { dispatch }) => {
+    const response = await fetch(`${API_HOST}/project/${projectId}/layout`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${getAuthToken()}` },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || "The layout could not be saved. Try again.");
+    dispatch(setCharts(result.Charts));
+    return result;
+  }
+);
+
 export const createProject = createAsyncThunk(
   "project/createProject",
   async ({ data }) => {
@@ -558,9 +573,11 @@ export const projectSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(getProjects.pending, (state) => {
       state.loading = true;
+      state.error = false;
     })
     builder.addCase(getProjects.fulfilled, (state, action) => {
       state.loading = false;
+      state.error = false;
       state.data = action.payload;
     })
     builder.addCase(getProjects.rejected, (state) => {
@@ -610,6 +627,11 @@ export const projectSlice = createSlice({
       state.loading = false;
       state.error = true;
     })
+
+    builder.addCase(saveDashboardLayout.fulfilled, (state, action) => {
+      if (state.active.id === action.payload.id) state.active = action.payload;
+      state.data = state.data.map((item) => item.id === action.payload.id ? action.payload : item);
+    });
 
     // updateProject
     builder.addCase(updateProject.pending, (state) => {

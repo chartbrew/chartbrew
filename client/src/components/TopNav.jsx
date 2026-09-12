@@ -1,24 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { TbBrandDiscord } from "react-icons/tb";
 import { useLocation, useNavigate, useParams } from "react-router";
 import {
   LuInbox,
-  LuBook,
-  LuBookOpenText,
   LuBrainCircuit,
-  LuFileCode2,
   LuExternalLink,
-  LuGithub,
-  LuHeartHandshake,
   LuPanelLeftClose,
   LuPanelLeftOpen,
-  LuSmile,
-  LuSquareKanban,
 } from "react-icons/lu";
-import { Badge, Breadcrumbs, Button, Chip, Dropdown, Popover, Separator } from "@heroui/react";
+import { Badge, Breadcrumbs, Button, Chip, Popover, Separator } from "@heroui/react";
 
-import { selectSidebarCollapsed, showFeedbackModal, toggleAiModal, toggleSidebar } from "../slices/ui";
+import { selectSidebarCollapsed, toggleAiModal, toggleSidebar } from "../slices/ui";
 import { selectTeam } from "../slices/team";
 import { selectProject } from "../slices/project";
 import { selectChart } from "../slices/chart";
@@ -134,37 +126,6 @@ function TopNav() {
   const isOnIntegrations = () => location.pathname.startsWith("/integrations");
   const isOnActivity = () => location.pathname.startsWith("/activity");
 
-  const onDropdownAction = (key) => {
-    switch (key) {
-      case "discord":
-        window.open("https://discord.gg/KwGEbFk", "_blank");
-        break;
-      case "tutorials":
-        window.open("https://chartbrew.com/blog/tag/tutorial/", "_blank");
-        break;
-      case "documentation":
-        window.open("https://docs.chartbrew.com", "_blank");
-        break;
-      case "github":
-        window.open("https://github.com/chartbrew/chartbrew/discussions", "_blank");
-        break;
-      case "feedback":
-        dispatch(showFeedbackModal());
-        break;
-      case "profile":
-        navigate("/settings/profile");
-        break;
-      case "roadmap":
-        window.open("https://chartbrew.com/roadmap", "_blank");
-        break;
-      case "api":
-        window.open("https://docs.chartbrew.com/api-reference/introduction", "_blank");
-        break;
-      default:
-        break;
-    }
-  };
-
   const renderBreadcrumbs = () => {
     const items = [];
     const datasetName = getDatasetDisplayName(dataset);
@@ -248,59 +209,6 @@ function TopNav() {
               Ask your data
             </Button>
           ) : null}
-
-          <Dropdown aria-label="Select a help option">
-            <Dropdown.Trigger className="flex h-8 items-center gap-2 rounded-lg px-3 text-sm hover:bg-surface-secondary">
-              <LuHeartHandshake size={18} />
-              Resources
-            </Dropdown.Trigger>
-            <Dropdown.Popover>
-              <Dropdown.Menu onAction={(key) => onDropdownAction(key)}>
-                <Dropdown.Item id="discord" textValue="Join our Discord">
-                  <div className="flex flex-row items-center gap-2">
-                    <TbBrandDiscord />
-                    <span>Join our Discord</span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="roadmap" textValue="Roadmap">
-                  <div className="flex flex-row items-center gap-2">
-                    <LuSquareKanban />
-                    <span>Roadmap</span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="tutorials" textValue="Blog tutorials">
-                  <div className="flex flex-row items-center gap-2">
-                    <LuBook />
-                    <span>Blog tutorials</span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="documentation" textValue="Documentation">
-                  <div className="flex flex-row items-center gap-2">
-                    <LuBookOpenText />
-                    <span>Documentation</span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="api" textValue="API Reference">
-                  <div className="flex flex-row items-center gap-2">
-                    <LuFileCode2 />
-                    <span>API Reference</span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="github" textValue="GitHub">
-                  <div className="flex flex-row items-center gap-2">
-                    <LuGithub />
-                    <span>GitHub</span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="feedback" textValue="Feedback">
-                  <div className="flex flex-row items-center gap-2">
-                    <LuSmile />
-                    <span>Feedback</span>
-                  </div>
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown.Popover>
-          </Dropdown>
 
           {newsItems.length > 0 ? (
             <Popover isOpen={newsOpen} onOpenChange={onNewsOpenChange}>

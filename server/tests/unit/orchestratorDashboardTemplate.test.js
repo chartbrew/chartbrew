@@ -163,7 +163,9 @@ describe("AI orchestrator dashboard template tool", () => {
     });
   });
 
-  it("creates an empty dashboard for mixed-source orchestration", async () => {
+  it("creates a dashboard for mixed-source orchestration when data is available", async () => {
+    vi.spyOn(db.Connection, "count").mockResolvedValue(1);
+    vi.spyOn(db.Dataset, "count").mockResolvedValue(0);
     vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({
       role: "teamOwner",
       projects: [],
@@ -260,6 +262,44 @@ describe("AI orchestrator dashboard template tool", () => {
       dataset_id: 301,
       chart_id: 501,
     });
+  });
+
+  it("places an AI batch in one transaction and renders only after commit", async () => {
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({ id: 42, team_id: 7, type: "postgres", subType: "postgres" });
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({ id: 91, team_id: 7, ghost: false, layoutCustom: ["lg"] });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue(null);
+    vi.spyOn(db.DataRequest, "findByPk").mockResolvedValue(null);
+    vi.spyOn(db.DataRequest, "findOne").mockResolvedValue(null);
+    vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
+    vi.spyOn(require("../../controllers/DatasetController").prototype, "createWithDataRequests")
+      .mockResolvedValue({ id: 301, name: "Users", DataRequests: [{ id: 401 }] });
+    let committed = false;
+    const transaction = { LOCK: { UPDATE: "UPDATE" } };
+    const transact = vi.spyOn(db.sequelize, "transaction").mockImplementation(async (callback) => {
+      const result = await callback(transaction);
+      committed = true;
+      return result;
+    });
+    const charts = [];
+    const create = vi.spyOn(require("../../controllers/ChartController").prototype, "createWithChartDatasetConfigs")
+      .mockImplementation(async (data) => {
+        const chart = { ...data, id: 501 + charts.length };
+        charts.push(chart);
+        return chart;
+      });
+    const renderedAfterCommit = [];
+    vi.spyOn(require("../../controllers/ChartController").prototype, "updateChartData")
+      .mockImplementation(async () => renderedAfterCommit.push(committed));
+    vi.spyOn(require("../../controllers/ChartController").prototype, "takeSnapshot").mockResolvedValue(null);
+    const spec = { connection_id: 42, name: "Users", type: "kpi", query: "SELECT 1 AS users", yAxis: "root[].users" };
+    const result = await createDashboardChart({ team_id: 7, project_id: 91, ...spec, additional_charts: [{ ...spec, name: "Customers" }] });
+    expect(transact).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenLastCalledWith(expect.objectContaining({ name: "Customers", layout: expect.objectContaining({ lg: [6, 0, 6, 1] }) }), null,
+      { transaction, skipBackgroundUpdate: true, preserveLayout: true });
+    expect(charts[0].layout.lg).toEqual([0, 0, 6, 1]);
+    expect(renderedAfterCommit).toEqual([true, true]);
+    expect(result.charts.map((item) => item.name)).toEqual(["Users", "Customers"]);
+    await expect(createDashboardChart({ ...spec, additional_charts: "invalid" })).rejects.toThrow("19 additional charts");
   });
 
   it("passes source-prepared template variable defaults into dashboard creation", async () => {

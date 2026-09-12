@@ -2,15 +2,19 @@ import React, { useEffect, useMemo, useState } from "react"
 import { Avatar, Badge, Button, Chip, Dropdown, Separator, Tooltip } from "@heroui/react"
 import { useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
-import { LuActivity, LuCheck, LuChevronDown, LuCoffee, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus } from "react-icons/lu"
+import { LuActivity, LuBook, LuBookOpenText, LuFileCode2, LuGithub, LuSmile, LuSquareKanban, LuCheck, LuChevronDown, LuCoffee, LuLayers, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUser, LuUserPlus, LuCircleHelp } from "react-icons/lu"
 
+import { TbBrandDiscord } from "react-icons/tb"
+import { VscMcp } from "react-icons/vsc"
+
+import SidebarDashboards from "./SidebarDashboards"
 import { cn } from "../modules/utils"
 import { useTheme } from "../modules/ThemeContext"
 import canAccess from "../config/canAccess"
 import { getBusinessProfileLogo, getTeamMembers, saveActiveTeam, selectTeam, selectTeams } from "../slices/team"
 import { clearConnections } from "../slices/connection"
 import { clearDatasets, getDatasets } from "../slices/dataset"
-import { selectSidebarCollapsed } from "../slices/ui"
+import { selectSidebarCollapsed, showFeedbackModal } from "../slices/ui"
 import { logout } from "../slices/user"
 import { getActivityCounts } from "../api/observations"
 import { shouldResumeOnboarding } from "../containers/Onboarding/onboardingState"
@@ -102,7 +106,6 @@ function Sidebar() {
   const isConnectionsActive = pathMenu === "connections";
   const isDatasetsActive = pathMenu === "datasets";
   const isIntegrationsActive = pathMenu === "integrations";
-  const isSettingsActive = pathMenu === "settings";
 
   const _getTeamRole = (teamRoles) => {
     const role = teamRoles?.find((item) => item.user_id === user.data.id)?.role;
@@ -131,44 +134,43 @@ function Sidebar() {
     navigate("/");
   };
 
-  const _getTheme = () => {
-    if (theme === "system") {
-      return {
-        name: "System",
-        icon: <LuMonitor size={18} />,
-      };
-    } else if (theme === "light") {
-      return {
-        name: "Light",
-        icon: <LuSun size={18} />,
-      };
-    } else if (theme === "dark") {
-      return {
-        name: "Dark",
-        icon: <LuMoon size={18} />,
-      };
-    }
-  }
-
-  const _onCycleTheme = () => {
-    if (theme === "system") {
-      setTheme("light");
-    } else if (theme === "light") {
-      setTheme("dark");
-    } else if (theme === "dark") {
-      setTheme("system");
+  const onDropdownAction = (key) => {
+    switch (key) {
+      case "discord":
+        window.open("https://discord.gg/KwGEbFk", "_blank");
+        break;
+      case "tutorials":
+        window.open("https://chartbrew.com/blog/tag/tutorial/", "_blank");
+        break;
+      case "documentation":
+        window.open("https://docs.chartbrew.com", "_blank");
+        break;
+      case "github":
+        window.open("https://github.com/chartbrew/chartbrew/discussions", "_blank");
+        break;
+      case "feedback":
+        dispatch(showFeedbackModal());
+        break;
+      case "roadmap":
+        window.open("https://chartbrew.com/roadmap", "_blank");
+        break;
+      case "api":
+        window.open("https://docs.chartbrew.com/api-reference/introduction", "_blank");
+        break;
+      default:
+        break;
     }
   };
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-surface border-r border-divider transition-all duration-300",
+        "fixed left-0 top-0 z-40 h-dvh bg-surface border-r border-divider transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex flex-col h-full justify-between">
-        <div className="flex flex-col">
+      <div className="flex h-full flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto pb-4">
           <Dropdown>
             <Dropdown.Trigger
               aria-label={`Switch team from ${team?.name || "current team"}`}
@@ -453,198 +455,113 @@ function Sidebar() {
                   </Button>
                 )
               )}
-              {_canAccess("teamAdmin", team.TeamRoles) && (
-                collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant={isSettingsActive ? "secondary" : "ghost"}
-                        fullWidth
-                        isIconOnly
-                        size="sm"
-                        className={cn("justify-center", "team-settings-tutorial")}
-                        onPress={() => navigate("/settings/team")}
-                      >
-                        <LuSettings size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Settings</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant={isSettingsActive ? "secondary" : "ghost"}
-                    fullWidth
-                    size="sm"
-                    className={cn("justify-start", "team-settings-tutorial")}
-                    onPress={() => navigate("/settings/team")}
-                  >
-                    <LuSettings size={18} />
-                    Settings
-                  </Button>
-                )
-              )}
             </div>
           </div>
 
-          <div className="h-4" />
-
-          <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-4 flex flex-col items-start justify-center")}>
-            {_canAccess("teamAdmin", team.TeamRoles) && (
-              <>
-                <div className="text-sm text-gray-500">
-                  {collapsed ? "" : "Quick actions"}
-                </div>
-                <div className="h-2" />
-                {collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        onPress={() => navigate("/dashboards?create=dashboard")}
-                        isIconOnly
-                        fullWidth
-                        className="justify-center"
-                      >
-                        <LuGrid2X2Plus size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Create a new dashboard</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate("/dashboards?create=dashboard")}
-                    fullWidth
-                    className="justify-start"
-                  >
-                    <LuGrid2X2Plus size={18} />New dashboard
-                  </Button>
-                )}
-                <div className="h-1" />
-                {collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        onPress={() => navigate("/datasets/new")}
-                        isIconOnly
-                        fullWidth
-                        className="justify-center"
-                      >
-                        <LuLayers2 size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Create a new dataset</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate("/datasets/new")}
-                    fullWidth
-                    className="justify-start"
-                  >
-                    <LuLayers2 size={18} />New dataset
-                  </Button>
-                )}
-                <div className="h-1" />
-                {collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        onPress={() => navigate("/connections/new")}
-                        isIconOnly
-                        fullWidth
-                        className="justify-center"
-                      >
-                        <LuUnplug size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Create a new connection</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate("/connections/new")}
-                    fullWidth
-                    className="justify-start"
-                  >
-                    <LuUnplug size={18} />New connection
-                  </Button>
-                )}
-                <div className="h-1" />
-                {collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        onPress={() => navigate("/settings/team/members")}
-                        isIconOnly
-                        fullWidth
-                        className="justify-center"
-                      >
-                        <LuUserPlus size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Add a team member</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate("/settings/team/members")}
-                    fullWidth
-                    className="justify-start"
-                  >
-                    <LuUserPlus size={18} />Add team member
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
+          <SidebarDashboards key={`${user.data.id}-${team.id}`} />
         </div>
-        
-        <div className="flex flex-col">
-          <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
-            {collapsed ? (
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <Button
-                    onPress={() => _onCycleTheme()}
-                    variant="tertiary"
-                    size="sm"
-                    isIconOnly
-                    fullWidth
-                    className="justify-center"
-                  >
-                    {_getTheme().icon}
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content placement="right">Change theme</Tooltip.Content>
+
+        <div className="flex shrink-0 flex-col border-t border-divider bg-surface pt-2">
+          <div className={cn("mb-2 flex flex-col gap-1 px-2", collapsed && "items-center")}>
+            {[
+              ...(_canAccess("teamAdmin", team.TeamRoles) ? [{
+                label: "Invite your team",
+                icon: LuUserPlus,
+                path: "/settings/team/members",
+              }] : []),
+              { label: "Connect MCP", icon: VscMcp, path: "/settings/mcp", isNew: true },
+              ...(_canAccess("teamAdmin", team.TeamRoles) ? [{
+                label: "Settings",
+                icon: LuSettings,
+                path: "/settings/team",
+              }] : []),
+            ].map(({ label, icon: Icon, path, isNew }) => (
+              <Tooltip key={path} isDisabled={!collapsed}>
+                <Button
+                  aria-label={isNew ? `${label}, new` : label}
+                  variant="ghost"
+                  size="sm"
+                  isIconOnly={collapsed}
+                  fullWidth={!collapsed}
+                  className={cn(collapsed ? "justify-center" : "justify-start", label === "Settings" && "team-settings-tutorial")}
+                  onPress={() => navigate(path)}
+                >
+                  <Icon aria-hidden size={18} />
+                  {!collapsed && <span>{label}</span>}
+                  {!collapsed && isNew && (
+                    <Chip size="sm" color="accent" variant="soft" className="ml-auto text-[10px]">
+                      <Chip.Label>New</Chip.Label>
+                    </Chip>
+                  )}
+                </Button>
+                <Tooltip.Content placement="right">{isNew ? `${label} · New` : label}</Tooltip.Content>
               </Tooltip>
-            ) : (
+            ))}
+            <Dropdown>
               <Button
-                variant="tertiary"
-                onPress={() => _onCycleTheme()}
-                fullWidth
-                className="justify-start"
+                aria-label="Resources"
+                title={collapsed ? "Resources" : undefined}
+                variant="ghost"
+                size="sm"
+                isIconOnly={collapsed}
+                fullWidth={!collapsed}
+                className={collapsed ? "justify-center" : "justify-start"}
               >
-                {_getTheme().icon}{_getTheme().name}
+                <LuCircleHelp aria-hidden size={18} />
+                {!collapsed && <span>Resources</span>}
               </Button>
-            )}
+              <Dropdown.Popover placement="right bottom">
+                <Dropdown.Menu aria-label="Resources" onAction={(key) => onDropdownAction(key)}>
+                  <Dropdown.Item id="discord" textValue="Join our Discord">
+                    <div className="flex flex-row items-center gap-2">
+                      <TbBrandDiscord />
+                      <span>Join our Discord</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="roadmap" textValue="Roadmap">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuSquareKanban />
+                      <span>Roadmap</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="tutorials" textValue="Blog tutorials">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuBook />
+                      <span>Blog tutorials</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="documentation" textValue="Documentation">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuBookOpenText />
+                      <span>Documentation</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="api" textValue="API Reference">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuFileCode2 />
+                      <span>API Reference</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="github" textValue="GitHub">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuGithub />
+                      <span>GitHub</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="feedback" textValue="Feedback">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuSmile />
+                      <span>Feedback</span>
+                    </div>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
           </div>
-          <div className="h-2" />
           <Separator />
           <div className="h-2" />
           <Dropdown>
-            <Dropdown.Trigger>
+            <Dropdown.Trigger aria-label="User menu">
               <div className={cn("flex flex-row items-center gap-1 justify-start cursor-pointer", collapsed ? "px-0 justify-center" : "px-4")}>
                 <Avatar size="sm">
                   <Avatar.Fallback>{userInitials || <LuUser />}</Avatar.Fallback>
@@ -680,6 +597,34 @@ function Sidebar() {
                     <span>Profile</span>
                   </div>
                 </Dropdown.Item>
+
+                <Dropdown.SubmenuTrigger>
+                  <Dropdown.Item id="appearance" textValue="Appearance">
+                    <LuMonitor aria-hidden size={18} />
+                    <span>Appearance</span>
+                    <Dropdown.SubmenuIndicator />
+                  </Dropdown.Item>
+                  <Dropdown.Popover>
+                    <Dropdown.Menu
+                      aria-label="Appearance"
+                      selectionMode="single"
+                      selectedKeys={[theme]}
+                      onAction={(key) => setTheme(key)}
+                    >
+                      {[
+                        { id: "system", label: "System", icon: LuMonitor },
+                        { id: "light", label: "Light", icon: LuSun },
+                        { id: "dark", label: "Dark", icon: LuMoon },
+                      ].map(({ id, label, icon: Icon }) => (
+                        <Dropdown.Item id={id} key={id} textValue={label}>
+                          <Icon aria-hidden size={18} />
+                          <span>{label}</span>
+                          <Dropdown.ItemIndicator />
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown.Popover>
+                </Dropdown.SubmenuTrigger>
 
                 <Dropdown.Item id="logout" textValue="Sign out" variant="danger">
                   <div className="flex flex-row items-center gap-2">

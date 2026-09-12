@@ -17,9 +17,7 @@ import {
 } from "../../slices/chart";
 import { getChartAlerts, clearAlerts } from "../../slices/alert";
 import ChartDatasets from "./components/ChartDatasets";
-import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
-import { placeNewWidget } from "../../modules/autoLayout";
 import { chartColors } from "../../config/colors";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import getDefaultCdcBindings from "../../modules/getDefaultCdcBindings";
@@ -62,19 +60,6 @@ const _clearPendingChartName = (chartId) => {
 };
 
 const _shouldAutoNameChart = (chartId) => _getStoredPendingChartIds().includes(chartId);
-
-const _getNewChartLayout = (charts) => {
-  const layouts = getDashboardLayout(charts);
-  const chartLayout = {};
-
-  Object.keys(layouts).forEach((bp) => {
-    const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
-    const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
-    chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
-  });
-
-  return chartLayout;
-};
 
 /*
   Container used for setting up a new chart
@@ -178,7 +163,6 @@ function AddChart() {
     const chartData = {
       ...defaultChart,
       name,
-      layout: _getNewChartLayout(charts),
     };
 
     return dispatch(createChart({ project_id: params.projectId, data: chartData })).unwrap();

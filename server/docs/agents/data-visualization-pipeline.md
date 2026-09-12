@@ -454,7 +454,8 @@ GET /chart/share/:share_string?token=JWT&userId=123&period=7d
 ### Support Modules
 
 - `modules/dataTransformations.js` - Data transformation logic
-- `modules/chartLayoutEngine.js` - Auto-layout calculation
+- `../shared/dashboard/layout.mjs` - Shared dashboard placement and row layout
+- `modules/dashboardLayout.js` - Transactional placement and layout saves
 - `modules/snapshots.js` - Chart snapshot system
 - `crons/workers/updateMongoSchema.js` - Background schema updates
 

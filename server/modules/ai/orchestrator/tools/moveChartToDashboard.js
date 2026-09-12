@@ -1,6 +1,7 @@
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
-const { calculateChartLayout, ensureCompleteLayout } = require("../../../chartLayoutEngine");
+const { appendCharts, breakpoints } = require("../../../../../shared/dashboard/layout.mjs");
+const { saveMetadata } = require("../../../dashboardLayout");
 const { normalizeTeamId } = require("./teamScope");
 
 async function moveChartToDashboard(payload) {
@@ -22,7 +23,16 @@ async function moveChartToDashboard(payload) {
 
   try {
     const normalizedTeamId = normalizeTeamId(team_id);
+    const sourceChart = await db.Chart.findByPk(chart_id);
+    if (!sourceChart) throw new Error("Chart not found");
     const result = await db.sequelize.transaction(async (transaction) => {
+      // Lock dashboards in the same order before locking their charts.
+      const projects = new Map();
+      const projectIds = [...new Set([Number(sourceChart.project_id), Number(target_project_id)])].sort((a, b) => a - b);
+      for (const id of projectIds) {
+        // eslint-disable-next-line no-await-in-loop
+        projects.set(id, await db.Project.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE }));
+      }
       // Find the chart
       const chart = await db.Chart.findByPk(chart_id, { transaction, lock: transaction.LOCK.UPDATE });
       if (!chart) {
@@ -30,13 +40,16 @@ async function moveChartToDashboard(payload) {
       }
 
       // Verify the chart belongs to the team
-      const currentProject = await db.Project.findByPk(chart.project_id, { transaction });
+      if (Number(chart.project_id) !== Number(sourceChart.project_id)) {
+        throw Object.assign(new Error("This chart is already saved to a dashboard"), { statusCode: 409 });
+      }
+      const currentProject = projects.get(Number(chart.project_id));
       if (!currentProject || currentProject.team_id !== normalizedTeamId) {
         throw new Error("Chart does not belong to the specified team");
       }
 
       // Verify the target project exists and belongs to the team
-      const targetProject = await db.Project.findByPk(target_project_id, { transaction, lock: transaction.LOCK.UPDATE });
+      const targetProject = projects.get(Number(target_project_id));
       if (!targetProject || targetProject.team_id !== normalizedTeamId) {
         throw new Error("Target project not found or does not belong to the specified team");
       }
@@ -52,10 +65,9 @@ async function moveChartToDashboard(payload) {
       if (!isAlreadyPlaced) {
         const existingCharts = await db.Chart.findAll({
           where: { project_id: target_project_id },
-          attributes: ["layout"],
-          transaction,
+          transaction, lock: transaction.LOCK.UPDATE,
         });
-        const finalLayout = ensureCompleteLayout(calculateChartLayout(existingCharts));
+        const finalLayout = appendCharts(existingCharts, [chart], targetProject.layoutCustom || breakpoints)[String(chart.id)];
         await db.Chart.update(
           {
             project_id: target_project_id,
@@ -63,6 +75,13 @@ async function moveChartToDashboard(payload) {
           },
           { where: { id: chart_id }, transaction }
         );
+      }
+
+      if (!isAlreadyPlaced) {
+        const charts = await db.Chart.findAll({ where: { project_id: target_project_id }, transaction, lock: transaction.LOCK.UPDATE });
+        await saveMetadata(targetProject, charts, transaction);
+        const remaining = await db.Chart.findAll({ where: { project_id: currentProject.id }, transaction, lock: transaction.LOCK.UPDATE });
+        await saveMetadata(currentProject, remaining, transaction);
       }
 
       // Update project_ids for all datasets used by this chart

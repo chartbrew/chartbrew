@@ -216,14 +216,14 @@ class ChartTemplateController {
       }));
 
       const selectedCharts = template.charts.filter((chart) => chartTemplateIds.includes(chart.id));
+      await project.reload({ transaction, lock: transaction.LOCK.UPDATE });
       const existingCharts = await db.Chart.findAll({
         where: { project_id: project.id },
         attributes: ["id", "layout"],
-        transaction,
+        transaction, lock: transaction.LOCK.UPDATE,
       });
-      const generatedLayouts = selectedCharts.some((chart) => chart.layoutIntent)
-        ? buildTemplateLayouts(selectedCharts, { existingCharts })
-        : {};
+      const generatedLayouts = buildTemplateLayouts(selectedCharts, { existingCharts, custom: project.layoutCustom || undefined });
+      selectedCharts.sort((a, b) => (a.layoutIntent?.priority ?? 1000) - (b.layoutIntent?.priority ?? 1000));
       const createdCharts = [];
       await selectedCharts.reduce((promise, chartTemplate) => {
         return promise.then(async () => {
@@ -258,7 +258,7 @@ class ChartTemplateController {
             visualization: chartTemplate.visualization || chartTemplate.chart?.visualization,
             layout: generatedLayouts[chartTemplate.id] || chartTemplate.chart?.layout,
             chartDatasetConfigs,
-          }, user, { transaction, skipBackgroundUpdate: true });
+          }, user, { transaction, skipBackgroundUpdate: true, preserveLayout: true });
 
           createdCharts.push({
             template_id: chartTemplate.id,

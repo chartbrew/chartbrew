@@ -1,11 +1,14 @@
 import {
-  afterEach, describe, expect, it, vi
+  afterEach, beforeEach, describe, expect, it, vi
 } from "vitest";
 
 const db = require("../../models/models");
 const ChartController = require("../../controllers/ChartController");
 
 describe("ChartController background updates", () => {
+  beforeEach(() => {
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({ id: 77, layoutRevision: 0, update: vi.fn() });
+  });
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -24,16 +27,17 @@ describe("ChartController background updates", () => {
 
     const creation = controller.createWithChartDatasetConfigs({ project_id: 77 }, null, { waitForData: true });
     await vi.waitFor(() => expect(update).toHaveBeenCalledWith(123, null, { getCache: true }));
-    expect(findChart).not.toHaveBeenCalled();
+    expect(findChart).toHaveBeenCalledExactlyOnceWith(123, null, { transaction: expect.anything() });
     finishUpdate();
     await expect(creation).resolves.toEqual(chart);
+    expect(findChart).toHaveBeenLastCalledWith(123);
 
     const failure = new Error("Source data is unavailable");
     update.mockRejectedValue(failure);
     findChart.mockClear();
     await expect(controller.createWithChartDatasetConfigs({ project_id: 77 }, null, { waitForData: true }))
       .rejects.toBe(failure);
-    expect(findChart).not.toHaveBeenCalled();
+    expect(findChart).toHaveBeenCalledExactlyOnceWith(123, null, { transaction: expect.anything() });
   });
 
   it("attaches a rejection handler to background chart updates after chart creation", async () => {

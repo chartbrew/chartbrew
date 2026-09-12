@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Button, Card, Chip } from "@heroui/react";
+import { Button, Card } from "@heroui/react";
 import { LuExternalLink } from "react-icons/lu";
 import { useDispatch } from "react-redux";
 
@@ -70,7 +70,6 @@ function AiConnectionCard({ option, teamId, conversationId, onEnsureSaved, onCon
   const review = current.needs_approval || (current.state === "admin_required" && current.connection_id);
   const source = SOURCE_DEFINITIONS.find((item) => item.id === (current.source_id || "mcp"));
   const provider = source?.providers?.[current.provider_id];
-  const sourceName = provider?.name || source?.name || current.name;
   const logo = getSourceDefinitionLogo(provider || source, isDark);
   const canSetUp = Boolean(current.connection_id) || SOURCE_DEFINITIONS
     .some((source) => source.id === (current.source_id || "mcp") && canCreateSourceConnections(source));
@@ -81,61 +80,44 @@ function AiConnectionCard({ option, teamId, conversationId, onEnsureSaved, onCon
     setupUrl = `/connections/new?type=${encodeURIComponent(current.source_id || "mcp")}`;
   }
 
-  let status = "Not connected";
-  if (pending) status = "Connecting";
-  else if (connected) status = "Connected";
-  else if (current.state === "admin_required") status = "Admin needed";
-  else if (current.state === "unsupported") status = "Unavailable";
+  let setupLabel = "Connect";
+  if (review) setupLabel = "Review access";
 
-  let setupLabel = `Set up ${sourceName}`;
-  if (review) setupLabel = "Review tool access";
-  else if (connected) setupLabel = "Open connection";
-
-  let description = source?.setupDescription
-    || `Connect ${sourceName} to Chartbrew to use its data in your charts. Complete setup in a new tab, then return here to continue your request.`;
-  if (oauth) {
-    description = `Connect your ${sourceName} account to Chartbrew through ${sourceName}'s MCP server. This lets Chartbrew request data using the tools you approve.`;
-  } else if (current.state === "manual_mcp_setup") {
-    description = `To use ${current.name} in Chartbrew, you need its MCP server address and sign-in details. Automatic setup is not available. Open setup to enter them, not this chat.`;
+  let description = null;
+  if (current.state === "manual_mcp_setup") {
+    description = "Check whether this source offers an MCP server before setting it up.";
   } else if (review) {
-    description = `${current.name} needs approval before Chartbrew can use its data. Open the connection and approve the read-only tools you want to use, then return here.`;
+    description = "Approve access to the data you want to use.";
   } else if (connected) {
-    description = `${current.name} is connected to Chartbrew. Continue your request to check the available data and build your charts.`;
+    description = "Connected";
   } else if (current.state === "admin_required") {
-    description = `Ask a team owner or admin to connect ${current.name} to Chartbrew, then return here to continue.`;
+    description = "Ask a team owner or admin to connect this source.";
   } else if (current.state === "unsupported") {
-    description = `Chartbrew cannot set up ${current.name} here. Choose another data source to continue.`;
+    description = "This source is unavailable. Choose another data source.";
   }
-  if (!canSetUp && (oauth || setupUrl)) description = "This connection is not available for setup. Choose another source.";
+  if (!canSetUp && (oauth || setupUrl)) description = "This connection is unavailable. Choose another source.";
 
   return (
-    <Card className="my-3 w-full gap-3 rounded-[2rem] bg-foreground/[0.055] p-3 shadow-none dark:bg-foreground/[0.08]" aria-label={`${current.name} connection`}>
-      <Card.Header className="flex flex-row flex-wrap items-center justify-between gap-3 px-2 py-1">
-        <div className="flex min-w-0 items-center gap-3">
-          {logo ? <img src={logo} alt="" className="size-7 shrink-0 object-contain" /> : null}
-          <Card.Title className="break-words text-base">{current.name}</Card.Title>
-        </div>
-        <Chip size="sm" variant="soft" color={connected ? "success" : "default"}>{status}</Chip>
-      </Card.Header>
-      <Card.Content className="flex flex-col gap-4 rounded-[1.25rem] bg-surface p-4">
-        <Card.Description className="text-sm leading-relaxed text-foreground">{description}</Card.Description>
-        {oauth && canSetUp ? (
-          <p className="text-sm leading-relaxed text-muted">
-            {`Chartbrew will save this conversation and open ${sourceName} sign-in. You will return to the connection page to approve tools. Your chat stays saved.`}
-          </p>
-        ) : null}
-        {error ? <p className="text-sm text-danger" role="alert">{error}</p> : null}
+    <Card className="my-3 w-full max-w-lg gap-3 rounded-xl bg-surface p-3 shadow-none" aria-label={`${current.name} connection`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Card.Header className="min-w-0 flex-1 flex-row items-center gap-3">
+          {logo ? <img src={logo} alt="" className="size-6 shrink-0 object-contain" /> : null}
+          <div className="min-w-0">
+            <Card.Title className="break-words text-sm">{current.name}</Card.Title>
+            {description ? <Card.Description className="text-sm">{description}</Card.Description> : null}
+          </div>
+        </Card.Header>
         <Card.Footer className="flex flex-wrap gap-2">
           {oauth && canSetUp ? (
             <Button className="h-auto min-h-10 whitespace-normal rounded-lg py-2" isDisabled={isLoading} isPending={pending} onPress={connect} variant="primary">
-              {pending ? "Connecting…" : error ? "Try again" : `Connect ${sourceName}`}
+              {pending ? "Connecting…" : error ? "Try again" : "Connect"}
               <LuExternalLink size={16} className="shrink-0" aria-hidden />
             </Button>
           ) : null}
-          {setupUrl && (!oauth || error) && canSetUp ? (
+          {setupUrl && (!connected || review) && (!oauth || error) && canSetUp ? (
             <Button
               className="h-auto min-h-10 whitespace-normal rounded-lg py-2"
-              variant={oauth || (connected && !review) ? "secondary" : "primary"}
+              variant={oauth ? "secondary" : "primary"}
               onPress={() => setSetupOpened(true)}
               render={(props) => <a {...props} href={setupUrl} target="_blank" rel="noopener noreferrer" />}
             >
@@ -159,7 +141,8 @@ function AiConnectionCard({ option, teamId, conversationId, onEnsureSaved, onCon
             </Button>
           ) : null}
         </Card.Footer>
-      </Card.Content>
+      </div>
+      {error ? <p className="text-sm text-danger" role="alert">{error}</p> : null}
     </Card>
   );
 }

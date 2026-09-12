@@ -29,17 +29,14 @@ import {
   createCdc,
   createChart,
   runQuery,
-  selectCharts,
 } from "../../../slices/chart";
 import { selectConnections } from "../../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../../slices/dataset";
 import { showAiModal } from "../../../slices/ui";
 import { chartColors } from "../../../config/colors";
-import { placeNewWidget } from "../../../modules/autoLayout";
 import getConnectionLogo from "../../../modules/getConnectionLogo";
 import getDefaultCdcBindings from "../../../modules/getDefaultCdcBindings";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
-import { widthSize } from "../../../modules/layoutBreakpoints";
 import { getPaginationPageNumbers } from "../../../modules/getPaginationPageNumbers";
 import { useTheme } from "../../../modules/ThemeContext";
 
@@ -259,37 +256,9 @@ function DashboardStarter({
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const charts = useSelector(selectCharts);
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
   const { isDark } = useTheme();
-
-  const getNewChartLayout = () => {
-    const computedLayout = {};
-    const dashboardChartsToPlace = charts.filter((chart) => `${chart.project_id}` === projectId);
-
-    Object.keys(widthSize).forEach((bp) => {
-      const bpLayout = dashboardChartsToPlace.reduce((items, chart) => {
-        if (!chart?.layout?.[bp]) return items;
-
-        items.push({
-          i: `${chart.id}`,
-          x: chart.layout[bp][0] || 0,
-          y: chart.layout[bp][1] || 0,
-          w: chart.layout[bp][2],
-          h: chart.layout[bp][3],
-        });
-
-        return items;
-      }, []);
-
-      const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
-      const pos = placeNewWidget(bpLayout, { w, h: 2 }, bp);
-      computedLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
-    });
-
-    return computedLayout;
-  };
 
   const createChartFromDataset = async (dataset) => {
     if (!dataset?.id) return;
@@ -307,7 +276,6 @@ function DashboardStarter({
           type: "line",
           subType: "lcTimeseries",
           name: datasetName,
-          layout: getNewChartLayout(),
         },
       })).unwrap();
 

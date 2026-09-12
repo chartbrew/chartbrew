@@ -1,3 +1,8 @@
+function isSetupQuestion(message) {
+  return /\b(get started|getting started|where (?:do|should) I start|plan (?:my|our|a|the) (?:first )?report)\b/i.test(message)
+    || /^(?:please )?(?:help(?: me)?|how (?:do|can|should) (?:I|we)|which .+ should (?:I|we))\b/i.test(message);
+}
+
 function normalizeMessage(message) {
   return `${message || ""}`.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -9,6 +14,7 @@ function isTypedConfirmation(message) {
 
 function isVisualizationAction(message) {
   const normalized = normalizeMessage(message);
+  if (isSetupQuestion(normalized)) return false;
   if (!normalized || /\bkpi (review|reviews|summary|summaries|status)\b/.test(normalized)) {
     return false;
   }
@@ -30,6 +36,7 @@ function routeWorkspaceRequest({ action, message }) {
   if (isTypedConfirmation(normalized)) {
     return { intent: "confirm_pending_action", mode: "executor" };
   }
+  if (isSetupQuestion(normalized)) return null;
   if (isVisualizationAction(normalized)) return null;
   if (/\b(data freshness|freshness (issues|status)|check (data )?freshness)\b/.test(normalized)) {
     return { intent: "data_freshness", mode: "fast_path" };

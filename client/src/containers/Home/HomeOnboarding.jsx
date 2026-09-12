@@ -90,6 +90,7 @@ function HomeOnboarding({ onboarding, onDismiss }) {
   const availableSecondaryKeys = new Set(plan.secondaryKeys);
   const secondary = MILESTONES.filter((item) => (
     SECONDARY_KEYS.includes(item.key)
+    && availableSecondaryKeys.has(item.key)
     && !onboarding.milestones[item.key]
     && item.key !== primary?.key
   ));
@@ -102,10 +103,9 @@ function HomeOnboarding({ onboarding, onDismiss }) {
 
   return (
     <Card className="gap-0 overflow-hidden rounded-3xl border border-divider shadow-none">
-      <Card.Header className="flex flex-row items-start gap-4 px-2 py-2">
-        <div className="min-w-0 flex-1">
+      <Card.Header className="flex flex-row flex-wrap items-center gap-x-4 gap-y-2 px-2 py-2">
+        <div className="min-w-24 flex-1">
           <Card.Title className="text-lg font-semibold">Get started</Card.Title>
-          <Card.Description>Set up Chartbrew for your team.</Card.Description>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-sm font-medium text-muted">
@@ -203,18 +203,16 @@ function HomeOnboarding({ onboarding, onDismiss }) {
               <div className="divide-y divide-divider">
                 {secondary.map((item) => {
                   const SecondaryIcon = item.icon;
-                  const available = availableSecondaryKeys.has(item.key);
                   return (
                     <div
-                      className={`flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 ${available ? "" : "opacity-45"}`}
+                      className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
                       key={item.key}
                     >
                       <SecondaryIcon className="shrink-0 text-muted" size={17} aria-hidden />
                       <span className="min-w-0 flex-1 text-sm font-medium">{item.label}</span>
                       <Button
                         className="shrink-0"
-                        isDisabled={!available}
-                        onPress={available ? () => navigate(getMilestonePath(item, onboarding.dashboardId)) : undefined}
+                        onPress={() => navigate(getMilestonePath(item, onboarding.dashboardId))}
                         size="sm"
                         variant="secondary"
                       >

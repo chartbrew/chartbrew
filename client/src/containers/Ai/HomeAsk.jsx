@@ -20,7 +20,7 @@ const EMPTY_CONTEXT = {
   singleSelect: null,
 };
 
-function HomeAsk({ focused, onFocusChange, teamId }) {
+function HomeAsk({ focused, hasContent, onContentChange, onFocusChange, suggestions, teamId }) {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const [showAccessNotice, setShowAccessNotice] = useState(false);
@@ -43,7 +43,7 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
   const isAccessNoticeVisible = showAccessNotice && availability?.enabled !== true;
   const questionPlaceholder = teamRole === "projectViewer"
     ? "Ask about existing reports and metrics"
-    : "Ask anything about your data";
+    : hasContent ? "Ask anything about your data" : "What are you trying to understand from your data?";
 
   useEffect(() => {
     if (!isContextPickerOpen || !teamId) return undefined;
@@ -80,7 +80,8 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
     }
     setShowAccessNotice(false);
     onFocusChange(true);
-    chat.sendMessage(message || selectedContext.multiSelect.map((entity) => entity.label).join("\n"));
+    chat.sendMessage(message || selectedContext.multiSelect.map((entity) => entity.label).join("\n"))
+      .then((result) => { if (result) onContentChange(); });
     return true;
   };
 
@@ -93,17 +94,21 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
     return chat.changeAction(action);
   };
 
-  const onConfirmAction = (action) => {
+  const onConfirmAction = async (action) => {
     if (!canSubmitAiMessage(availability)) {
       setShowAccessNotice(true);
       return null;
     }
     setShowAccessNotice(false);
-    return chat.confirmAction(action);
+    const result = await chat.confirmAction(action);
+    if (result) onContentChange();
+    return result;
   };
 
-  const onChartAction = (action) => {
-    return chat.runChartAction(action);
+  const onChartAction = async (action) => {
+    const result = await chat.runChartAction(action);
+    if (result) onContentChange();
+    return result;
   };
 
   const clearChat = () => {
@@ -163,6 +168,11 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
         isRequested={showAccessNotice}
         onRetry={reloadAvailability}
       />
+      {!conversationStarted && !hasContent && isTeamAdmin ? (
+        <p className="text-sm text-muted">
+          Tell me what you want to track, where your data lives, or what your business does.
+        </p>
+      ) : null}
       <AiChat
         fill={focused || !conversationStarted}
         framed
@@ -207,11 +217,7 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
             canManageTeam={isTeamAdmin}
           />
         )}
-        suggestions={conversationStarted ? [] : [
-          "Summarize recent changes",
-          "Which metrics need attention?",
-          "Check data freshness",
-        ]}
+        suggestions={conversationStarted ? [] : suggestions}
         toolDisplayNames={chat.toolDisplayNames}
         teamId={teamId}
       />
@@ -221,6 +227,9 @@ function HomeAsk({ focused, onFocusChange, teamId }) {
 
 HomeAsk.propTypes = {
   focused: PropTypes.bool.isRequired,
+  hasContent: PropTypes.bool.isRequired,
+  onContentChange: PropTypes.func.isRequired,
+  suggestions: PropTypes.arrayOf(PropTypes.string).isRequired,
   onFocusChange: PropTypes.func.isRequired,
   teamId: PropTypes.number.isRequired,
 };

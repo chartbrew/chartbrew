@@ -40,6 +40,28 @@ describe("connection setup resolution", () => {
     }]);
   });
 
+  it("distinguishes connection support from AI query support", async () => {
+    const result = await request({ provider: "Strapi" });
+    expect(result.connections).toEqual([]);
+    expect(result.options).toEqual([expect.objectContaining({
+      state: "native_setup",
+      source_id: "strapi",
+      setup_url: "/connections/new?type=strapi",
+      note: expect.stringContaining("AI cannot query this source directly"),
+    })]);
+    db.Connection.findAll.mockResolvedValue([{
+      id: 12, type: "api", subType: "strapi", name: "Content", active: true,
+    }]);
+    expect((await request({ provider: "Strapi" })).options).toEqual([
+      expect.objectContaining({ connection_id: 12, setup_url: "/connections/12" }),
+    ]);
+    vi.stubEnv("CB_DISABLED_SERVER_SOURCES", "strapi");
+    expect((await request({ provider: "Strapi" })).options)
+      .not.toContainEqual(expect.objectContaining({ source_id: "strapi" }));
+    expect((await request({ provider: "A service that is not registered" })).options)
+      .not.toContainEqual(expect.objectContaining({ state: "native_setup" }));
+  });
+
   it("offers OAuth only for a documented provider and supported capability", async () => {
     expect((await request({ provider: "posthog", capability: "query" })).options).toEqual([
       expect.objectContaining({
@@ -103,12 +125,13 @@ describe("connection setup resolution", () => {
       { connection_id: 8, project_ids: [12], DataRequests: [{ connection_id: 9 }] },
       { connection_id: 10, project_ids: [13] },
     ]);
-    await request({ project_id: 12 });
+    await request({ project_id: 12, scope: "dashboard" });
     expect(db.Connection.findAll).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ team_id: 7, id: [8, 9] }),
     }));
     db.Project.findByPk.mockResolvedValue({ id: 12, team_id: 99 });
     await expect(request({ project_id: 12 })).rejects.toThrow("Project does not belong");
+    await expect(request({ scope: "dashboard" })).rejects.toThrow("Specify a dashboard");
   });
 
   it("does not offer disabled sources", async () => {

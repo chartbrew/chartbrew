@@ -1,7 +1,7 @@
 const _ = require("lodash");
 
 const db = require("../../models/models");
-const { remapVisualizationBindings } = require("../../visualization/remapBindings");
+const { createTemplateCharts } = require("../createTemplateCharts");
 
 module.exports = async (teamId, projectId, {
   template_id, charts, connections, newDatasets
@@ -75,54 +75,6 @@ module.exports = async (teamId, projectId, {
     model.Charts = newModelCharts;
   }
 
-  const createChart = async (chart) => {
-    try {
-      const sourceConfigs = chart.ChartDatasetConfigs || [];
-      const chartData = { ...chart };
-      delete chartData.ChartDatasetConfigs;
-      [
-        "chartData",
-        "chartDataUpdated",
-        "preparedData",
-        "preparedDataFingerprint",
-        "preparedDataSourceFingerprint",
-        "preparedDataUpdatedAt",
-        "preparedDataVisualizationFingerprint",
-      ].forEach((field) => delete chartData[field]);
-      const createdChart = await db.Chart.create(chartData);
-      const createdConfigs = await Promise.all(sourceConfigs.map((cdc) => {
-        const newCdc = { ...cdc, chart_id: createdChart.id };
-        if (newModelDatasets[cdc.dataset_id]) {
-          newCdc.dataset_id = newModelDatasets[cdc.dataset_id];
-        }
-        delete newCdc.bindingId;
-        delete newCdc.id;
-        delete newCdc.templateBindingId;
-        return db.ChartDatasetConfig.create(newCdc);
-      }));
-
-      if (chart.visualization && createdConfigs.length > 0) {
-        await createdChart.update({
-          visualization: remapVisualizationBindings(
-            chart.visualization,
-            sourceConfigs,
-            createdConfigs
-          ),
-        });
-      }
-      return createdChart;
-    } catch (error) {
-      return error;
-    }
-  };
-
-  const chartPromises = [];
-  model.Charts.forEach((chart) => {
-    const newChart = { ...chart, project_id: projectId };
-    delete newChart.id;
-    chartPromises.push(createChart(newChart));
-  });
-
   if (model?.Variables?.length > 0) {
     model.Variables.forEach((variable) => {
       const newVariable = { ...variable, project_id: projectId };
@@ -131,5 +83,5 @@ module.exports = async (teamId, projectId, {
     });
   }
 
-  return Promise.all(chartPromises);
+  return createTemplateCharts(model.Charts, projectId, newModelDatasets);
 };

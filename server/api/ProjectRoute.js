@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
+const { saveDashboardLayout } = require("../modules/dashboardLayout");
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const SharePolicyController = require("../controllers/SharePolicyController");
@@ -94,6 +95,15 @@ module.exports = (app) => {
       return res.status(403).json({ message: "Access denied" });
     };
   };
+
+  app.put("/project/:id/layout", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      await saveDashboardLayout(req.params.id, req.body);
+      return res.json(await projectController.findById(req.params.id));
+    } catch (error) {
+      return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "Could not save the layout. Try again." });
+    }
+  });
 
   /*
   ** [MASTER] Route to get all the projects
