@@ -139,7 +139,7 @@ function AiComposer({
         <Label className="sr-only">{placeholder}</Label>
         <InputGroup
           className={framed
-            ? `relative flex flex-col items-stretch gap-2 overflow-visible rounded-[1.25rem] border-transparent bg-surface py-2 shadow-none${fill ? " h-full" : ""}`
+            ? `relative flex flex-col items-stretch gap-2 overflow-visible border-transparent bg-surface py-2 shadow-none${fill ? " h-full" : ""}`
             : "flex flex-col gap-2 rounded-3xl py-2"}
           fullWidth
           variant={framed ? "secondary" : "primary"}
@@ -179,8 +179,8 @@ function AiComposer({
 
   return (
     <div className={fill
-      ? "flex h-full min-h-0 flex-1 flex-col rounded-[2rem] bg-surface-secondary p-3 border border-divider"
-      : "rounded-[2rem] bg-surface-secondary p-3"}
+      ? "flex h-full min-h-0 flex-1 flex-col rounded-3xl bg-surface-secondary p-3 border border-divider"
+      : "rounded-3xl bg-surface-secondary p-3"}
     >
       {form}
     </div>
