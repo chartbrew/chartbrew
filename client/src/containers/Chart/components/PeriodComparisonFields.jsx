@@ -313,6 +313,7 @@ function PeriodComparisonFields({
   return (
     <div className="flex flex-col gap-5">
       <Select
+        variant="secondary"
         fullWidth
         onChange={(period) => setValue("comparisonPeriod", period)}
         value={value.comparisonPeriod}
@@ -356,6 +357,8 @@ function PeriodComparisonFields({
       </Select>
 
       <Select
+
+        variant="secondary"
         fullWidth
         onChange={(behavior) => setValue("metricBehavior", behavior)}
         value={value.metricBehavior}
@@ -399,6 +402,7 @@ function PeriodComparisonFields({
         <Label>Show a change when it moves by at least</Label>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-[8.5rem_minmax(0,1fr)]">
           <Input
+            variant="secondary"
             label="Amount"
             min="0"
             onChange={(event) => setValue("thresholdValue", event.target.value)}
@@ -407,6 +411,7 @@ function PeriodComparisonFields({
             value={value.thresholdValue}
           />
           <Select
+            variant="secondary"
             fullWidth
             onChange={(type) => setValue("thresholdType", type)}
             value={value.thresholdType}
@@ -461,6 +466,7 @@ function PeriodCalendarFields({ onChange, value }) {
     <div className="flex flex-col gap-4">
       {value.comparisonPeriod === "week" ? (
         <Select
+          variant="secondary"
           fullWidth
           onChange={(day) => setValue("weekStartsOn", day)}
           value={value.weekStartsOn}
@@ -480,6 +486,8 @@ function PeriodCalendarFields({ onChange, value }) {
       ) : null}
 
       <Autocomplete
+
+        variant="secondary"
         aria-label="Timezone"
         fullWidth
         onChange={(timezone) => setValue("calendarTimezone", timezone || "")}

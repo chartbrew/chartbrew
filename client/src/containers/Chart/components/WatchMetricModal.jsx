@@ -149,6 +149,7 @@ function WatchMetricModal({
                   </div>
                 ) : (
                   <Select
+                    variant="secondary"
                     fullWidth
                     onChange={(value) => {
                       setLayerId(value);
@@ -183,6 +184,8 @@ function WatchMetricModal({
                 )}
 
                 <Select
+
+                  variant="secondary"
                   fullWidth
                   onChange={setDesiredDirection}
                   value={desiredDirection}
@@ -263,6 +266,7 @@ function WatchMetricModal({
                       <Accordion.Body className="flex flex-col gap-5 pt-1 pb-4">
                         {initialName !== null ? (
                           <Input
+                            variant="secondary"
                             label="Name shown in Activity"
                             onChange={(event) => setName(event.target.value)}
                             value={name}
@@ -274,7 +278,7 @@ function WatchMetricModal({
                           value={periodSettings}
                         />
 
-                        <Select fullWidth onChange={setImportance} value={importance}>
+                        <Select variant="secondary" fullWidth onChange={setImportance} value={importance}>
                           <Label>How important is this metric?</Label>
                           <Select.Trigger>
                             <Select.Value />
@@ -296,6 +300,8 @@ function WatchMetricModal({
                         </Select>
 
                         <Select
+
+                          variant="secondary"
                           fullWidth
                           onChange={setFormatSource}
                           placeholder="Choose how values appear"
@@ -321,7 +327,7 @@ function WatchMetricModal({
                         </Select>
 
                         {formatSource === "override" ? (
-                          <Select fullWidth onChange={setValueMeaning} value={valueMeaning}>
+                          <Select variant="secondary" fullWidth onChange={setValueMeaning} value={valueMeaning}>
                             <Label>Value type</Label>
                             <Select.Trigger>
                               <Select.Value />
@@ -345,6 +351,7 @@ function WatchMetricModal({
 
                         {formatSource === "override" && valueMeaning === "currency" ? (
                           <Select
+                            variant="secondary"
                             fullWidth
                             onChange={setCurrency}
                             placeholder="Choose a currency"
@@ -374,6 +381,7 @@ function WatchMetricModal({
 
                         {formatSource === "override" && valueMeaning === "percentage" ? (
                           <Select
+                            variant="secondary"
                             fullWidth
                             onChange={setPercentageScale}
                             value={percentageScale}
@@ -400,7 +408,7 @@ function WatchMetricModal({
 
                         {formatSource === "override" ? (
                           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <Select fullWidth onChange={setDecimals} value={decimals}>
+                            <Select variant="secondary" fullWidth onChange={setDecimals} value={decimals}>
                               <Label>Decimal places</Label>
                               <Select.Trigger>
                                 <Select.Value />
@@ -420,7 +428,7 @@ function WatchMetricModal({
                               </Select.Popover>
                             </Select>
                             {valueMeaning === "percentage" ? null : (
-                              <Select fullWidth onChange={setNotation} value={notation}>
+                              <Select variant="secondary" fullWidth onChange={setNotation} value={notation}>
                                 <Label>Large numbers</Label>
                                 <Select.Trigger>
                                   <Select.Value />

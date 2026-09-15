@@ -140,7 +140,7 @@ function KpiReviewsPage() {
   return (
     <>
       {digests.length > 0 ? (
-        <ActivityList>
+        <ActivityList label="KPI reviews">
           {digests.map((subscription) => (
             <ActivityListRow
               actions={(

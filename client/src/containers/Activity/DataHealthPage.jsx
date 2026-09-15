@@ -65,7 +65,7 @@ function DataHealthPage() {
           Needs attention
         </h2>
         {activeItems.length > 0 ? (
-          <ActivityList>
+          <ActivityList label="Data health">
             {activeItems.map((item) => (
               <ActivityListRow
                 actions={item.action ? (
@@ -95,7 +95,7 @@ function DataHealthPage() {
             ))}
           </ActivityList>
         ) : (
-          <ActivityList>
+          <ActivityList label="Data health">
             <ActivityListRow
               icon={<LuCircleCheck className="text-success" size={18} aria-hidden />}
               meta="No current connection, dataset, chart, or watched metric failures were found."
@@ -110,7 +110,7 @@ function DataHealthPage() {
           <h2 className="text-lg font-semibold" id="resolved-health-heading">
             Resolved recently
           </h2>
-          <ActivityList>
+          <ActivityList label="Data health">
             {health.resolved.map((item) => (
               <ActivityListRow
                 icon={getHealthIcon(item.type, true)}

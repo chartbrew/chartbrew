@@ -80,7 +80,7 @@ function AlertsPage() {
   }
 
   return (
-    <ActivityList>
+    <ActivityList label="Alerts">
       {alerts.map((alert) => (
         <ActivityListRow
           actions={(

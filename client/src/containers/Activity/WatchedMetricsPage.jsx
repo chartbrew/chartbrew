@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Accordion,
   Autocomplete,
   Avatar,
   Button,
   Chip,
+  Disclosure,
   Dropdown,
   ListBox,
   Modal,
@@ -450,135 +450,8 @@ function WatchedMetricsPage() {
   return (
     <>
       <div className="flex flex-col gap-6">
-        {canEdit && recommendations.length > 0 ? (
-          <Accordion
-            className="w-full overflow-hidden rounded-3xl"
-            defaultExpandedKeys={["suggested-metrics"]}
-            hideSeparator
-            variant="surface"
-          >
-            <Accordion.Item id="suggested-metrics" textValue="Suggested metrics">
-              <Accordion.Heading>
-                <Accordion.Trigger className="items-start gap-3 py-3">
-                  <div className="flex min-w-0 flex-1 flex-col items-start gap-1 text-start">
-                    <div className="flex flex-row flex-wrap items-center gap-2">
-                      <span className="text-lg font-semibold text-foreground">Suggested metrics</span>
-                      <Chip size="sm" variant="soft" color="accent">
-                        <Chip.Label>{recommendations.length}</Chip.Label>
-                      </Chip>
-                    </div>
-                    <span className="text-sm font-normal text-muted">
-                      Based on charts your team already relies on. Nothing is watched until you approve it.
-                    </span>
-                  </div>
-                  <Accordion.Indicator className="mt-1 shrink-0 text-muted" />
-                </Accordion.Trigger>
-              </Accordion.Heading>
-              <Accordion.Panel>
-                <Accordion.Body className="pt-0 pb-4">
-                  <ActivityList>
-                    {recommendations.map((recommendation) => (
-                      <ActivityListRow
-                        actions={(
-                          <>
-                            <Button
-                              isDisabled={Boolean(recommendationPendingId)}
-                              onPress={() => setSelectedRecommendation(recommendation)}
-                              size="sm"
-                              variant="secondary"
-                            >
-                              Review
-                            </Button>
-                            <Dropdown aria-label={`Options for ${recommendation.name}`}>
-                              <Dropdown.Trigger
-                                aria-label={`Dismiss ${recommendation.name}`}
-                                className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
-                                isDisabled={Boolean(recommendationPendingId)}
-                              >
-                                {recommendationPendingId === recommendation.id
-                                  ? <Spinner aria-hidden size="sm" />
-                                  : <LuEllipsis size={18} aria-hidden />}
-                              </Dropdown.Trigger>
-                              <Dropdown.Popover>
-                                <Dropdown.Menu>
-                                  <Dropdown.Item
-                                    id="later"
-                                    onPress={() => dismissRecommendation(recommendation, "later")}
-                                    textValue="Not now"
-                                  >
-                                    <LuClock size={16} aria-hidden />
-                                    Not now
-                                  </Dropdown.Item>
-                                  <Dropdown.Item
-                                    id="definition"
-                                    onPress={() => dismissRecommendation(recommendation, "definition")}
-                                    textValue="Do not suggest this metric"
-                                  >
-                                    <LuEyeOff size={16} aria-hidden />
-                                    Don&apos;t suggest this metric
-                                  </Dropdown.Item>
-                                </Dropdown.Menu>
-                              </Dropdown.Popover>
-                            </Dropdown>
-                          </>
-                        )}
-                        icon={<LuActivity className="text-accent" size={18} aria-hidden />}
-                        key={recommendation.id}
-                        meta={(
-                          <>
-                            {recommendation.learningReason ? (
-                              <span className="block text-muted">{recommendation.learningReason}</span>
-                            ) : null}
-                            <span className="text-muted">{recommendation.reasons.join(" ")}</span>
-                            <span className="mt-2 block text-xs text-muted">
-                              {recommendation.project.name} · {recommendation.chart.name}
-                              {" · "}{recommendation.calculation} · {recommendation.comparison}
-                            </span>
-                          </>
-                        )}
-                        title={<span className="font-medium text-foreground">{recommendation.name}</span>}
-                      />
-                    ))}
-                  </ActivityList>
-                </Accordion.Body>
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
-        ) : null}
-
-        {canEdit && recommendationDismissals.length > 0 ? (
-          <section className="rounded-3xl border border-divider bg-surface p-4" aria-labelledby="hidden-suggestions-heading">
-            <h2 className="text-lg font-semibold" id="hidden-suggestions-heading">
-              Hidden suggestions
-            </h2>
-            <div className="mt-3">
-              <ActivityList>
-                {recommendationDismissals.map((dismissal) => (
-                  <ActivityListRow
-                    actions={(
-                      <Button
-                        isDisabled={Boolean(recommendationPendingId)}
-                        isPending={recommendationPendingId === dismissal.id}
-                        onPress={() => restoreRecommendation(dismissal)}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        <LuEye size={16} aria-hidden />
-                        Restore
-                      </Button>
-                    )}
-                    key={dismissal.id}
-                    meta={`${dismissal.dashboardName} · ${dismissal.chartName}`}
-                    title={<span className="font-medium text-foreground">{dismissal.name}</span>}
-                  />
-                ))}
-              </ActivityList>
-            </div>
-          </section>
-        ) : null}
-
         <section aria-labelledby="watched-metrics-heading" className="flex flex-col gap-3">
-          {recommendations.length > 0 ? (
+          {recommendations.length > 0 || recommendationDismissals.length > 0 ? (
             <h2 className="text-lg font-semibold" id="watched-metrics-heading">
               Watched metrics
             </h2>
@@ -624,7 +497,7 @@ function WatchedMetricsPage() {
                 ) : null}
               </div>
               {filteredMonitors.length > 0 ? (
-                <ActivityList>
+                <ActivityList label="Watched metrics">
                   {filteredMonitors.map((monitor) => (
                     <ActivityListRow
                       actions={canEdit ? (
@@ -727,6 +600,133 @@ function WatchedMetricsPage() {
             />
           )}
         </section>
+
+        {canEdit && (recommendations.length > 0 || recommendationDismissals.length > 0) ? (
+          <Disclosure defaultExpanded>
+            <Disclosure.Heading>
+              <Button
+                className="h-auto justify-start gap-2 rounded-lg px-3 py-2 text-lg font-semibold"
+                slot="trigger"
+                variant="ghost"
+              >
+                Suggested metrics
+                <Chip size="sm" variant="soft" color="accent">
+                  <Chip.Label>{recommendations.length}</Chip.Label>
+                </Chip>
+                <Disclosure.Indicator className="size-4 text-muted" />
+              </Button>
+            </Disclosure.Heading>
+            <Disclosure.Content>
+              <div className="flex flex-col gap-3 pt-2">
+                {recommendations.length > 0 ? (
+                  <ActivityList label="Suggested metrics">
+                    {recommendations.map((recommendation) => (
+                      <ActivityListRow
+                        actions={(
+                          <>
+                            <Button
+                              isDisabled={Boolean(recommendationPendingId)}
+                              onPress={() => setSelectedRecommendation(recommendation)}
+                              size="sm"
+                              variant="secondary"
+                            >
+                              Review
+                            </Button>
+                            <Dropdown aria-label={`Options for ${recommendation.name}`}>
+                              <Dropdown.Trigger
+                                aria-label={`Dismiss ${recommendation.name}`}
+                                className="flex size-8 items-center justify-center rounded-3xl text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+                                isDisabled={Boolean(recommendationPendingId)}
+                              >
+                                {recommendationPendingId === recommendation.id
+                                  ? <Spinner aria-hidden size="sm" />
+                                  : <LuEllipsis size={18} aria-hidden />}
+                              </Dropdown.Trigger>
+                              <Dropdown.Popover>
+                                <Dropdown.Menu>
+                                  <Dropdown.Item
+                                    id="later"
+                                    onPress={() => dismissRecommendation(recommendation, "later")}
+                                    textValue="Not now"
+                                  >
+                                    <LuClock size={16} aria-hidden />
+                                    Not now
+                                  </Dropdown.Item>
+                                  <Dropdown.Item
+                                    id="definition"
+                                    onPress={() => dismissRecommendation(recommendation, "definition")}
+                                    textValue="Do not suggest this metric"
+                                  >
+                                    <LuEyeOff size={16} aria-hidden />
+                                    Don&apos;t suggest this metric
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>
+                              </Dropdown.Popover>
+                            </Dropdown>
+                          </>
+                        )}
+                        icon={<LuActivity className="text-accent" size={18} aria-hidden />}
+                        key={recommendation.id}
+                        meta={(
+                          <>
+                            {recommendation.learningReason ? (
+                              <span className="block text-muted">{recommendation.learningReason}</span>
+                            ) : null}
+                            <span className="text-muted">{recommendation.reasons.join(" ")}</span>
+                            <span className="mt-2 block text-xs text-muted">
+                              {recommendation.project.name} · {recommendation.chart.name}
+                              {" · "}{recommendation.calculation} · {recommendation.comparison}
+                            </span>
+                          </>
+                        )}
+                        title={<span className="font-medium text-foreground">{recommendation.name}</span>}
+                      />
+                    ))}
+                  </ActivityList>
+                ) : null}
+                {recommendationDismissals.length > 0 ? (
+                  <Disclosure>
+                    <Disclosure.Heading>
+                      <Button
+                        className="h-auto justify-start gap-2 rounded-lg px-3 py-2 text-sm text-muted"
+                        slot="trigger"
+                        variant="ghost"
+                      >
+                        Hidden suggestions ({recommendationDismissals.length})
+                        <Disclosure.Indicator className="size-4" />
+                      </Button>
+                    </Disclosure.Heading>
+                    <Disclosure.Content>
+                      <div className="pt-2">
+                        <ActivityList label="Hidden suggestions">
+                          {recommendationDismissals.map((dismissal) => (
+                            <ActivityListRow
+                              actions={(
+                                <Button
+                                  isDisabled={Boolean(recommendationPendingId)}
+                                  isPending={recommendationPendingId === dismissal.id}
+                                  onPress={() => restoreRecommendation(dismissal)}
+                                  size="sm"
+                                  variant="secondary"
+                                >
+                                  <LuEye size={16} aria-hidden />
+                                  Restore
+                                </Button>
+                              )}
+                              key={dismissal.id}
+                              meta={`${dismissal.dashboardName} · ${dismissal.chartName}`}
+                              title={<span className="font-medium text-foreground">{dismissal.name}</span>}
+                            />
+                          ))}
+                        </ActivityList>
+                      </div>
+                    </Disclosure.Content>
+                  </Disclosure>
+                ) : null}
+              </div>
+            </Disclosure.Content>
+          </Disclosure>
+        ) : null}
       </div>
 
       <WatchMetricModal

@@ -41,16 +41,13 @@ function Activity() {
     <main className="flex w-full flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="font-tw text-2xl font-semibold">Activity</h1>
-        <p className="text-sm text-foreground-500">
-          Review detected changes, refresh issues, and watched metrics.
-        </p>
       </header>
 
       <Tabs
         selectedKey={selectedTab}
         onSelectionChange={(key) => setSearchParams({ tab: key })}
       >
-        <Tabs.ListContainer className="w-fit max-w-full">
+        <Tabs.ListContainer className="w-fit max-w-full overflow-x-auto">
           <Tabs.List
             aria-label="Activity sections"
             className="w-fit *:w-fit *:shrink-0 *:whitespace-nowrap"
@@ -91,19 +88,19 @@ function Activity() {
         </Tabs.ListContainer>
 
         <Tabs.Panel id="changes" className="p-0 pt-1">
-          <ChangesPage />
+          <ChangesPage key={team?.id} />
         </Tabs.Panel>
         <Tabs.Panel id="alerts" className="p-0 pt-1">
-          <AlertsPage />
+          <AlertsPage key={team?.id} />
         </Tabs.Panel>
         <Tabs.Panel id="health" className="p-0 pt-1">
-          <DataHealthPage />
+          <DataHealthPage key={team?.id} />
         </Tabs.Panel>
         <Tabs.Panel id="monitors" className="p-0 pt-1">
-          <WatchedMetricsPage />
+          <WatchedMetricsPage key={team?.id} />
         </Tabs.Panel>
         <Tabs.Panel id="summaries" className="p-0 pt-1">
-          <KpiReviewsPage />
+          <KpiReviewsPage key={team?.id} />
         </Tabs.Panel>
       </Tabs>
     </main>
