@@ -30,7 +30,7 @@ I help you query your data and create charts. Here's what I can do:
 
 ⚙️ **Query your data** - Ask questions and I'll retrieve answers from your connected sources
 
-📊 **Create charts** - Turn data into visualizations (line, bar, pie, KPI, etc.)
+📊 **Create charts** - Turn data into visualizations (line, bar, pie, KPI, maps, etc.)
 
 🔄 **Auto-place charts** - I'll add them to your dashboard automatically
 

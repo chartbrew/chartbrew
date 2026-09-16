@@ -1,4 +1,5 @@
 const echarts = require("echarts");
+const { getMap } = require("../geo");
 
 const { buildEChartsOption } = require("../compilers/echarts");
 const {
@@ -106,6 +107,10 @@ function renderEChartsSvg({
 }) {
   assertImageDimensions(width, height);
   assertPreparedRows(preparedData);
+  if (visualization.layers[0]?.mark === "map") {
+    const map = getMap(visualization.layers[0].options?.map?.area);
+    echarts.registerMap(map.definition.id, map.geoJSON);
+  }
   const option = buildStaticOption(buildEChartsOption({
     chart,
     preparedData,

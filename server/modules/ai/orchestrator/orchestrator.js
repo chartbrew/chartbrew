@@ -103,6 +103,7 @@ const {
   stripeOfficialValidateConfiguration,
 } = require("./tools");
 const { chartColors } = require("../../../charts/colors");
+const mapManifest = require("../../../../shared/geo/manifest.json");
 
 const AI_FIELD_ENCODING_SCHEMA = {
   type: "object",
@@ -124,12 +125,16 @@ const AI_FIELD_ENCODING_SCHEMA = {
 
 const AI_ENCODING_SCHEMA = {
   type: "object",
-  description: "Renderer-neutral semantic field roles. Never use x or y. For line/bar use time or category plus value, and optionally breakdown.",
+  description: "Renderer-neutral semantic field roles. Never use x or y. For line/bar use time or category plus value, and optionally breakdown. Maps use location for filled regions, or latitude and longitude or a GeoJSON point field for points. Map value is optional; omit it to count rows.",
   properties: {
     time: AI_FIELD_ENCODING_SCHEMA,
     category: AI_FIELD_ENCODING_SCHEMA,
     value: AI_FIELD_ENCODING_SCHEMA,
     breakdown: AI_FIELD_ENCODING_SCHEMA,
+    location: AI_FIELD_ENCODING_SCHEMA,
+    latitude: AI_FIELD_ENCODING_SCHEMA,
+    longitude: AI_FIELD_ENCODING_SCHEMA,
+    point: AI_FIELD_ENCODING_SCHEMA,
     row: AI_FIELD_ENCODING_SCHEMA,
     column: AI_FIELD_ENCODING_SCHEMA,
     columns: { type: "array", items: AI_FIELD_ENCODING_SCHEMA },
@@ -139,7 +144,7 @@ const AI_ENCODING_SCHEMA = {
 
 const AI_VISUALIZATION_SCHEMA = {
   type: "object",
-  description: "Complete canonical visualization specification. Every layer must use semantic encoding roles; never use x or y.",
+  description: "Complete canonical visualization specification. Every layer must use semantic encoding roles; never use x or y. For maps, supply one map layer with geographic encodings and options.map, including area and mode.",
   properties: {
     version: { type: "integer", enum: [2] },
     status: { type: "string", enum: ["ready", "draft", "orphan"] },
@@ -150,13 +155,30 @@ const AI_VISUALIZATION_SCHEMA = {
         properties: {
           id: { type: "string" },
           bindingId: { type: ["string", "number"] },
-          mark: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          mark: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix", "map"] },
           name: { type: "string" },
           rowPath: { type: "string" },
           encoding: AI_ENCODING_SCHEMA,
           transforms: { type: "array", items: { type: "object" } },
           style: { type: "object" },
-          options: { type: "object" },
+          options: {
+            type: "object",
+            properties: {
+              map: {
+                type: "object",
+                properties: {
+                  area: {
+                    type: "string",
+                    enum: mapManifest.maps.map((map) => map.id),
+                    description: "World, continent slug, or country code from the enum. Country maps show subdivisions. Use GB for the UK; EU is not a separate map, use Europe with country data filtered to EU members.",
+                  },
+                  mode: { type: "string", enum: ["regions", "points"] },
+                  coordinates: { type: "string", enum: ["fields", "geojson"] },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
           stack: { type: "string", enum: ["none", "normal", "percent"] },
           orientation: { type: "string", enum: ["vertical", "horizontal"] },
           goal: { type: ["number", "null"] },
@@ -875,7 +897,7 @@ async function availableTools() {
           dataset_id: { type: "string" },
           name: { type: "string", description: "Chart name/title" },
           legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
-          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix", "map"] },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
           pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
@@ -954,7 +976,7 @@ async function availableTools() {
           dataset_id: { type: "string", description: "New dataset ID (if changing the dataset)" },
           name: { type: "string", description: "New chart name/title" },
           legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
-          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"], description: "Chart type" },
+          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix", "map"], description: "Chart type" },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
           pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
@@ -1024,7 +1046,7 @@ async function availableTools() {
           dataset_id: { type: "string", description: "Existing reusable dataset ID from search_datasets. Prefer this when the user asks to use the same or an existing dataset." },
           name: { type: "string", description: "Chart name/title" },
           legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend (max 20-30 chars, appears on hover)" },
-          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix", "map"] },
           subType: { type: "string", description: "Chart subtype (e.g. 'AddTimeseries' for KPI totals)" },
           displayLegend: { type: "boolean", description: "Show chart legend" },
           pointRadius: { type: "integer", description: "Point radius (0 to hide, >0 to show)" },
@@ -1113,7 +1135,7 @@ async function availableTools() {
           connection_id: { type: "string", description: `Connection ID to use for data fetching (must be one of: ${supportedSourceList})` },
           name: { type: "string", description: "Chart and dataset name/title" },
           legend: { type: "string", description: "Chart-series label stored on ChartDatasetConfig.legend" },
-          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix"] },
+          type: { type: "string", enum: ["line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "table", "kpi", "avg", "gauge", "matrix", "map"] },
           subType: { type: "string", description: "Chart subtype, for example AddTimeseries for KPI totals" },
           displayLegend: { type: "boolean" },
           pointRadius: { type: "integer" },
@@ -2304,6 +2326,9 @@ async function buildSemanticLayer(teamId, options = {}) {
     },
     "avg": {
       description: "Similar to a KPI chart, but shows the average value of the data based on the number of data points",
+    },
+    "map": {
+      description: "Geographic values as filled regions or coordinate points on world, continent, or country subdivision maps. Use a complete visualization with map options and nested location fields.",
     },
     "matrix": {
       description: "Currently only supported for time-based heatmaps with days of the week on the y axis and days on the x axis",

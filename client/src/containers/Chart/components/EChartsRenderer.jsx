@@ -2,14 +2,15 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import * as echarts from "echarts/core";
 import {
-  BarChart, GaugeChart, LineChart, PieChart, RadarChart, ScatterChart,
+  BarChart, GaugeChart, LineChart, MapChart, PieChart, RadarChart, ScatterChart,
 } from "echarts/charts";
 import {
-  AriaComponent, DatasetComponent, GridComponent, LegendComponent, MarkLineComponent,
+  AriaComponent, DatasetComponent, GeoComponent, GridComponent, LegendComponent, MarkLineComponent,
   PolarComponent, RadarComponent, TitleComponent, TooltipComponent, VisualMapComponent,
 } from "echarts/components";
 import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
+import { registerOptionMap } from "../../../visualization/mapAssets";
 
 import { semanticColors } from "../../../lib/themeTokens";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -40,11 +41,13 @@ echarts.use([
   CanvasRenderer,
   DatasetComponent,
   GaugeChart,
+  GeoComponent,
   GridComponent,
   LabelLayout,
   LegendComponent,
   LineChart,
   MarkLineComponent,
+  MapChart,
   PieChart,
   PolarComponent,
   RadarChart,
@@ -610,8 +613,14 @@ function EChartsRenderer({
   }, []);
   const effectiveOption = useMemo(() => {
     const colors = semanticColors[themeMode];
+    const mapStyle = {
+      areaColor: colors.content2.DEFAULT,
+      borderColor: colors.foreground[400],
+      borderWidth: 0.5,
+    };
     return {
       ...option,
+      ...(option.geo ? { geo: { ...option.geo, itemStyle: mapStyle } } : {}),
       ...(renderer === "svg" || reducedMotion ? { animation: false } : {}),
       series: option.series?.map((series) => series.type === "gauge" ? {
         ...series,
@@ -623,7 +632,10 @@ function EChartsRenderer({
         },
         itemStyle: { ...series.itemStyle, color: colors.foreground.DEFAULT },
         title: { ...series.title, color: colors.foreground[500] },
-      } : series),
+      } : series.type === "map" ? { ...series, itemStyle: mapStyle } : series),
+      ...(option.visualMap && (option.geo || option.series?.some((series) => series.type === "map")) ? {
+        visualMap: { ...option.visualMap, textStyle: { color: colors.foreground.DEFAULT } },
+      } : {}),
       tooltip: getEChartsTooltipOption(option, getTooltipColors(themeMode)),
     };
   }, [option, reducedMotion, renderer, themeMode]);
@@ -636,8 +648,11 @@ function EChartsRenderer({
   const applyOption = (instance, nextOption, { clear = false } = {}) => {
     const container = containerRef.current;
     if (!instance || !container) return;
+    const area = nextOption.geo?.map || nextOption.series?.find((series) => series.type === "map")?.map;
+    if (area && !echarts.getMap(area)) return;
     const width = container.clientWidth;
     const height = container.clientHeight;
+    if (width === 0 || height === 0) return;
     const compact = isCompactTooltipLayout(width, height);
     compactTooltipRef.current = compact;
     const nextCategoryComposition = isCategoryPieChart(nextOption)
@@ -675,7 +690,8 @@ function EChartsRenderer({
           ? isCompactTooltipLayout(container.clientWidth, container.clientHeight)
           : false;
         if (
-          isMatrixSeries(current?.series?.[0])
+          !instance.getOption()?.series?.length
+          || isMatrixSeries(current?.series?.[0])
           || isCategoryPieChart(current)
           || isGaugeChart(current)
           || isHorizontalBarChart(current)
@@ -705,12 +721,19 @@ function EChartsRenderer({
   useEffect(() => {
     const instance = instanceRef.current;
     if (!instance) return;
-    try {
-      applyOption(instance, effectiveOption, { clear: redraw });
-      redrawComplete();
-    } catch (error) {
-      setRenderError(error);
-    }
+    let cancelled = false;
+    const render = async () => {
+      try {
+        await registerOptionMap(echarts, effectiveOption);
+        if (cancelled || instance.isDisposed()) return;
+        applyOption(instance, effectiveOption, { clear: redraw });
+        redrawComplete();
+      } catch (error) {
+        if (!cancelled) setRenderError(error);
+      }
+    };
+    render();
+    return () => { cancelled = true; };
   }, [compactAxes, detailScale, effectiveOption, redraw, redrawComplete, themeName]);
 
   useEffect(() => {

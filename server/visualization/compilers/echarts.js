@@ -1,4 +1,5 @@
 const moment = require("moment-timezone");
+const { buildMapOption } = require("./map");
 
 const { toJsonValue } = require("../preparedData");
 const { createRenderContext } = require("../renderContext");
@@ -1542,7 +1543,9 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
   }
   const presetId = marks[0];
   let option;
-  if (CARTESIAN_PRESETS.has(presetId)) {
+  if (presetId === "map") {
+    option = buildMapOption({ chart, preparedData, visualization, renderContext: context });
+  } else if (CARTESIAN_PRESETS.has(presetId)) {
     option = buildCartesianOption({ preparedData, visualization, renderContext: context });
   } else if (PIE_PRESETS.has(presetId)) {
     option = buildPieOption({ preparedData, visualization, renderContext: context }, presetId);

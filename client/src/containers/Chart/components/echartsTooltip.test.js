@@ -235,3 +235,19 @@ test("formats gauge range tooltips as one compact label", () => {
   assert.equal((html.match(/Action required/g) || []).length, 1);
   assert.doesNotMatch(html, /min-width/);
 });
+
+
+test("map tooltips show place names and formatted measures without exposing coordinates or HTML", () => {
+  const tooltip = createEChartsTooltipFormatter(colors);
+  const point = tooltip({ seriesType: "scatter", name: "Store", seriesName: "Revenue", data: {
+    locationLabel: "<Store>", value: [26, 44, 12], formattedValue: "$12",
+  } });
+  assert.match(point, /&lt;Store&gt;/);
+  assert.match(point, /\$12/);
+  assert.doesNotMatch(point, /26,44/);
+  const missing = tooltip({ seriesType: "map", name: "US", data: {
+    locationLabel: "United States", value: null, formattedValue: "No data",
+  } });
+  assert.match(missing, /United States/);
+  assert.match(missing, /No data/);
+});

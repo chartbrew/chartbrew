@@ -1,0 +1,1754 @@
+{
+  "source": "Natural Earth",
+  "version": "v5.1.2",
+  "maps": [
+    {
+      "id": "world",
+      "name": "World",
+      "file": "world"
+    },
+    {
+      "id": "africa",
+      "name": "Africa",
+      "file": "world",
+      "continent": "Africa"
+    },
+    {
+      "id": "asia",
+      "name": "Asia",
+      "file": "world",
+      "continent": "Asia"
+    },
+    {
+      "id": "europe",
+      "name": "Europe",
+      "file": "world",
+      "continent": "Europe"
+    },
+    {
+      "id": "north-america",
+      "name": "North America",
+      "file": "world",
+      "continent": "North America"
+    },
+    {
+      "id": "south-america",
+      "name": "South America",
+      "file": "world",
+      "continent": "South America"
+    },
+    {
+      "id": "oceania",
+      "name": "Oceania",
+      "file": "world",
+      "continent": "Oceania"
+    },
+    {
+      "id": "antarctica",
+      "name": "Antarctica",
+      "file": "world",
+      "continent": "Antarctica"
+    },
+    {
+      "id": "AF",
+      "name": "Afghanistan",
+      "file": "AF",
+      "country": "AF",
+      "regions": 32
+    },
+    {
+      "id": "AX",
+      "name": "Aland",
+      "file": "AX",
+      "country": "AX",
+      "regions": 11
+    },
+    {
+      "id": "AL",
+      "name": "Albania",
+      "file": "AL",
+      "country": "AL",
+      "regions": 12
+    },
+    {
+      "id": "DZ",
+      "name": "Algeria",
+      "file": "DZ",
+      "country": "DZ",
+      "regions": 48
+    },
+    {
+      "id": "AS",
+      "name": "American Samoa",
+      "file": "AS",
+      "country": "AS",
+      "regions": 5
+    },
+    {
+      "id": "AD",
+      "name": "Andorra",
+      "file": "AD",
+      "country": "AD",
+      "regions": 7
+    },
+    {
+      "id": "AO",
+      "name": "Angola",
+      "file": "AO",
+      "country": "AO",
+      "regions": 18
+    },
+    {
+      "id": "AI",
+      "name": "Anguilla",
+      "file": "AI",
+      "country": "AI",
+      "regions": 15
+    },
+    {
+      "id": "AQ",
+      "name": "Antarctica",
+      "file": "AQ",
+      "country": "AQ",
+      "wrap": "west",
+      "regions": 2
+    },
+    {
+      "id": "AG",
+      "name": "Antigua and Barbuda",
+      "file": "AG",
+      "country": "AG",
+      "regions": 8
+    },
+    {
+      "id": "AR",
+      "name": "Argentina",
+      "file": "AR",
+      "country": "AR",
+      "regions": 24
+    },
+    {
+      "id": "AM",
+      "name": "Armenia",
+      "file": "AM",
+      "country": "AM",
+      "regions": 11
+    },
+    {
+      "id": "AW",
+      "name": "Aruba",
+      "file": "AW",
+      "country": "AW",
+      "regions": 1
+    },
+    {
+      "id": "AU",
+      "name": "Australia",
+      "file": "AU",
+      "country": "AU",
+      "regions": 13
+    },
+    {
+      "id": "AT",
+      "name": "Austria",
+      "file": "AT",
+      "country": "AT",
+      "regions": 9
+    },
+    {
+      "id": "AZ",
+      "name": "Azerbaijan",
+      "file": "AZ",
+      "country": "AZ",
+      "regions": 75
+    },
+    {
+      "id": "BH",
+      "name": "Bahrain",
+      "file": "BH",
+      "country": "BH",
+      "regions": 5
+    },
+    {
+      "id": "BD",
+      "name": "Bangladesh",
+      "file": "BD",
+      "country": "BD",
+      "regions": 7
+    },
+    {
+      "id": "BB",
+      "name": "Barbados",
+      "file": "BB",
+      "country": "BB",
+      "regions": 11
+    },
+    {
+      "id": "BY",
+      "name": "Belarus",
+      "file": "BY",
+      "country": "BY",
+      "regions": 7
+    },
+    {
+      "id": "BE",
+      "name": "Belgium",
+      "file": "BE",
+      "country": "BE",
+      "regions": 11
+    },
+    {
+      "id": "BZ",
+      "name": "Belize",
+      "file": "BZ",
+      "country": "BZ",
+      "regions": 6
+    },
+    {
+      "id": "BJ",
+      "name": "Benin",
+      "file": "BJ",
+      "country": "BJ",
+      "regions": 12
+    },
+    {
+      "id": "BM",
+      "name": "Bermuda",
+      "file": "BM",
+      "country": "BM",
+      "regions": 11
+    },
+    {
+      "id": "BT",
+      "name": "Bhutan",
+      "file": "BT",
+      "country": "BT",
+      "regions": 20
+    },
+    {
+      "id": "BO",
+      "name": "Bolivia",
+      "file": "BO",
+      "country": "BO",
+      "regions": 9
+    },
+    {
+      "id": "BA",
+      "name": "Bosnia and Herzegovina",
+      "file": "BA",
+      "country": "BA",
+      "regions": 10
+    },
+    {
+      "id": "BW",
+      "name": "Botswana",
+      "file": "BW",
+      "country": "BW",
+      "regions": 15
+    },
+    {
+      "id": "BR",
+      "name": "Brazil",
+      "file": "BR",
+      "country": "BR",
+      "regions": 27
+    },
+    {
+      "id": "IO",
+      "name": "British Indian Ocean Territory",
+      "file": "IO",
+      "country": "IO",
+      "regions": 1
+    },
+    {
+      "id": "VG",
+      "name": "British Virgin Islands",
+      "file": "VG",
+      "country": "VG",
+      "regions": 1
+    },
+    {
+      "id": "BN",
+      "name": "Brunei",
+      "file": "BN",
+      "country": "BN",
+      "regions": 4
+    },
+    {
+      "id": "BG",
+      "name": "Bulgaria",
+      "file": "BG",
+      "country": "BG",
+      "regions": 28
+    },
+    {
+      "id": "BF",
+      "name": "Burkina Faso",
+      "file": "BF",
+      "country": "BF",
+      "regions": 45
+    },
+    {
+      "id": "BI",
+      "name": "Burundi",
+      "file": "BI",
+      "country": "BI",
+      "regions": 17
+    },
+    {
+      "id": "KH",
+      "name": "Cambodia",
+      "file": "KH",
+      "country": "KH",
+      "regions": 24
+    },
+    {
+      "id": "CM",
+      "name": "Cameroon",
+      "file": "CM",
+      "country": "CM",
+      "regions": 10
+    },
+    {
+      "id": "CA",
+      "name": "Canada",
+      "file": "CA",
+      "country": "CA",
+      "regions": 13
+    },
+    {
+      "id": "CV",
+      "name": "Cape Verde",
+      "file": "CV",
+      "country": "CV",
+      "regions": 22
+    },
+    {
+      "id": "KY",
+      "name": "Cayman Islands",
+      "file": "KY",
+      "country": "KY",
+      "regions": 1
+    },
+    {
+      "id": "CF",
+      "name": "Central African Republic",
+      "file": "CF",
+      "country": "CF",
+      "regions": 17
+    },
+    {
+      "id": "TD",
+      "name": "Chad",
+      "file": "TD",
+      "country": "TD",
+      "regions": 22
+    },
+    {
+      "id": "CL",
+      "name": "Chile",
+      "file": "CL",
+      "country": "CL",
+      "regions": 16
+    },
+    {
+      "id": "CN",
+      "name": "China",
+      "file": "CN",
+      "country": "CN",
+      "regions": 32
+    },
+    {
+      "id": "CO",
+      "name": "Colombia",
+      "file": "CO",
+      "country": "CO",
+      "regions": 33
+    },
+    {
+      "id": "KM",
+      "name": "Comoros",
+      "file": "KM",
+      "country": "KM",
+      "regions": 3
+    },
+    {
+      "id": "CK",
+      "name": "Cook Islands",
+      "file": "CK",
+      "country": "CK",
+      "regions": 11
+    },
+    {
+      "id": "CR",
+      "name": "Costa Rica",
+      "file": "CR",
+      "country": "CR",
+      "regions": 7
+    },
+    {
+      "id": "HR",
+      "name": "Croatia",
+      "file": "HR",
+      "country": "HR",
+      "regions": 20
+    },
+    {
+      "id": "CU",
+      "name": "Cuba",
+      "file": "CU",
+      "country": "CU",
+      "regions": 16
+    },
+    {
+      "id": "CW",
+      "name": "Curaçao",
+      "file": "CW",
+      "country": "CW",
+      "regions": 1
+    },
+    {
+      "id": "CY",
+      "name": "Cyprus",
+      "file": "CY",
+      "country": "CY",
+      "regions": 5
+    },
+    {
+      "id": "CZ",
+      "name": "Czech Republic",
+      "file": "CZ",
+      "country": "CZ",
+      "regions": 14
+    },
+    {
+      "id": "CD",
+      "name": "Democratic Republic of the Congo",
+      "file": "CD",
+      "country": "CD",
+      "regions": 11
+    },
+    {
+      "id": "DK",
+      "name": "Denmark",
+      "file": "DK",
+      "country": "DK",
+      "regions": 5
+    },
+    {
+      "id": "DJ",
+      "name": "Djibouti",
+      "file": "DJ",
+      "country": "DJ",
+      "regions": 6
+    },
+    {
+      "id": "DM",
+      "name": "Dominica",
+      "file": "DM",
+      "country": "DM",
+      "regions": 10
+    },
+    {
+      "id": "DO",
+      "name": "Dominican Republic",
+      "file": "DO",
+      "country": "DO",
+      "regions": 32
+    },
+    {
+      "id": "TL",
+      "name": "East Timor",
+      "file": "TL",
+      "country": "TL",
+      "regions": 13
+    },
+    {
+      "id": "EC",
+      "name": "Ecuador",
+      "file": "EC",
+      "country": "EC",
+      "regions": 24
+    },
+    {
+      "id": "EG",
+      "name": "Egypt",
+      "file": "EG",
+      "country": "EG",
+      "regions": 27
+    },
+    {
+      "id": "SV",
+      "name": "El Salvador",
+      "file": "SV",
+      "country": "SV",
+      "regions": 14
+    },
+    {
+      "id": "GQ",
+      "name": "Equatorial Guinea",
+      "file": "GQ",
+      "country": "GQ",
+      "regions": 7
+    },
+    {
+      "id": "ER",
+      "name": "Eritrea",
+      "file": "ER",
+      "country": "ER",
+      "regions": 6
+    },
+    {
+      "id": "EE",
+      "name": "Estonia",
+      "file": "EE",
+      "country": "EE",
+      "regions": 15
+    },
+    {
+      "id": "ET",
+      "name": "Ethiopia",
+      "file": "ET",
+      "country": "ET",
+      "regions": 11
+    },
+    {
+      "id": "FK",
+      "name": "Falkland Islands",
+      "file": "FK",
+      "country": "FK",
+      "regions": 1
+    },
+    {
+      "id": "FO",
+      "name": "Faroe Islands",
+      "file": "FO",
+      "country": "FO",
+      "regions": 1
+    },
+    {
+      "id": "FM",
+      "name": "Federated States of Micronesia",
+      "file": "FM",
+      "country": "FM",
+      "regions": 4
+    },
+    {
+      "id": "FJ",
+      "name": "Fiji",
+      "file": "FJ",
+      "country": "FJ",
+      "wrap": "east",
+      "regions": 5
+    },
+    {
+      "id": "FI",
+      "name": "Finland",
+      "file": "FI",
+      "country": "FI",
+      "regions": 18
+    },
+    {
+      "id": "FR",
+      "name": "France",
+      "file": "FR",
+      "country": "FR",
+      "regions": 101
+    },
+    {
+      "id": "PF",
+      "name": "French Polynesia",
+      "file": "PF",
+      "country": "PF",
+      "regions": 5
+    },
+    {
+      "id": "TF",
+      "name": "French Southern and Antarctic Lands",
+      "file": "TF",
+      "country": "TF",
+      "regions": 4
+    },
+    {
+      "id": "GA",
+      "name": "Gabon",
+      "file": "GA",
+      "country": "GA",
+      "regions": 9
+    },
+    {
+      "id": "GM",
+      "name": "Gambia",
+      "file": "GM",
+      "country": "GM",
+      "regions": 6
+    },
+    {
+      "id": "PS",
+      "name": "Gaza Strip",
+      "file": "PS",
+      "country": "PS",
+      "regions": 2
+    },
+    {
+      "id": "GE",
+      "name": "Georgia",
+      "file": "GE",
+      "country": "GE",
+      "regions": 12
+    },
+    {
+      "id": "DE",
+      "name": "Germany",
+      "file": "DE",
+      "country": "DE",
+      "regions": 16
+    },
+    {
+      "id": "GH",
+      "name": "Ghana",
+      "file": "GH",
+      "country": "GH",
+      "regions": 10
+    },
+    {
+      "id": "GI",
+      "name": "Gibraltar",
+      "file": "GI",
+      "country": "GI",
+      "regions": 1
+    },
+    {
+      "id": "GR",
+      "name": "Greece",
+      "file": "GR",
+      "country": "GR",
+      "regions": 14
+    },
+    {
+      "id": "GL",
+      "name": "Greenland",
+      "file": "GL",
+      "country": "GL",
+      "regions": 5
+    },
+    {
+      "id": "GD",
+      "name": "Grenada",
+      "file": "GD",
+      "country": "GD",
+      "regions": 7
+    },
+    {
+      "id": "GU",
+      "name": "Guam",
+      "file": "GU",
+      "country": "GU",
+      "regions": 1
+    },
+    {
+      "id": "GT",
+      "name": "Guatemala",
+      "file": "GT",
+      "country": "GT",
+      "regions": 22
+    },
+    {
+      "id": "GG",
+      "name": "Guernsey",
+      "file": "GG",
+      "country": "GG",
+      "regions": 1
+    },
+    {
+      "id": "GN",
+      "name": "Guinea",
+      "file": "GN",
+      "country": "GN",
+      "regions": 34
+    },
+    {
+      "id": "GW",
+      "name": "Guinea Bissau",
+      "file": "GW",
+      "country": "GW",
+      "regions": 9
+    },
+    {
+      "id": "GY",
+      "name": "Guyana",
+      "file": "GY",
+      "country": "GY",
+      "regions": 10
+    },
+    {
+      "id": "HT",
+      "name": "Haiti",
+      "file": "HT",
+      "country": "HT",
+      "regions": 10
+    },
+    {
+      "id": "HM",
+      "name": "Heard Island and McDonald Islands",
+      "file": "HM",
+      "country": "HM",
+      "regions": 1
+    },
+    {
+      "id": "HN",
+      "name": "Honduras",
+      "file": "HN",
+      "country": "HN",
+      "regions": 18
+    },
+    {
+      "id": "HK",
+      "name": "Hong Kong S.A.R.",
+      "file": "HK",
+      "country": "HK",
+      "regions": 18
+    },
+    {
+      "id": "HU",
+      "name": "Hungary",
+      "file": "HU",
+      "country": "HU",
+      "regions": 43
+    },
+    {
+      "id": "IS",
+      "name": "Iceland",
+      "file": "IS",
+      "country": "IS",
+      "regions": 9
+    },
+    {
+      "id": "IN",
+      "name": "India",
+      "file": "IN",
+      "country": "IN",
+      "regions": 36
+    },
+    {
+      "id": "ID",
+      "name": "Indonesia",
+      "file": "ID",
+      "country": "ID",
+      "regions": 33
+    },
+    {
+      "id": "IR",
+      "name": "Iran",
+      "file": "IR",
+      "country": "IR",
+      "regions": 30
+    },
+    {
+      "id": "IQ",
+      "name": "Iraq",
+      "file": "IQ",
+      "country": "IQ",
+      "regions": 18
+    },
+    {
+      "id": "IE",
+      "name": "Ireland",
+      "file": "IE",
+      "country": "IE",
+      "regions": 26
+    },
+    {
+      "id": "IM",
+      "name": "Isle of Man",
+      "file": "IM",
+      "country": "IM",
+      "regions": 1
+    },
+    {
+      "id": "IL",
+      "name": "Israel",
+      "file": "IL",
+      "country": "IL",
+      "regions": 6
+    },
+    {
+      "id": "IT",
+      "name": "Italy",
+      "file": "IT",
+      "country": "IT",
+      "regions": 110
+    },
+    {
+      "id": "CI",
+      "name": "Ivory Coast",
+      "file": "CI",
+      "country": "CI",
+      "regions": 19
+    },
+    {
+      "id": "JM",
+      "name": "Jamaica",
+      "file": "JM",
+      "country": "JM",
+      "regions": 14
+    },
+    {
+      "id": "JP",
+      "name": "Japan",
+      "file": "JP",
+      "country": "JP",
+      "regions": 47
+    },
+    {
+      "id": "JE",
+      "name": "Jersey",
+      "file": "JE",
+      "country": "JE",
+      "regions": 1
+    },
+    {
+      "id": "JO",
+      "name": "Jordan",
+      "file": "JO",
+      "country": "JO",
+      "regions": 12
+    },
+    {
+      "id": "KZ",
+      "name": "Kazakhstan",
+      "file": "KZ",
+      "country": "KZ",
+      "regions": 15
+    },
+    {
+      "id": "KE",
+      "name": "Kenya",
+      "file": "KE",
+      "country": "KE",
+      "regions": 8
+    },
+    {
+      "id": "KI",
+      "name": "Kiribati",
+      "file": "KI",
+      "country": "KI",
+      "wrap": "east",
+      "regions": 2
+    },
+    {
+      "id": "XK",
+      "name": "Kosovo",
+      "file": "XK",
+      "country": "XK",
+      "regions": 30
+    },
+    {
+      "id": "KW",
+      "name": "Kuwait",
+      "file": "KW",
+      "country": "KW",
+      "regions": 6
+    },
+    {
+      "id": "KG",
+      "name": "Kyrgyzstan",
+      "file": "KG",
+      "country": "KG",
+      "regions": 8
+    },
+    {
+      "id": "LA",
+      "name": "Laos",
+      "file": "LA",
+      "country": "LA",
+      "regions": 16
+    },
+    {
+      "id": "LV",
+      "name": "Latvia",
+      "file": "LV",
+      "country": "LV",
+      "regions": 114
+    },
+    {
+      "id": "LB",
+      "name": "Lebanon",
+      "file": "LB",
+      "country": "LB",
+      "regions": 6
+    },
+    {
+      "id": "LS",
+      "name": "Lesotho",
+      "file": "LS",
+      "country": "LS",
+      "regions": 10
+    },
+    {
+      "id": "LR",
+      "name": "Liberia",
+      "file": "LR",
+      "country": "LR",
+      "regions": 15
+    },
+    {
+      "id": "LY",
+      "name": "Libya",
+      "file": "LY",
+      "country": "LY",
+      "regions": 22
+    },
+    {
+      "id": "LI",
+      "name": "Liechtenstein",
+      "file": "LI",
+      "country": "LI",
+      "regions": 11
+    },
+    {
+      "id": "LT",
+      "name": "Lithuania",
+      "file": "LT",
+      "country": "LT",
+      "regions": 10
+    },
+    {
+      "id": "LU",
+      "name": "Luxembourg",
+      "file": "LU",
+      "country": "LU",
+      "regions": 3
+    },
+    {
+      "id": "MO",
+      "name": "Macau S.A.R",
+      "file": "MO",
+      "country": "MO",
+      "regions": 1
+    },
+    {
+      "id": "MK",
+      "name": "Macedonia",
+      "file": "MK",
+      "country": "MK",
+      "regions": 84
+    },
+    {
+      "id": "MG",
+      "name": "Madagascar",
+      "file": "MG",
+      "country": "MG",
+      "regions": 6
+    },
+    {
+      "id": "MW",
+      "name": "Malawi",
+      "file": "MW",
+      "country": "MW",
+      "regions": 27
+    },
+    {
+      "id": "MY",
+      "name": "Malaysia",
+      "file": "MY",
+      "country": "MY",
+      "regions": 16
+    },
+    {
+      "id": "MV",
+      "name": "Maldives",
+      "file": "MV",
+      "country": "MV",
+      "regions": 20
+    },
+    {
+      "id": "ML",
+      "name": "Mali",
+      "file": "ML",
+      "country": "ML",
+      "regions": 9
+    },
+    {
+      "id": "MT",
+      "name": "Malta",
+      "file": "MT",
+      "country": "MT",
+      "regions": 68
+    },
+    {
+      "id": "MH",
+      "name": "Marshall Islands",
+      "file": "MH",
+      "country": "MH",
+      "regions": 2
+    },
+    {
+      "id": "MR",
+      "name": "Mauritania",
+      "file": "MR",
+      "country": "MR",
+      "regions": 13
+    },
+    {
+      "id": "MU",
+      "name": "Mauritius",
+      "file": "MU",
+      "country": "MU",
+      "regions": 15
+    },
+    {
+      "id": "MX",
+      "name": "Mexico",
+      "file": "MX",
+      "country": "MX",
+      "regions": 33
+    },
+    {
+      "id": "MD",
+      "name": "Moldova",
+      "file": "MD",
+      "country": "MD",
+      "regions": 38
+    },
+    {
+      "id": "MC",
+      "name": "Monaco",
+      "file": "MC",
+      "country": "MC",
+      "regions": 1
+    },
+    {
+      "id": "MN",
+      "name": "Mongolia",
+      "file": "MN",
+      "country": "MN",
+      "regions": 22
+    },
+    {
+      "id": "ME",
+      "name": "Montenegro",
+      "file": "ME",
+      "country": "ME",
+      "regions": 21
+    },
+    {
+      "id": "MS",
+      "name": "Montserrat",
+      "file": "MS",
+      "country": "MS",
+      "regions": 3
+    },
+    {
+      "id": "MA",
+      "name": "Morocco",
+      "file": "MA",
+      "country": "MA",
+      "regions": 16
+    },
+    {
+      "id": "MZ",
+      "name": "Mozambique",
+      "file": "MZ",
+      "country": "MZ",
+      "regions": 10
+    },
+    {
+      "id": "MM",
+      "name": "Myanmar",
+      "file": "MM",
+      "country": "MM",
+      "regions": 14
+    },
+    {
+      "id": "NA",
+      "name": "Namibia",
+      "file": "NA",
+      "country": "NA",
+      "regions": 13
+    },
+    {
+      "id": "NR",
+      "name": "Nauru",
+      "file": "NR",
+      "country": "NR",
+      "regions": 14
+    },
+    {
+      "id": "NP",
+      "name": "Nepal",
+      "file": "NP",
+      "country": "NP",
+      "regions": 14
+    },
+    {
+      "id": "NL",
+      "name": "Netherlands",
+      "file": "NL",
+      "country": "NL",
+      "regions": 15
+    },
+    {
+      "id": "NC",
+      "name": "New Caledonia",
+      "file": "NC",
+      "country": "NC",
+      "regions": 3
+    },
+    {
+      "id": "NZ",
+      "name": "New Zealand",
+      "file": "NZ",
+      "country": "NZ",
+      "wrap": "east",
+      "regions": 24
+    },
+    {
+      "id": "NI",
+      "name": "Nicaragua",
+      "file": "NI",
+      "country": "NI",
+      "regions": 17
+    },
+    {
+      "id": "NE",
+      "name": "Niger",
+      "file": "NE",
+      "country": "NE",
+      "regions": 8
+    },
+    {
+      "id": "NG",
+      "name": "Nigeria",
+      "file": "NG",
+      "country": "NG",
+      "regions": 37
+    },
+    {
+      "id": "NU",
+      "name": "Niue",
+      "file": "NU",
+      "country": "NU",
+      "regions": 1
+    },
+    {
+      "id": "NF",
+      "name": "Norfolk Island",
+      "file": "NF",
+      "country": "NF",
+      "regions": 1
+    },
+    {
+      "id": "KP",
+      "name": "North Korea",
+      "file": "KP",
+      "country": "KP",
+      "regions": 11
+    },
+    {
+      "id": "CYN",
+      "name": "Northern Cyprus",
+      "file": "CYN",
+      "country": "CYN",
+      "regions": 1
+    },
+    {
+      "id": "MP",
+      "name": "Northern Mariana Islands",
+      "file": "MP",
+      "country": "MP",
+      "regions": 4
+    },
+    {
+      "id": "NO",
+      "name": "Norway",
+      "file": "NO",
+      "country": "NO",
+      "regions": 21
+    },
+    {
+      "id": "OM",
+      "name": "Oman",
+      "file": "OM",
+      "country": "OM",
+      "regions": 11
+    },
+    {
+      "id": "PK",
+      "name": "Pakistan",
+      "file": "PK",
+      "country": "PK",
+      "regions": 8
+    },
+    {
+      "id": "PW",
+      "name": "Palau",
+      "file": "PW",
+      "country": "PW",
+      "regions": 16
+    },
+    {
+      "id": "PA",
+      "name": "Panama",
+      "file": "PA",
+      "country": "PA",
+      "regions": 12
+    },
+    {
+      "id": "PG",
+      "name": "Papua New Guinea",
+      "file": "PG",
+      "country": "PG",
+      "regions": 20
+    },
+    {
+      "id": "PY",
+      "name": "Paraguay",
+      "file": "PY",
+      "country": "PY",
+      "regions": 18
+    },
+    {
+      "id": "PE",
+      "name": "Peru",
+      "file": "PE",
+      "country": "PE",
+      "regions": 25
+    },
+    {
+      "id": "PH",
+      "name": "Philippines",
+      "file": "PH",
+      "country": "PH",
+      "regions": 83
+    },
+    {
+      "id": "PN",
+      "name": "Pitcairn Islands",
+      "file": "PN",
+      "country": "PN",
+      "regions": 1
+    },
+    {
+      "id": "PL",
+      "name": "Poland",
+      "file": "PL",
+      "country": "PL",
+      "regions": 16
+    },
+    {
+      "id": "PT",
+      "name": "Portugal",
+      "file": "PT",
+      "country": "PT",
+      "regions": 20
+    },
+    {
+      "id": "PR",
+      "name": "Puerto Rico",
+      "file": "PR",
+      "country": "PR",
+      "regions": 1
+    },
+    {
+      "id": "QA",
+      "name": "Qatar",
+      "file": "QA",
+      "country": "QA",
+      "regions": 7
+    },
+    {
+      "id": "RS",
+      "name": "Republic of Serbia",
+      "file": "RS",
+      "country": "RS",
+      "regions": 25
+    },
+    {
+      "id": "CG",
+      "name": "Republic of the Congo",
+      "file": "CG",
+      "country": "CG",
+      "regions": 12
+    },
+    {
+      "id": "RO",
+      "name": "Romania",
+      "file": "RO",
+      "country": "RO",
+      "regions": 42
+    },
+    {
+      "id": "RU",
+      "name": "Russia",
+      "file": "RU",
+      "country": "RU",
+      "wrap": "east",
+      "regions": 86
+    },
+    {
+      "id": "RW",
+      "name": "Rwanda",
+      "file": "RW",
+      "country": "RW",
+      "regions": 5
+    },
+    {
+      "id": "SS",
+      "name": "S. Sudan",
+      "file": "SS",
+      "country": "SS",
+      "regions": 10
+    },
+    {
+      "id": "BL",
+      "name": "Saint Barthelemy",
+      "file": "BL",
+      "country": "BL",
+      "regions": 1
+    },
+    {
+      "id": "SH",
+      "name": "Saint Helena",
+      "file": "SH",
+      "country": "SH",
+      "regions": 3
+    },
+    {
+      "id": "KN",
+      "name": "Saint Kitts and Nevis",
+      "file": "KN",
+      "country": "KN",
+      "regions": 14
+    },
+    {
+      "id": "LC",
+      "name": "Saint Lucia",
+      "file": "LC",
+      "country": "LC",
+      "regions": 11
+    },
+    {
+      "id": "MF",
+      "name": "Saint Martin",
+      "file": "MF",
+      "country": "MF",
+      "regions": 1
+    },
+    {
+      "id": "PM",
+      "name": "Saint Pierre and Miquelon",
+      "file": "PM",
+      "country": "PM",
+      "regions": 2
+    },
+    {
+      "id": "VC",
+      "name": "Saint Vincent and the Grenadines",
+      "file": "VC",
+      "country": "VC",
+      "regions": 6
+    },
+    {
+      "id": "WS",
+      "name": "Samoa",
+      "file": "WS",
+      "country": "WS",
+      "regions": 11
+    },
+    {
+      "id": "SM",
+      "name": "San Marino",
+      "file": "SM",
+      "country": "SM",
+      "regions": 9
+    },
+    {
+      "id": "ST",
+      "name": "Sao Tome and Principe",
+      "file": "ST",
+      "country": "ST",
+      "regions": 2
+    },
+    {
+      "id": "SA",
+      "name": "Saudi Arabia",
+      "file": "SA",
+      "country": "SA",
+      "regions": 13
+    },
+    {
+      "id": "SN",
+      "name": "Senegal",
+      "file": "SN",
+      "country": "SN",
+      "regions": 14
+    },
+    {
+      "id": "SC",
+      "name": "Seychelles",
+      "file": "SC",
+      "country": "SC",
+      "regions": 26
+    },
+    {
+      "id": "KAS",
+      "name": "Siachen Glacier",
+      "file": "KAS",
+      "country": "KAS",
+      "regions": 1
+    },
+    {
+      "id": "SL",
+      "name": "Sierra Leone",
+      "file": "SL",
+      "country": "SL",
+      "regions": 4
+    },
+    {
+      "id": "SG",
+      "name": "Singapore",
+      "file": "SG",
+      "country": "SG",
+      "regions": 5
+    },
+    {
+      "id": "SX",
+      "name": "Sint Maarten",
+      "file": "SX",
+      "country": "SX",
+      "regions": 1
+    },
+    {
+      "id": "SK",
+      "name": "Slovakia",
+      "file": "SK",
+      "country": "SK",
+      "regions": 8
+    },
+    {
+      "id": "SI",
+      "name": "Slovenia",
+      "file": "SI",
+      "country": "SI",
+      "regions": 192
+    },
+    {
+      "id": "SB",
+      "name": "Solomon Islands",
+      "file": "SB",
+      "country": "SB",
+      "regions": 9
+    },
+    {
+      "id": "SO",
+      "name": "Somalia",
+      "file": "SO",
+      "country": "SO",
+      "regions": 13
+    },
+    {
+      "id": "SOL",
+      "name": "Somaliland",
+      "file": "SOL",
+      "country": "SOL",
+      "regions": 1
+    },
+    {
+      "id": "ZA",
+      "name": "South Africa",
+      "file": "ZA",
+      "country": "ZA",
+      "regions": 9
+    },
+    {
+      "id": "GS",
+      "name": "South Georgia and the Islands",
+      "file": "GS",
+      "country": "GS",
+      "regions": 1
+    },
+    {
+      "id": "KR",
+      "name": "South Korea",
+      "file": "KR",
+      "country": "KR",
+      "regions": 17
+    },
+    {
+      "id": "ES",
+      "name": "Spain",
+      "file": "ES",
+      "country": "ES",
+      "regions": 52
+    },
+    {
+      "id": "LK",
+      "name": "Sri Lanka",
+      "file": "LK",
+      "country": "LK",
+      "regions": 25
+    },
+    {
+      "id": "SD",
+      "name": "Sudan",
+      "file": "SD",
+      "country": "SD",
+      "regions": 16
+    },
+    {
+      "id": "SR",
+      "name": "Suriname",
+      "file": "SR",
+      "country": "SR",
+      "regions": 10
+    },
+    {
+      "id": "SZ",
+      "name": "Swaziland",
+      "file": "SZ",
+      "country": "SZ",
+      "regions": 4
+    },
+    {
+      "id": "SE",
+      "name": "Sweden",
+      "file": "SE",
+      "country": "SE",
+      "regions": 21
+    },
+    {
+      "id": "CH",
+      "name": "Switzerland",
+      "file": "CH",
+      "country": "CH",
+      "regions": 26
+    },
+    {
+      "id": "SY",
+      "name": "Syria",
+      "file": "SY",
+      "country": "SY",
+      "regions": 15
+    },
+    {
+      "id": "TW",
+      "name": "Taiwan",
+      "file": "TW",
+      "country": "TW",
+      "regions": 21
+    },
+    {
+      "id": "TJ",
+      "name": "Tajikistan",
+      "file": "TJ",
+      "country": "TJ",
+      "regions": 5
+    },
+    {
+      "id": "TH",
+      "name": "Thailand",
+      "file": "TH",
+      "country": "TH",
+      "regions": 77
+    },
+    {
+      "id": "BS",
+      "name": "The Bahamas",
+      "file": "BS",
+      "country": "BS",
+      "regions": 30
+    },
+    {
+      "id": "TG",
+      "name": "Togo",
+      "file": "TG",
+      "country": "TG",
+      "regions": 5
+    },
+    {
+      "id": "TO",
+      "name": "Tonga",
+      "file": "TO",
+      "country": "TO",
+      "regions": 5
+    },
+    {
+      "id": "TT",
+      "name": "Trinidad and Tobago",
+      "file": "TT",
+      "country": "TT",
+      "regions": 16
+    },
+    {
+      "id": "TN",
+      "name": "Tunisia",
+      "file": "TN",
+      "country": "TN",
+      "regions": 23
+    },
+    {
+      "id": "TR",
+      "name": "Turkey",
+      "file": "TR",
+      "country": "TR",
+      "regions": 81
+    },
+    {
+      "id": "TM",
+      "name": "Turkmenistan",
+      "file": "TM",
+      "country": "TM",
+      "regions": 5
+    },
+    {
+      "id": "TC",
+      "name": "Turks and Caicos Islands",
+      "file": "TC",
+      "country": "TC",
+      "regions": 6
+    },
+    {
+      "id": "TV",
+      "name": "Tuvalu",
+      "file": "TV",
+      "country": "TV",
+      "regions": 1
+    },
+    {
+      "id": "UG",
+      "name": "Uganda",
+      "file": "UG",
+      "country": "UG",
+      "regions": 111
+    },
+    {
+      "id": "UA",
+      "name": "Ukraine",
+      "file": "UA",
+      "country": "UA",
+      "regions": 25
+    },
+    {
+      "id": "AE",
+      "name": "United Arab Emirates",
+      "file": "AE",
+      "country": "AE",
+      "regions": 9
+    },
+    {
+      "id": "GB",
+      "name": "United Kingdom",
+      "file": "GB",
+      "country": "GB",
+      "regions": 232
+    },
+    {
+      "id": "TZ",
+      "name": "United Republic of Tanzania",
+      "file": "TZ",
+      "country": "TZ",
+      "regions": 30
+    },
+    {
+      "id": "UM",
+      "name": "United States Minor Outlying Islands",
+      "file": "UM",
+      "country": "UM",
+      "wrap": "west",
+      "regions": 8
+    },
+    {
+      "id": "US",
+      "name": "United States of America",
+      "file": "US",
+      "country": "US",
+      "wrap": "west",
+      "regions": 51
+    },
+    {
+      "id": "VI",
+      "name": "United States Virgin Islands",
+      "file": "VI",
+      "country": "VI",
+      "regions": 3
+    },
+    {
+      "id": "UY",
+      "name": "Uruguay",
+      "file": "UY",
+      "country": "UY",
+      "regions": 19
+    },
+    {
+      "id": "UZ",
+      "name": "Uzbekistan",
+      "file": "UZ",
+      "country": "UZ",
+      "regions": 14
+    },
+    {
+      "id": "VU",
+      "name": "Vanuatu",
+      "file": "VU",
+      "country": "VU",
+      "regions": 6
+    },
+    {
+      "id": "VA",
+      "name": "Vatican",
+      "file": "VA",
+      "country": "VA",
+      "regions": 1
+    },
+    {
+      "id": "VE",
+      "name": "Venezuela",
+      "file": "VE",
+      "country": "VE",
+      "regions": 26
+    },
+    {
+      "id": "VN",
+      "name": "Vietnam",
+      "file": "VN",
+      "country": "VN",
+      "regions": 63
+    },
+    {
+      "id": "WF",
+      "name": "Wallis and Futuna",
+      "file": "WF",
+      "country": "WF",
+      "regions": 3
+    },
+    {
+      "id": "EH",
+      "name": "Western Sahara",
+      "file": "EH",
+      "country": "EH",
+      "regions": 1
+    },
+    {
+      "id": "YE",
+      "name": "Yemen",
+      "file": "YE",
+      "country": "YE",
+      "regions": 21
+    },
+    {
+      "id": "ZM",
+      "name": "Zambia",
+      "file": "ZM",
+      "country": "ZM",
+      "regions": 10
+    },
+    {
+      "id": "ZW",
+      "name": "Zimbabwe",
+      "file": "ZW",
+      "country": "ZW",
+      "regions": 10
+    }
+  ]
+}

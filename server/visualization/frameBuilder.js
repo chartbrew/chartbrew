@@ -1,4 +1,5 @@
 const { aggregateRows } = require("./aggregate");
+const { projectMapRows } = require("./geo");
 const { getFieldValue, selectRows } = require("./fieldPath");
 const { getMarkDefinition, getSlotDefinition } = require("./registry");
 const { createSeriesId, getSeriesLabel, serializeTypedValue } = require("./seriesIdentity");
@@ -206,7 +207,10 @@ function buildLayerFrame(layer, data, options = {}) {
     };
   }
 
-  const projection = projectRows(filteredRows, layer, markDefinition, options);
+  const projection = layer.mark === "map"
+    ? projectMapRows(filteredRows, layer)
+    : projectRows(filteredRows, layer, markDefinition, options);
+  warnings.push(...(projection.warnings || []));
   let outputRows = aggregateRows(
     projection.projected,
     projection.dimensionRoles,

@@ -66,6 +66,7 @@ export function getVisualizationTimeField(visualization, bindingId) {
 }
 
 export function getLayerFieldRequirements(mark) {
+  if (mark === "map") return { map: true, value: true };
   if (mark === "table") return { collection: true };
   if (mark === "matrix") return { dimension: true, value: true };
   if (METRIC_MARKS.has(mark)) return { value: true };
@@ -78,6 +79,14 @@ export function getLayerFieldRequirements(mark) {
 export function isVisualizationReady(visualization) {
   if (!visualization?.layers?.length) return false;
   return visualization.layers.every((layer) => {
+    if (layer.mark === "map") {
+      if (visualization.layers.length !== 1) return false;
+      if (layer.options?.map?.mode === "points") {
+        return Boolean(layer.encoding?.point?.field
+          || (layer.encoding?.latitude?.field && layer.encoding?.longitude?.field));
+      }
+      return Boolean(layer.encoding?.location?.field);
+    }
     const requirements = getLayerFieldRequirements(layer.mark);
     if (requirements.collection) return Boolean(layer.rowPath);
     if (requirements.dimension && !layer.encoding?.time && !layer.encoding?.category) return false;
@@ -110,6 +119,29 @@ export function updateVisualizationLayer(visualization, layerId, updater) {
   return nextVisualization;
 }
 
+export function updateLayerMap(visualization, layerId, changes) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => {
+    const encoding = { ...layer.encoding };
+    if (changes.mode) {
+      delete encoding.location;
+      delete encoding.latitude;
+      delete encoding.longitude;
+      delete encoding.point;
+    }
+    if (changes.coordinates === "geojson") {
+      delete encoding.latitude;
+      delete encoding.longitude;
+    } else if (changes.coordinates === "fields") {
+      delete encoding.point;
+    }
+    return {
+      ...layer,
+      encoding,
+      options: { ...layer.options, map: { ...layer.options?.map, ...changes } },
+    };
+  });
+}
+
 function cloneEncoding(encoding = {}) {
   return Object.entries(encoding).reduce((copy, [role, definition]) => {
     copy[role] = Array.isArray(definition)
@@ -132,6 +164,13 @@ function getEncodingForMark(layer, mark, markState) {
 
   const candidates = getEncodingCandidates(layer, markState);
   if (mark === "table" || mark === "markdown") return {};
+  if (mark === "map") {
+    const source = candidates.find((encoding) => encoding.location || encoding.category) || candidates[0];
+    return {
+      ...(source.location || source.category ? { location: { ...(source.location || source.category), type: "nominal" } } : {}),
+      ...(source.value ? { value: { ...source.value } } : {}),
+    };
+  }
   if (METRIC_MARKS.has(mark)) {
     const source = candidates.find((encoding) => encoding.value) || {};
     return source.value ? {

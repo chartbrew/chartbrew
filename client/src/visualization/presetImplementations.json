@@ -11,5 +11,6 @@
   "kpi": "native-metric",
   "avg": "native-metric",
   "table": "native-table",
-  "markdown": "native-markdown"
+  "markdown": "native-markdown",
+  "map": "echarts"
 }

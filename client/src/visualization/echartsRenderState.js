@@ -10,6 +10,7 @@ function getAxis(option, name) {
 
 export function getEChartsPreset(option) {
   const series = getSeries(option);
+  if (series.some((item) => item.type === "map" || item.coordinateSystem === "geo")) return "map";
   if (series.some((item) => item.type === "gauge")) return "gauge";
   if (series.some((item) => item.type === "radar")) return "radar";
   if (series.some((item) => item.coordinateSystem === "polar")) return "polar";

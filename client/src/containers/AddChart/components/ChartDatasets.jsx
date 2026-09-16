@@ -178,7 +178,7 @@ function ChartDatasets(props) {
             </Button>
           )}
 
-          {datasets.length > 0 && chart?.ChartDatasetConfigs.length > 0 && (
+          {datasets.length > 0 && chart?.ChartDatasetConfigs.length > 0 && chart.type !== "map" && (
             <Button
               isIconOnly={addMode}
               variant="tertiary"

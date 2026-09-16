@@ -550,6 +550,15 @@ describe("orchestrator Responses API adapters", () => {
       expect(encodingSchema.properties).toHaveProperty("time");
       expect(encodingSchema.properties).toHaveProperty("category");
       expect(encodingSchema.properties).toHaveProperty("value");
+      for (const role of ["location", "latitude", "longitude", "point"]) {
+        expect(encodingSchema.properties).toHaveProperty(role);
+      }
+      expect(tool.parameters.properties.type.enum).toContain("map");
+      const layerSchema = tool.parameters.properties.visualization.properties.layers.items.properties;
+      expect(layerSchema.mark.enum).toContain("map");
+      expect(layerSchema.options.properties.map.properties.area.enum).toEqual(
+        require("../../../shared/geo/manifest.json").maps.map((map) => map.id)
+      );
       expect(encodingSchema.properties).not.toHaveProperty("x");
       expect(encodingSchema.properties).not.toHaveProperty("y");
       expect(layerEncodingSchema).toBe(encodingSchema);

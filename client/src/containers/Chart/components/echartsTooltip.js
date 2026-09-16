@@ -216,10 +216,14 @@ export function createEChartsTooltipFormatter(colors, { category = false, compac
   return (input) => {
     const params = (Array.isArray(input) ? input : [input])
       .filter(Boolean)
-      .filter((param) => param.seriesType === "pie" || hasTooltipValue(param));
+      .filter((param) => param.seriesType === "pie" || param.seriesType === "map" || hasTooltipValue(param));
     if (params.length === 0) return "";
 
     const first = params[0];
+    if (first.seriesType === "map" || first.data?.locationLabel !== undefined) {
+      return heading(first.data?.locationLabel || first.name, colors.text)
+        + row(first.seriesName || "Value", first.data?.formattedValue || "No data", first.color, colors.text, colors.muted);
+    }
     if (first.seriesType === "pie" && `${first.seriesId || ""}`.endsWith("-ranges")) {
       return heading(first.name, colors.text);
     }

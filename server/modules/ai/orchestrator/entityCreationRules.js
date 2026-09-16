@@ -20,6 +20,17 @@ function buildSupportedConnectionText() {
     .join("\n");
 }
 
+const MAP_CHART_RULES = `**Maps:**
+- Use type=map and a complete visualization with one layer, mark=map, one dataset, and at most one value. Put map settings in visualization.layers[0].options.map. Use the same structure to update maps; preserve the existing layer id and bindingId.
+- Set map.mode=regions for filled regions. Bind encoding.location to country names or codes for world/continent maps, or subdivision names/full codes for country maps.
+- Set map.mode=points for coordinates. Use encoding.latitude and encoding.longitude with map.coordinates=fields, or encoding.point with type=record and map.coordinates=geojson. Never send both coordinate formats.
+- GeoJSON Point and Feature objects with Point geometry are supported. Select the whole nested object. GeoJSON coordinate order is longitude, latitude. Separate coordinate fields use decimal degrees.
+- Inspect actual dataset fields and preserve nested paths, including the row collection. Do not flatten GeoJSON coordinates into rows. Do not infer coordinates from addresses, IP addresses, or city names; these need prepared geographic data.
+- Set map.area to world, a continent slug, or an available country code from the tool schema. Country maps show states, provinces, or local areas; coverage varies. GB is the UK. Europe includes non-EU countries; filter country data when the user asks for EU members.
+- Bind encoding.value with the requested aggregation, or omit it to count rows per location. Do not add breakdowns, extra layers, or cumulative time transforms. Use mode=chart; do not use AddTimeseries.
+- Map colors use layer.style.fillColor for low values and layer.style.color for high values. Show or hide the color legend with visualization.settings.legend.visible.
+- Unmatched region names and invalid coordinates are excluded with warnings. Prefer full region codes when names are ambiguous. Do not claim all locations were matched without checking the result.`;
+
 const ENTITY_CREATION_RULES = `## Entity Creation Rules
 
 **Dataset:**
@@ -49,7 +60,7 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - Set draft=false. Chartbrew appends charts in report order and sets their layout; do not supply dashboardOrder or layout coordinates.
 - name: string - chart name/title (optional)
 - legend: string - short legend for data points (separate from chart name, max 20-30 chars)
-- type: string - line|bar|pie|doughnut|radar|polar|table|kpi|avg|gauge|matrix
+- type: string - line|bar|horizontalBar|pie|doughnut|radar|polar|table|kpi|avg|gauge|matrix|map
 - subType: string - "AddTimeseries" for KPI totals and cumulative charts
 - chartSize: integer - 1-4 (size: small to full-width) (default: 2)
 - displayLegend: boolean - show legend (default: true)
@@ -68,9 +79,11 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 - ranges: array - gauge ranges [{min, max, label, color}] (optional)
 - Placement is automatic. Manual layout changes use the dashboard layout editor.
 
+${MAP_CHART_RULES}
+
 **Visualization and ChartDatasetConfig:**
 - Required ChartDatasetConfig fields: chart_id, dataset_id. The CDC binds reusable data to the chart; it does not own visual series.
-- Prefer canonical visualization.encoding roles: category or time, value, and optional breakdown. Use a complete visualization specification for multiple values/layers.
+- Prefer semantic encoding roles for the selected chart type: category or time, value, and optional breakdown for ordinary charts; geographic roles for maps. Use a complete visualization specification for maps or multiple values/layers.
 - Put goals on the intended canonical value layer. Never copy one CDC goal to every value or generated series.
 - Legacy xAxis/yAxis arguments remain accepted for compatibility, but new chart plans should send encoding or visualization.
 - Set the CDC legend (short and concise), order=1, and datasetColor="#4285F4" for compatibility metadata.
@@ -98,7 +111,7 @@ Note: Sources that declare AI query generation or source-owned AI tools in the s
 
 **Sequence:**
 1. Create Dataset with DataRequest using quick-create (team_id, connection_id, name, query or configuration, draft=false, dataRequests array)
-2. Create Chart with ChartDatasetConfig and canonical visualization using quick-create. Bind visualization layers to the supplied template binding and describe fields with category/time, value, and optional breakdown encodings.
+2. Create Chart with ChartDatasetConfig and canonical visualization using quick-create. Bind visualization layers to the supplied template binding and use semantic field roles for the selected chart type.
 
 **Source-owned configuration sequence:**
 1. Use source_plan_dataset to create a DataRequest.configuration and chartSpec. Do not use generate_query or run_query for configuration-based sources.
@@ -221,7 +234,8 @@ const DEFAULTS = {
     kpi: "single value metrics",
     avg: "average value metrics",
     table: "tabular data display",
-    gauge: "indicator within a range"
+    gauge: "indicator within a range",
+    map: "geographic values by region or coordinate points"
   }
 };
 // Helper functions for future validation/enhancement
@@ -299,6 +313,7 @@ function validateEntityPayload(entityType, payload) {
 
 module.exports = {
   ENTITY_CREATION_RULES,
+  MAP_CHART_RULES,
   FIELD_SPECS,
   DEFAULTS,
   SUPPORTED_CONNECTIONS,
