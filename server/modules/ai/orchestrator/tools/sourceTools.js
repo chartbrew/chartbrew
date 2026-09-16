@@ -78,7 +78,7 @@ async function sourceGetCapabilities(payload) {
   const { connection, source } = await getScopedSource(payload);
   const tool = requireAiTool(source, "getCapabilities");
 
-  return tool({ connection });
+  return tool({ connection, question: payload.question });
 }
 
 async function sourceListResources(payload) {

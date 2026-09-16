@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { sanitizeSnippet } = require("../../../modules/updateAudit");
 
 const { MCP_AUTH_TYPES, MCP_LIMITS, MCP_RESERVED_HEADERS } = require("./mcp.constants");
 
@@ -28,6 +29,9 @@ function createMcpError(code, message, statusCode = 400, details = {}) {
   if (RECOVERY[code]) {
     const [action, safeMessage] = RECOVERY[code];
     error.recovery = { code, action, message: safeMessage };
+  }
+  if (["MCP_INVALID_ARGUMENTS", "MCP_TOOL_ERROR", "MCP_CHART_FIELDS_INVALID"].includes(code)) {
+    error.repair = { code, message: sanitizeSnippet(redactErrorSecrets(message), 1000) };
   }
   return error;
 }

@@ -97,7 +97,7 @@ function ProjectBoard() {
   }
 
   return (
-    <div className="bg-surface-secondary">
+    <div className="bg-background">
       <div
         style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
       >

@@ -1,6 +1,7 @@
 const { applyTransformation } = require("../../../dataTransformations");
 const { buildAiVisualization } = require("../../../../visualization/aiVisualization");
 const { VisualizationEngine } = require("../../../../visualization/VisualizationEngine");
+const { sanitizeSnippet } = require("../../../updateAudit");
 
 function repairSourceDatasetIntent(source, payload) {
   const repair = source.backend?.ai?.repairDatasetIntent?.({
@@ -83,17 +84,34 @@ async function repairSourceDatasetIntentAsync(source, payload) {
     return repairedPayload;
   }
 
-  const plan = await planDataset({
-    connection: payload.connection,
-    question,
-    overrides: payload.overrides || {},
-  });
+  const generateConfiguration = source.backend?.ai?.generateConfiguration;
+  let plan;
+  if (typeof generateConfiguration === "function") {
+    const generated = await generateConfiguration({
+      connection: payload.connection,
+      question,
+      currentConfiguration: configuration,
+    });
+    plan = { status: generated.status === "ready" ? "ok" : generated.status, configuration: generated.configuration };
+  } else {
+    plan = await planDataset({
+      connection: payload.connection,
+      question,
+      overrides: payload.overrides || {},
+    });
+  }
 
   if (plan?.status !== "ok") {
     const options = Array.isArray(plan?.options) && plan.options.length > 0
       ? ` Options: ${plan.options.map((option) => option.label || option.value).join(", ")}.`
       : "";
-    throw new Error(`${plan?.message || "Source configuration is incomplete."}${options}`);
+    const error = new Error(`${plan?.message || "Source configuration is incomplete."}${options}`);
+    error.recovery = plan?.recovery;
+    error.repair = {
+      requiredContext: (plan?.requiredContext || []).slice(0, 10).map((item) => sanitizeSnippet(item, 120)),
+      message: sanitizeSnippet(plan?.nextAction || plan?.errors?.join(" "), 1000),
+    };
+    throw error;
   }
 
   return {

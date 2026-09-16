@@ -22,4 +22,12 @@ function getDataRecovery(error) {
   return null;
 }
 
-module.exports = { getDataRecovery };
+// Source adapters supply capped, redacted repair details for the model, separate from UI recovery.
+function getDataRepair(error) {
+  for (let cause = error, depth = 0; cause && depth < 10; cause = cause.cause, depth += 1) {
+    if (cause.repair) return cause.repair;
+  }
+  return null;
+}
+
+module.exports = { getDataRecovery, getDataRepair };

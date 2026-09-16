@@ -3,27 +3,17 @@ const { findSourceForConnection, getSources } = require("../../../../sources");
 const { isSourceServerEnabled } = require("../../../../sources/sourceAvailability");
 const {
   sourceSupportsOrchestrator,
+  sourceUsesSourceOwnedConfiguration,
 } = require("../sourceSupport");
 const { createHttpError, getObservationAccess } = require("../../../observations/access");
 const mcpProviders = require("../../../../sources/plugins/mcp/mcp.providers");
+const { getMcpProvider } = require("../../../../sources/plugins/mcp/mcp.toolSelection");
 const { normalizeTeamId, requireProjectForTeam } = require("./teamScope");
 
 const normalizeName = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
 function matchesProvider(provider, ...names) {
   return !provider || names.some((name) => normalizeName(name) === normalizeName(provider));
-}
-
-function getMcpProvider(host) {
-  try {
-    const url = new URL(host);
-    return mcpProviders.find((entry) => {
-      const endpoint = new URL(entry.url);
-      return url.origin === endpoint.origin && url.pathname.replace(/\/$/, "") === endpoint.pathname;
-    });
-  } catch (_) {
-    return null;
-  }
 }
 
 function supportsCapability(source, capability) {
@@ -195,6 +185,8 @@ async function listConnections(payload) {
       source_id: source.id,
       source_name: source.name,
       name: connection.name,
+      discovery_tool: sourceUsesSourceOwnedConfiguration(source) ? "source_get_capabilities" : "get_schema",
+      planning_tool: sourceUsesSourceOwnedConfiguration(source) ? "source_plan_dataset" : "generate_query",
     })),
     options,
     ...(!provider && !filteredConnections.length ? {

@@ -24,11 +24,12 @@ const MAP_CHART_RULES = `**Maps:**
 - Use type=map and a complete visualization with one layer, mark=map, one dataset, and at most one value. Put map settings in visualization.layers[0].options.map. Use the same structure to update maps; preserve the existing layer id and bindingId.
 - Set map.mode=regions for filled regions. Bind encoding.location to country names or codes for world/continent maps, or subdivision names/full codes for country maps.
 - Set map.mode=points for coordinates. Use encoding.latitude and encoding.longitude with map.coordinates=fields, or encoding.point with type=record and map.coordinates=geojson. Never send both coordinate formats.
+- For point maps, bind encoding.location to an available city or place label; retain coordinates as the fallback when no label is available. For popularity maps, request source-side totals by coordinates before any row limit, then bind the returned measure with sum; do not count aggregate rows.
 - GeoJSON Point and Feature objects with Point geometry are supported. Select the whole nested object. GeoJSON coordinate order is longitude, latitude. Separate coordinate fields use decimal degrees.
 - Inspect actual dataset fields and preserve nested paths, including the row collection. Do not flatten GeoJSON coordinates into rows. Do not infer coordinates from addresses, IP addresses, or city names; these need prepared geographic data.
 - Set map.area to world, a continent slug, or an available country code from the tool schema. Country maps show states, provinces, or local areas; coverage varies. GB is the UK. Europe includes non-EU countries; filter country data when the user asks for EU members.
 - Bind encoding.value with the requested aggregation, or omit it to count rows per location. Do not add breakdowns, extra layers, or cumulative time transforms. Use mode=chart; do not use AddTimeseries.
-- Map colors use layer.style.fillColor for low values and layer.style.color for high values. Show or hide the color legend with visualization.settings.legend.visible.
+- Region map colors use layer.style.fillColor for low values and layer.style.color for high values. Point maps use layer.style.color for every point and size for magnitude. Show or hide the color legend with visualization.settings.legend.visible.
 - Unmatched region names and invalid coordinates are excluded with warnings. Prefer full region codes when names are ambiguous. Do not claim all locations were matched without checking the result.`;
 
 const ENTITY_CREATION_RULES = `## Entity Creation Rules

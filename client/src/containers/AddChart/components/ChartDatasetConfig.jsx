@@ -782,10 +782,12 @@ function ChartDatasetConfig(props) {
           <Tabs.Panel id="display">
             <div className="h-2" />
             <div className="flex flex-col gap-4">
-              {[
+              {(fillLayer?.options?.map?.mode === "points" ? [
+                { key: "color", label: "Point color", fallback: "#048BDE" },
+              ] : [
                 { key: "fillColor", label: "Low values", fallback: chart.render?.configuration?.visualMap?.inRange?.color?.[0] || (isDark ? "#173b53" : "#d9eefe") },
                 { key: "color", label: "High values", fallback: "#048BDE" },
-              ].map(({ key, label, fallback }) => (
+              ]).map(({ key, label, fallback }) => (
                 <ColorPickerControl
                   key={key}
                   ariaLabel={label}

@@ -87,7 +87,7 @@ function buildMapOption({ chart, preparedData, visualization, renderContext }) {
       text: [max, min].map((value) => `${formula.prefix}${value.toLocaleString(renderContext.locale)}${formula.suffix}`),
       itemWidth: 10, itemHeight: 100, precision: 2,
       calculable: false,
-      inRange: { color: [lowColor, color], ...(points ? { symbolSize: [6, 24] } : {}) },
+      inRange: points ? { color: [color, color], symbolSize: [6, 24] } : { color: [lowColor, color] },
       textStyle: { color: dark ? "#e4e4e7" : "#3f3f46" },
     },
     ...(points ? { geo: geography } : {}),

@@ -67,7 +67,7 @@ describe("map data and rendering", () => {
       chartEngine.chart.displayLegend = false;
       const hidden = chartEngine.render();
       expect(hidden.configuration.visualMap.show).toBe(false);
-      expect(hidden.configuration.visualMap.inRange.color).toEqual(["#ffff00", "#ff0000"]);
+      expect(hidden.configuration.visualMap.inRange.color).toEqual(mode === "points" ? ["#ff0000", "#ff0000"] : ["#ffff00", "#ff0000"]);
       expect((hidden.configuration.geo || hidden.configuration.series[0]).bottom).toBe(8);
       chartEngine.chart.visualization.settings = { legend: { visible: true } };
       expect(chartEngine.render().configuration.visualMap.show).toBe(true);
@@ -77,6 +77,23 @@ describe("map data and rendering", () => {
       const svg = image(result);
       expect(svg.includes('fill="rgb(255,0,0)"')).toBe(true);
       expect(svg.includes("<linearGradient")).toBe(false);
+    }
+  });
+
+  it("keeps small points visible with the same color and opacity as large points", () => {
+    echarts.registerMap("world", getMap("world").geoJSON);
+    const instance = echarts.init(null, null, { renderer: "svg", ssr: true, width: 800, height: 400 });
+    try {
+      instance.setOption(engine([
+        { location: { lat: 10, lon: 20 }, amount: 1 },
+        { location: { lat: 30, lon: 40 }, amount: 1000 },
+      ], points, { mode: "points" }).render().configuration);
+      const data = instance.getModel().getSeriesByIndex(0).getData();
+      expect(data.getItemVisual(0, "style")).toEqual(data.getItemVisual(1, "style"));
+      expect(data.getItemVisual(0, "symbolSize")).toBeGreaterThanOrEqual(6);
+      expect(data.getItemVisual(0, "symbolSize")).toBeLessThan(data.getItemVisual(1, "symbolSize"));
+    } finally {
+      instance.dispose();
     }
   });
 
