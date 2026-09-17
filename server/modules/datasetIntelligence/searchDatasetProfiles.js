@@ -128,7 +128,7 @@ async function searchDatasetProfiles({
       attributes: ["id"],
       include: [{
         model: db.Connection,
-        required: true,
+        required: false,
         where: { team_id: teamId },
         attributes: ["id"],
       }],

@@ -157,7 +157,7 @@ it("keeps source connection links when a saved aggregate lacks the requested fie
     dataset_id: 42, fields: ["root[].country", "root[].visits"], connection_ids: [8],
   })]);
   expect(find.mock.calls[0][0].include[1].include[0]).toMatchObject({
-    model: db.Connection, required: true, where: { team_id: 7 }, attributes: ["id"],
+    model: db.Connection, required: false, where: { team_id: 7 }, attributes: ["id"],
   });
   expect(result.nextAction).toContain("not the source schema");
 });
