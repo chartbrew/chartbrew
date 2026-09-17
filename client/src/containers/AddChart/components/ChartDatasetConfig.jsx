@@ -779,9 +779,8 @@ function ChartDatasetConfig(props) {
         </Tabs.Panel>
 
         {chart.type === "map" && (
-          <Tabs.Panel id="display">
-            <div className="h-2" />
-            <div className="flex flex-col gap-4">
+          <Tabs.Panel id="display" className="flex flex-col gap-4 px-0 py-2">
+            <div className="flex flex-wrap gap-3">
               {(fillLayer?.options?.map?.mode === "points" ? [
                 { key: "color", label: "Point color", fallback: "#048BDE" },
               ] : [
@@ -802,19 +801,22 @@ function ChartDatasetConfig(props) {
                   })}
                 />
               ))}
-              <Switch
-                isSelected={chart.visualization?.settings?.legend?.visible ?? chart.displayLegend ?? true}
-                onChange={(visible) => _onUpdateVisualization({
-                  refresh: true,
-                  visualization: updateLegendVisibility(chart.visualization, visible),
-                })}
-              >
+            </div>
+            <Switch
+              isSelected={chart.visualization?.settings?.legend?.visible ?? chart.displayLegend ?? true}
+              onChange={(visible) => _onUpdateVisualization({
+                refresh: true,
+                visualization: updateLegendVisibility(chart.visualization, visible),
+              })}
+            >
+              <Switch.Content>
                 <Switch.Control>
                   <Switch.Thumb />
                 </Switch.Control>
-                <Switch.Content>Legend</Switch.Content>
-              </Switch>
-            </div>
+                Legend
+              </Switch.Content>
+            </Switch>
+            <Separator />
             {formulaControl}
           </Tabs.Panel>
         )}

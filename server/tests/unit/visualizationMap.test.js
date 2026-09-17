@@ -35,6 +35,45 @@ function image(result, theme = "light") {
 }
 
 describe("map data and rendering", () => {
+  it("lets tall maps expand beyond their initial bounds and return to the fitted view", () => {
+    echarts.registerMap("TH", getMap("TH").geoJSON);
+    for (const mode of ["regions", "points"]) {
+      const option = engine([
+        { location: { country: "TH-10", lat: 13.75, lon: 100.5 }, amount: 5 },
+      ], mode === "points" ? points : regions, { mode, area: "TH" }).render().configuration;
+      const instance = echarts.init(null, null, { renderer: "svg", ssr: true, width: 1000, height: 400 });
+      try {
+        instance.setOption(option);
+        const getGeography = () => mode === "points"
+          ? instance.getModel().getComponent("geo")
+          : instance.getModel().getSeriesByIndex(0);
+        const original = getGeography().coordinateSystem.dataToPoint([100.5, 13.75]);
+        expect(getGeography().coordinateSystem.shouldClip()).toBe(false);
+        expect(getGeography().get("roamTrigger")).toBe("global");
+        instance.dispatchAction({
+          type: "geoRoam",
+          ...(mode === "points" ? { geoIndex: 0 } : { seriesIndex: 0 }),
+          zoom: 3, originX: 500, originY: 200,
+        });
+        expect(getGeography().get("zoom")).toBeCloseTo(3);
+        const zoomed = getGeography().coordinateSystem.dataToPoint([100.5, 13.75]);
+        instance.dispatchAction({
+          type: "geoRoam",
+          ...(mode === "points" ? { geoIndex: 0 } : { seriesIndex: 0 }),
+          dx: 300, dy: 0,
+        });
+        expect(getGeography().coordinateSystem.dataToPoint([100.5, 13.75])[0]).toBeCloseTo(zoomed[0] + 300);
+        expect(instance.renderToSVGString()).not.toContain("NaN");
+        instance.clear();
+        instance.setOption(option, { notMerge: true });
+        expect(getGeography().get("zoom")).toBe(1);
+        expect(getGeography().coordinateSystem.dataToPoint([100.5, 13.75])).toEqual(original);
+      } finally {
+        instance.dispose();
+      }
+    }
+  });
+
   it("moves the legend to the right on wide maps and restores it below on resize", () => {
     echarts.registerMap("world", getMap("world").geoJSON);
     for (const mode of ["regions", "points"]) {

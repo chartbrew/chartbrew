@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
+import { Button, Tooltip } from "@heroui/react";
+import { LuFocus } from "react-icons/lu";
 import * as echarts from "echarts/core";
 import {
   BarChart, GaugeChart, LineChart, MapChart, PieChart, RadarChart, ScatterChart,
@@ -11,6 +13,7 @@ import {
 import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
 import { registerOptionMap } from "../../../visualization/mapAssets";
+import { addMapWheelZoom } from "../../../visualization/mapWheelZoom";
 
 import { semanticColors } from "../../../lib/themeTokens";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -591,7 +594,7 @@ function EChartsRenderer({
   onChartEvent = null,
   option,
   redraw = false,
-  redrawComplete = () => {},
+  redrawComplete = null,
   renderer = "canvas",
   theme = null,
 }) {
@@ -604,6 +607,7 @@ function EChartsRenderer({
   const categoryFadeRef = useRef(null);
   const restoreCategoryRef = useRef(() => {});
   const [renderError, setRenderError] = useState(null);
+  const [mapMoved, setMapMoved] = useState(false);
   const { isDark } = useTheme();
   const themeMode = theme || (isDark ? "dark" : "light");
   const themeName = `chartbrew-${themeMode}`;
@@ -675,6 +679,7 @@ function EChartsRenderer({
       { lazyUpdate: false, notMerge: true }
     );
     instance.resize();
+    setMapMoved(false);
   };
 
   useEffect(() => {
@@ -718,6 +723,24 @@ function EChartsRenderer({
     };
   }, [renderer, themeName]);
 
+  const mapSeriesIndex = option.series?.findIndex((series) => series.type === "map") ?? -1;
+  const hasGeo = Boolean(option.geo);
+  useEffect(() => {
+    if (!instanceRef.current || (!hasGeo && mapSeriesIndex < 0)) return undefined;
+    const instance = instanceRef.current;
+    const onRoam = () => setMapMoved(true);
+    instance.on("georoam", onRoam);
+    const removeWheelZoom = addMapWheelZoom(
+      containerRef.current,
+      instance,
+      hasGeo ? { geoIndex: 0 } : { seriesIndex: mapSeriesIndex }
+    );
+    return () => {
+      removeWheelZoom();
+      if (!instance.isDisposed()) instance.off("georoam", onRoam);
+    };
+  }, [hasGeo, mapSeriesIndex, renderer, themeName]);
+
   useEffect(() => {
     const instance = instanceRef.current;
     if (!instance) return;
@@ -727,7 +750,7 @@ function EChartsRenderer({
         await registerOptionMap(echarts, effectiveOption);
         if (cancelled || instance.isDisposed()) return;
         applyOption(instance, effectiveOption, { clear: redraw });
-        redrawComplete();
+        redrawComplete?.();
       } catch (error) {
         if (!cancelled) setRenderError(error);
       }
@@ -885,14 +908,32 @@ function EChartsRenderer({
 
   if (renderError) throw renderError;
 
+  const isMap = option.geo || option.series?.some((series) => series.type === "map");
+
   return (
-    <div className="relative h-full min-h-0 w-full" data-echarts-renderer={renderer}>
+    <div className={`relative h-full min-h-0 w-full${isMap ? " overflow-hidden" : ""}`} data-echarts-renderer={renderer}>
       <div
         ref={containerRef}
         className="absolute inset-0"
         role="img"
         aria-label={ariaLabel}
       />
+      {isMap && mapMoved && (
+        <Tooltip>
+          <Button
+            isIconOnly
+            aria-label="Reset view"
+            className="absolute right-2 top-2"
+            size="sm"
+            variant="secondary"
+            onPointerDown={(event) => event.stopPropagation()}
+            onPress={() => applyOption(instanceRef.current, optionRef.current, { clear: true })}
+          >
+            <LuFocus size={16} aria-hidden="true" />
+          </Button>
+          <Tooltip.Content placement="left">Reset view</Tooltip.Content>
+        </Tooltip>
+      )}
       {isCategoryBreakdown(categoryComposition) && categoryItems.length > 0 && (
         <CategoryBreakdown
           activeKey={activeCategoryKey}
