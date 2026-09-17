@@ -1086,7 +1086,7 @@ function ProjectDashboard() {
             overflowX: previewSize.size > dashboardRef.current?.offsetWidth ? "auto" : "hidden",
           }),
           ...(editingLayout && {
-            paddingBottom: 100,
+            paddingBottom: "max(24rem, 60vh)",
           }),
         }}
         ref={dashboardRef}
@@ -1105,7 +1105,7 @@ function ProjectDashboard() {
             breakpoints={widthSize}
             cols={cols}
             rowHeight={rowHeight}
-            compactType={null}
+            compactType={editingLayout ? "vertical" : null}
             onDragStop={_onManualLayout}
             onResizeStop={_onManualLayout}
             breakpoint={editingLayout ? previewSize.breakpoint : undefined}

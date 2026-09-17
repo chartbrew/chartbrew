@@ -62,3 +62,9 @@ test("keeps the previous ECharts frame during a renderer transition", () => {
     type: "doughnut",
   }), null);
 });
+
+
+test("identifies region and point maps before matrix charts", () => {
+  assert.equal(getEChartsPreset({ series: [{ type: "map" }] }), "map");
+  assert.equal(getEChartsPreset({ visualMap: {}, series: [{ type: "scatter", coordinateSystem: "geo" }] }), "map");
+});

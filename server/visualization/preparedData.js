@@ -18,6 +18,7 @@ const SEMANTIC_FIELD_ORDER = [
   "location",
   "latitude",
   "longitude",
+  "point",
   "source",
   "target",
   "hierarchy",
@@ -81,6 +82,19 @@ function getFieldListKey(definition, fallback) {
 }
 
 function buildFieldMetadata(layer, layerFrame, rows) {
+  if (layerFrame.mark === "map") {
+    const encoding = layerFrame.fields;
+    const points = layer.options?.map?.mode === "points";
+    const keys = points
+      ? ["latitude", "longitude", ...(encoding.location ? ["location"] : []), "value"]
+      : ["location", "value"];
+    return keys.map((key) => ({
+      key,
+      role: key === "value" ? "measure" : "dimension",
+      sourceField: encoding[key]?.field || (["latitude", "longitude"].includes(key) ? encoding.point?.field : null) || null,
+      type: key === "location" ? "nominal" : "quantitative",
+    }));
+  }
   const fields = Object.entries(layerFrame.fields || {}).flatMap(([key, encoding]) => {
     const definitions = Array.isArray(encoding) ? encoding : [encoding];
     const slot = getSlotDefinition(layerFrame.mark, key);

@@ -11,7 +11,7 @@ import {
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
 import { BsTable } from "react-icons/bs";
-import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX, LuGauge, LuX, LuPlus, LuChartBarBig } from "react-icons/lu";
+import { LuInfo, LuListFilter, LuRefreshCw, LuCircleX, LuGauge, LuX, LuPlus, LuChartBarBig, LuMap } from "react-icons/lu";
 import { findIndex, isEqual } from "lodash";
 import { chartColors } from "../../../config/colors";
 
@@ -83,7 +83,7 @@ function ChartPreview(props) {
 
   const _onChangeChartType = (data) => {
     const newType = data;
-    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar" || data.type === "table" || data.type === "matrix") {
+    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar" || data.type === "table" || data.type === "matrix" || data.type === "map") {
       newType.subType = "timeseries";
       newType.mode = "chart";
     }
@@ -441,6 +441,22 @@ function ChartPreview(props) {
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>Display as a time-based matrix chart (heatmap)</Tooltip.Content>
+                </Tooltip>
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      aria-label="Display as a map"
+                      variant={chart.type === "map" ? "primary" : "outline"}
+                      isDisabled={chart.visualization?.layers?.length > 1}
+                      onPress={() => _onChangeChartType({ type: "map" })}
+                      isIconOnly
+                    >
+                      <LuMap size={24} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    {chart.visualization?.layers?.length > 1 ? "Use one dataset and one value for a map" : "Display as a map"}
+                  </Tooltip.Content>
                 </Tooltip>
               </div>
 

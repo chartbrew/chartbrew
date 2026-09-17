@@ -28,6 +28,11 @@ test("line exposes its supported display controls", () => {
   });
 });
 
+test("map exposes Display and legend controls", () => {
+  assert.equal(hasDatasetEditorTab("map", "display"), true);
+  assert.equal(hasPresetCapability("map", "legend"), true);
+});
+
 test("vertical bar exposes stacking but keeps geometry standardized", () => {
   assert.equal(hasPresetCapability("bar", "stack"), true);
   assert.equal(hasPresetCapability("bar", "barWidth"), false);

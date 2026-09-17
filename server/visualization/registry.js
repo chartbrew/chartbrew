@@ -113,13 +113,13 @@ const MARK_DEFINITIONS = Object.freeze({
   },
   map: {
     label: "Map",
-    requiredOneOf: [["location", "latitude"]],
+    requiredOneOf: [],
     slots: {
       location: { kind: "dimension", types: ["nominal", "ordinal"] },
-      latitude: { kind: "measure", types: ["quantitative"] },
-      longitude: { kind: "measure", types: ["quantitative"] },
+      latitude: { kind: "dimension", types: ["quantitative"] },
+      longitude: { kind: "dimension", types: ["quantitative"] },
+      point: { kind: "dimension", types: ["record"] },
       value: { kind: "measure", types: ["quantitative"] },
-      breakdown: { kind: "dimension", types: ["nominal", "ordinal"] },
     },
   },
   treemap: {

@@ -64,6 +64,9 @@ describe("Signed-in chart previews", () => {
 
   it("places a preview and returns the saved dashboard on subsequent loads", async () => {
     const chart = setup();
+    db.Chart.findByPk.mockImplementation(async () => ({ ...chart }));
+    let finishRefresh;
+    const refresh = vi.spyOn(ChartController.prototype, "updateChartData").mockImplementation(() => new Promise((resolve) => { finishRefresh = resolve; }));
     const target = { layoutRevision: 0, update: vi.fn(), id: 20, team_id: 7, name: "Visits", ghost: false };
     vi.spyOn(db.Project, "findOne").mockResolvedValue(target);
     vi.spyOn(db.Project, "findByPk").mockImplementation(async (id) =>
@@ -79,7 +82,16 @@ describe("Signed-in chart previews", () => {
       chart.project_id = 20;
       chart.Project = target;
     });
-    expect(await placePreview(1, 20, 5)).toMatchObject({
+    let placed = false;
+    const placement = placePreview(1, 20, 5).then((result) => {
+      placed = true;
+      return result;
+    });
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalledOnce());
+    expect(placed).toBe(false);
+    expect(ChartController.prototype.findById).not.toHaveBeenCalled();
+    finishRefresh();
+    expect(await placement).toMatchObject({
       parsed: { visibility: "dashboard", projectId: 20 },
     });
     expect(await getPreview(1, 5)).toMatchObject({

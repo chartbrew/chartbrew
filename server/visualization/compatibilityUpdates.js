@@ -30,6 +30,13 @@ function getEncodingForMark(layer, mark, markState = layer.options?.markState ||
 
   const candidates = getEncodingCandidates(layer, markState);
   if (mark === "table" || mark === "markdown") return {};
+  if (mark === "map") {
+    const source = candidates.find((encoding) => encoding.location || encoding.category) || candidates[0];
+    return {
+      ...(source.location || source.category ? { location: { ...(source.location || source.category), type: "nominal" } } : {}),
+      ...(source.value ? { value: { ...source.value } } : {}),
+    };
+  }
   if (["kpi", "avg", "gauge"].includes(mark)) {
     const source = candidates.find((encoding) => encoding.value) || {};
     return source.value ? {
@@ -186,7 +193,7 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
       ? setCumulativeTransform(
         markedLayer.transforms,
         `${data.subType}`.includes("AddTimeseries")
-          && !["table", "matrix", "markdown"].includes(mark)
+          && !["table", "matrix", "markdown", "map"].includes(mark)
       )
       : markedLayer.transforms;
     return {

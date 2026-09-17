@@ -1195,6 +1195,31 @@ describe("Source AI harness", () => {
     expect(chartWrite).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { map: { area: "US", mode: "regions" }, encoding: { location: { field: "root[].us_state" }, value: { field: "root[].visits" } } },
+    { map: { area: "world", mode: "points" }, encoding: { latitude: { field: "root[].latitude" }, longitude: { field: "root[].longitude" }, value: { field: "root[].visits" } } },
+  ])("refuses to reuse country totals for $map.mode without the required fields", async ({ map, encoding }) => {
+    const fixture = compactToolFixtures.find((item) => item.sourceId === "mcp");
+    const connection = { ...toolHarnessConnections.mcp, id: 42, team_id: 7 };
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+    vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({ data: [{ country: "US", visits: 25 }] });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({ id: 77, team_id: 7, ghost: true });
+    const update = vi.fn();
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({
+      id: 99, team_id: 7, project_ids: [], update,
+      DataRequests: [{ id: 1001, connection_id: 42, configuration: fixture.previewConfiguration }],
+    });
+    const datasetWrite = vi.spyOn(DatasetController.prototype, "createWithDataRequests");
+    const chartWrite = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs");
+    await expect(createTemporaryChart({
+      team_id: 7, dataset_id: 99, name: "Visits", type: "map",
+      visualization: { version: 2, layers: [{ id: "geo", bindingId: "binding-1", mark: "map", encoding, options: { map } }] },
+    })).rejects.toThrow("no usable values");
+    expect(update).not.toHaveBeenCalled();
+    expect(datasetWrite).not.toHaveBeenCalled();
+    expect(chartWrite).not.toHaveBeenCalled();
+  });
+
   it("persists safe CDC bindings for temporary chart table payloads", async () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
       id: 42,

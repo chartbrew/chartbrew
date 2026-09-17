@@ -124,7 +124,7 @@ async function moveChartToDashboard(payload) {
     });
     // Refresh only after both the chart and dataset updates have committed.
     if (Number(result.previous_project_id) !== Number(result.project_id)) {
-      new ChartController().updateChartData(chart_id, null, {}).catch(() => null);
+      await new ChartController().updateChartData(chart_id, null, {}).catch(() => null);
     }
     return result;
   } catch (error) {

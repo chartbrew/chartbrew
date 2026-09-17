@@ -36,7 +36,7 @@ charts readable, then reduce empty space. Filling every gap is not a goal.
 | Add an AI or template batch | Auto-arrange the batch below existing content. Keep existing widgets fixed and save the new visual reading order. |
 | Tidy | Close vertical gaps. Preserve each widget’s horizontal position, width, and height. |
 | Auto-arrange | Group KPI cards, pair charts, and fill rows. Keep text and tables between groups. Preview before saving. |
-| Manual move or resize | Keep the user's choice. Do not run automatic packing after the edit. |
+| Manual move or resize | Use vertical compaction in edit mode to close collision gaps. Preserve widths and heights; do not run Auto-arrange. Saved layouts keep their positions outside edit mode. |
 | Undo | Restore the layout before the last layout action. |
 | Save | Save the complete edit in one transaction. Leave the editor open on failure. |
 

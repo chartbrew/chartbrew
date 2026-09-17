@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-const { getMcpEndpoint, selectTools } = require("../../sources/plugins/mcp/mcp.toolSelection");
+const { getMcpEndpoint, getMcpProvider, selectTools } = require("../../sources/plugins/mcp/mcp.toolSelection");
 const { mergeApprovals, sanitizeTool } = require("../../sources/plugins/mcp/mcp.policy");
 const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
 const providers = require("../../sources/plugins/mcp/mcp.providers");
 const { MCP_LIMITS } = require("../../sources/plugins/mcp/mcp.constants");
 
 describe("MCP tool selection", () => {
+  it("identifies providers only by an exact endpoint, with query and trailing slash tolerance", () => {
+    expect(getMcpProvider("https://MCP.POSTHOG.COM/mcp/?tools=read-data-schema")?.id).toBe("posthog");
+    for (const host of [undefined, "bad url", "https://mcp.posthog.com.evil.test/mcp", "https://evil.test/mcp?server=mcp.posthog.com", "http://mcp.posthog.com/mcp", "https://mcp.posthog.com/other"]) {
+      expect(getMcpProvider(host)).toBeNull();
+    }
+  });
   const connection = (question) => ({
     host: "https://mcp.posthog.com/mcp?mode=tools&readonly=true",
     options: { mcp: { toolQuery: question } },

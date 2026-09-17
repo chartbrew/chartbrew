@@ -80,6 +80,10 @@ function summarizeCandidate(dataset, intelligence, score) {
     name: dataset.name || dataset.legend || `Dataset ${dataset.id}`,
     summary: profile?.dataset?.summary || null,
     grain: profile?.dataset?.grain || null,
+    fields: Object.keys(profile?.fields || {}).slice(0, 20),
+    fieldsTruncated: Object.keys(profile?.fields || {}).length > 20,
+    connection_ids: [...new Set((dataset.DataRequests || [])
+      .map((request) => request.Connection?.id).filter(Boolean))],
     metrics: (profile?.monitoring?.candidateMetrics || []).slice(0, 5),
     dimensions: (profile?.monitoring?.candidateSegments || []).slice(0, 5),
     defaultTimeField: profile?.monitoring?.defaultTimeField || null,
@@ -113,11 +117,21 @@ async function searchDatasetProfiles({
   const safeLimit = Math.min(Math.max(Number.parseInt(limit, 10) || 5, 1), 20);
   const datasets = await db.Dataset.findAll({
     where: { team_id: teamId, draft: false },
-    attributes: ["id", "name", "legend", "project_ids"],
+    attributes: ["id", "name", "legend", "project_ids", "updatedAt"],
     include: [{
       model: db.DatasetIntelligence,
       required: false,
       attributes: ["dataset_id", "status", "profile", "generated_at", "expires_at"],
+    }, {
+      model: db.DataRequest,
+      required: false,
+      attributes: ["id"],
+      include: [{
+        model: db.Connection,
+        required: false,
+        where: { team_id: teamId },
+        attributes: ["id"],
+      }],
     }],
     limit: 500,
     order: [["updatedAt", "DESC"]],
@@ -139,6 +153,7 @@ async function searchDatasetProfiles({
   });
 
   const result = {
+    nextAction: "These are saved datasets, not the source schema. If required fields are missing, inspect the matching dataset's connection_ids and plan a new dataset from that source. Do not conclude the source lacks those fields or switch to unrelated databases.",
     datasets: candidates
       .filter((candidate) => !query || candidate.relevance > 0)
       .sort((left, right) => right.relevance - left.relevance)

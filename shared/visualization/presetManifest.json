@@ -93,7 +93,7 @@
       "renderer": "echarts",
       "requiredFieldRoles": ["value"],
       "requiredOneOf": [["time", "row"], ["time", "column"]],
-      "capabilities": ["responsive", "theme", "visualMap"],
+      "capabilities": ["responsive", "theme", "visualMap", "legend"],
       "surfaces": ["dashboard", "editor", "embed", "export", "social"],
       "ssr": true
     },
@@ -156,6 +156,18 @@
       "capabilities": ["responsive", "theme"],
       "surfaces": ["dashboard", "editor", "embed", "export"],
       "ssr": false
+    },
+    {
+      "id": "map",
+      "label": "Map",
+      "mark": "map",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": [],
+      "requiredOneOf": [["location", "latitude", "point"]],
+      "capabilities": ["responsive", "theme", "visualMap", "legend"],
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     }
   ]
 }

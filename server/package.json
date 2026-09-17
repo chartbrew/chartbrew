@@ -34,7 +34,8 @@
     "workspace-orchestrator:evaluate": "node scripts/evaluateWorkspaceOrchestrator.js",
     "precommit": "lint-staged",
     "install:playwright": "npx --yes playwright install chromium --with-deps",
-    "postinstall": "node scripts/installPlaywright.js"
+    "postinstall": "node scripts/installPlaywright.js",
+    "maps:import": "node scripts/importMaps.js"
   },
   "author": {
     "email": "hello@chartbrew.com",

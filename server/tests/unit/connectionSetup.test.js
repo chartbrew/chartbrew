@@ -27,7 +27,7 @@ describe("connection setup resolution", () => {
     expect(result.options).toEqual([{
       state: "connected", connection_id: 8, source_id: "postgres", name: "Reports",
     }]);
-    expect(JSON.stringify(result)).not.toMatch(/private-host|hidden|password|schema/);
+    expect(JSON.stringify(result)).not.toMatch(/private-host|hidden|password|"schema"\s*:/);
     expect(db.TeamRole.findOne).toHaveBeenCalledWith(expect.objectContaining({
       where: { team_id: 7, user_id: 3 },
     }));

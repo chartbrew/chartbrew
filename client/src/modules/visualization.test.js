@@ -13,6 +13,7 @@ import {
   updateLayerFormula,
   updateLayerGoal,
   updateLayerMark,
+  updateLayerMap,
   updateLayerNullHandling,
   updateLayerRowPath,
   updateLayerSeriesOptions,
@@ -385,4 +386,26 @@ test("date fields prefer the semantic time binding and created dates", () => {
     type: "date",
     value: "root[].createdAt",
   }]), "root[].createdAt");
+});
+
+
+test("maps require a location or a complete coordinate binding and retain their fields when switching charts", () => {
+  let map = { version: 2, layers: [{ id: "map", bindingId: 1, mark: "map", encoding: {} }] };
+  assert.equal(isVisualizationReady(map), false);
+  map = updateLayerField(map, "map", "location", { value: "root[].location.country", type: "string" });
+  assert.equal(isVisualizationReady(map), true);
+  map = updateLayerMap(map, "map", { mode: "points" });
+  assert.equal(isVisualizationReady(map), false);
+  map = updateLayerField(map, "map", "latitude", { value: "root[].location.lat", type: "number" });
+  assert.equal(isVisualizationReady(map), false);
+  map = updateLayerField(map, "map", "longitude", { value: "root[].location.lon", type: "number" });
+  assert.equal(isVisualizationReady(map), true);
+  map = updateLayerMap(map, "map", { coordinates: "geojson" });
+  assert.equal(map.layers[0].encoding.latitude, undefined);
+  assert.equal(isVisualizationReady(map), false);
+  map = updateLayerField(map, "map", "point", { value: "root[].location.geo_data", type: "object" });
+  assert.equal(isVisualizationReady(map), true);
+  const restored = updateLayerMark(updateLayerMark(map, "map", "bar"), "map", "map");
+  assert.deepEqual(restored.layers[0].encoding, map.layers[0].encoding);
+  assert.equal(isVisualizationReady(restored), true);
 });

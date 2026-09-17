@@ -971,19 +971,17 @@ function Chart(props) {
           <Card.Content
             className={embedded ? "overflow-hidden p-0" : "overflow-y-hidden"}
           >
-            {chart.render?.configuration && (
-              <div className="flex h-full w-full items-center justify-center">
-                <div ref={chartContentRef} className="h-full w-full min-h-0">
-                  <ChartRenderer
-                    chart={chart}
-                    height={height}
-                    loading={chartLoading || chart.loading}
-                    redraw={redraw}
-                    redrawComplete={() => setRedraw(false)}
-                  />
-                </div>
+            <div className="flex h-full w-full items-center justify-center">
+              <div ref={chartContentRef} className="h-full w-full min-h-0">
+                <ChartRenderer
+                  chart={chart}
+                  height={height}
+                  loading={chartLoading || chart.loading}
+                  redraw={redraw}
+                  redrawComplete={() => setRedraw(false)}
+                />
               </div>
-            )}
+            </div>
           </Card.Content>
         </Card>
       )}

@@ -45,13 +45,23 @@ function selectTools(tools, { question = "", allowedTools = {}, limit = 24 } = {
   return [...selected.values()].slice(0, MCP_LIMITS.maxTools);
 }
 
+function getMcpProvider(host) {
+  try {
+    const url = new URL(host);
+    return providers.find((entry) => {
+      const endpoint = new URL(entry.url);
+      return url.origin === endpoint.origin
+        && url.pathname.replace(/\/$/, "") === endpoint.pathname.replace(/\/$/, "");
+    }) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 function getMcpEndpoint(connection, { discoverTools = false } = {}) {
   const url = new URL(connection.host);
   if (discoverTools || !(connection.schema?.mcp?.omittedToolCount > 0)) return url.toString();
-  const provider = providers.find((entry) => {
-    const endpoint = new URL(entry.url);
-    return url.origin === endpoint.origin && url.pathname.replace(/\/$/, "") === endpoint.pathname;
-  });
+  const provider = getMcpProvider(connection.host);
   const filter = provider?.toolFilter;
   // URL filters are provider extensions, not MCP. Never invent them or replace a user's filter.
   if (!filter || [filter.parameter, ...(filter.preserveParameters || [])].some((name) => url.searchParams.has(name))) return url.toString();
@@ -64,4 +74,4 @@ function getMcpEndpoint(connection, { discoverTools = false } = {}) {
   return url.toString();
 }
 
-module.exports = { getMcpEndpoint, scoreTool, selectTools };
+module.exports = { getMcpEndpoint, getMcpProvider, scoreTool, selectTools };

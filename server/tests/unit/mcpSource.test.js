@@ -36,6 +36,7 @@ const {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
 });
 
 function createTool(overrides = {}) {
@@ -79,6 +80,230 @@ function createConnection(tool, approval = {}) {
     },
   };
 }
+
+function modelCall(name, args) {
+  return { choices: [{ message: { tool_calls: [{ function: { name, arguments: JSON.stringify(args) } }] } }] };
+}
+
+describe("MCP planning and repair", () => {
+  const queryTool = () => createTool({
+    name: "execute-sql",
+    title: "Execute SQL",
+    description: "Run a read-only query",
+    inputSchema: {
+      type: "object",
+      properties: { query: { type: "string" }, context: { type: "string" } },
+      required: ["query", "context"],
+    },
+  });
+
+  it("loads provider and topic rules only for the selected connection and task", () => {
+    const connection = { ...createConnection(queryTool()), host: "https://mcp.posthog.com/mcp" };
+    const general = mcpAi.getCapabilities({ connection, question: "Show paid orders" });
+    expect(general.instructions).toContain("read-data-schema");
+    expect(general.instructions).not.toContain("$geoip_latitude");
+    expect(mcpAi.listResources({ connection, question: "Show visits by coordinates" }).instructions).toContain("properties.$geoip_latitude");
+    expect(general.discoveryAccess).toEqual([{ tool: "read-data-schema", status: "unavailable" }]);
+    connection.host = "https://another.example/mcp";
+    connection.schema.mcp.server = { name: "PostHog", instructions: "Load PostHog rules" };
+    expect(mcpAi.getCapabilities({ connection, question: "Show a map" }).instructions).not.toContain("PostHog");
+    expect(mcpAi.listResources({ connection, question: "Show a map" }).instructions).toBeUndefined();
+  });
+
+  it("repairs a required argument before executing and shares generation with the chat planner", async () => {
+    const tool = queryTool();
+    const proposal = { toolName: tool.name, arguments: { query: "SELECT country, count() AS visits FROM events GROUP BY country" } };
+    const create = vi.fn()
+      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce(modelCall("propose_mcp_dataset", proposal))
+      .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
+        ...proposal, arguments: { ...proposal.arguments, context: "Visits by country" },
+      }));
+    const execute = vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({ data: [{ country: "US", visits: 25 }], tool });
+    const result = await mcpAi.planDataset({
+      client: { chat: { completions: { create } } }, connection: createConnection(tool),
+      question: "Make a world map of visits", overrides: { generate: true },
+    });
+    expect(result.status).toBe("ok");
+    expect(result.configuration.arguments.context).toBe("Visits by country");
+    expect(result.preview.rows).toEqual([{ country: "US", visits: 25 }]);
+    expect(execute).toHaveBeenCalledOnce();
+    expect(JSON.parse(create.mock.calls[2][0].messages[1].content).correction.preview.requiredArguments).toEqual(["context"]);
+  });
+
+  it("retains an approved provider query tool when metadata tools rank higher", () => {
+    const sql = queryTool();
+    const connection = { ...createConnection(sql), host: "https://mcp.posthog.com/mcp" };
+    for (const name of ["read-data-schema", "dashboard-get", "agent-feedback", "feature-flag-get-all"]) {
+      const tool = createTool({ name, description: "website visits map latitude longitude" });
+      connection.schema.mcp.tools.push(tool);
+      connection.schema.mcp.allowedTools[name] = { ask: true, datasets: true, confirmedReadOnly: true };
+    }
+    const candidates = () => mcpAi._private.getDatasetAiCandidates(connection, "website visits map latitude longitude");
+    expect(candidates()).toHaveLength(3);
+    expect(candidates()[0].toolName).toBe("execute-sql");
+    connection.schema.mcp.allowedTools[sql.name].ask = false;
+    expect(candidates().some((tool) => tool.toolName === "execute-sql")).toBe(false);
+    connection.schema.mcp.allowedTools[sql.name].ask = true;
+    connection.host = "https://unknown.example/mcp";
+    expect(candidates().some((tool) => tool.toolName === "execute-sql")).toBe(false);
+  });
+
+  it("reports missing schema access before asking for technical field names or making queries", async () => {
+    const tool = queryTool();
+    const connection = { ...createConnection(tool), id: 8, host: "https://mcp.posthog.com/mcp" };
+    const create = vi.fn().mockResolvedValueOnce(modelCall("search_mcp_context", { query: "geoip schema" }));
+    const execute = vi.spyOn(mcpProtocol._private, "executeTool");
+    await expect(mcpAi.planDataset({
+      client: { chat: { completions: { create } } }, connection,
+      question: "Create a point map with latitude and longitude", overrides: { generate: true },
+    })).rejects.toMatchObject({
+      code: "MCP_TOOL_NOT_APPROVED", connectionId: 8,
+      recovery: { action: "connection" }, repair: { tools: ["read-data-schema"] },
+    });
+    expect(execute).not.toHaveBeenCalled();
+    expect(create).toHaveBeenCalledOnce();
+  });
+
+  it("corrects a source error once and gives the model redacted repair details", async () => {
+    const tool = queryTool();
+    const proposal = { toolName: tool.name, arguments: { query: "SELECT bad_field FROM events", context: "Visits" } };
+    const create = vi.fn()
+      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce(modelCall("propose_mcp_dataset", proposal))
+      .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
+        ...proposal, arguments: { query: "SELECT visits FROM events", context: "Visits" },
+      }));
+    const execute = vi.spyOn(mcpProtocol._private, "executeTool")
+      .mockRejectedValueOnce(createMcpError("MCP_TOOL_ERROR", 'Unknown field bad_field. Bearer abcsecret123456789 {"api_key":"private-key"}'))
+      .mockResolvedValueOnce({ data: [{ visits: 25 }], tool });
+    const result = await mcpAi.generateConfiguration({
+      client: { chat: { completions: { create } } }, connection: createConnection(tool), question: "Visits",
+    });
+    expect(result.status).toBe("ready");
+    const correction = create.mock.calls[2][0].messages[1].content;
+    expect(correction).toContain("Unknown field bad_field");
+    expect(correction).not.toContain("abcsecret");
+    expect(correction).not.toContain("private-key");
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([false, true])("repairs missing schema arguments before editing a grouped point query (nested=%s)", async (nested) => {
+    const tool = queryTool();
+    const schemaTool = createTool({
+      name: "read-data-schema", title: "Read data schema", description: "Read event properties",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "object", properties: { kind: { type: "string" } }, required: ["kind"] },
+          context: { type: "string" },
+        },
+        required: ["query", "context"],
+      },
+    });
+    const connection = { ...createConnection(tool), host: "https://mcp.posthog.com/mcp" };
+    connection.schema.mcp.tools.push(schemaTool);
+    connection.schema.mcp.allowedTools[schemaTool.name] = { ask: true, confirmedReadOnly: true, datasets: false };
+    const query = "SELECT properties.$geoip_latitude AS latitude, properties.$geoip_longitude AS longitude, any(properties.$geoip_city_name) AS city, count() AS visits FROM events WHERE event = '$pageview' AND timestamp >= now() - INTERVAL 30 DAY GROUP BY latitude, longitude ORDER BY visits DESC LIMIT 200";
+    const create = vi.fn()
+      .mockResolvedValueOnce(modelCall("search_mcp_context", { query: "geoip properties" }))
+      .mockResolvedValueOnce(modelCall("inspect_mcp_context", { actions: [{ kind: "tool", toolName: schemaTool.name, arguments: nested ? { query: {}, context: "Visit locations" } : { query: { kind: "events" } } }] }))
+      .mockResolvedValueOnce(modelCall("inspect_mcp_context", { actions: [{ kind: "tool", toolName: schemaTool.name, arguments: { query: { kind: "events" }, context: "Visit locations" } }] }))
+      .mockResolvedValueOnce(modelCall("propose_mcp_dataset", { toolName: tool.name, arguments: { query, context: "Pageviews by location in the last 30 days" } }));
+    const execute = vi.spyOn(mcpProtocol._private, "executeTool")
+      .mockResolvedValueOnce({ data: [{ city: "string", latitude: "number", longitude: "number" }], tool: schemaTool })
+      .mockResolvedValueOnce({ data: [{ city: "London", latitude: 51.5, longitude: -0.1, visits: 100 }], tool });
+    const result = await mcpAi.generateConfiguration({
+      client: { chat: { completions: { create } } }, connection,
+      currentConfiguration: { tool: { name: tool.name }, arguments: { query: "SELECT properties.$geoip_latitude FROM events", context: "Visits" } },
+      question: "Group by lat/long and show a count of visits in the last 30 days on a map",
+    });
+    expect(result.status).toBe("ready");
+    expect(result.configuration.arguments.query).toBe(query);
+    const correction = JSON.parse(create.mock.calls[2][0].messages[1].content).correction;
+    expect(correction[0]).toMatchObject({ toolName: schemaTool.name, failed: true });
+    expect(JSON.stringify(correction)).toContain(nested ? "kind" : "context");
+    expect(execute).toHaveBeenCalledTimes(2);
+    const prompt = create.mock.calls[3][0].messages[0].content;
+    expect(prompt).toContain("GROUP BY latitude, longitude");
+    expect(prompt).toContain("$geoip_city_name");
+  });
+
+  it("discovers fields for country, state, and point follow-ups through the approved schema tool", async () => {
+    const { buildSourceQuestion } = require("../../modules/ai/orchestrator/orchestrator");
+    const tool = queryTool();
+    const schemaTool = createTool({
+      name: "read-data-schema", title: "Read data schema", description: "Read event properties and schema",
+      inputSchema: { type: "object", properties: { kind: { type: "string" } }, required: ["kind"] },
+    });
+    const connection = { ...createConnection(tool), host: "https://mcp.posthog.com/mcp" };
+    connection.schema.mcp.tools.push(schemaTool);
+    connection.schema.mcp.allowedTools[schemaTool.name] = { ask: true, confirmedReadOnly: true, datasets: false };
+    const execute = vi.spyOn(mcpProtocol._private, "executeTool");
+    const history = [];
+    const scenarios = [
+      { question: "Show PostHog unique page visitors by country for the last 30 days", fields: "properties.$geoip_country_code AS country", rows: [{ country: "US", visitors: 20 }] },
+      { question: "Now make a US state map", fields: "properties.$geoip_subdivision_1_code AS us_state", filter: " AND properties.$geoip_country_code = 'US'", rows: [{ us_state: "CA", visitors: 12 }] },
+      { question: "Create a new dataset for a world point map with latitude and longitude", fields: "properties.$geoip_latitude AS latitude, properties.$geoip_longitude AS longitude", rows: [{ latitude: 38, longitude: -122, visitors: 5 }] },
+    ];
+    for (const scenario of scenarios) {
+      const query = `SELECT ${scenario.fields}, uniqExact(distinct_id) AS visitors FROM events WHERE event = '$pageview' AND timestamp >= now() - INTERVAL 30 DAY${scenario.filter || ""} GROUP BY ${scenario.fields.includes("latitude") ? "latitude, longitude" : Object.keys(scenario.rows[0])[0]}`;
+      const create = vi.fn()
+        .mockResolvedValueOnce(modelCall("search_mcp_context", { query: "event property schema" }))
+        .mockResolvedValueOnce(modelCall("inspect_mcp_context", { actions: [{ kind: "tool", toolName: schemaTool.name, arguments: { kind: "properties" } }] }))
+        .mockResolvedValueOnce(modelCall("propose_mcp_dataset", { toolName: tool.name, arguments: { query, context: "Unique page visitors in the last 30 days" } }));
+      execute.mockResolvedValueOnce({ data: [{ content: "$pageview properties: $geoip_country_code, $geoip_subdivision_1_code, $geoip_latitude, $geoip_longitude" }], tool: schemaTool })
+        .mockResolvedValueOnce({ data: scenario.rows, tool });
+      const result = await mcpAi.planDataset({
+        client: { chat: { completions: { create } } }, connection,
+        question: buildSourceQuestion(scenario.question, history), overrides: { generate: true },
+      });
+      expect(result.status).toBe("ok");
+      expect(result.preview.rows).toEqual(scenario.rows);
+      const proposalContext = JSON.parse(create.mock.calls[2][0].messages[1].content);
+      expect(proposalContext.discovery).toEqual(expect.arrayContaining([
+        expect.objectContaining({ toolName: "read-data-schema", rows: [expect.stringContaining("$geoip_latitude")] }),
+      ]));
+      expect(proposalContext.request).toContain("last 30 days");
+      expect(proposalContext.request).toContain(scenario.question);
+      history.push({ role: "user", content: scenario.question });
+    }
+    expect(execute).toHaveBeenCalledTimes(6);
+    expect(connection.schema.mcp.allowedTools[schemaTool.name].datasets).toBe(false);
+  });
+
+  it.each(["MCP_TOOL_NOT_APPROVED", "MCP_RECONNECT_REQUIRED"])("does not retry %s", async (code) => {
+    const tool = queryTool();
+    const create = vi.fn()
+      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
+        toolName: tool.name, arguments: { query: "SELECT count() FROM events", context: "Visits" },
+      }));
+    const execute = vi.spyOn(mcpProtocol._private, "executeTool").mockRejectedValue(createMcpError(code, "Access needed"));
+    await expect(mcpAi.generateConfiguration({
+      client: { chat: { completions: { create } } }, connection: createConnection(tool), question: "Visits",
+    })).rejects.toMatchObject({ code });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(execute).toHaveBeenCalledOnce();
+  });
+
+  it("rejects a repeated failed request even when argument order changes", async () => {
+    const tool = queryTool();
+    const create = vi.fn()
+      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
+        toolName: tool.name, arguments: { query: "SELECT bad_field FROM events", context: "Visits" },
+      }))
+      .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
+        toolName: tool.name, arguments: { context: "Visits", query: "SELECT bad_field FROM events" },
+      }));
+    const execute = vi.spyOn(mcpProtocol._private, "executeTool").mockRejectedValue(createMcpError("MCP_TOOL_ERROR", "Unknown field"));
+    await expect(mcpAi.generateConfiguration({
+      client: { chat: { completions: { create } } }, connection: createConnection(tool), question: "Visits",
+    })).rejects.toMatchObject({ code: "MCP_TOOL_ERROR" });
+    expect(execute).toHaveBeenCalledOnce();
+  });
+});
 
 describe("MCP source policy", () => {
   it("exposes usable inbound exploration details and refuses unapproved dataset tools", async () => {
@@ -699,6 +924,7 @@ describe("MCP source integration contracts", () => {
         }],
       });
 
+    vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({ data: [{ status: "paid", total: 12 }], tool });
     const result = await mcpAi.generateConfiguration({
       client: { chat: { completions: { create } } },
       connection: createConnection(tool),

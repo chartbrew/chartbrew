@@ -1,3 +1,4 @@
+const { getMapRows } = require("./map");
 const { projectPreparedSeries } = require("../seriesProjection");
 const { buildSeriesStyleMap } = require("../seriesStyles");
 
@@ -20,6 +21,15 @@ function compileShownExport({
   timezone,
   visualization,
 }) {
+  if (preparedData.results[0]?.mark === "map") {
+    return {
+      [chart.name || "Map"]: getMapRows(preparedData, visualization).map((row) => ({
+        Location: row.name,
+        ...(row.latitude !== undefined ? { Latitude: row.latitude, Longitude: row.longitude } : {}),
+        Value: row.value,
+      })),
+    };
+  }
   const projection = projectPreparedSeries({
     chart,
     preparedData,

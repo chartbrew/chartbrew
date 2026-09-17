@@ -30,6 +30,7 @@ import {
 } from "react-icons/lu";
 
 import DatasetFilters from "../../../components/DatasetFilters";
+import mapManifest from "../../../../../shared/geo/manifest.json";
 import { getDatasetFieldOptionsFromSchema } from "../../../modules/getDatasetFieldOptions";
 import {
   AGGREGATIONS,
@@ -43,6 +44,7 @@ import {
   updateLayerAggregation,
   updateLayerField,
   updateLayerGoal,
+  updateLayerMap,
   updateLayerNullHandling,
   updateLayerRowPath,
   updateLayerSeriesOptions,
@@ -307,7 +309,7 @@ function FieldPicker({
         {isClearable && <Autocomplete.ClearButton />}
         <Autocomplete.Indicator />
       </Autocomplete.Trigger>
-      <Autocomplete.Popover>
+      <Autocomplete.Popover aria-label={label}>
         <Autocomplete.Filter filter={contains}>
           <SearchField autoFocus name={`${label.toLowerCase().replaceAll(" ", "-")}-search`} variant="secondary">
             <SearchField.Group>
@@ -316,17 +318,19 @@ function FieldPicker({
               <SearchField.ClearButton />
             </SearchField.Group>
           </SearchField>
-          <ListBox renderEmptyState={() => <EmptyState>No matching fields</EmptyState>}>
+          <ListBox renderEmptyState={() => <EmptyState>No matches</EmptyState>}>
             {fieldOptions.map((option) => (
               <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                <Chip
-                  size="sm"
-                  className="mr-2 min-w-[70px] justify-center"
-                  variant="soft"
-                  color={option.label.color}
-                >
-                  {option.label.content}
-                </Chip>
+                {option.label && (
+                  <Chip
+                    size="sm"
+                    className="mr-2 min-w-[70px] justify-center"
+                    variant="soft"
+                    color={option.label.color}
+                  >
+                    {option.label.content}
+                  </Chip>
+                )}
                 {option.text}
                 <ListBox.ItemIndicator />
               </ListBox.Item>
@@ -379,6 +383,9 @@ function ChartDatasetDataSetup({
   const selectedLayer = bindingLayers.find((layer) => layer.id === selectedLayerId)
     || bindingLayers[0];
   const requirements = getLayerFieldRequirements(selectedLayer?.mark || chart.type);
+  const mapOptions = selectedLayer?.options?.map || {};
+  const mapPoints = mapOptions.mode === "points";
+  const mapCoordinates = mapOptions.coordinates || (selectedLayer?.encoding?.point ? "geojson" : "fields");
   const dimensionRole = getDimensionRole(selectedLayer);
   const dimensionField = selectedLayer?.encoding?.[dimensionRole]?.field || null;
   const dimensionNullPolicy = selectedLayer?.encoding?.[dimensionRole]?.nullPolicy || "exclude";
@@ -521,6 +528,72 @@ function ChartDatasetDataSetup({
               </div>
             ) : (
               <div className="flex flex-col gap-4">
+                {requirements.map && (
+                  <>
+                    <FieldPicker
+                      label="Map display"
+                      placeholder="Select a display"
+                      description="Fill regions or show points at their coordinates."
+                      fieldOptions={[
+                        { value: "regions", text: "Filled regions" },
+                        { value: "points", text: "Points" },
+                      ]}
+                      value={mapOptions.mode || "regions"}
+                      onChange={(mode) => _commitVisualization(updateLayerMap(chart.visualization, selectedLayer.id, { mode }))}
+                    />
+                    <FieldPicker
+                      label="Map area"
+                      placeholder="Select an area"
+                      description="Country maps show the available states, provinces, or local regions."
+                      fieldOptions={mapManifest.maps.map((map) => ({ value: map.id, text: map.name }))}
+                      value={mapOptions.area || "world"}
+                      onChange={(area) => _commitVisualization(updateLayerMap(chart.visualization, selectedLayer.id, { area }))}
+                    />
+                    {mapPoints && (
+                      <FieldPicker
+                        label="Coordinate format"
+                        placeholder="Select a format"
+                        description="Use separate coordinate fields or a GeoJSON Point object."
+                        fieldOptions={[
+                          { value: "fields", text: "Latitude and longitude fields" },
+                          { value: "geojson", text: "GeoJSON Point" },
+                        ]}
+                        value={mapCoordinates}
+                        onChange={(coordinates) => _commitVisualization(updateLayerMap(chart.visualization, selectedLayer.id, { coordinates }))}
+                      />
+                    )}
+                    {mapPoints && mapCoordinates === "geojson" && (
+                      <FieldPicker
+                        label="Point field"
+                        placeholder="Select a GeoJSON Point field"
+                        description="Select the object that contains the Point type and coordinates."
+                        fieldOptions={fieldOptions.filter((field) => ["object", "record"].includes(field.type))}
+                        value={selectedLayer.encoding?.point?.field}
+                        onChange={(value) => _updateField("point", value)}
+                      />
+                    )}
+                    {mapPoints && mapCoordinates === "fields" && ["latitude", "longitude"].map((role) => (
+                      <FieldPicker
+                        key={role}
+                        label={role === "latitude" ? "Latitude" : "Longitude"}
+                        placeholder={`Select ${role}`}
+                        description="Use coordinates in decimal degrees."
+                        fieldOptions={fieldOptions.filter((field) => ["number", "string"].includes(field.type))}
+                        value={selectedLayer.encoding?.[role]?.field}
+                        onChange={(value) => _updateField(role, value)}
+                      />
+                    ))}
+                    <FieldPicker
+                      label={mapPoints ? "Point label" : "Location"}
+                      placeholder={mapPoints ? "Use coordinates as labels" : "Select a country or region field"}
+                      description={mapPoints ? "Optional name for each point." : "Use country or region names or codes."}
+                      fieldOptions={fieldOptions.filter((field) => ["number", "string"].includes(field.type))}
+                      value={selectedLayer.encoding?.location?.field}
+                      isClearable={mapPoints}
+                      onChange={(value) => _updateField("location", value)}
+                    />
+                  </>
+                )}
                 {requirements.collection && (
                   <FieldPicker
                     label="Rows"
@@ -554,47 +627,50 @@ function ChartDatasetDataSetup({
                   <>
                     <FieldPicker
                       label="Value"
-                      placeholder="Select a value field"
+                      placeholder={requirements.map ? "Count rows" : "Select a value field"}
+                      isClearable={requirements.map}
                       description="The value to measure, count, or aggregate."
                       fieldOptions={fieldOptions.filter((field) => field.type !== "array")}
                       value={valueField}
                       onChange={(value) => _updateField("value", value)}
                     />
-                    <Select
-                      placeholder="Choose an aggregation"
-                      onChange={(aggregate) => {
-                        const nextVisualization = updateLayerAggregation(
-                          chart.visualization,
-                          selectedLayer.id,
-                          aggregate
-                        );
-                        _commitVisualization(nextVisualization);
-                      }}
-                      value={selectedLayer.encoding?.value?.aggregate || "none"}
-                      selectionMode="single"
-                      variant="secondary"
-                      aria-label="Value aggregation"
-                    >
-                      <Label>Summarize by</Label>
-                      <Select.Trigger>
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox>
-                          {AGGREGATIONS.map((aggregate) => (
-                            <ListBox.Item
-                              key={aggregate.id}
-                              id={aggregate.id}
-                              textValue={aggregate.label}
-                            >
-                              {aggregate.label}
-                              <ListBox.ItemIndicator />
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
+                    {(!requirements.map || valueField) && (
+                      <Select
+                        placeholder="Choose an aggregation"
+                        onChange={(aggregate) => {
+                          const nextVisualization = updateLayerAggregation(
+                            chart.visualization,
+                            selectedLayer.id,
+                            aggregate
+                          );
+                          _commitVisualization(nextVisualization);
+                        }}
+                        value={selectedLayer.encoding?.value?.aggregate || "none"}
+                        selectionMode="single"
+                        variant="secondary"
+                        aria-label="Value aggregation"
+                      >
+                        <Label>Summarize by</Label>
+                        <Select.Trigger>
+                          <Select.Value />
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            {AGGREGATIONS.map((aggregate) => (
+                              <ListBox.Item
+                                key={aggregate.id}
+                                id={aggregate.id}
+                                textValue={aggregate.label}
+                              >
+                                {aggregate.label}
+                                <ListBox.ItemIndicator />
+                              </ListBox.Item>
+                            ))}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                    )}
 
                     {["line", "bar", "horizontalBar", "kpi", "avg", "gauge"].includes(selectedLayer.mark) && (
                       <LayerGoalField
@@ -766,7 +842,9 @@ function ChartDatasetDataSetup({
             <Alert status="warning" key={`${warning.code}-${warning.layerId}`}>
               <Alert.Indicator />
               <Alert.Content>
-                <Alert.Title>Large number of generated series</Alert.Title>
+                <Alert.Title>
+                  {selectedLayer.mark === "map" ? "Check map locations" : "Large number of generated series"}
+                </Alert.Title>
                 <Alert.Description>{warning.message}</Alert.Description>
               </Alert.Content>
             </Alert>

@@ -65,6 +65,9 @@ function buildLegacyEncoding(mark, options) {
   if (mark === "avg" && value) value.aggregate = "avg";
 
   if (mark === "table" || mark === "markdown") return {};
+  if (mark === "map") {
+    return compactObject({ location: createFieldEncoding(xAxis, "nominal"), value });
+  }
   if (mark === "kpi" || mark === "avg" || mark === "gauge") {
     return compactObject({ value });
   }
@@ -99,7 +102,7 @@ function buildLegacyTransforms(options, mark, chart) {
   const transforms = [];
 
   if (chart.subType?.includes("AddTimeseries")
-    && !["table", "matrix", "markdown"].includes(mark)
+    && !["table", "matrix", "markdown", "map"].includes(mark)
   ) {
     transforms.push({
       operation: "cumulativeSum",

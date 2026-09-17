@@ -1,4 +1,5 @@
 const { getMarkDefinition } = require("./registry");
+const mapManifest = require("../../shared/geo/manifest.json");
 
 const VISUALIZATION_SPEC_VERSION = 2;
 const AGGREGATIONS = new Set([
@@ -139,6 +140,29 @@ function validateVisualizationSpec(input, options = {}) {
     if (!markDefinition) {
       errors.push(`${layerPath}.mark is not supported`);
       return;
+    }
+
+    if (layer.mark === "map") {
+      const map = layer.options?.map || {};
+      if (!mapManifest.maps.some((item) => item.id === (map.area || "world"))) {
+        errors.push("Select an available map area.");
+      }
+      if (map.mode && !["regions", "points"].includes(map.mode)) {
+        errors.push("Select filled regions or points.");
+      }
+      if (!allowIncomplete) {
+        if (spec.layers.length !== 1) errors.push("Map charts need one dataset and one value.");
+        if (map.mode === "points") {
+          if (!layer.encoding.point && !(layer.encoding.latitude && layer.encoding.longitude)) {
+            errors.push("Select both latitude and longitude, or a GeoJSON Point field.");
+          }
+          if (layer.encoding.point && (layer.encoding.latitude || layer.encoding.longitude)) {
+            errors.push("Select one coordinate format.");
+          }
+        } else if (!layer.encoding.location) {
+          errors.push("Select a location field.");
+        }
+      }
     }
 
     if (markDefinition.bindingRequired !== false

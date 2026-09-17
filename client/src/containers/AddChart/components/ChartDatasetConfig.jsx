@@ -64,6 +64,8 @@ import {
   updateLayerFormula,
   updateLayerSeriesOptions,
   updateSeriesColor,
+  updateMarkStyle,
+  updateLegendVisibility,
 } from "../../../modules/visualization";
 import {
   hasDatasetEditorTab,
@@ -776,7 +778,50 @@ function ChartDatasetConfig(props) {
           )}
         </Tabs.Panel>
 
-        {hasDisplayTab && (
+        {chart.type === "map" && (
+          <Tabs.Panel id="display" className="flex flex-col gap-4 px-0 py-2">
+            <div className="flex flex-wrap gap-3">
+              {(fillLayer?.options?.map?.mode === "points" ? [
+                { key: "color", label: "Point color", fallback: "#048BDE" },
+              ] : [
+                { key: "fillColor", label: "Low values", fallback: chart.render?.configuration?.visualMap?.inRange?.color?.[0] || (isDark ? "#173b53" : "#d9eefe") },
+                { key: "color", label: "High values", fallback: "#048BDE" },
+              ]).map(({ key, label, fallback }) => (
+                <ColorPickerControl
+                  key={key}
+                  ariaLabel={label}
+                  fallbackColor={fallback}
+                  value={typeof fillLayer?.style?.[key] === "string" ? fillLayer.style[key] : fallback}
+                  valueFormat="hex"
+                  presetColors={Object.values(chartColors).map((color) => color.hex)}
+                  swatchClassName="bg-surface-secondary shadow-none"
+                  onChange={(color) => _onUpdateVisualization({
+                    refresh: true,
+                    visualization: updateMarkStyle(chart.visualization, "map", { [key]: color }),
+                  })}
+                />
+              ))}
+            </div>
+            <Switch
+              isSelected={chart.visualization?.settings?.legend?.visible ?? chart.displayLegend ?? true}
+              onChange={(visible) => _onUpdateVisualization({
+                refresh: true,
+                visualization: updateLegendVisibility(chart.visualization, visible),
+              })}
+            >
+              <Switch.Content>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                Legend
+              </Switch.Content>
+            </Switch>
+            <Separator />
+            {formulaControl}
+          </Tabs.Panel>
+        )}
+
+        {hasDisplayTab && chart.type !== "map" && (
           <Tabs.Panel id="display">
             <div className="h-2" />
 
