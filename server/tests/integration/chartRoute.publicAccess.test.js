@@ -399,7 +399,7 @@ describe("ChartRoute public access", () => {
     expect(refreshSpy).not.toHaveBeenCalled();
   });
 
-  it("allows public chart refresh with report password and valid project share token", async () => {
+  it.each([false, true])("allows public chart refresh with report password and valid project share token (allow_params=%s)", async (allowParams) => {
     const refreshedChart = {
       id: 123,
       chartData: {
@@ -417,6 +417,7 @@ describe("ChartRoute public access", () => {
       },
       sharePolicy: {
         visibility: "private",
+        allow_params: allowParams,
       },
     });
 
@@ -441,7 +442,7 @@ describe("ChartRoute public access", () => {
       `${seeded.chart.id}`,
       null,
       expect.objectContaining({
-        variables: { region: "eu" },
+        variables: allowParams ? { region: "eu" } : {},
         traceContext: expect.objectContaining({
           triggerType: "chart_manual",
           entityType: "chart",
