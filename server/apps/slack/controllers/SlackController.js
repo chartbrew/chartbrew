@@ -1041,8 +1041,9 @@ class SlackController {
     if (!created) {
       await integration.update({
         name: `Slack - ${tokenData.team_name}`,
+        team_id: null,
+        apikey_id: null,
         config: {
-          ...integration.config,
           slack_team_id: tokenData.team_id,
           slack_team_name: tokenData.team_name,
           bot_user_id: tokenData.bot_user_id,

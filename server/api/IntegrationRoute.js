@@ -38,7 +38,7 @@ module.exports = (app) => {
         if (!integration) {
           throw new Error(404);
         }
-        return res.status(200).send(integration);
+        return res.status(200).send(integrationController.toPublicIntegration(integration));
       })
       .catch((err) => {
         if (err.message === "401") {
@@ -62,7 +62,7 @@ module.exports = (app) => {
         return integrationController.findByTeam(req.params.team_id);
       })
       .then((integrations) => {
-        return res.status(200).send(integrations);
+        return res.status(200).send(integrations.map(integrationController.toPublicIntegration));
       })
       .catch((err) => {
         if (err.message === "401") {
@@ -87,7 +87,7 @@ module.exports = (app) => {
         return integrationController.create(req.body);
       })
       .then((integration) => {
-        return res.status(200).send(integration);
+        return res.status(200).send(integrationController.toPublicIntegration(integration));
       })
       .catch((err) => {
         if (err.message === "401") {
@@ -110,7 +110,7 @@ module.exports = (app) => {
         return integrationController.update(req.params.id, req.body, req.params.team_id);
       })
       .then((integration) => {
-        return res.status(200).send(integration);
+        return res.status(200).send(integrationController.toPublicIntegration(integration));
       })
       .catch((err) => {
         if (err.message === "401") {
