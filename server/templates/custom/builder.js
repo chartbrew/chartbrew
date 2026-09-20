@@ -1,12 +1,32 @@
-const _ = require("lodash");
-
 const db = require("../../models/models");
 const { remapVisualizationBindings } = require("../../visualization/remapBindings");
 
 module.exports = async (teamId, projectId, {
-  template_id, charts, connections, newDatasets
+  template_id, charts, connections = {}, newDatasets
 }) => {
-  const { model } = await db.Template.findByPk(template_id);
+  const template = await db.Template.findOne({ where: { id: template_id, team_id: teamId } });
+  if (!template) throw new Error("403");
+
+  const { model } = template;
+  const selectedCharts = Array.isArray(charts)
+    ? model.Charts.filter((chart) => charts.includes(chart.tid))
+    : model.Charts;
+  const datasetIds = [...new Set([
+    ...model.Datasets.map((dataset) => dataset.id),
+    ...selectedCharts.flatMap((chart) => (chart.ChartDatasetConfigs || []).map((config) => config.dataset_id)),
+  ])];
+  const datasets = await db.Dataset.findAll({
+    where: { id: datasetIds, team_id: teamId },
+    include: [{ model: db.DataRequest }],
+  });
+  if (datasets.length !== datasetIds.length) throw new Error("403");
+
+  const connectionIds = [...new Set(datasets.flatMap((dataset) => dataset.DataRequests.map((request) => (
+    newDatasets ? connections[request.connection_id] : request.connection_id
+  ))))];
+  if (connectionIds.some((id) => !id)) throw new Error("403");
+  const connectionCount = await db.Connection.count({ where: { id: connectionIds, team_id: teamId } });
+  if (connectionCount !== connectionIds.length) throw new Error("403");
 
   const newModelDatasets = {};
 
@@ -15,11 +35,10 @@ module.exports = async (teamId, projectId, {
 
     const original = datasets[index];
     const ogDataset = await db.Dataset.findOne({
-      where: { id: original },
-      include: [{
-        model: db.DataRequest,
-      }],
+      where: { id: original, team_id: teamId },
+      include: [{ model: db.DataRequest }],
     });
+    if (!ogDataset) throw new Error("403");
 
     const dataRequests = ogDataset.DataRequests.map((dr) => dr.toJSON());
 
@@ -64,16 +83,7 @@ module.exports = async (teamId, projectId, {
     await createDatasets(datasetIds, 0);
   }
 
-  if (charts && Array.isArray(charts)) {
-    const newModelCharts = [];
-    model.Charts.forEach((chart) => {
-      if (_.indexOf(charts, chart.tid) > -1) {
-        newModelCharts.push(chart);
-      }
-    });
-
-    model.Charts = newModelCharts;
-  }
+  model.Charts = selectedCharts;
 
   const createChart = async (chart) => {
     try {
