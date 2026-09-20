@@ -1,4 +1,4 @@
-const request = require("request-promise");
+const safeRequest = require("../safeRequest");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
@@ -90,7 +90,7 @@ function send(data) {
     }),
   };
 
-  return request(options);
+  return safeRequest(options, { source: "webhook_alert", teamId: integration.team_id });
 }
 
 module.exports = {
