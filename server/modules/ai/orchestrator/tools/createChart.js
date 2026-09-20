@@ -24,7 +24,7 @@ function resolveXAxis({
   return xAxis ?? chartSpec.xAxis;
 }
 
-async function createChart(payload) {
+async function createChart(payload, options = {}) {
   let {
     project_id, dataset_id, spec, team_id,
     name, legend, type, subType, displayLegend, pointRadius,
@@ -96,6 +96,7 @@ async function createChart(payload) {
       const source = findSourceForConnection(connection);
       if (source?.backend?.ai?.alignChartBindings) {
         const aligned = await alignSourceChartBindings(source, {
+          rows: options.rows,
           connection,
           configuration: dataRequest.configuration,
           type: chartType,
@@ -103,7 +104,7 @@ async function createChart(payload) {
           yAxis: yAxis ?? chartSpec.yAxis,
           yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation,
           dateField: dateField ?? chartSpec.dateField,
-          transform: dataRequest.transform,
+          transform: options.rows ? null : dataRequest.transform,
           encoding: encoding || chartSpec.encoding,
           visualization: visualization || chartSpec.visualization,
           chartSpec,
@@ -156,7 +157,7 @@ async function createChart(payload) {
     const project = await requireProjectForTeam(project_id, normalizedTeamId);
 
     // Update dataset's project_ids to include this project (if not ghost and not already included)
-    if (!project.ghost) {
+    if (!project.ghost && !options.prepareOnly) {
       const currentProjectIds = dataset.project_ids || [];
       if (!currentProjectIds.includes(project_id)) {
         await dataset.update({
@@ -167,7 +168,7 @@ async function createChart(payload) {
 
     // Use the quick-create function to create chart with chart dataset config in one go
     // Layout will be auto-calculated by the controller
-    const chart = await chartController.createWithChartDatasetConfigs({
+    const chartData = {
       project_id,
       name: name || chartSpec.title || "AI Generated Chart",
       type: chartType,
@@ -224,7 +225,9 @@ async function createChart(payload) {
         goal: chartSpec.goal,
         configuration: seriesConfiguration ?? chartSpec.configuration ?? {}
       }]
-    }, null, { waitForData: true }); // A returned AI preview must have prepared data.
+    };
+    if (options.prepareOnly) return { chartData };
+    const chart = await chartController.createWithChartDatasetConfigs(chartData, null, { waitForData: true });
 
     // Take a snapshot of the chart for visualization
     let snapshot = null;

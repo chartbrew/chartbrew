@@ -58,7 +58,9 @@ function getSetupOptions(provider, capability, sources) {
   return [{ state: "unsupported", name: provider || "Data source" }];
 }
 
-async function listConnections(payload) {
+async function listConnections(payload, pagination = {}) {
+  const limit = Math.min(Math.max(Number(pagination.limit) || 5, 1), 100);
+  const offset = Math.max(0, Number(pagination.offset) || 0);
   const { project_id, team_id, user_id, provider, capability, scope = "all" } = payload;
   const normalizedTeamId = normalizeTeamId(team_id);
   if ((provider != null && (typeof provider !== "string" || !normalizeName(provider) || provider.length > 100))
@@ -142,7 +144,7 @@ async function listConnections(payload) {
   // Existing sources win over new setup. Do not claim metric coverage from a provider match alone.
   let options;
   if (usableConnections.length) {
-    options = usableConnections.slice(0, 5).map(({ connection, source }) => ({
+    options = usableConnections.slice(offset, offset + limit).map(({ connection, source }) => ({
       state: "connected", connection_id: connection.id, source_id: source.id, name: connection.name,
     }));
   } else if (filteredConnections.length) {
@@ -178,7 +180,7 @@ async function listConnections(payload) {
   }
 
   return {
-    connections: usableConnections.slice(0, 5).map(({ connection, source }) => ({
+    connections: usableConnections.slice(offset, offset + limit).map(({ connection, source }) => ({
       id: connection.id,
       type: connection.type,
       subType: connection.subType,
@@ -193,7 +195,7 @@ async function listConnections(payload) {
       message: "No matching connection is available. Ask where the relevant data lives, then check that provider. The user can also browse sources.",
       setup_url: "/connections/new",
     } : {}),
-    ...(usableConnections.length > 5 ? { has_more: true } : {}),
+    ...(usableConnections.length > offset + limit ? { has_more: true, nextOffset: offset + limit } : {}),
   };
 }
 

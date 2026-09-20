@@ -4,6 +4,102 @@
 @plugin "@tailwindcss/typography";
 @import "@heroui/styles";
 
+.dashboard-preview-window {
+  position: relative;
+  margin: 16px auto 96px;
+  padding: 56px 16px 16px;
+  border-radius: 16px;
+  background: var(--background);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 24%, var(--background)),
+    0 4px 16px color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.dashboard-preview-titlebar {
+  position: absolute;
+  inset: 1px 1px auto;
+  display: flex;
+  height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 15px 15px 0 0;
+  background: var(--surface-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.inline-chart-dialog[data-placement="right"] {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  padding: 0;
+  flex-direction: row;
+  background: transparent;
+  box-shadow: none;
+  translate: none;
+}
+
+.inline-chart-stage {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.inline-chart-preview {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  height: min(480px, calc(100dvh - 64px));
+  border-radius: var(--radius-3xl);
+}
+
+.inline-chart-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 2px solid var(--accent);
+  border-radius: inherit;
+}
+
+.inline-chart-panel {
+  display: flex;
+  flex-direction: column;
+  width: 384px;
+  height: 100%;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+@media (max-width: 767px) {
+  .inline-chart-dialog[data-placement="right"] {
+    flex-direction: column;
+  }
+
+  .inline-chart-stage {
+    flex: none;
+    padding: 16px;
+  }
+
+  .inline-chart-preview {
+    height: 28dvh;
+  }
+
+  .inline-chart-panel {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    flex: 1;
+    border-left: 0;
+  }
+}
+
 @theme inline {
   --font-sans: Inter, -apple-system, system-ui, sans-serif;
   --font-tight: "Inter Tight", Inter, -apple-system, system-ui, sans-serif;

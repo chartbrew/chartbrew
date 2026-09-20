@@ -35,7 +35,7 @@ function resolveXAxis({
   return xAxis ?? spec.xAxis;
 }
 
-async function prepareDashboardChart(payload) {
+async function prepareDashboardChart(payload, options = {}) {
   let {
     project_id, connection_id, name, legend, type, subType, displayLegend, pointRadius,
     dataLabels, includeZeros, timeInterval, stacked, horizontal, xLabelTicks,
@@ -132,7 +132,7 @@ async function prepareDashboardChart(payload) {
     const resolvedIncludeZeros = includeZeros !== undefined
       ? includeZeros
       : spec.includeZeros ?? true;
-    const dataset = await datasetController.createWithDataRequests({
+    const datasetData = {
       team_id: normalizedTeamId,
       project_ids: [Number(project_id)],
       draft: false,
@@ -158,7 +158,10 @@ async function prepareDashboardChart(payload) {
         transform: transform || null
       }],
       main_dr_index: 0
-    });
+    };
+    const dataset = options.prepareOnly
+      ? { id: null, name: datasetData.name }
+      : await datasetController.createWithDataRequests(datasetData);
     const canonicalVisualization = buildAiVisualization({
       bindingId: "binding-1",
       chart: {
@@ -242,6 +245,7 @@ async function prepareDashboardChart(payload) {
 
     return {
       chartData,
+      datasetData,
       finish: async (chart) => {
         let snapshot = null;
         try {
@@ -314,3 +318,5 @@ async function createDashboardChart(payload) {
 }
 
 module.exports = createDashboardChart;
+
+module.exports.prepareDashboardChart = prepareDashboardChart;

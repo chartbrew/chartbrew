@@ -27,7 +27,7 @@ function hasLimitClause(query) {
   return /\blimit\b/i.test(query);
 }
 
-async function runQuery(payload) {
+async function runQuery(payload, options = {}) {
   const {
     connection_id, query, configuration = null, row_limit = DEFAULT_ROW_LIMIT, timeout_ms = 8000, team_id
   } = payload;
@@ -62,6 +62,23 @@ async function runQuery(payload) {
       if (!hasLimitClause(limitedQuery) && SQL_LIMIT_SOURCES.includes(source.type)) {
         limitedQuery = `${limitedQuery} LIMIT ${safeRowLimit}`;
       }
+    }
+
+    if (options.transient) {
+      let preview;
+      if (source.backend.exploreReadOnly) {
+        preview = await source.backend.exploreReadOnly({ connection, operation: "query", query: limitedQuery, limit: safeRowLimit });
+      } else if (source.backend.previewDataRequest) {
+        preview = await source.backend.previewDataRequest({ connection, dataRequest: { query: limitedQuery, configuration } });
+      } else if (source.backend.runChartQuery) {
+        preview = { rows: await source.backend.runChartQuery({ connection, query: limitedQuery }) };
+      } else {
+        throw new Error("This source cannot prepare a chart without a saved dataset. Select an existing dataset.");
+      }
+      const rows = preview.rows || preview.responseData?.data || [];
+      if (!Array.isArray(rows)) throw new Error("The source must return structured rows");
+      return { rows: rows.slice(0, safeRowLimit), rowCount: rows.length,
+        columns: rows.length ? Object.keys(rows[0]).map((name) => ({ name, type: typeof rows[0][name] })) : [] };
     }
 
     // Create a temporary Dataset and DataRequest for proper database relationships

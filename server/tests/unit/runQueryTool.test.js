@@ -29,6 +29,16 @@ describe("run_query AI tool", () => {
     mockRunQueryStorage();
   });
 
+  it("prepares inline query data without temporary database records", async () => {
+    const postgres = getSourceById("postgres");
+    const read = vi.spyOn(postgres.backend, "exploreReadOnly").mockResolvedValue({ rows: [{ visits: 0 }] });
+    const result = await runQuery({ team_id: 7, connection_id: 42, query: "SELECT 0 AS visits", row_limit: 10 }, { transient: true });
+    expect(read).toHaveBeenCalledWith(expect.objectContaining({ operation: "query", limit: 10 }));
+    expect(result.rows).toEqual([{ visits: 0 }]);
+    expect(db.Dataset.create).not.toHaveBeenCalled();
+    expect(db.DataRequest.create).not.toHaveBeenCalled();
+  });
+
   it("normalizes row_limit before appending it to SQL queries", async () => {
     const postgres = getSourceById("postgres");
     const runDataRequestSpy = vi.spyOn(postgres.backend, "runDataRequest").mockResolvedValue({

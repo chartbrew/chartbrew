@@ -26,6 +26,20 @@ const nativeVisualization = {
 };
 
 describe("native visualization compatibility updates", () => {
+  it("preserves map locations and values when switching chart types", () => {
+    const map = { version: 2, layers: [{ id: "visits", bindingId: "visits", mark: "map",
+      encoding: { location: { field: "root[].country", type: "nominal" }, value: { field: "root[].visits", aggregate: "sum", type: "quantitative" } },
+      options: { map: { area: "world", mode: "regions" } } }] };
+    for (const type of ["bar", "horizontalBar", "line", "pie"]) {
+      const changed = applyChartCompatibilityUpdate(map, { type });
+      expect(changed.layers[0].encoding.category.field).toBe("root[].country");
+      expect(changed.layers[0].encoding.value).toEqual(map.layers[0].encoding.value);
+      const restored = applyChartCompatibilityUpdate(changed, { type: "map" });
+      expect(restored.layers[0].encoding).toEqual(map.layers[0].encoding);
+      expect(restored.layers[0].options.map).toEqual(map.layers[0].options.map);
+    }
+  });
+
   it("keeps breakdown fields while mirroring legacy display controls", () => {
     const next = applyCdcCompatibilityUpdate(nativeVisualization, "cdc-income", {
       datasetColor: "#123456",
