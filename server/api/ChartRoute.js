@@ -154,7 +154,11 @@ module.exports = (app) => {
   const resolveRuntimeVariables = async (req, project, providedVariables = {}) => {
     const queryParams = req.body?.queryParams || {};
     const urlVariables = projectController._extractVariablesFromQuery(queryParams);
-    let policyVariables = {};
+    const requestedVariables = { ...urlVariables, ...(providedVariables || {}) };
+
+    if (await hasProjectReadAccess(project, req.user)) {
+      return requestedVariables;
+    }
 
     const sharePolicy = await db.SharePolicy.findOne({
       where: {
@@ -164,15 +168,10 @@ module.exports = (app) => {
     });
 
     if (sharePolicy) {
-      policyVariables = projectController._mergeVariablesWithPolicy(urlVariables, sharePolicy);
-    } else if (project.public) {
-      policyVariables = urlVariables;
+      return projectController._mergeVariablesWithPolicy(requestedVariables, sharePolicy);
     }
 
-    return {
-      ...policyVariables,
-      ...(providedVariables || {}),
-    };
+    return project.public ? requestedVariables : (providedVariables || {});
   };
 
   const checkPermissions = (actionType = "readOwn", entity = "chart") => {
