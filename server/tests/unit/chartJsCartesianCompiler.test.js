@@ -48,6 +48,35 @@ function buildChart(data) {
 }
 
 describe("Chart.js cartesian visualization compiler", () => {
+  it.each([
+    ["line", "vertical"],
+    ["bar", "vertical"],
+    ["bar", "horizontal"],
+  ])("applies and clears value limits for %s %s charts", (mark, orientation) => {
+    const input = buildChart(readFixture("exam-income-long.json"));
+    Object.assign(input.chart.visualization.layers[0], { mark, orientation });
+    input.chart.minValue = 10;
+    input.chart.maxValue = 500;
+    const valueAxis = orientation === "horizontal" ? "x" : "y";
+    const categoryAxis = valueAxis === "x" ? "y" : "x";
+    const renderScales = () => new VisualizationEngine(input).render().configuration.options.scales;
+
+    expect(renderScales()[valueAxis]).toMatchObject({ min: 10, max: 500, beginAtZero: false });
+
+    for (const [minValue, maxValue] of [[0, 100], [-100, 0], [25, 75]]) {
+      input.chart.visualization.settings = { minValue, maxValue };
+      const scales = renderScales();
+      expect(scales[valueAxis]).toMatchObject({ min: minValue, max: maxValue, beginAtZero: false });
+      expect(scales[categoryAxis].min).toBeUndefined();
+      expect(scales[categoryAxis].max).toBeUndefined();
+    }
+
+    input.chart.visualization.settings = { minValue: null, maxValue: null };
+    expect(renderScales()[valueAxis].min).toBeUndefined();
+    expect(renderScales()[valueAxis].max).toBeUndefined();
+    expect(renderScales()[valueAxis].beginAtZero).toBe(true);
+  });
+
   it("compiles one binding and one breakdown into multiple stacked datasets", () => {
     const input = buildChart(readFixture("exam-income-long.json"));
     const result = new VisualizationEngine(input).render();

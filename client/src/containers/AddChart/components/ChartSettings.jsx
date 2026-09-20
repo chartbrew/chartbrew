@@ -121,18 +121,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   const displayedDateRange = resolveChartConfiguredDateRange(chart);
 
   useEffect(() => {
-    if (chart.maxValue || chart.maxValue === 0) {
-      setMax(chart.maxValue);
-    }
-    if (chart.maxValue === null) {
-      setMax("");
-    }
-    if (chart.minValue || chart.minValue === 0) {
-      setMin(chart.minValue);
-    }
-    if (chart.minValue === null) {
-      setMin("");
-    }
+    setMax(chart.maxValue == null ? "" : String(chart.maxValue));
+    setMin(chart.minValue == null ? "" : String(chart.minValue));
   }, [chart.maxValue, chart.minValue]);
 
   useEffect(() => {
@@ -561,11 +551,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                 />
               </TextField>
               <div className="flex flex-row gap-1">
-                {max && (
+                {max !== "" && (
                   <>
                     <Button
-                      isDisabled={!max || (max === chart.maxValue)}
-                      onPress={() => onChange({ maxValue: max })}
+                      isDisabled={Number(max) === chart.maxValue}
+                      onPress={() => onChange({ maxValue: Number(max) })}
                       variant="secondary"
                       size="sm"
                     >
@@ -598,11 +588,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                 />
               </TextField>
               <div className="flex flex-row items-center gap-1">
-                {min && (
+                {min !== "" && (
                   <>
                     <Button
-                      isDisabled={!min || (min === chart.minValue)}
-                      onPress={() => onChange({ minValue: min })} variant="secondary"
+                      isDisabled={Number(min) === chart.minValue}
+                      onPress={() => onChange({ minValue: Number(min) })} variant="secondary"
                       size="sm"
                     >
                       Save

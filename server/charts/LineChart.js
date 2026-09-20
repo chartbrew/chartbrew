@@ -98,7 +98,7 @@ class NewLineChart {
       },
       scales: {
         y: {
-          beginAtZero: !this.chart.minValue && true,
+          beginAtZero: this.chart.minValue == null,
           ticks: {
             precision: 0,
             font: {
@@ -156,10 +156,10 @@ class NewLineChart {
       },
     };
 
-    if (this.chart.maxValue) {
+    if (this.chart.maxValue != null) {
       chartJsData.options.scales.y.max = this.chart.maxValue;
     }
-    if (this.chart.minValue) {
+    if (this.chart.minValue != null) {
       chartJsData.options.scales.y.min = this.chart.minValue;
     }
     if (this.chart.isLogarithmic) {

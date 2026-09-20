@@ -112,7 +112,6 @@ class NewBarChart {
       scales: {
         y: {
           stacked: this.chart.stacked,
-          beginAtZero: !this.chart.minValue && true,
           ticks: {
             precision: 0,
             font: {
@@ -170,14 +169,17 @@ class NewBarChart {
       },
     };
 
-    if (this.chart.maxValue) {
-      chartJsData.options.scales.y.max = this.chart.maxValue;
+    const valueScale = chartJsData.options.scales[this.chart.horizontal ? "x" : "y"];
+    valueScale.beginAtZero = this.chart.minValue == null;
+
+    if (this.chart.maxValue != null) {
+      valueScale.max = this.chart.maxValue;
     }
-    if (this.chart.minValue) {
-      chartJsData.options.scales.y.min = this.chart.minValue;
+    if (this.chart.minValue != null) {
+      valueScale.min = this.chart.minValue;
     }
     if (this.chart.isLogarithmic) {
-      chartJsData.options.scales.y.type = "logarithmic";
+      valueScale.type = "logarithmic";
     }
 
     // check how many ticks should the X Axis have

@@ -255,6 +255,10 @@ function compileChartJsCartesian({ chart, frame, runtimeContext, timezone, visua
   const chartWithSeries = {
     ...chart,
     ChartDatasetConfigs: compiled.configs,
+    minValue: visualization.settings?.minValue !== undefined
+      ? visualization.settings.minValue : chart.minValue,
+    maxValue: visualization.settings?.maxValue !== undefined
+      ? visualization.settings.maxValue : chart.maxValue,
     displayLegend: visualization.settings?.legend?.visible ?? chart.displayLegend ?? true,
     horizontal: visualization.layers.some((layer) => layer.orientation === "horizontal"),
     stacked: visualization.layers.some((layer) => layer.stack !== "none"),
