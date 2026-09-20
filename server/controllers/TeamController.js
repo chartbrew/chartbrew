@@ -142,6 +142,10 @@ class TeamController {
 
   // add a new team role
   addTeamRole(teamId, userId, roleName, projects, canExport) {
+    if (!this.isInvitableRole(roleName)) {
+      return Promise.reject(new Error("Invalid invitation role"));
+    }
+
     const teamRoleObj = { "team_id": teamId, "user_id": userId, "role": roleName };
     if (projects) teamRoleObj.projects = projects;
     if (canExport) teamRoleObj.canExport = canExport;
@@ -166,6 +170,10 @@ class TeamController {
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
+  }
+
+  isInvitableRole(role) {
+    return TEAM_ROLES.has(role) && role !== "teamOwner";
   }
 
   addProjectAccess(teamId, userId, projectId, options = {}) {

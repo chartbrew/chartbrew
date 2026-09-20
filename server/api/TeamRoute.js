@@ -156,10 +156,15 @@ module.exports = (app) => {
 
   // a route to send a team invite
   app.post("/team/:id/invite", verifyToken, checkPermissions("createAny", "teamInvite"), (req, res) => {
+    const role = req.body.role ?? "projectViewer";
+    if (!teamController.isInvitableRole(role)) {
+      return res.status(400).send({ error: "Invalid invitation role" });
+    }
+
     const payload = {
       projects: req.body.projects,
       canExport: req.body.canExport,
-      role: req.body.role,
+      role,
       team_id: req.params.id,
       user_id: req.user.id,
     };
@@ -186,6 +191,10 @@ module.exports = (app) => {
 
     let newRole = {};
     return jwt.verify(req.body.token, app.settings.encryptionKey, (err, decoded) => {
+      if (err || !decoded?.team_id) {
+        return res.status(401).send({ error: "Invalid or expired invitation" });
+      }
+
       return teamController.addTeamRole(decoded.team_id, req.user.id, decoded.role || "projectViewer", decoded.projects, decoded.canExport)
         .then((role) => {
           newRole = role;
