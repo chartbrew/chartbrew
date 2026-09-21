@@ -9,9 +9,10 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
-const { decrypt, encrypt } = require("../modules/cbCrypto");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+
+const PASSWORD_RESET_TOKEN_TTL = 30 * 60 * 1000;
 
 const sc = simplecrypt({
   password: settings.secret,
@@ -456,7 +457,7 @@ class UserController {
   }
 
   requestPasswordReset(email) {
-    const newToken = uuid();
+    const newToken = `${uuid()}.${Date.now() + PASSWORD_RESET_TOKEN_TTL}`;
     return db.User.findOne({ where: { email } })
       .then((user) => {
         if (!user) {
@@ -466,14 +467,9 @@ class UserController {
         return this.update(user.id, { passwordResetToken: newToken });
       })
       .then((user) => {
-        const hash = encrypt(JSON.stringify({
-          id: user.id,
-          email: user.email,
-        }));
-
         return mail.passwordReset({
           email: user.email,
-          resetUrl: `${settings.client}/passwordReset?token=${newToken}&hash=${hash}`,
+          resetUrl: `${settings.client}/passwordReset?token=${newToken}`,
         });
       })
       .then((body) => {
@@ -484,37 +480,32 @@ class UserController {
       });
   }
 
-  async changePassword({ token, hash, password }) {
-    // decrypt the hash to get the user information
-    let user;
-    try {
-      user = JSON.parse(decrypt(hash));
-    } catch (e) {
-      return new Promise((resolve, reject) => reject(e));
+  async changePassword({ token, password }) {
+    if (typeof token !== "string" || !token || typeof password !== "string" || password.length < 6) {
+      throw new Error(401);
     }
 
-    // check if the existing token is valid first
-    return this.findById(user.id)
-      .then(async (existingUser) => {
-        if (existingUser.passwordResetToken !== token) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
+    const expiresAt = Number(token.slice(token.lastIndexOf(".") + 1));
+    if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) {
+      throw new Error(401);
+    }
 
-        const bcryptHash = await bcrypt.hash(password, 10);
+    const existingUser = await db.User.findOne({ where: { passwordResetToken: token } });
+    if (!existingUser) throw new Error(401);
 
-        const userUpdate = {
-          passwordResetToken: uuid(),
-          password: bcryptHash,
-        };
+    const bcryptHash = await bcrypt.hash(password, 10);
+    const [updatedUsers] = await db.User.update({
+      passwordResetToken: null,
+      password: bcryptHash,
+    }, {
+      where: {
+        id: existingUser.id,
+        passwordResetToken: token,
+      },
+    });
 
-        return this.update(user.id, userUpdate);
-      })
-      .then(() => {
-        return new Promise((resolve) => resolve({ completed: true }));
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+    if (!updatedUsers) throw new Error(401);
+    return { completed: true };
   }
 
   areThereAnyUsers() {

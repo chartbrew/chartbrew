@@ -37,16 +37,14 @@ This document covers all authentication and user management flows in Chartbrew.
 - **Request reset**: `POST /user/password/reset`
   - Always returns `{ "success": true }` immediately (does not await controller)
   - Controller path: `UserController.requestPasswordReset(email)`
-    - Sets `User.passwordResetToken` to a new UUID
-    - Builds a `hash` payload using [`server/modules/cbCrypto.encrypt()`](../modules/cbCrypto.js):
-      - JSON: `{ id, email }`
+    - Sets `User.passwordResetToken` to a new UUID-based token with a 30-minute expiry
     - Emails a reset URL like:
-      - `${settings.client}/passwordReset?token=${passwordResetToken}&hash=${hash}`
+      - `${settings.client}/passwordReset?token=${passwordResetToken}`
 - **Change password**: `PUT /user/password/change`
-  - Controller path: `UserController.changePassword({ token, hash, password })`
-  - Decrypts `hash`, verifies `token` matches `User.passwordResetToken`, then:
+  - Controller path: `UserController.changePassword({ token, password })`
+  - Finds the user by the non-expired `passwordResetToken`, then:
     - Updates password (bcrypt)
-    - Rotates `passwordResetToken` (new UUID)
+    - Clears `passwordResetToken`
 
 ## Email Update Flow
 
