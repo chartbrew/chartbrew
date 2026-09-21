@@ -282,7 +282,7 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
           </Button>
         </div>
         {settings && (
-          <Button size="sm" variant="ghost" className="-ml-2 self-start" isDisabled={busy} onPress={() => navigate(`/dashboard/${projectId}/chart/${chartId}/edit`)}>
+          <Button size="sm" variant="tertiary" className="-ml-2 self-start" isDisabled={busy} onPress={() => navigate(`/dashboard/${projectId}/chart/${chartId}/edit`)}>
             Open full editor
             <LuArrowUpRight size={16} />
           </Button>
