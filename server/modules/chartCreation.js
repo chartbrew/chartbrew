@@ -283,7 +283,7 @@ async function run(projectId, userId, body, chartId = null) {
       Object.assign(chartData, { startDate: plan.startDate, endDate: plan.endDate,
         currentEndDate: plan.currentEndDate === true, fixedStartDate: plan.fixedStartDate === true });
     }
-    chartData.draft = false;
+    chartData.draft = true;
     chartData.onReport = true;
     const bindings = chartData.chartDatasetConfigs;
     if (allowedFields && bindings.some((binding) => [binding.xAxis, binding.yAxis, binding.dateField]
@@ -429,7 +429,7 @@ async function run(projectId, userId, body, chartId = null) {
         const existing = chart.getDataValue("ChartDatasetConfigs");
         if (existing.length !== 1) throw fail("Use More options to change this chart.", 422);
         const updates = { ...chartData };
-        ["chartDatasetConfigs", "project_id", "layout"].forEach((key) => delete updates[key]);
+        ["chartDatasetConfigs", "project_id", "layout", "draft", "onReport"].forEach((key) => delete updates[key]);
         await existing[0].update({ ...bindings[0], id: existing[0].id, chart_id: chart.id }, { transaction });
         updates.visualization = remapVisualizationBindings(chartData.visualization, bindings, existing);
         await chart.update(updates, { transaction });
@@ -459,7 +459,7 @@ async function details(projectId, userId, chartId) {
   const cdc = chart.getDataValue("ChartDatasetConfigs")[0];
   const dataset = cdc ? await getDataset(access, cdc.dataset_id) : null;
   const saved = await db.ChartCreation.findOne({ where: { chart_id: chart.id, state: "succeeded" }, order: [["updatedAt", "DESC"]] });
-  return { version: chartVersion(chart), name: chart.name, type: chart.type, timeInterval: chart.timeInterval,
+  return { version: chartVersion(chart), name: chart.name, draft: chart.draft, type: chart.type, timeInterval: chart.timeInterval,
     datasetId: dataset?.id, fields: saved?.result?.fields || dataset?.fieldsSchema || {}, xAxis: cdc?.xAxis || dataset?.xAxis, yAxis: cdc?.yAxis || dataset?.yAxis, yAxisOperation: cdc?.yAxisOperation || dataset?.yAxisOperation,
     ...getInlineBindings(chart) };
 }

@@ -22,8 +22,13 @@ function AiComposer({
   rows = 4,
   framed = false,
   fill = false,
+  value,
+  onValueChange,
+  submitLabel = "Send question",
 }) {
-  const [draftQuestion, setDraftQuestion] = useState("");
+  const [localQuestion, setLocalQuestion] = useState("");
+  const draftQuestion = value ?? localQuestion;
+  const setDraftQuestion = onValueChange || setLocalQuestion;
   const fallbackRef = useRef(null);
   const composerRef = inputRef || fallbackRef;
   const hasContent = draftQuestion.trim()
@@ -57,9 +62,9 @@ function AiComposer({
 
   const sendButton = (
     <Tooltip delay={0}>
-      <Tooltip.Trigger>
-        <Button
-          aria-label="Send question"
+      <Tooltip.Trigger render={(triggerProps) => (
+        <Button {...triggerProps}
+          aria-label={submitLabel}
           className="rounded-full"
           isDisabled={!hasContent}
           isIconOnly
@@ -70,7 +75,7 @@ function AiComposer({
         >
           <LuArrowUp size={17} aria-hidden />
         </Button>
-      </Tooltip.Trigger>
+      )} />
       <Tooltip.Content>
         <div className="flex items-center gap-1.5 text-xs">
           <span>Send</span>
@@ -130,7 +135,6 @@ function AiComposer({
 
       <div className={fill ? "min-h-0 flex-1" : undefined}>
       <TextField
-        aria-label={placeholder}
         className={fill ? "flex h-full min-h-0 w-full flex-col" : "flex w-full flex-col border border-divider rounded-3xl"}
         fullWidth
         isDisabled={isLoading}
@@ -207,6 +211,9 @@ AiComposer.propTypes = {
   rows: PropTypes.number,
   framed: PropTypes.bool,
   fill: PropTypes.bool,
+  value: PropTypes.string,
+  onValueChange: PropTypes.func,
+  submitLabel: PropTypes.string,
 };
 
 export default AiComposer;

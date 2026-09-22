@@ -292,7 +292,7 @@ function ChartDatasetConfig(props) {
       ? state.dataset.data.find((d) => d.id === parseInt(cdc.dataset_id, 10))
       : null
   ));
-  const drs = dataset?.DataRequests || [];
+  const drs = dataset?.DataRequests;
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
   const bindingLayers = (chart?.visualization?.layers || []).filter((layer) => {
     return `${layer.bindingId}` === `${cdc?.id}`;

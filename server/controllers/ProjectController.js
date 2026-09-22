@@ -104,6 +104,7 @@ class ProjectController {
       include: [
         {
           model: db.Chart,
+          ...(options.includeDrafts === false ? { where: { draft: false }, required: false } : {}),
           include: [{
             model: db.ChartDatasetConfig, include: [{ model: db.Dataset }]
           }, {
@@ -261,7 +262,8 @@ class ProjectController {
         {
           model: db.Chart,
           attributes: { exclude: ["query"] },
-          where: { onReport: true },
+          where: { onReport: true, draft: false },
+          required: false,
           include: [{
             model: db.ChartDatasetConfig,
             order: [["order", "ASC"]],

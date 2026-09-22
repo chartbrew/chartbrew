@@ -39,14 +39,12 @@ function ChartDatasets(props) {
   const navigate = useNavigate();
 
   const initRef = useRef(null);
-  const datasetsRef = useRef(null);
 
   useEffect(() => {
-    if ((!datasets || datasets.length === 0) && !datasetsRef.current && team?.id) {
-      datasetsRef.current = true;
+    if (team?.id) {
       dispatch(getDatasets({ team_id: team.id }));
     }
-  }, [team]);
+  }, [team?.id, chartId, dispatch]);
 
   useEffect(() => {
     if (datasets?.length > 0 && !initRef.current && chart) {

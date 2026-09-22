@@ -159,7 +159,7 @@ describe("Inline chart creation", () => {
     const result = await f.run();
     expect(result.state).toBe("succeeded");
     const chart = await db.Chart.findByPk(result.chartId);
-    expect({ draft: chart.draft, onReport: chart.onReport, project: chart.project_id }).toEqual({ draft: false, onReport: true, project: f.project.id });
+    expect({ draft: chart.draft, onReport: chart.onReport, project: chart.project_id }).toEqual({ draft: true, onReport: true, project: f.project.id });
     expect(await f.run()).toEqual(result);
     expect(await db.Chart.count({ where: { project_id: f.project.id } })).toBe(1);
     expect((await f.dataset.reload()).project_ids).toContain(f.project.id);
@@ -176,8 +176,28 @@ describe("Inline chart creation", () => {
     expect(result.state).toBe("succeeded");
     expect(result.chartId).toBe(saved.chartId);
     expect((await db.Chart.findByPk(saved.chartId)).name).toBe("Countries");
+    expect((await db.Chart.findByPk(saved.chartId)).draft).toBe(true);
     expect(await f.run(edit, saved.chartId)).toEqual(result);
     expect((await f.run({ ...edit, requestId: randomUUID() }, saved.chartId)).state).toBe("failed");
+  });
+
+  it("creates independent drafts and preserves publication when refining", async () => {
+    const f = await fixture();
+    const results = await Promise.all([f.run(), f.run({ ...f.input, requestId: randomUUID() })]);
+    expect(results.map((result) => result.state)).toEqual(["succeeded", "succeeded"]);
+    expect(new Set(results.map((result) => result.chartId)).size).toBe(2);
+    const ProjectController = require("../../controllers/ProjectController");
+    const controller = new ProjectController();
+    expect((await controller.findById(f.project.id, { includeDrafts: false })).Charts).toHaveLength(0);
+    expect((await controller.getPublicDashboard(f.project.brewName)).Charts).toHaveLength(0);
+    const chart = await db.Chart.findByPk(results[0].chartId);
+    await chart.update({ draft: false });
+    const settings = await creation.details(f.project.id, f.user.id, chart.id);
+    expect(settings.draft).toBe(false);
+    expect((await f.run({ requestId: randomUUID(), mode: "settings", expectedVersion: settings.version, choices: { name: "Published visits" } }, chart.id)).state).toBe("succeeded");
+    expect((await chart.reload()).draft).toBe(false);
+    expect((await controller.findById(f.project.id, { includeDrafts: false })).Charts.map((item) => item.id)).toEqual([chart.id]);
+    expect((await controller.getPublicDashboard(f.project.brewName)).Charts.map((item) => item.id)).toEqual([chart.id]);
   });
 
   it("does not leave a chart or dataset link when final placement fails", async () => {

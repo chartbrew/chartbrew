@@ -1,23 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Avatar, Button, Drawer, Input, Label, ListBox, Modal, Select, Spinner, TextArea, TextField } from "@heroui/react";
-import { LuArrowUpRight, LuDatabase, LuTrash2, LuX } from "react-icons/lu";
+import { Avatar, Button, Drawer, Input, Label, ListBox, Modal, Select, Spinner, TextField } from "@heroui/react";
+import { LuArrowUpRight, LuDatabase, LuX } from "react-icons/lu";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import { v4 as uuid } from "uuid";
 import { chartCreationRequest } from "../../../api/chartCreation";
 import getConnectionLogo from "../../../modules/getConnectionLogo";
 import { useTheme } from "../../../modules/ThemeContext";
+import AiComposer from "../../Ai/AiComposer";
 
 const TYPES = { kpi: "Number", line: "Line", bar: "Bar", horizontalBar: "Horizontal bar", table: "Table", pie: "Pie", doughnut: "Doughnut", avg: "Average", map: "Map" };
 const OPERATIONS = { none: "As provided", sum: "Total", avg: "Average", min: "Minimum", max: "Maximum", count: "Count", count_unique: "Unique count" };
 const PHASES = { finding: "Finding suitable data…", checking: "Checking your chart…", saving: "Saving your chart…", saved: "Loading your chart…" };
 
-function ChartSelect({ label, value, items, onChange, isDisabled }) {
+function ChartSelect({ label, value, items, onChange, isDisabled, compact = false }) {
   return (
-    <Select value={value || null} onChange={onChange} isDisabled={isDisabled} variant="secondary" className="w-full">
-      <Label>{label}</Label>
-      <Select.Trigger>
+    <Select value={value || null} onChange={onChange} isDisabled={isDisabled} variant="secondary" className={compact ? "min-w-0 max-w-64 flex-1" : "w-full"}>
+      <Label className={compact ? "sr-only" : undefined}>{label}</Label>
+      <Select.Trigger className={compact ? "h-8 min-h-8 bg-transparent px-2 text-xs shadow-none" : undefined}>
         <Select.Value className="flex items-center gap-2" />
         <Select.Indicator />
       </Select.Trigger>
@@ -43,12 +44,12 @@ function ChartSelect({ label, value, items, onChange, isDisabled }) {
   );
 }
 
-ChartSelect.propTypes = { label: PropTypes.string, value: PropTypes.string, items: PropTypes.array, onChange: PropTypes.func, isDisabled: PropTypes.bool };
+ChartSelect.propTypes = { label: PropTypes.string, value: PropTypes.string, items: PropTypes.array, onChange: PropTypes.func, isDisabled: PropTypes.bool, compact: PropTypes.bool };
 
-function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelectChart, onChartContainer, onUndo, runtime }) {
+function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClose, onSaved, onChartContainer, onPublish, runtime }) {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const storageKey = `chart-creation:${userId}:${projectId}`;
+  const storageKey = `chart-creation:${userId}:${projectId}:${sessionId}`;
   const [options, setOptions] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [source, setSource] = useState("auto");
@@ -64,30 +65,18 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
   const [settings, setSettings] = useState(null);
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
-  const [undoAvailable, setUndoAvailable] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const active = useRef(null);
   const completed = useRef(null);
   const form = useRef(null);
   const inputRef = useRef(null);
-  const wasVisible = useRef(false);
   const busy = operation?.state === "running" || finishing;
   const chartId = settings?.chartId || request?.chartId;
-  const visible = open || Boolean(request) || Boolean(settings);
-
-  useEffect(() => {
-    const restoreFocus = wasVisible.current && !visible;
-    wasVisible.current = visible;
-    if (!restoreFocus) return undefined;
-    const frame = requestAnimationFrame(() => document.querySelector("[data-add-chart]")?.focus({ preventScroll: true }));
-    return () => cancelAnimationFrame(frame);
-  }, [visible]);
 
   const loadSettings = async (id) => {
     const result = await chartCreationRequest(projectId, `chart/${id}/inline-settings`);
     setSettings({ ...result, chartId: id });
     setTitle(result.name);
-    onSelectChart(id);
   };
 
   const acceptResult = async (result, pending) => {
@@ -100,9 +89,11 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
       setError(result.message || "");
       try {
         await onSaved(result.chartId);
-        await loadSettings(result.chartId);
-        if (!pending.chartId) setUndoAvailable(true);
-        if (!pending.chartId) toast.success("Chart added");
+        if (pending.chartId) await loadSettings(result.chartId);
+        else {
+          toast.success("Chart draft saved");
+          close(true);
+        }
         setPrompt("");
       } catch (_) {
         setError("Chart saved. Reload the dashboard to show it.");
@@ -112,7 +103,7 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
     } else if (result.state === "failed") {
       setError(result.message || "The chart could not be created. Try again.");
     } else if (result.state === "cancelled") {
-      close(false, true);
+      close(true);
     }
   };
 
@@ -125,21 +116,23 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
       if (saved?.body?.requestId) {
         active.current = saved.body.requestId;
         setRequest(saved);
-        onClose(true);
         setPrompt(saved.body.prompt || "");
+        setSource(saved.body.connectionId ? String(saved.body.connectionId) : "auto");
+        setDataset(saved.dataset || null);
         setOperation({ state: "running", phase: "finding" });
         if (saved.chartId) loadSettings(saved.chartId).catch(() => {});
       }
+      if (!saved?.body?.requestId && targetChartId) loadSettings(targetChartId).catch((reason) => setError(reason.message));
     } catch (_) { sessionStorage.removeItem(storageKey); }
     return () => { controller.abort(); active.current = null; };
-  }, [projectId, userId]);
+  }, [projectId, userId, sessionId]);
 
   useEffect(() => {
-    if (open && !settings) {
+    if (!targetChartId && options && !request) {
       form.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       inputRef.current?.focus({ preventScroll: true });
     }
-  }, [open, Boolean(settings)]);
+  }, [Boolean(options)]);
 
   useEffect(() => {
     if (!request || operation?.state !== "running") return undefined;
@@ -184,7 +177,7 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
     return () => { controller.abort(); window.clearTimeout(timer); };
   }, [picker, query, source, projectId]);
 
-  const submit = async (changes = {}) => {
+  const submit = async (changes = {}, selectedDataset = dataset) => {
     if (busy) return;
     const body = {
       requestId: uuid(), mode: "prompt", prompt, runtime,
@@ -192,7 +185,7 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
       ...(settings ? { expectedVersion: settings.version } : {}),
       ...changes,
     };
-    const pending = { body, chartId: settings?.chartId || null };
+    const pending = { body, chartId: settings?.chartId || null, dataset: selectedDataset };
     active.current = body.requestId;
     completed.current = null;
     setRequest(pending);
@@ -218,7 +211,7 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
     } catch (reason) { setError(reason.message); }
   };
 
-  const close = (addAnother = false, force = false) => {
+  const close = (force = false) => {
     if (busy && !force) return;
     sessionStorage.removeItem(storageKey);
     active.current = null;
@@ -228,15 +221,13 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
     setDataset(null);
     setPrompt("");
     setError("");
-    setUndoAvailable(false);
-    onSelectChart(null);
-    onClose(addAnother);
+    onClose();
   };
 
   const chooseDataset = (item) => {
     setDataset(item);
     setPicker(false);
-    submit({ mode: prompt.trim() && options?.aiEnabled ? "prompt" : "dataset", datasetId: item.dataset_id, connectionId: null, choices: {} });
+    submit({ mode: prompt.trim() && options?.aiEnabled ? "prompt" : "dataset", datasetId: item.dataset_id, connectionId: null, choices: {} }, item);
   };
 
   const saveSetting = (key, value) => {
@@ -254,7 +245,14 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
     finally { setPickerLoading(false); }
   };
 
-  if (!visible) return null;
+  if (targetChartId && !settings) {
+    return (
+      <div role="status" className="my-4 flex items-center gap-3">
+        {error || <Spinner aria-label="Loading chart settings" />}
+        <Button variant="secondary" onPress={() => close()}>Close</Button>
+      </div>
+    );
+  }
 
   const fieldItems = Object.entries(settings?.fields || {}).filter(([, type]) => ["number", "string", "boolean", "date"].includes(type))
     .map(([value]) => ({ value, label: value.replace(/^root(?:\[\])?\./, "") }));
@@ -272,22 +270,22 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
         }}
         className={settings
           ? "inline-chart-panel"
-          : "my-5 max-w-3xl rounded-2xl border border-divider bg-surface p-5 sm:p-6"}
+          : "min-w-0 rounded-2xl border border-divider bg-surface p-4"}
       >
-        <header className={settings ? "flex shrink-0 flex-col gap-1 border-b border-divider px-6 py-4" : "mb-5"}>
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">{settings ? "Edit chart" : "What would you like to show?"}</h2>
-          <Button isIconOnly variant="ghost" aria-label={settings ? "Close chart settings" : "Cancel chart creation"} isDisabled={busy || Boolean(settings && (title !== settings.name || error))} onPress={() => close()}>
-            <LuX size={18} />
-          </Button>
-        </div>
         {settings && (
-          <Button size="sm" variant="tertiary" className="-ml-2 self-start" isDisabled={busy} onPress={() => navigate(`/dashboard/${projectId}/chart/${chartId}/edit`)}>
-            Open full editor
-            <LuArrowUpRight size={16} />
-          </Button>
+          <header className="flex shrink-0 flex-col gap-1 border-b border-divider px-6 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-base font-semibold">Configure chart</h2>
+              <Button isIconOnly variant="ghost" aria-label="Close chart settings" isDisabled={busy || title !== settings.name || Boolean(error)} onPress={() => close()}>
+                <LuX size={18} />
+              </Button>
+            </div>
+            <Button size="sm" variant="tertiary" className="-ml-2 self-start" isDisabled={busy} onPress={() => navigate(`/dashboard/${projectId}/chart/${chartId}/edit`)}>
+              Open full editor
+              <LuArrowUpRight size={16} />
+            </Button>
+          </header>
         )}
-        </header>
 
         <div className={settings ? "min-h-0 flex-1 overflow-y-auto px-6 py-4" : ""}>
         {settings && (
@@ -337,23 +335,28 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
         )}
 
         {options?.aiEnabled && (
-          <form onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
-            <TextField isDisabled={busy} value={prompt} onChange={setPrompt}>
-              <Label>{settings ? "Refine with AI" : "Describe your chart"}</Label>
-              <TextArea ref={inputRef} variant="secondary" maxLength={4000} rows={settings ? 2 : 3} placeholder={settings ? "Make it weekly" : "Website visits by country in the last 30 days"} />
-            </TextField>
-            {!settings && (
-              <ChartSelect label={dataset ? "Dataset" : "Connection"} value={source} isDisabled={busy || Boolean(dataset)}
-                items={[{ value: "auto", label: dataset?.name || "Choose automatically" }, ...options.connections.map((item) => ({
+          <AiComposer
+            id={`chart-prompt-${sessionId}`}
+            name="chartPrompt"
+            inputRef={inputRef}
+            value={prompt}
+            onValueChange={setPrompt}
+            isLoading={busy}
+            selectedContext={{ multiSelect: [] }}
+            placeholder={settings ? "Describe a change to your chart…" : "Describe the chart you want to create…"}
+            submitLabel={settings ? "Update chart" : "Generate chart"}
+            onSubmitQuestion={() => { submit(); return false; }}
+            rows={3}
+            framed
+            leadingControl={!settings && (
+              <ChartSelect compact label={dataset ? "Dataset" : "Connection"} value={source} isDisabled={busy || Boolean(dataset)}
+                items={[{ value: "auto", label: dataset?.name || "Auto connection" }, ...options.connections.map((item) => ({
                   value: String(item.id), label: item.name, logo: item.icon || getConnectionLogo(item, isDark),
                 }))]}
                 onChange={(value) => { setSource(value); setDataset(null); }}
               />
             )}
-            <Button type="submit" variant={settings ? "secondary" : "primary"} isDisabled={busy || !prompt.trim()} className="self-start">
-              {settings ? "Update chart" : "Generate chart"}
-            </Button>
-          </form>
+          />
         )}
 
         {question && (
@@ -380,9 +383,14 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
         {error && (
           <div className="mt-4 space-y-2" role="alert">
             <p className="text-sm text-danger">{error}</p>
-            {!busy && request && (
+            {!busy && request && operation?.state !== "succeeded" && (
               <Button size="sm" variant="secondary" onPress={() => submit({ ...request.body, requestId: uuid(), ...(settings ? { expectedVersion: settings.version } : {}) })}>
                 Retry
+              </Button>
+            )}
+            {!busy && operation?.state === "succeeded" && !settings && (
+              <Button size="sm" variant="secondary" onPress={() => window.location.reload()}>
+                Reload dashboard
               </Button>
             )}
             {!busy && settings && (
@@ -393,7 +401,7 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
           </div>
         )}
         </div>
-        <footer className={settings ? "flex shrink-0 items-center justify-between gap-3 border-t border-divider bg-surface px-6 py-4" : "mt-5 flex flex-wrap items-center gap-2 border-t border-divider pt-4"}>
+        <footer className={settings ? "flex shrink-0 items-center justify-between gap-3 border-t border-divider bg-surface px-6 py-4" : `flex flex-wrap items-center gap-2${options?.aiEnabled ? " mt-4 border-t border-divider pt-3" : ""}`}>
           {!settings ? (
             <>
               <Button variant={options?.aiEnabled ? "secondary" : "primary"} isDisabled={busy || !options} onPress={() => setPicker(true)}>
@@ -401,34 +409,36 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
                 Use a dataset
               </Button>
               <Button variant="ghost" isDisabled={busy} onPress={() => navigate(`/dashboard/${projectId}/chart`)}>
-                Build manually
+                Open in Chart Studio
                 <LuArrowUpRight size={16} />
+              </Button>
+              <Button isIconOnly variant="ghost" className="ml-auto" aria-label="Cancel chart creation" isDisabled={busy} onPress={() => close()}>
+                <LuX size={18} />
               </Button>
             </>
           ) : (
             <>
-              {undoAvailable && (
+              <Button variant="secondary" isDisabled={busy || title !== settings.name || Boolean(error)} onPress={() => close()}>
+                {settings.draft ? "Save draft" : "Done"}
+              </Button>
+              {settings.draft && (
                 <Button
-                  variant="ghost"
-                  className="text-danger"
-                  isDisabled={busy}
+                  variant="primary"
+                  isDisabled={busy || title !== settings.name || Boolean(error)}
                   onPress={async () => {
                     setFinishing(true);
                     try {
-                      await onUndo(settings.chartId);
-                      setFinishing(false);
-                      close();
+                      await onPublish(settings.chartId);
+                      close(true);
                     } catch (reason) {
                       setError(reason.message);
                       setFinishing(false);
                     }
                   }}
                 >
-                  <LuTrash2 size={16} />
-                  Remove chart
+                  Publish chart
                 </Button>
               )}
-              <Button className="ml-auto" isDisabled={busy || title !== settings.name || Boolean(error)} onPress={() => close()}>Done</Button>
             </>
           )}
         </footer>
@@ -496,7 +506,6 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
                 {nextOffset != null && <Button variant="secondary" isDisabled={pickerLoading} onPress={loadMore}>Show more</Button>}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="ghost" onPress={() => navigate(`/dashboard/${projectId}/chart?tab=templates`)}>Browse templates</Button>
                 <Button variant="secondary" onPress={() => setPicker(false)}>Cancel</Button>
               </Modal.Footer>
             </Modal.Dialog>
@@ -507,10 +516,69 @@ function InlineChartCreator({ projectId, userId, open, onClose, onSaved, onSelec
   );
 }
 
+InlineChartSession.propTypes = {
+  projectId: PropTypes.string.isRequired, userId: PropTypes.number.isRequired,
+  sessionId: PropTypes.string.isRequired, targetChartId: PropTypes.number,
+  onClose: PropTypes.func.isRequired, onSaved: PropTypes.func.isRequired,
+  onChartContainer: PropTypes.func.isRequired, onPublish: PropTypes.func.isRequired, runtime: PropTypes.object.isRequired,
+};
+
+function InlineChartCreator({ open, onClose, selectedChartId, onSelectChart, ...props }) {
+  const storageKey = `chart-creations:${props.userId}:${props.projectId}`;
+  const [sessions, setSessions] = useState(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(storageKey));
+      return Array.isArray(saved) ? saved : [];
+    } catch (_) { return []; }
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem(storageKey, JSON.stringify(sessions));
+  }, [sessions, storageKey]);
+
+  useEffect(() => {
+    if (!open) return;
+    setSessions((current) => [...current, uuid()]);
+    onClose();
+  }, [open]);
+
+  return (
+    <>
+      {sessions.length > 0 && (
+        <div className="my-5 grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+          {sessions.map((id) => (
+            <InlineChartSession
+              {...props}
+              key={id}
+              sessionId={id}
+              onClose={() => setSessions((current) => current.filter((item) => item !== id))}
+            />
+          ))}
+        </div>
+      )}
+      {selectedChartId && (
+        <InlineChartSession
+          {...props}
+          key={selectedChartId}
+          sessionId={`edit-${selectedChartId}`}
+          targetChartId={selectedChartId}
+          onClose={() => {
+            onSelectChart(null);
+            requestAnimationFrame(() => {
+              const trigger = document.querySelector(`[data-configure-chart="${selectedChartId}"]`) || document.querySelector("[data-add-chart]");
+              trigger?.focus({ preventScroll: true });
+            });
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 InlineChartCreator.propTypes = {
   projectId: PropTypes.string.isRequired, userId: PropTypes.number.isRequired,
-  open: PropTypes.bool.isRequired, onClose: PropTypes.func.isRequired, onSaved: PropTypes.func.isRequired,
-  onChartContainer: PropTypes.func.isRequired, onSelectChart: PropTypes.func.isRequired, onUndo: PropTypes.func.isRequired, runtime: PropTypes.object.isRequired,
+  open: PropTypes.bool.isRequired, onClose: PropTypes.func.isRequired,
+  selectedChartId: PropTypes.number, onSelectChart: PropTypes.func.isRequired,
 };
 
 export default InlineChartCreator;

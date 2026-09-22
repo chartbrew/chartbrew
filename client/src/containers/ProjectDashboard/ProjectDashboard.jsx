@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import {
   Button,
   Tooltip,
@@ -49,7 +49,6 @@ import {
   exportChart,
   stageChart,
   getChart,
-  removeChart,
   shouldSkipFiltering,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
@@ -139,6 +138,8 @@ function ProjectDashboard() {
   const [creationOpen, setCreationOpen] = useState(false);
   const [selectedInlineChart, setSelectedInlineChart] = useState(null);
   const [inlineChartContainer, setInlineChartContainer] = useState(null);
+  const inlineRefresh = useRef(Promise.resolve());
+  const store = useStore();
   const [filters, setFilters] = useState(getFiltersFromStorage());
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
@@ -789,15 +790,18 @@ function ProjectDashboard() {
   const projectMemberStackVisible = projectMemberStackOverflow > 0
     ? projectMemberStack.slice(0, projectMemberStackMax - 1)
     : projectMemberStack.slice(0, projectMemberStackMax);
-  const _onInlineChartSaved = async (chartId) => {
-    const current = await dispatch(getProject({ project_id: params.projectId })).unwrap();
-    const saved = await dispatch(getChart({ project_id: params.projectId, chart_id: chartId })).unwrap();
-    dispatch(setCharts(current.Charts.map((item) => {
-      if (item.id === chartId) return saved;
-      return { ...item, ...charts.find((existing) => existing.id === item.id), layout: item.layout };
-    })));
-    await _runChartRequest(saved, filters, chartFilters);
-    setPendingScrollWidgetId(chartId);
+  const _onInlineChartSaved = (chartId) => {
+    inlineRefresh.current = inlineRefresh.current.catch(() => {}).then(async () => {
+      const current = await dispatch(getProject({ project_id: params.projectId })).unwrap();
+      const saved = await dispatch(getChart({ project_id: params.projectId, chart_id: chartId })).unwrap();
+      const latestCharts = selectCharts(store.getState());
+      dispatch(setCharts(current.Charts.map((item) => {
+        if (item.id === chartId) return saved;
+        return { ...item, ...latestCharts.find((existing) => existing.id === item.id), layout: item.layout };
+      })));
+      await _runChartRequest(saved, filters, chartFilters);
+    });
+    return inlineRefresh.current;
   };
 
   const currentDashboardCharts = charts.filter((chart) => `${chart.project_id}` === params.projectId);
@@ -1239,6 +1243,7 @@ function ProjectDashboard() {
                               }}
                               onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
                               height={() => selectedInlineChart === chart.id && inlineChartContainer ? inlineChartContainer.clientHeight : _onGetChartHeight(chart)}
+                              onConfigure={_canAccess("projectEditor") && !selectedInlineChart ? () => setSelectedInlineChart(chart.id) : undefined}
                               editingLayout={editingLayout}
                               onEditLayout={() => _onEditLayout()}
                             />
@@ -1267,13 +1272,14 @@ function ProjectDashboard() {
             projectId={params.projectId}
             userId={user.id}
             open={creationOpen}
-            onClose={(again) => setCreationOpen(Boolean(again))}
+            onClose={() => setCreationOpen(false)}
+            selectedChartId={selectedInlineChart}
             onSelectChart={setSelectedInlineChart}
             onChartContainer={setInlineChartContainer}
             onSaved={_onInlineChartSaved}
-            onUndo={async (chartId) => {
-              await dispatch(removeChart({ project_id: params.projectId, chart_id: chartId })).unwrap();
-              await dispatch(getProject({ project_id: params.projectId })).unwrap();
+            onPublish={async (chartId) => {
+              await dispatch(updateChart({ project_id: params.projectId, chart_id: chartId, data: { draft: false } })).unwrap();
+              toast.success("Chart published");
             }}
             runtime={_buildRuntimeRequest({ id: selectedInlineChart }).cacheableChartPayload}
           />

@@ -64,6 +64,7 @@ module.exports = (app) => {
       if (!teamRole?.role) {
         return res.status(403).json({ message: "Access denied" });
       }
+      req.user.teamRole = teamRole;
 
       if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
         const permission = accessControl.can(teamRole.role)[actionType]("project");
@@ -146,6 +147,7 @@ module.exports = (app) => {
   app.get("/project/:id", verifyToken, checkPermissions("readOwn"), (req, res) => {
     return projectController.findById(req.params.id, {
       refreshPreparedData: true,
+      includeDrafts: req.user.teamRole.role !== "projectViewer",
     })
       .then((project) => {
         return res.status(200).send(project);
