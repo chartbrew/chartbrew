@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import { v4 as uuid } from "uuid";
 import { chartCreationRequest } from "../../../api/chartCreation";
+import PixelLoader from "../../../components/PixelLoader";
 import getConnectionLogo from "../../../modules/getConnectionLogo";
 import { useTheme } from "../../../modules/ThemeContext";
 import AiComposer from "../../Ai/AiComposer";
@@ -270,8 +271,15 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
         }}
         className={settings
           ? "inline-chart-panel"
-          : "min-w-0 rounded-2xl border border-divider bg-surface p-4"}
+          : `min-w-0 rounded-2xl border border-divider bg-surface p-4${busy ? " relative isolate overflow-hidden" : ""}`}
       >
+        {!settings && busy && (
+          <div className="inline-chart-loading-field" aria-hidden="true">
+            {Array.from({ length: 12 }, (_, tile) => (
+              <PixelLoader key={tile} variant="heat" size={120} />
+            ))}
+          </div>
+        )}
         {settings && (
           <header className="flex shrink-0 flex-col gap-1 border-b border-divider px-6 py-4">
             <div className="flex items-center justify-between gap-3">
@@ -375,7 +383,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
         )}
         {busy && (
           <div className="mt-4 flex items-center gap-3" role="status" aria-live="polite">
-            <Spinner size="sm" />
+            <PixelLoader variant="bars" />
             <span className="flex-1 text-sm">{finishing ? "Loading your chart…" : PHASES[operation?.phase] || PHASES.finding}</span>
             {!finishing && <Button size="sm" variant="ghost" onPress={cancel}>Cancel</Button>}
           </div>
@@ -545,7 +553,7 @@ function InlineChartCreator({ open, onClose, selectedChartId, onSelectChart, ...
   return (
     <>
       {sessions.length > 0 && (
-        <div className="my-5 grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-3 px-px lg:grid-cols-2">
           {sessions.map((id) => (
             <InlineChartSession
               {...props}

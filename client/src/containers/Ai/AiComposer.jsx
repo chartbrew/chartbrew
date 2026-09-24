@@ -4,6 +4,7 @@ import {
   Button, Chip, InputGroup, Kbd, Label, TextField, Tooltip,
 } from "@heroui/react";
 import { LuArrowUp } from "react-icons/lu";
+import PixelLoader from "../../components/PixelLoader";
 
 function AiComposer({
   id,
@@ -65,15 +66,15 @@ function AiComposer({
       <Tooltip.Trigger render={(triggerProps) => (
         <Button {...triggerProps}
           aria-label={submitLabel}
+          aria-busy={isLoading}
           className="rounded-full"
-          isDisabled={!hasContent}
+          isDisabled={!hasContent || isLoading}
           isIconOnly
-          isPending={isLoading}
           size="sm"
           type="submit"
           variant="primary"
         >
-          <LuArrowUp size={17} aria-hidden />
+          {isLoading ? <PixelLoader variant="ripple" size={17} /> : <LuArrowUp size={17} aria-hidden />}
         </Button>
       )} />
       <Tooltip.Content>

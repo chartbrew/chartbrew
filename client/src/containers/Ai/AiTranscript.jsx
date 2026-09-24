@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Button } from "@heroui/react";
 import {
-  LuCheck, LuCopy, LuLoader,
+  LuCheck, LuCopy,
 } from "react-icons/lu";
 
+import PixelLoader from "../../components/PixelLoader";
 import AiMarkdown from "./AiMarkdown";
 
 export function AiUserPrompt({ children }) {
@@ -70,7 +71,7 @@ AiAnswer.propTypes = {
 export function AiLoadingActivity({ children = "Working through the available data…" }) {
   return (
     <div className="flex w-full items-center gap-2 text-sm text-muted">
-      <LuLoader className="animate-spin text-accent" size={15} aria-hidden />
+      <PixelLoader />
       {children}
     </div>
   );

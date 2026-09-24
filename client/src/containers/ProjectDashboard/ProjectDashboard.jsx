@@ -1165,12 +1165,6 @@ function ProjectDashboard() {
             {currentDashboardCharts.length === 0 && !chartsLoading && (
               <div className="flex min-h-48 flex-col items-center justify-center gap-4">
                 <h2 className="text-lg font-semibold">{_canAccess("projectEditor") ? "Add your first chart" : "No charts yet"}</h2>
-                {_canAccess("projectEditor") && !creationOpen && (
-                  <Button data-add-chart onPress={() => setCreationOpen(true)}>
-                    <LuPlus size={18} />
-                    Add chart
-                  </Button>
-                )}
               </div>
             )}
 
@@ -1261,12 +1255,6 @@ function ProjectDashboard() {
 
       {_canAccess("projectEditor") && !editingLayout && (
         <>
-          {!creationOpen && !selectedInlineChart && currentDashboardCharts.length > 0 && (
-            <Button data-add-chart variant="ghost" className="my-5" onPress={() => setCreationOpen(true)}>
-              <LuPlus size={16} />
-              Add chart
-            </Button>
-          )}
           <InlineChartCreator
             key={params.projectId}
             projectId={params.projectId}
@@ -1283,6 +1271,17 @@ function ProjectDashboard() {
             }}
             runtime={_buildRuntimeRequest({ id: selectedInlineChart }).cacheableChartPayload}
           />
+          {!creationOpen && !selectedInlineChart && (
+            <Button
+              data-add-chart
+              variant={currentDashboardCharts.length === 0 ? "primary" : "ghost"}
+              className="my-5"
+              onPress={() => setCreationOpen(true)}
+            >
+              <LuPlus size={currentDashboardCharts.length === 0 ? 18 : 16} />
+              Add chart
+            </Button>
+          )}
         </>
       )}
 

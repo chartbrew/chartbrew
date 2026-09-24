@@ -22,6 +22,31 @@ beforeEach(() => {
 });
 
 describe("inline chart planning", () => {
+  it("continues after the model asks how to name the chart", async () => {
+    create.mockReset();
+    create.mockResolvedValueOnce(response("ask_chart_question", {
+      question: "Should the chart title include the source name Internal DB?",
+    })).mockResolvedValueOnce(response("prepare_chart", { name: "Chart creations in the last 90 days", type: "line", connection_id: 40 }));
+    const prepareChart = vi.fn();
+    const result = await planInlineChart({ ...context(),
+      input: { prompt: "Create a time series of charts created in the last 90 days" }, prepareChart });
+    expect(result.question).toBeUndefined();
+    expect(result.plan.name).toBe("Chart creations in the last 90 days");
+    expect(prepareChart).toHaveBeenCalledTimes(1);
+    expect(create.mock.calls[1][0].input).toContainEqual(expect.objectContaining({
+      output: expect.stringContaining("Choose the chart title"),
+    }));
+  });
+
+  it("still asks when the metric meaning is unclear", async () => {
+    create.mockReset();
+    create.mockResolvedValueOnce(response("ask_chart_question", {
+      question: "Do you mean charts created or chart views?",
+    }));
+    const result = await planInlineChart({ ...context(), input: { prompt: "Show chart activity" } });
+    expect(result.question).toBe("Do you mean charts created or chart views?");
+  });
+
   it("requires source query review before accepting a saved dataset", async () => {
     create.mockReset();
     create.mockResolvedValueOnce(response("prepare_chart", mapPlan("root[].country")))

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import toast from "react-hot-toast";
 import {
-  Autocomplete, Button, Chip, EmptyState, Link, ListBox, ProgressCircle,
+  Autocomplete, Button, Chip, EmptyState, Link, ListBox,
   SearchField, useFilter,
 } from "@heroui/react";
 import {
@@ -10,6 +10,7 @@ import {
 } from "react-icons/lu";
 
 import { searchAiContext } from "../../api/ai";
+import PixelLoader from "../../components/PixelLoader";
 import Chart from "../Chart/Chart";
 
 function getChartDatasets(parsed, chartData) {
@@ -165,7 +166,7 @@ function AiChartPreview({
           </div>
         ) : (
           <div className="flex h-80 flex-col items-center justify-center gap-2 text-muted">
-            <ProgressCircle aria-label="Loading generated chart" />
+            <PixelLoader variant="bars" size={24} />
             <p className="text-sm">Loading chart…</p>
           </div>
         )}

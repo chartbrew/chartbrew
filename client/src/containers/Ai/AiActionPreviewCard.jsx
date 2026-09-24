@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Button } from "@heroui/react";
 import { LuCheck, LuPencil } from "react-icons/lu";
+import PixelLoader from "../../components/PixelLoader";
 
 function PreviewRow({ label, value }) {
   if (value === null || value === undefined || value === "") return null;
@@ -137,12 +138,12 @@ function AiActionPreviewCard({
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
               isDisabled={isLoading}
-              isPending={isLoading}
+              aria-busy={isLoading}
               onPress={() => onConfirm(action)}
               size="sm"
               variant="primary"
             >
-              <LuCheck size={15} aria-hidden />
+              {isLoading ? <PixelLoader variant="comet" /> : <LuCheck size={15} aria-hidden />}
               {getConfirmLabel(action.actionType)}
             </Button>
             <Button

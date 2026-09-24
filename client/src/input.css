@@ -77,6 +77,34 @@
   border-left: 1px solid var(--border);
 }
 
+.inline-chart-loading-field {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-content: center;
+  opacity: 0.14;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent, #000);
+}
+
+.inline-chart-loading-field ~ :is(div, footer) {
+  position: relative;
+}
+
+.inline-chart-loading-field svg.pixel-loader {
+  --pixel-color: #048bde;
+  --pixel-highlight: color-mix(in srgb, var(--pixel-color) 65%, white);
+  width: 100%;
+  height: auto;
+}
+
+.inline-chart-loading-field .pixel-loader:nth-child(even) rect:nth-child(3n),
+.inline-chart-loading-field rect:nth-child(3n + 2) {
+  --pixel-color: var(--cb-secondary-500);
+  --pixel-highlight: color-mix(in srgb, var(--pixel-color) 65%, white);
+}
+
 @media (max-width: 767px) {
   .inline-chart-dialog[data-placement="right"] {
     flex-direction: column;
