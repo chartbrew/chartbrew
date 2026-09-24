@@ -57,9 +57,9 @@ function getEncodingForMark(layer, mark, markState = layer.options?.markState ||
   }
   if (["pie", "doughnut", "polar", "radar"].includes(mark)) {
     const source = candidates.find((encoding) => {
-      return (encoding.category || encoding.time) && encoding.value;
+      return (encoding.category || encoding.time || encoding.location) && encoding.value;
     }) || {};
-    const category = source.category || source.time;
+    const category = source.category || source.time || source.location;
     return {
       ...(category ? { category: { ...category, type: "nominal" } } : {}),
       ...(source.value ? { value: { ...source.value } } : {}),
@@ -70,11 +70,11 @@ function getEncodingForMark(layer, mark, markState = layer.options?.markState ||
   }
 
   const source = candidates.find((encoding) => {
-    return (encoding.time || encoding.category) && encoding.value;
+    return (encoding.time || encoding.category || encoding.location) && encoding.value;
   }) || candidates.find((encoding) => encoding.value) || {};
   return {
     ...(source.time ? { time: { ...source.time } } : {}),
-    ...(source.category ? { category: { ...source.category } } : {}),
+    ...(source.category || source.location ? { category: { ...(source.category || source.location) } } : {}),
     ...(source.value ? { value: { ...source.value } } : {}),
     ...(source.breakdown ? { breakdown: { ...source.breakdown } } : {}),
   };

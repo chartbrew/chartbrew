@@ -135,7 +135,7 @@ module.exports = (app) => {
       return Promise.reject(401);
     }
 
-    if (!chart.onReport) {
+    if (!chart.onReport || chart.draft) {
       return Promise.reject(401);
     }
 
@@ -223,6 +223,9 @@ module.exports = (app) => {
       if (chartId && projectId) {
         const chart = await chartController.findById(req.params.chart_id);
         if (!chart) {
+          return res.status(404).json({ message: "Chart not found" });
+        }
+        if (chart.draft && teamRole.role === "projectViewer") {
           return res.status(404).json({ message: "Chart not found" });
         }
         if (chart.project_id.toString() !== projectId.toString()) {
@@ -773,7 +776,7 @@ module.exports = (app) => {
     if (req.params.share_string.length < 16) {
       return chartController.findById(req.params.share_string)
         .then(async (chart) => {
-          if (!chart.public) {
+          if (!chart.public || chart.draft) {
             return new Promise((resolve, reject) => reject(new Error("401")));
           }
 

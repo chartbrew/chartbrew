@@ -118,7 +118,7 @@ function AiMessageGroup({
                 {suggestions.map((suggestion) => (
                   <Button
                     className="h-auto min-h-8 rounded-full px-3 py-1 font-normal"
-                    isPending={isLoading}
+                    isDisabled={isLoading}
                     key={suggestion.id}
                     onPress={() => onSuggestionClick(suggestion)}
                     size="sm"

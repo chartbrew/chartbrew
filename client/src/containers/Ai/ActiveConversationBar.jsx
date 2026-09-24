@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@heroui/react";
-import { LuArrowUpRight, LuLoader, LuMessageSquare, LuX } from "react-icons/lu";
+import { LuArrowUpRight, LuMessageSquare, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router";
 
 import { getAiConversation } from "../../api/ai";
 import { selectUser } from "../../slices/user";
 import { selectTeam } from "../../slices/team";
+import PixelLoader from "../../components/PixelLoader";
 import {
   dismissAiConversation, selectActiveAiConversation, selectAiModalOpen,
   selectInlineAiConversationKey, setActiveAiConversation, showAiModal, updateActiveAiConversation,
@@ -67,7 +68,7 @@ export default function ActiveConversationBar() {
         onPress={() => dispatch(showAiModal({ conversationId: active.id }))}
         aria-label={`Continue conversation: ${active.title}`}
       >
-        {active.busy ? <LuLoader className="animate-spin motion-reduce:animate-none shrink-0" aria-hidden /> : <LuMessageSquare className="shrink-0 text-accent" aria-hidden />}
+        {active.busy ? <PixelLoader variant="orbit" size={20} /> : <LuMessageSquare className="shrink-0 text-accent" aria-hidden />}
         <span className="min-w-0 flex-1 truncate text-left">{active.title}</span>
         <LuArrowUpRight className="shrink-0 text-muted" aria-hidden />
       </Button>

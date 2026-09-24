@@ -3,6 +3,7 @@ const user = require("./UserRoute");
 const project = require("./ProjectRoute");
 const connection = require("./ConnectionRoute");
 const chart = require("./ChartRoute");
+const chartCreation = require("./ChartCreationRoute");
 const savedQuery = require("./SavedQueryRoute");
 const dataRequest = require("./DataRequestRoute");
 const dataset = require("./DatasetRoute");
@@ -26,6 +27,7 @@ module.exports = {
   project,
   connection,
   chart,
+  chartCreation,
   savedQuery,
   dataRequest,
   dataset,

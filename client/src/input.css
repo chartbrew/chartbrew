@@ -4,6 +4,137 @@
 @plugin "@tailwindcss/typography";
 @import "@heroui/styles";
 
+.button--outline.chartbrew-ai-button {
+  --button-bg: var(--surface);
+  --button-bg-hover: var(--surface-secondary);
+  --button-bg-pressed: var(--surface-tertiary);
+  --button-fg: var(--surface-foreground);
+}
+
+.dashboard-preview-window {
+  position: relative;
+  margin: 16px auto 96px;
+  padding: 56px 16px 16px;
+  border-radius: 16px;
+  background: var(--background);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 24%, var(--background)),
+    0 4px 16px color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.dashboard-preview-titlebar {
+  position: absolute;
+  inset: 1px 1px auto;
+  display: flex;
+  height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 15px 15px 0 0;
+  background: var(--surface-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.inline-chart-dialog[data-placement="right"] {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  padding: 0;
+  flex-direction: row;
+  background: transparent;
+  box-shadow: none;
+  translate: none;
+}
+
+.inline-chart-stage {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.inline-chart-preview {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  height: min(480px, calc(100dvh - 64px));
+  border-radius: var(--radius-3xl);
+}
+
+.inline-chart-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 2px solid var(--accent);
+  border-radius: inherit;
+}
+
+.inline-chart-panel {
+  display: flex;
+  flex-direction: column;
+  width: 384px;
+  height: 100%;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+.inline-chart-loading-field {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-content: center;
+  opacity: 0.14;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent, #000);
+}
+
+.inline-chart-loading-field ~ :is(div, footer) {
+  position: relative;
+}
+
+.inline-chart-loading-field svg.pixel-loader {
+  --pixel-color: #048bde;
+  --pixel-highlight: color-mix(in srgb, var(--pixel-color) 65%, white);
+  width: 100%;
+  height: auto;
+}
+
+.inline-chart-loading-field .pixel-loader:nth-child(even) rect:nth-child(3n),
+.inline-chart-loading-field rect:nth-child(3n + 2) {
+  --pixel-color: var(--cb-secondary-500);
+  --pixel-highlight: color-mix(in srgb, var(--pixel-color) 65%, white);
+}
+
+@media (max-width: 767px) {
+  .inline-chart-dialog[data-placement="right"] {
+    flex-direction: column;
+  }
+
+  .inline-chart-stage {
+    flex: none;
+    padding: 16px;
+  }
+
+  .inline-chart-preview {
+    height: 28dvh;
+  }
+
+  .inline-chart-panel {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    flex: 1;
+    border-left: 0;
+  }
+}
+
 @theme inline {
   --font-sans: Inter, -apple-system, system-ui, sans-serif;
   --font-tight: "Inter Tight", Inter, -apple-system, system-ui, sans-serif;
@@ -336,6 +467,505 @@
     border-bottom: 1px solid rgba(4, 139, 222, 0.85);
     border-radius: 3px;
     cursor: pointer;
+  }
+
+  .chart-studio-page {
+    height: 100dvh;
+    min-height: 640px;
+  }
+
+  .chart-studio-shell {
+    display: flex;
+    height: 100%;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .chart-studio-topbar,
+  .chart-studio-panel-heading,
+  .chart-studio-settings-heading {
+    display: flex;
+    min-height: 56px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--separator);
+  }
+
+  .chart-studio-topbar {
+    z-index: 1;
+    flex: none;
+    padding: 8px 16px;
+    background: var(--surface);
+  }
+
+  .chart-studio-identity,
+  .chart-studio-actions,
+  .chart-studio-panel-heading > span {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chart-studio-title {
+    width: min(480px, 40vw);
+  }
+
+  .chart-studio-title > .tooltip__trigger,
+  .chart-studio-title .link {
+    max-width: 100%;
+  }
+
+  .chart-studio-body {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .chart-studio-tool-rail {
+    display: flex;
+    width: 72px;
+    flex: none;
+    justify-content: center;
+    border-right: 1px solid var(--separator);
+    background: var(--surface-secondary);
+    padding: 12px 8px;
+  }
+
+  .chart-studio-tool-rail button {
+    height: fit-content;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.75rem;
+  }
+
+  .chart-studio-side {
+    display: flex;
+    width: var(--chart-studio-chat-width);
+    min-width: 260px;
+    max-width: 440px;
+    min-height: 0;
+    flex: none;
+    flex-direction: column;
+    background: var(--surface-secondary);
+  }
+
+  .chart-studio-side.is-closed {
+    display: none;
+  }
+
+  .chart-studio-panel-heading {
+    padding: 8px 12px 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .chart-studio-divider-vertical {
+    width: 7px;
+    flex: none;
+    cursor: col-resize;
+    background: var(--separator);
+    touch-action: none;
+  }
+
+  .chart-studio-divider-vertical:focus-visible,
+  .chart-studio-divider-horizontal:focus-visible {
+    z-index: 2;
+    outline: 2px solid var(--focus);
+    outline-offset: -1px;
+  }
+
+  .chart-studio-main {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chart-studio-preview,
+  .chart-studio-data-view {
+    min-width: 0;
+    min-height: 240px;
+    flex: 1;
+    overflow: auto;
+    background: var(--surface);
+  }
+
+  .chart-studio-data-view {
+    flex-direction: column;
+  }
+
+  .chart-studio-data-view:not(.is-hidden) {
+    display: flex;
+  }
+
+  .chart-studio-data-toolbar {
+    display: flex;
+    min-height: 56px;
+    flex: none;
+    align-items: center;
+    justify-content: flex-end;
+    border-bottom: 1px solid var(--separator);
+    padding: 8px 16px;
+  }
+
+  .chart-studio-data-content {
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .chart-studio-main .is-hidden {
+    display: none;
+  }
+
+  .chart-studio-preview-content {
+    overflow: hidden;
+  }
+
+  .chart-studio-preview-toolbar {
+    order: 1;
+    min-height: 56px;
+    flex: none;
+    padding: 10px 16px;
+  }
+
+  .chart-studio-chart-canvas {
+    order: 3;
+    min-height: 240px;
+    flex: 1;
+    padding: 16px 24px 20px;
+  }
+
+  .chart-studio-divider-horizontal {
+    display: flex;
+    height: 7px;
+    flex: none;
+    cursor: row-resize;
+    align-items: center;
+    justify-content: center;
+    background: var(--separator);
+    touch-action: none;
+  }
+
+  .chart-studio-divider-horizontal > span {
+    width: 48px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--muted);
+  }
+
+  .chart-studio-settings {
+    display: flex;
+    height: var(--chart-studio-settings-height);
+    min-height: 220px;
+    max-height: calc(100% - 247px);
+    flex: none;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface-secondary);
+  }
+
+  .chart-studio-settings-heading {
+    min-height: 44px;
+    flex: none;
+    border-bottom: 0;
+    padding: 4px 16px;
+  }
+
+  .chart-studio-settings-content {
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+    padding: 4px 16px 16px;
+  }
+
+  .chart-studio-settings-group {
+    container-type: inline-size;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--separator);
+    border-radius: 1rem;
+    background: var(--surface);
+    padding: 16px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .chart-settings-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .chart-studio-settings-group .chart-settings-fields > * {
+    min-width: 0;
+    grid-column: auto;
+  }
+
+  .chart-studio-settings-group .chart-settings-fields > .chart-settings-full {
+    grid-column: 1 / -1;
+  }
+
+  .chart-settings-dataset-heading > .textfield {
+    min-width: 0;
+    flex: 1 1 240px;
+  }
+
+  .chart-settings-dataset-heading > button {
+    flex: none;
+    margin-bottom: 2px;
+  }
+
+  .chart-studio-settings-group .date-range-picker,
+  .chart-studio-settings-group .date-input-group,
+  .chart-studio-settings-group div:has(> .date-range-picker) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .chart-studio-settings-group .date-input-group {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .chart-studio-settings-group .date-input-group__prefix {
+    height: auto;
+    padding-top: 4px;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+
+  @container (min-width: 560px) {
+    .chart-studio-settings-group .chart-settings-fields {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .chart-studio-settings-collapsed {
+    display: flex;
+    min-height: 56px;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--separator);
+    background: var(--surface-secondary);
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .chart-studio-chat textarea:focus,
+  .chart-studio-chat textarea:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .chart-studio-chat-backdrop {
+    display: none;
+  }
+
+  @media (min-width: 1600px) {
+    .chart-studio-main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 384px);
+      grid-template-rows: minmax(300px, 1.2fr) minmax(220px, 0.8fr);
+    }
+
+    .chart-studio-main.is-settings-hidden {
+      grid-template-columns: minmax(0, 1fr) 64px;
+    }
+
+    .chart-studio-preview {
+      grid-column: 1;
+      grid-row: 1;
+      border-right: 1px solid var(--separator);
+    }
+
+    .chart-studio-data-view {
+      display: block;
+      grid-column: 1;
+      grid-row: 2;
+      border-top: 1px solid var(--separator);
+      border-right: 1px solid var(--separator);
+    }
+
+    .chart-studio-data-view:not(.is-hidden) {
+      display: flex;
+    }
+
+    .chart-studio-settings {
+      width: 100%;
+      height: auto;
+      max-height: none;
+      grid-column: 2;
+      grid-row: 1 / 3;
+    }
+
+    .chart-studio-settings-collapsed {
+      min-width: 0;
+      min-height: 0;
+      grid-column: 2;
+      grid-row: 1 / 3;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 12px;
+      border-top: 0;
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .chart-studio-settings-collapsed > span {
+      writing-mode: vertical-rl;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .chart-studio-page {
+      height: auto;
+      min-height: 0;
+    }
+
+    .chart-studio-shell {
+      height: auto;
+      overflow: visible;
+    }
+
+    .chart-studio-topbar {
+      min-height: 56px;
+      flex-wrap: wrap;
+    }
+
+    .chart-studio-title {
+      width: min(60vw, 480px);
+    }
+
+    .chart-studio-body {
+      display: block;
+      overflow: visible;
+    }
+
+    .chart-studio-tool-rail {
+      width: 100%;
+      height: 56px;
+      align-items: center;
+      justify-content: flex-start;
+      border-right: 0;
+      border-bottom: 1px solid var(--separator);
+      padding: 8px 12px;
+    }
+
+    .chart-studio-tool-rail button {
+      flex-direction: row;
+      font-size: 0.875rem;
+    }
+
+    .chart-studio-chat-backdrop {
+      position: fixed;
+      z-index: 300;
+      inset: 0;
+      display: block;
+      border: 0;
+      background: rgb(0 0 0 / 45%);
+    }
+
+    .chart-studio-side {
+      position: fixed;
+      z-index: 301;
+      inset: 0 auto 0 0;
+      display: flex;
+      width: min(400px, calc(100vw - 32px));
+      max-width: none;
+      transform: translateX(0);
+      box-shadow: var(--overlay-shadow);
+      transition: transform 180ms ease, visibility 180ms ease;
+    }
+
+    .chart-studio-side.is-closed {
+      display: flex;
+      visibility: hidden;
+      transform: translateX(-100%);
+      pointer-events: none;
+    }
+
+    .chart-studio-main {
+      overflow: visible;
+    }
+
+    .chart-studio-preview,
+    .chart-studio-data-view {
+      min-height: 420px;
+      flex: none;
+      overflow: auto;
+    }
+
+    .chart-studio-preview {
+      overflow: hidden;
+    }
+
+    .chart-studio-preview-content {
+      min-height: 420px;
+      overflow: hidden;
+    }
+
+    .chart-studio-preview-toolbar {
+      overflow: hidden;
+    }
+
+    .chart-studio-chart-canvas {
+      height: clamp(280px, 46vh, 380px);
+      min-height: 280px;
+      flex: none;
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .chart-studio-settings {
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      max-height: none;
+    }
+
+    .chart-studio-settings-heading {
+      padding-inline: 12px;
+    }
+
+    .chart-studio-settings-content {
+      overflow: visible;
+      padding: 4px 12px 12px;
+    }
+
+    .chart-studio-settings-group {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .chart-studio-settings-group .date-range-picker,
+    .chart-studio-settings-group .date-input-group {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .chart-studio-settings-group div:has(> .date-range-picker) {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .chart-studio-settings-collapsed {
+      border-top: 1px solid var(--separator);
+    }
   }
 }
 

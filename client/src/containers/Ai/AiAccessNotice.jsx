@@ -1,7 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Button, ProgressCircle } from "@heroui/react";
+import { Button } from "@heroui/react";
 
+import PixelLoader from "../../components/PixelLoader";
 import AiDisabledState from "./AiDisabledState";
 
 function AiAccessNotice({
@@ -23,7 +24,7 @@ function AiAccessNotice({
         className="flex items-center gap-3 rounded-2xl border border-divider bg-surface-secondary/50 p-4 text-sm text-muted"
         role="status"
       >
-        <ProgressCircle aria-label="Checking Chartbrew AI availability" size="sm" />
+        <PixelLoader variant="comet" />
         Checking whether Chartbrew AI is available…
       </div>
     );

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import toast from "react-hot-toast";
 import {
@@ -20,12 +20,10 @@ import {
   Separator,
   Switch,
   TextField,
-  Tooltip,
   useFilter,
 } from "@heroui/react";
 import {
   LuPlus,
-  LuSettings,
   LuTrash2,
 } from "react-icons/lu";
 
@@ -50,9 +48,6 @@ import {
   updateLayerSeriesOptions,
 } from "../../../modules/visualization";
 import { repairChartVisualization } from "../../../slices/chart";
-import canAccess from "../../../config/canAccess";
-import { selectUser } from "../../../slices/user";
-import { selectTeam } from "../../../slices/team";
 
 const MULTI_VALUE_MARKS = new Set(["bar", "horizontalBar", "line", "radar"]);
 const NULL_POLICY_OPTIONS = [{
@@ -363,14 +358,11 @@ function ChartDatasetDataSetup({
   chart,
   onUpdateCdc,
   onUpdateVisualization,
-  onEditDataset,
 }) {
   const dispatch = useDispatch();
   const params = useParams();
   const [repairingVisualization, setRepairingVisualization] = useState(false);
   const [selectedLayerId, setSelectedLayerId] = useState(null);
-  const user = useSelector(selectUser);
-  const team = useSelector(selectTeam);
   const fieldsSchema = cdc.Dataset?.fieldsSchema || dataset?.fieldsSchema || {};
   const fieldOptions = useMemo(
     () => getDatasetFieldOptionsFromSchema(fieldsSchema),
@@ -484,24 +476,6 @@ function ChartDatasetDataSetup({
       {selectedLayer && (
         <>
           <div>
-            <div className="mb-4 flex items-start">
-              {canAccess("projectAdmin", user.id, team?.TeamRoles) && (
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <Button
-                      aria-label="Edit dataset"
-                      variant="tertiary"
-                      size="sm"
-                      onPress={onEditDataset}
-                    >
-                      <LuSettings size={16} /> Edit dataset
-                    </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Edit dataset</Tooltip.Content>
-                </Tooltip>
-              )}
-            </div>
-
             {bindingLayers.length > 1 && (
               <div className="mb-4 rounded-xl bg-surface-secondary/40 p-2">
                 <div className="mb-2 px-1 text-xs font-medium text-foreground-500">
@@ -527,7 +501,7 @@ function ChartDatasetDataSetup({
                 <div className="text-sm font-medium">Refresh the chart to discover fields</div>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
+              <div className="chart-settings-fields">
                 {requirements.map && (
                   <>
                     <FieldPicker
@@ -690,17 +664,7 @@ function ChartDatasetDataSetup({
                       />
                     )}
 
-                    {canAddValue && (
-                      <Button
-                        className="self-start"
-                        size="sm"
-                        variant="tertiary"
-                        onPress={_addValue}
-                      >
-                        <LuPlus size={14} />
-                        Add another value
-                      </Button>
-                    )}
+
                   </>
                 )}
 
@@ -717,7 +681,7 @@ function ChartDatasetDataSetup({
                     />
 
                     {breakdownField && generatedSeries.length > 0 && (
-                      <div>
+                      <div className="chart-settings-full">
                         <div className="mb-2 flex items-center gap-2">
                           <div className="text-xs font-medium text-foreground-500">
                             Generated series
@@ -743,10 +707,22 @@ function ChartDatasetDataSetup({
                   </>
                 )}
 
+                {canAddValue && (
+                  <Button
+                    className="chart-settings-full self-start justify-self-start"
+                    size="sm"
+                    variant="tertiary"
+                    onPress={_addValue}
+                  >
+                    <LuPlus size={14} />
+                    Add another value
+                  </Button>
+                )}
+
                 {requirements.dimension && dimensionField && (
                   <Accordion
                     aria-label="Data grouping options"
-                    className="bg-surface-secondary"
+                    className="chart-settings-full bg-surface-secondary"
                     variant="surface"
                   >
                     <Accordion.Item id="empty-values" textValue="Empty values">
@@ -892,7 +868,7 @@ function ChartDatasetDataSetup({
       <Separator />
 
       <div>
-        <div className="font-semibold text-foreground">Filters</div>
+        <div className="text-sm font-semibold text-foreground">Filters</div>
         <div className="mb-3 text-sm text-foreground-500">
           Filter rows before chart values are calculated.
         </div>
@@ -924,7 +900,6 @@ ChartDatasetDataSetup.propTypes = {
   chart: PropTypes.object.isRequired,
   onUpdateCdc: PropTypes.func.isRequired,
   onUpdateVisualization: PropTypes.func.isRequired,
-  onEditDataset: PropTypes.func.isRequired,
 };
 
 export default ChartDatasetDataSetup;

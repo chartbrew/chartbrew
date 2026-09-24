@@ -3,13 +3,14 @@ import PropTypes from "prop-types";
 import { Button, Alert, TextField, InputGroup } from "@heroui/react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
-import { LuBrainCircuit, LuSend } from "react-icons/lu";
+import { LuSend } from "react-icons/lu";
 import { useSelector } from "react-redux";
 
 import { API_HOST } from "../../config/settings";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import { getAuthToken } from "../../modules/auth";
 import { selectTeam } from "../../slices/team";
+import ChartbrewAiIcon from "../../components/ChartbrewAiIcon";
 
 function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }) {
   const [askAiLoading, setAskAiLoading] = useState(false);
@@ -96,7 +97,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
         {askAiLoading ? (
           <Alert status="accent" className="shadow-none border border-divider">
             <Alert.Indicator>
-              <LuBrainCircuit />
+              <ChartbrewAiIcon />
             </Alert.Indicator>
             <Alert.Content>
               <Alert.Title>
@@ -112,7 +113,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
         ) : conversation.length === 0 ? (
           <Alert status="accent" className="shadow-none border border-divider">
             <Alert.Indicator>
-              <LuBrainCircuit />
+              <ChartbrewAiIcon />
             </Alert.Indicator>
             <Alert.Content>
               <Alert.Description>
@@ -123,7 +124,7 @@ function AiQuery({ onChangeQuery, dataRequest, query = "", connectionType = "" }
         ) : (
           <Alert status="accent" className="text-sm shadow-none border border-divider">
             <Alert.Indicator>
-              <LuBrainCircuit />
+              <ChartbrewAiIcon />
             </Alert.Indicator>
             <Alert.Content>
               <Alert.Description>{typedText}</Alert.Description>

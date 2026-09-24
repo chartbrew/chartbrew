@@ -234,11 +234,9 @@ describe("ChartRoute public access", () => {
     }
   });
 
-  it("blocks direct public chart retrieval for charts hidden from the report", async () => {
+  it.each([{ onReport: false }, { draft: true }])("blocks direct public chart retrieval for unpublished charts: %j", async (chartOverrides) => {
     const seeded = await seedPublicChart(models, {
-      chartOverrides: {
-        onReport: false,
-      },
+      chartOverrides,
     });
 
     const response = await request(app)

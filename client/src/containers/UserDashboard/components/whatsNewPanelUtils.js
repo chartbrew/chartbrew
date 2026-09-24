@@ -1,7 +1,6 @@
 import {
   LuBell,
   LuBookOpenText,
-  LuBrainCircuit,
   LuChartNoAxesColumnIncreasing,
   LuDatabase,
   LuExternalLink,
@@ -9,9 +8,12 @@ import {
   LuLayoutDashboard,
   LuSlack,
   LuCalendar,
+  LuSparkles,
+  LuWandSparkles,
 } from "react-icons/lu";
 
 import { toggleAiModal } from "../../../slices/ui";
+import ChartbrewAiIcon from "../../../components/ChartbrewAiIcon";
 
 /**
  * @typedef {"newFeature"|"releaseHighlight"|"underusedCapability"|"tip"} WhatsNewItemType
@@ -59,15 +61,15 @@ export const PANEL_GROUPS = [
 export const ICON_REGISTRY = {
   bell: LuBell,
   book: LuBookOpenText,
-  brain: LuBrainCircuit,
+  brain: ChartbrewAiIcon,
   chart: LuChartNoAxesColumnIncreasing,
   dashboard: LuLayoutDashboard,
   data: LuDatabase,
   database: LuDatabase,
   external: LuExternalLink,
   gauge: LuGauge,
-  sparkles: LuBrainCircuit,
-  wand: LuBrainCircuit,
+  sparkles: LuSparkles,
+  wand: LuWandSparkles,
   slack: LuSlack,
   calendar: LuCalendar,
 };

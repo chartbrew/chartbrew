@@ -76,6 +76,7 @@ function Chart(props) {
     showExport = false,
     editingLayout = false,
     onEditLayout = () => {},
+    onConfigure,
     dashboardFilters: externalDashboardFilters = null,
     chartFilters: externalChartFilters = null,
     onAddChartFilter = null,
@@ -676,7 +677,7 @@ function Chart(props) {
               </Alert.Content>
             </Alert>
           )}
-          {showChartTitle && !embedded && (
+          {(showChartTitle || (chart.draft && onConfigure)) && !embedded && (
             <Card.Header className="min-w-0 pb-0 pr-8 flex flex-row items-center">
               <div className="min-w-0 flex-1" title={chart.name}>
                 <Row align="center" className="min-w-0 flex-nowrap gap-1">
@@ -695,6 +696,11 @@ function Chart(props) {
                   </>
                 </Row>
               </div>
+              {chart.draft && onConfigure && !editingLayout && (
+                <Button data-configure-chart={chart.id} size="sm" variant="secondary" onPress={onConfigure}>
+                  Configure
+                </Button>
+              )}
             </Card.Header>
           )}
           <div className={`absolute right-2 top-2 z-10 flex items-center justify-end gap-1${embedded ? " hidden" : ""}`}>
@@ -1344,6 +1350,7 @@ Chart.propTypes = {
   password: PropTypes.string,
   editingLayout: PropTypes.bool,
   onEditLayout: PropTypes.func,
+  onConfigure: PropTypes.func,
   onDashboard: PropTypes.bool,
   dashboardFilters: PropTypes.array,
   chartFilters: PropTypes.array,

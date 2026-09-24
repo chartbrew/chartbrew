@@ -1486,7 +1486,7 @@ class ChartController {
     const project = await db.Project.findByPk(chart.project_id);
     const team = await db.Team.findByPk(project.team_id);
 
-    if (!chart.public && !chart.shareable) {
+    if (chart.draft || (!chart.public && !chart.shareable)) {
       return Promise.reject("401");
     }
     chart = await this.hydratePreparedChart(chart, {
@@ -1547,6 +1547,7 @@ class ChartController {
     validateShareTokenPolicy(decodedToken, sharePolicy, "Chart", sharePolicy.entity_id);
 
     let chart = await this.findById(sharePolicy.entity_id);
+    if (chart.draft) throw new Error("401");
     const project = await db.Project.findByPk(chart.project_id);
     const team = await db.Team.findByPk(project.team_id);
     chart = await this.hydratePreparedChart(chart, {

@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router";
 import {
   LuInbox,
-  LuBrainCircuit,
   LuExternalLink,
   LuPanelLeftClose,
   LuPanelLeftOpen,
@@ -17,6 +16,7 @@ import { selectChart } from "../slices/chart";
 import { selectIntegrations } from "../slices/integration";
 import { getObservation } from "../api/observations";
 import getDatasetDisplayName from "../modules/getDatasetDisplayName";
+import ChartbrewAiIcon from "./ChartbrewAiIcon";
 import {
   getNewsFeedUrl,
   getSeenNewsIds,
@@ -198,14 +198,15 @@ function TopNav() {
           {renderBreadcrumbs()}
         </div>
 
-        <div className="flex flex-row items-center">
+        <div className="flex flex-row items-center gap-2">
           {team?.id ? (
             <Button
               onPress={() => dispatch(toggleAiModal())}
               size="sm"
-              variant="primary"
+              variant="outline"
+              className="chartbrew-ai-button"
             >
-              <LuBrainCircuit size={18} />
+              <ChartbrewAiIcon size={18} />
               Ask your data
             </Button>
           ) : null}

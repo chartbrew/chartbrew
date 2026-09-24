@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Button, Card } from "@heroui/react";
 import { LuExternalLink } from "react-icons/lu";
 import { useDispatch } from "react-redux";
+import PixelLoader from "../../components/PixelLoader";
 
 import { getAiConnectionSetup } from "../../api/ai";
 import { runSourceAction } from "../../slices/connection";
@@ -109,9 +110,10 @@ function AiConnectionCard({ option, teamId, conversationId, onEnsureSaved, onCon
         </Card.Header>
         <Card.Footer className="flex flex-wrap gap-2">
           {oauth && canSetUp ? (
-            <Button className="h-auto min-h-10 whitespace-normal rounded-lg py-2" isDisabled={isLoading} isPending={pending} onPress={connect} variant="primary">
+            <Button className="h-auto min-h-10 whitespace-normal rounded-lg py-2" isDisabled={isLoading || pending} aria-busy={pending} onPress={connect} variant="primary">
+              {pending && <PixelLoader variant="twin" />}
               {pending ? "Connecting…" : error ? "Try again" : "Connect"}
-              <LuExternalLink size={16} className="shrink-0" aria-hidden />
+              {!pending && <LuExternalLink size={16} className="shrink-0" aria-hidden />}
             </Button>
           ) : null}
           {setupUrl && (!connected || review) && (!oauth || error) && canSetUp ? (

@@ -98,6 +98,31 @@ describe("AI map tools", () => {
     expect(render({ ...chart, visualization: saved }).configuration.geo.map).toBe("RO");
   });
 
+  it("keeps unrelated chart settings when a sparse update has no spec", async () => {
+    const chart = {
+      id: 50,
+      project_id: 10,
+      type: "map",
+      name: "Places",
+      displayLegend: false,
+      includeZeros: false,
+      pointRadius: 8,
+      stacked: true,
+      visualization: mapSpec(regionEncoding, { area: "world", mode: "regions" }, 60),
+      Project: { id: 10, name: "Dashboard", ghost: false },
+    };
+    vi.spyOn(db.Chart, "findByPk").mockResolvedValue(chart);
+    vi.spyOn(db.Chart, "update").mockResolvedValue([1]);
+    vi.spyOn(ChartController.prototype, "findById").mockResolvedValue(chart);
+    vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue(null);
+
+    const result = await updateChart({ team_id: 7, chart_id: 50, name: "Renamed" });
+    const chartFieldUpdate = db.Chart.update.mock.calls.find(([fields]) => fields.name);
+
+    expect(chartFieldUpdate[0]).toEqual({ name: "Renamed" });
+    expect(result.updated_fields.chart).toEqual(["name"]);
+  });
+
   it("rejects invalid map areas and incomplete coordinates before chart creation", async () => {
     const payload = { team_id: 7, project_id: 10, dataset_id: 20, name: "Places", type: "map" };
     await expect(createChart({

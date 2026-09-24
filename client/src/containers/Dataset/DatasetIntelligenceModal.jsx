@@ -10,7 +10,7 @@ import {
   LuFingerprint,
   LuSigma,
   LuTags,
-  LuBrainCircuit,
+  LuWandSparkles,
 } from "react-icons/lu";
 
 import {
@@ -355,7 +355,7 @@ function DatasetIntelligenceModal({
                               <ListBox>
                                 <ListBox.Item id="automatic" textValue={`Automatic (${field.role})`}>
                                   <RoleOption
-                                    icon={LuBrainCircuit}
+                                    icon={LuWandSparkles}
                                     label={`Automatic (${field.role})`}
                                   />
                                   <ListBox.ItemIndicator />

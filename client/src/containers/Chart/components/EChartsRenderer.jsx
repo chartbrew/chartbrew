@@ -624,7 +624,7 @@ function EChartsRenderer({
     };
     return {
       ...option,
-      ...(option.geo ? { geo: { ...option.geo, itemStyle: mapStyle } } : {}),
+      ...(option.geo ? { geo: { ...option.geo, roam: option.geo.roam ? "move" : option.geo.roam, itemStyle: mapStyle } } : {}),
       ...(renderer === "svg" || reducedMotion ? { animation: false } : {}),
       series: option.series?.map((series) => series.type === "gauge" ? {
         ...series,
@@ -636,7 +636,7 @@ function EChartsRenderer({
         },
         itemStyle: { ...series.itemStyle, color: colors.foreground.DEFAULT },
         title: { ...series.title, color: colors.foreground[500] },
-      } : series.type === "map" ? { ...series, itemStyle: mapStyle } : series),
+      } : series.type === "map" ? { ...series, roam: series.roam ? "move" : series.roam, itemStyle: mapStyle } : series),
       ...(option.visualMap && (option.geo || option.series?.some((series) => series.type === "map")) ? {
         visualMap: { ...option.visualMap, textStyle: { color: colors.foreground.DEFAULT } },
       } : {}),

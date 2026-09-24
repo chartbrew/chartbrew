@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { Button, Checkbox, Popover, SearchField, Tooltip } from "@heroui/react";
 import { LuGrid2X2Plus, LuLayers2, LuLayoutGrid, LuPin, LuPinOff, LuPlus, LuUnplug } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,15 +12,13 @@ import { getSidebarDashboards, readDashboardVisits } from "../modules/sidebarDas
 import { getProjects, selectProjects } from "../slices/project";
 import { selectTeam } from "../slices/team";
 import { pinDashboard, selectUser, unpinDashboard } from "../slices/user";
-import { selectSidebarCollapsed } from "../slices/ui";
 
-function SidebarDashboards() {
+function SidebarDashboards({ collapsed }) {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const projects = useSelector(selectProjects);
   const loading = useSelector((state) => state.project.loading);
   const loadError = useSelector((state) => state.project.error);
-  const collapsed = useSelector(selectSidebarCollapsed);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -208,5 +207,9 @@ function SidebarDashboards() {
     </section>
   );
 }
+
+SidebarDashboards.propTypes = {
+  collapsed: PropTypes.bool.isRequired,
+};
 
 export default SidebarDashboards;

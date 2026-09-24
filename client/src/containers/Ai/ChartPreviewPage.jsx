@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { useSelector } from "react-redux";
-import { Button, ProgressCircle } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { Helmet } from "react-helmet-async";
 import { selectUser } from "../../slices/user";
 import { getAuthToken } from "../../modules/auth";
 import { API_HOST } from "../../config/settings";
+import PixelLoader from "../../components/PixelLoader";
 import AiChartPreview from "./AiChartPreview";
 
 export default function ChartPreviewPage() {
@@ -102,16 +103,9 @@ export default function ChartPreviewPage() {
           }}
         />
       ) : (
-        <ProgressCircle
-          isIndeterminate
-          aria-label="Loading preview"
-          className="mx-auto my-16"
-        >
-          <ProgressCircle.Track>
-            <ProgressCircle.TrackCircle />
-            <ProgressCircle.FillCircle />
-          </ProgressCircle.Track>
-        </ProgressCircle>
+        <div className="mx-auto my-16 w-fit" role="status" aria-label="Loading preview">
+          <PixelLoader variant="bars" size={32} />
+        </div>
       )}
     </main>
   );

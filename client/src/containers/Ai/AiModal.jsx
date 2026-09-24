@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import { Accordion, Button, Chip, Dropdown, Modal, Separator } from "@heroui/react"
-import { LuClock, LuMessageSquare, LuPlus, LuLoader, LuTrash2, LuEllipsis, LuSlack, LuX } from "react-icons/lu"
+import { LuClock, LuMessageSquare, LuPlus, LuTrash2, LuEllipsis, LuSlack, LuX } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
@@ -13,6 +13,7 @@ import { selectCharts } from "../../slices/chart";
 import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
+import PixelLoader from "../../components/PixelLoader";
 import {
   clearAiModalConversationId, selectAiModalConversationId, selectActiveAiConversation,
   setActiveAiConversation, updateActiveAiConversation, dismissAiConversation,
@@ -1217,7 +1218,7 @@ function AiModal({ isOpen, onClose }) {
                         ) : isLoading ? (
                           <div className="flex justify-center items-center h-full">
                             <div className="flex items-center gap-2 text-muted">
-                              <LuLoader className="animate-spin text-accent" size={18} aria-hidden />
+                              <PixelLoader variant="comet" size={18} />
                               <span className="text-sm">Loading conversation…</span>
                             </div>
                           </div>

@@ -167,13 +167,13 @@ function DateRangeFilter({
           </DateRangePicker.Trigger>
         </DateField.Suffix>
       </DateField.Group>
-      <DateRangePicker.Popover className="flex max-w-[100vw] flex-col">
+      <DateRangePicker.Popover className="flex max-h-[85dvh] max-w-[calc(100vw-24px)] flex-col overflow-y-auto">
         <RangeCalendar
           aria-label="Select a date range"
           className="@container-normal w-full max-w-none overflow-x-auto"
           visibleDuration={{ months: 2 }}
         >
-          <div className="mx-auto flex w-max gap-8">
+          <div className="mx-auto flex w-max max-w-full flex-col gap-8 sm:flex-row">
             <div className="w-64">
               <RangeCalendar.Header>
                 <RangeCalendar.NavButton slot="previous" />

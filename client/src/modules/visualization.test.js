@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   addVisualizationLayer,
+  getBindingPresentation,
   getPreferredDateField,
   getVisualizationTimeField,
   isVisualizationReady,
@@ -408,4 +409,21 @@ test("maps require a location or a complete coordinate binding and retain their 
   const restored = updateLayerMark(updateLayerMark(map, "map", "bar"), "map", "map");
   assert.deepEqual(restored.layers[0].encoding, map.layers[0].encoding);
   assert.equal(isVisualizationReady(restored), true);
+});
+
+test("binding settings use the chart label and color before legacy dataset values", () => {
+  const cdc = { id: 12, legend: "Visitors", datasetColor: "blue" };
+  const chart = {
+    visualization: {
+      layers: [{ id: "pages", bindingId: "12", name: "Top pages", style: { color: "pink" } }],
+    },
+    render: { metadata: { series: [{ id: "pages-series", layerId: "pages", color: "pink" }] } },
+  };
+  assert.deepEqual(getBindingPresentation(chart, cdc), { label: "Top pages", color: "pink" });
+  chart.visualization.layers[0].style.series = { "pages-series": { color: "purple" } };
+  assert.equal(getBindingPresentation(chart, cdc).color, "purple");
+  assert.deepEqual(getBindingPresentation({}, cdc), { label: "Visitors", color: "blue" });
+  assert.deepEqual(getBindingPresentation(chart, { ...cdc, id: 99 }), {
+    label: "Visitors", color: "blue",
+  });
 });

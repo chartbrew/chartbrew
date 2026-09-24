@@ -2878,6 +2878,7 @@ async function orchestrateWorkspaceSplit({ access, history, options, question })
 }
 
 module.exports = {
+  getChartCreationProvider: () => ({ client: openaiClient, model: openAiModel || "gpt-5.4-nano" }),
   availableTools,
   callTool,
   orchestrate,

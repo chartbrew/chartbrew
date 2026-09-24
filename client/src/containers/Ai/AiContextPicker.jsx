@@ -1,7 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Button, Input, ListBox, Popover, Spinner, Tooltip } from "@heroui/react";
+import { Button, Input, ListBox, Popover, Tooltip } from "@heroui/react";
 import { LuChartNoAxesColumnIncreasing, LuLayers, LuLayoutGrid, LuPaperclip, LuPlug } from "react-icons/lu";
+import PixelLoader from "../../components/PixelLoader";
 
 const GROUP_LABELS = {
   project: "Dashboards",
@@ -72,11 +73,12 @@ function AiContextPicker({
       type="button"
       variant={triggerVariant}
       size={triggerSize}
-      isPending={isLoading}
+      isDisabled={isLoading}
+      aria-busy={isLoading}
       isIconOnly={triggerIsIconOnly}
       aria-label="Add context"
     >
-      <LuPaperclip size={triggerSize === "sm" ? 16 : 18} />
+      {isLoading ? <PixelLoader variant="comet" size={triggerSize === "sm" ? 16 : 18} /> : <LuPaperclip size={triggerSize === "sm" ? 16 : 18} />}
       {showTriggerLabel
         ? hasSelectedContext ? `Context (${selectedContext.multiSelect.length})` : "Add context"
         : null}
@@ -107,7 +109,7 @@ function AiContextPicker({
             <div className="max-h-64 overflow-y-auto w-full">
               {isSearching ? (
                 <div className="flex items-center gap-2 px-2 py-3 text-sm text-foreground-500">
-                  <Spinner aria-label="Searching context" size="sm" />
+                  <PixelLoader variant="diagonal" />
                   Searching...
                 </div>
               ) : null}
