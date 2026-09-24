@@ -1274,11 +1274,13 @@ function ProjectDashboard() {
           {!creationOpen && !selectedInlineChart && (
             <Button
               data-add-chart
-              variant={currentDashboardCharts.length === 0 ? "primary" : "ghost"}
-              className="my-5"
+              variant="outline"
+              className="group my-5 flex h-24 w-full items-center justify-start gap-4 rounded-3xl border-dotted border-divider/80 bg-transparent px-6 text-base text-muted shadow-none transition-colors duration-200 hover:border-accent/60 hover:bg-accent/5 hover:text-foreground focus-visible:border-accent"
               onPress={() => setCreationOpen(true)}
             >
-              <LuPlus size={currentDashboardCharts.length === 0 ? 18 : 16} />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed border-divider/70 transition-colors duration-200 group-hover:border-accent/50 group-hover:text-accent">
+                <LuPlus size={20} aria-hidden="true" />
+              </span>
               Add chart
             </Button>
           )}

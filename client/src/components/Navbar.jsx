@@ -7,7 +7,6 @@ import {
 import {
   LuBook, LuBookOpenText, LuContrast, LuFileCode2, LuGithub, LuHeartHandshake, LuSquareKanban, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
-  LuBrainCircuit,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
 
@@ -22,6 +21,7 @@ import { useTheme } from "../modules/ThemeContext";
 import cbFullLogoLight from "../assets/cb_logo_light.svg";
 import cbFullLogoDark from "../assets/cb_logo_dark.svg";
 import AiModal from "../containers/Ai/AiModal";
+import ChartbrewAiIcon from "./ChartbrewAiIcon";
 
 /*
   The navbar component used throughout the app
@@ -252,12 +252,12 @@ function NavbarContainer() {
           
           {team?.id && (
               <Button
-                variant="primary"
+                variant="outline"
                 onPress={() => dispatch(toggleAiModal())}
                 size="sm"
-                className="from-primary-300 via-violet-200 to-secondary-300 dark:from-primary-500 dark:via-violet-500 dark:to-secondary-500 bg-gradient-to-tr hover:bg-gradient-to-br transition-all duration-300 shadow-md"
+                className="chartbrew-ai-button"
               >
-                <LuBrainCircuit size={18} />
+                <ChartbrewAiIcon size={18} />
                 Ask Chartbrew AI
               </Button>
           )}

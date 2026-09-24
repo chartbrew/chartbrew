@@ -7,13 +7,13 @@ import {
   TextField,
 } from "@heroui/react";
 import {
-  LuBrainCircuit,
   LuCheck,
   LuChevronDown,
   LuSend,
 } from "react-icons/lu";
 
 import { ButtonSpinner } from "../../components/ButtonSpinner";
+import ChartbrewAiIcon from "../../components/ChartbrewAiIcon";
 import { API_HOST } from "../../config/settings";
 import { getAuthToken } from "../../modules/auth";
 
@@ -87,8 +87,8 @@ function McpAiBuilder({ configuration, dataRequest, onApply, teamId }) {
           type="button"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground shadow-sm">
-              <LuBrainCircuit size={20} aria-hidden />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-divider bg-surface shadow-sm">
+              <ChartbrewAiIcon size={20} />
             </span>
             <div className="min-w-0">
               <p className="font-semibold text-foreground">Build with AI</p>
@@ -153,7 +153,7 @@ function McpAiBuilder({ configuration, dataRequest, onApply, teamId }) {
               <div className="flex flex-col gap-4 rounded-2xl border border-divider bg-surface p-4">
                 <div className="flex items-center gap-2">
                   <span className="flex size-7 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                    <LuBrainCircuit size={16} aria-hidden />
+                    <ChartbrewAiIcon size={16} />
                   </span>
                   <p className="font-medium text-foreground">Suggested setup</p>
                 </div>

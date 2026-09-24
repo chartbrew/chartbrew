@@ -19,7 +19,7 @@ function ChartSelect({ label, value, items, onChange, isDisabled, compact = fals
   return (
     <Select value={value || null} onChange={onChange} isDisabled={isDisabled} variant="secondary" className={compact ? "min-w-0 max-w-64 flex-1" : "w-full"}>
       <Label className={compact ? "sr-only" : undefined}>{label}</Label>
-      <Select.Trigger className={compact ? "h-8 min-h-8 bg-transparent px-2 text-xs shadow-none" : undefined}>
+      <Select.Trigger className={compact ? "h-8 min-h-8 px-2 text-xs shadow-none" : undefined}>
         <Select.Value className="flex items-center gap-2" />
         <Select.Indicator />
       </Select.Trigger>
@@ -271,7 +271,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
         }}
         className={settings
           ? "inline-chart-panel"
-          : `min-w-0 rounded-2xl border border-divider bg-surface p-4${busy ? " relative isolate overflow-hidden" : ""}`}
+          : `min-w-0 rounded-3xl border border-divider bg-surface p-4${busy ? " relative isolate overflow-hidden" : ""}`}
       >
         {!settings && busy && (
           <div className="inline-chart-loading-field" aria-hidden="true">
@@ -409,7 +409,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
           </div>
         )}
         </div>
-        <footer className={settings ? "flex shrink-0 items-center justify-between gap-3 border-t border-divider bg-surface px-6 py-4" : `flex flex-wrap items-center gap-2${options?.aiEnabled ? " mt-4 border-t border-divider pt-3" : ""}`}>
+        <footer className={settings ? "flex shrink-0 items-center justify-between gap-3 bg-surface px-6 py-4" : `flex flex-wrap items-center gap-2${options?.aiEnabled ? " mt-4" : ""}`}>
           {!settings ? (
             <>
               <Button variant={options?.aiEnabled ? "secondary" : "primary"} isDisabled={busy || !options} onPress={() => setPicker(true)}>

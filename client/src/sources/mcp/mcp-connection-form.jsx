@@ -42,6 +42,7 @@ import {
   testSavedConnection,
 } from "../../slices/connection";
 import { selectTeam } from "../../slices/team";
+import { getMcpConnectionPayload } from "./mcp-connection.utils";
 import { saveAndStartMcpOAuth } from "./mcp-oauth";
 import { getMcpToolPage, getMcpToolsToAllow } from "./mcp-tool-list";
 
@@ -389,29 +390,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const buildConnection = ({ includeApprovals = true } = {}) => {
-    const payload = {
-      ...connection,
-      type: "mcp",
-      subType: "mcp",
-      host: connection.host.trim(),
-      authentication: {
-        ...connection.authentication,
-        type: authenticationType,
-      },
-    };
-    if (!includeApprovals && payload.schema?.mcp) {
-      payload.schema = {
-        ...payload.schema,
-        mcp: {
-          ...payload.schema.mcp,
-          allowedTools: undefined,
-        },
-      };
-      delete payload.schema.mcp.allowedTools;
-    }
-    return payload;
-  };
+  const buildConnection = (options) => getMcpConnectionPayload(connection, options);
 
   const applyDiscovery = (discovery) => {
     if (!discovery) return;
@@ -486,6 +465,8 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
     setOauthLoading(true);
     try {
       const url = await saveAndStartMcpOAuth({
+        existingConnection: editConnection?.authentication?.type === "oauth"
+          && connection.host.trim() === editConnection.host ? editConnection : null,
         save: () => onComplete(buildConnection({ includeApprovals: !editConnection?.id })),
         startOAuth: async (connectionId) => dispatch(runSourceAction({
           team_id: team.id,

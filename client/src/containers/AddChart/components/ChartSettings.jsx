@@ -11,8 +11,6 @@ import { LuCheck, LuInfo, LuSettings, LuCircleX } from "react-icons/lu";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 
-import Row from "../../../components/Row";
-import Text from "../../../components/Text";
 import DateRangeFilter from "../../ProjectDashboard/components/DateRangeFilter";
 import {
   updateDataLabelsFormat,
@@ -108,7 +106,7 @@ const tableRowOptions = [{
   value: "50",
 }];
 
-function ChartSettings({ chart, onChange, onVisualizationChange }) {
+function ChartSettings({ chart, onChange, onVisualizationChange, section }) {
   const [max, setMax] = useState("");
   const [min, setMin] = useState("");
   const [ticksNumber, setTicksNumber] = useState("");
@@ -140,6 +138,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
     "stack",
   ].some(hasCapability);
   const hasAxisControls = hasCapability("axisRange") || chart.type === "table";
+  const showData = !section || section === "data";
+  const showAppearance = !section || section === "appearance";
 
   useEffect(() => {
     if (chart.maxValue || chart.maxValue === 0) {
@@ -208,18 +208,13 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   };
 
   return (
-    <div className={"bg-surface rounded-3xl mx-auto p-4 w-full"}>
-      <Row>
-        <Text b>Chart Settings</Text>
-      </Row>
+    <div className={section ? `w-full ${section === "automation" ? "hidden" : ""}` : "bg-surface rounded-3xl mx-auto p-4 w-full"}>
+      <h2 className="mb-4 text-sm font-semibold">{showData ? "Chart data" : "Chart appearance"}</h2>
 
-      <div className="h-4" />
-      <Separator />
-      <div className="h-4" />
-
+      <div className={showData ? "" : "hidden"}>
       <div className="text-sm text-foreground-500">Date settings</div>
       <div className="h-2" />
-      <div className="flex flex-col gap-2">
+      <div className="chart-settings-fields">
         <div className="flex flex-row items-center gap-2 flex-wrap">
           <div>
             <DateRangeFilter
@@ -331,8 +326,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
         </div>
       </div>
       <div className="h-4" />
-      <div className="grid grid-cols-12 gap-2">
-        <div className="col-span-12 md:col-span-6 lg:col-span-6">
+      <div className="chart-settings-fields">
+        <div className="min-w-0">
           <Select
             selectionMode="single"
             placeholder="Select a time interval"
@@ -359,8 +354,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Select.Popover>
           </Select>
         </div>
-        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-center">
-          {hasTimeEncoding && (
+        {hasTimeEncoding && (
+          <div className="min-w-0 flex items-center">
             <Checkbox
               id="chart-settings-include-zeros"
               isSelected={chart.includeZeros}
@@ -374,8 +369,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                 Fill missing time intervals
               </Checkbox.Content>
             </Checkbox>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {hasCapability("missingValues") && chart.visualization && (
@@ -408,13 +403,13 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
           </Select>
         </div>
       )}
+      </div>
 
+      <div className={showAppearance ? "" : "hidden"}>
       {hasDisplayControls && <>
-        <div className="h-4" />
-        <Separator />
-        <div className="h-4" />
+        {showData && <Separator className="my-4" />}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="chart-settings-fields">
         {hasCapability("points") && chart.visualization && (
           <div>
             <Checkbox
@@ -568,15 +563,13 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
       </>}
 
       {hasAxisControls && <>
-        <div className="h-4" />
-        <Separator />
-        <div className="h-4" />
+        {(showData || hasDisplayControls) && <Separator className="my-4" />}
 
-        <div className="flex flex-col gap-2">
+        <div className="chart-settings-fields">
         {hasCapability("axisRange") && (
           <>
-            <div className="flex flex-row items-end gap-2">
-              <TextField name="max-y-axis-value" className="w-full">
+            <div className="flex flex-wrap items-end gap-2">
+              <TextField name="max-y-axis-value" className="min-w-0 flex-1 basis-36">
                 <Label>{`Max ${axisName} Axis value`}</Label>
                 <Input
                   placeholder="Enter a number"
@@ -612,8 +605,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                 )}
               </div>
             </div>
-            <div className="flex flex-row items-end gap-2">
-              <TextField name="min-y-axis-value" className="w-full">
+            <div className="flex flex-wrap items-end gap-2">
+              <TextField name="min-y-axis-value" className="min-w-0 flex-1 basis-36">
                 <Label>{`Min ${axisName} Axis value`}</Label>
                 <Input
                   placeholder="Enter a number"
@@ -682,9 +675,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
       </>}
 
       {hasCapability("xAxisLabels") && <>
-        <div className="h-4" />
-        <Separator />
-        <div className="h-4" />
+        {(showData || hasDisplayControls || hasAxisControls) && <Separator className="my-4" />}
 
         <div className="grid grid-cols-12 gap-1">
         <div className="col-span-12">
@@ -743,6 +734,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
         )}
         </div>
       </>}
+      </div>
 
       <Modal.Backdrop isOpen={dateFormattingModal} onOpenChange={setDateFormattingModal}>
         <Modal.Container>
@@ -835,6 +827,11 @@ ChartSettings.propTypes = {
   onChange: PropTypes.func.isRequired,
   onComplete: PropTypes.func.isRequired,
   onVisualizationChange: PropTypes.func.isRequired,
+  section: PropTypes.oneOf(["data", "appearance", "automation"]),
+};
+
+ChartSettings.defaultProps = {
+  section: null,
 };
 
 export default ChartSettings;

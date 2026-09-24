@@ -14,7 +14,6 @@ import {
 } from "@heroui/react";
 import {
   LuArrowRight,
-  LuBrainCircuit,
   LuChartColumn,
   LuDatabase,
   LuFileText,
@@ -39,6 +38,7 @@ import getDefaultCdcBindings from "../../../modules/getDefaultCdcBindings";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import { getPaginationPageNumbers } from "../../../modules/getPaginationPageNumbers";
 import { useTheme } from "../../../modules/ThemeContext";
+import ChartbrewAiIcon from "../../../components/ChartbrewAiIcon";
 
 const DATASETS_PER_PAGE = 5;
 
@@ -147,10 +147,11 @@ function AiRecommendation({
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Button
                 onPress={onPress}
-                variant={disabled ? "outline" : "primary"}
+                variant="outline"
+                className="chartbrew-ai-button"
                 isDisabled={disabled}
               >
-                <LuBrainCircuit size={18} />
+                <ChartbrewAiIcon size={18} />
                 {actionLabel}
               </Button>
               {disabled && (
@@ -399,7 +400,7 @@ function DashboardStarter({
               description="Connect a source first so Chartbrew can inspect your schema and suggest charts."
               actionLabel="Plan my dashboard"
               disabled
-              icon={LuBrainCircuit}
+              icon={ChartbrewAiIcon}
               onPress={showAi}
             />
           </section>
@@ -434,7 +435,7 @@ function DashboardStarter({
               title="Ask AI to suggest datasets"
               description="AI can help with setup based on your connected sources. Insights come once datasets exist."
               actionLabel="Ask AI to suggest datasets"
-              icon={LuBrainCircuit}
+              icon={ChartbrewAiIcon}
               onPress={showAi}
             />
           </section>
@@ -456,7 +457,7 @@ function DashboardStarter({
               title="Build with AI"
               actionLabel="Ask your data"
               description="Ask the assistant to build the dashboard for you."
-              icon={LuBrainCircuit}
+              icon={ChartbrewAiIcon}
               iconColor="success"
               onPress={showAi}
               actionVariant="outline"

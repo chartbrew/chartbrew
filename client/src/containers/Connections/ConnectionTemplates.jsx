@@ -5,7 +5,6 @@ import {
   Surface,
 } from "@heroui/react";
 import {
-  LuBrainCircuit,
   LuLayers,
   LuLayoutDashboard,
 } from "react-icons/lu";
@@ -13,6 +12,7 @@ import { useNavigate, useParams } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 
 import canAccess from "../../config/canAccess";
+import ChartbrewAiIcon from "../../components/ChartbrewAiIcon";
 import getConnectionLogo from "../../modules/getConnectionLogo";
 import {
   listChartTemplates,
@@ -123,7 +123,7 @@ function ConnectionTemplates() {
               <Card className="flex h-auto flex-col border border-divider shadow-none transition-all duration-200 hover:border-secondary/40 hover:ring-1 hover:ring-secondary/35 sm:flex-row">
                 <div className="flex shrink-0 items-center justify-center overflow-hidden p-4">
                   <div className="flex size-14 shrink-0 items-center justify-center rounded-lg border border-secondary/30 bg-secondary/10">
-                    <LuBrainCircuit size={32} className="text-secondary" />
+                    <ChartbrewAiIcon size={32} />
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col gap-3">

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { addMapWheelZoom } from "./mapWheelZoom.js";
 
-test("map wheel zoom is gradual, bounded, reversible and centered on the pointer", () => {
+test("map wheel zoom needs Cmd or Ctrl and stays gradual, bounded and pointer-centered", () => {
   let listener;
   const actions = [];
   const container = {
@@ -21,10 +21,29 @@ test("map wheel zoom is gradual, bounded, reversible and centered on the pointer
   };
   for (const target of [{ geoIndex: 0 }, { seriesIndex: 0 }]) {
     const cleanup = addMapWheelZoom(container, { dispatchAction: (action) => actions.push(action) }, target);
-    const wheel = (deltaY, deltaMode = 0) => {
-      listener({ deltaY, deltaMode, clientX: 200, clientY: 100, preventDefault() {}, stopPropagation() {} });
+    const wheel = (deltaY, deltaMode = 0, modifier = "metaKey") => {
+      let prevented = false;
+      let stopped = false;
+      listener({
+        deltaY, deltaMode, [modifier]: true, clientX: 200, clientY: 100,
+        preventDefault() { prevented = true; },
+        stopPropagation() { stopped = true; },
+      });
+      assert.equal(prevented, true);
+      assert.equal(stopped, true);
       return actions.at(-1);
     };
+    const previousActions = actions.length;
+    let prevented = false;
+    let stopped = false;
+    listener({
+      deltaY: -80, clientX: 200, clientY: 100,
+      preventDefault() { prevented = true; },
+      stopPropagation() { stopped = true; },
+    });
+    assert.equal(prevented, false);
+    assert.equal(stopped, false);
+    assert.equal(actions.length, previousActions);
     const small = wheel(-1);
     assert.ok(small.zoom > 1 && small.zoom < 1.002);
     assert.equal(small.originX, 200);
@@ -34,6 +53,7 @@ test("map wheel zoom is gradual, bounded, reversible and centered on the pointer
     assert.equal(wheel(-80).zoom * wheel(80).zoom, 1);
     assert.equal(wheel(-1, 1).zoom, wheel(-16).zoom);
     assert.equal(wheel(-1, 2).zoom, wheel(-80).zoom);
+    assert.ok(wheel(-1, 0, "ctrlKey").zoom > 1);
     cleanup();
     assert.equal(listener, null);
   }

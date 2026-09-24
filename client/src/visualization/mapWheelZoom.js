@@ -1,5 +1,6 @@
 export function addMapWheelZoom(container, instance, target) {
   const onWheel = (event) => {
+    if (!event.metaKey && !event.ctrlKey) return;
     if (!Number.isFinite(event.deltaY) || event.deltaY === 0) return;
 
     event.preventDefault();

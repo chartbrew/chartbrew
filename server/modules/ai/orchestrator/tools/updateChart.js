@@ -45,21 +45,7 @@ async function updateChart(payload) {
       await requireDatasetForTeam(dataset_id, normalizedTeamId);
     }
 
-    // Provide default chart spec if not provided
-    const defaultSpec = {
-      displayLegend: true,
-      pointRadius: 0,
-      dataLabels: false,
-      includeZeros: true,
-      stacked: false,
-      horizontal: false,
-      xLabelTicks: "default",
-      showGrowth: false,
-      invertGrowth: false,
-      mode: "chart",
-    };
-
-    const chartSpec = spec || defaultSpec;
+    const chartSpec = spec || {};
 
     // Update chart fields (only if provided)
     const chartUpdates = {};

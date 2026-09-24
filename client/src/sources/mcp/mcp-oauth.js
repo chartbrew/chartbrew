@@ -1,5 +1,5 @@
-export async function saveAndStartMcpOAuth({ save, startOAuth }) {
-  const connection = await save();
+export async function saveAndStartMcpOAuth({ existingConnection, save, startOAuth }) {
+  const connection = existingConnection?.id ? existingConnection : await save();
   if (!connection?.id) {
     throw new Error("The connection could not be saved. Try again.");
   }

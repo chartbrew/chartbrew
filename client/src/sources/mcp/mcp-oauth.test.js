@@ -48,3 +48,12 @@ test("reports OAuth failure and can retry with the same saved connection", async
     startOAuth: async (id) => ({ url: `https://provider.example/authorize?connection=${id}` }),
   }), "https://provider.example/authorize?connection=42");
 });
+
+test("reconnect starts OAuth without saving or testing expired credentials first", async () => {
+  const url = await saveAndStartMcpOAuth({
+    existingConnection: { id: 857, authentication: { type: "oauth", hasToken: true } },
+    save: () => assert.fail("Reconnect must not save and test old credentials"),
+    startOAuth: async (id) => ({ url: `https://provider.example/authorize?connection=${id}` }),
+  });
+  assert.equal(url, "https://provider.example/authorize?connection=857");
+});

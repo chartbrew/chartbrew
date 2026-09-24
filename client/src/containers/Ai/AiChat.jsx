@@ -53,6 +53,8 @@ function AiChat({
   onAtTyped,
   framed = false,
   fill = false,
+  fillComposer = true,
+  emptyState,
 }) {
   const fetchedChartsRef = useRef(new Set());
   const loadedPreviewCountRef = useRef(0);
@@ -106,7 +108,7 @@ function AiChat({
 
   return (
     <div className={fill
-      ? "flex h-full min-h-0 min-w-0 flex-1 flex-col gap-3"
+      ? "flex h-full min-h-0 min-w-0 flex-1 flex-col justify-end gap-3"
       : "flex min-w-0 flex-col gap-3"}
     >
       {messages.length > 0 ? (
@@ -234,14 +236,14 @@ function AiChat({
             ) : null}
           </div>
         </ScrollShadow>
-      ) : null}
+      ) : emptyState}
 
-      <div className={fill && messages.length === 0
+      <div className={fill && fillComposer && messages.length === 0
         ? "flex min-h-0 flex-1 flex-col"
         : undefined}
       >
         <AiComposer
-          fill={fill && messages.length === 0}
+          fill={fill && fillComposer && messages.length === 0}
           framed={framed}
           id={id}
           isLoading={isLoading}
@@ -294,6 +296,8 @@ AiChat.propTypes = {
   onAtTyped: PropTypes.func,
   framed: PropTypes.bool,
   fill: PropTypes.bool,
+  fillComposer: PropTypes.bool,
+  emptyState: PropTypes.node,
 };
 
 export default AiChat;

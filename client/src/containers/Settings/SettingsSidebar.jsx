@@ -5,7 +5,6 @@ import { NavLink, useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import {
   LuArrowLeft,
-  LuBrainCircuit,
   LuBriefcaseBusiness,
   LuCode,
   LuSettings,
@@ -19,6 +18,7 @@ import canAccess from "../../config/canAccess";
 import { cn } from "../../modules/utils";
 import { getBusinessProfileLogo, selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
+import ChartbrewAiIcon from "../../components/ChartbrewAiIcon";
 
 const ACCOUNT_ITEMS = [{
   icon: LuUser,
@@ -43,7 +43,7 @@ const TEAM_ITEMS = [{
   label: "Team members",
   path: "/settings/team/members",
 }, {
-  icon: LuBrainCircuit,
+  icon: ChartbrewAiIcon,
   label: "AI settings",
   path: "/settings/team/ai",
 }, {

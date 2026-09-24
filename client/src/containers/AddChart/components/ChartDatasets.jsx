@@ -19,10 +19,11 @@ import { selectTeam } from "../../../slices/team";
 import canAccess from "../../../config/canAccess";
 import { selectProjects } from "../../../slices/project";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
+import { getBindingPresentation } from "../../../modules/visualization";
 import getDefaultCdcBindings from "../../../modules/getDefaultCdcBindings";
 
 function ChartDatasets(props) {
-  const { chartId, user } = props;
+  const { chartId, section, user } = props;
 
   const chart = useSelector((state) => selectChart(state, chartId));
   const datasets = useSelector(selectDatasetsNoDrafts) || [];
@@ -160,10 +161,11 @@ function ChartDatasets(props) {
 
   return (
     <div>
+      {(!section || section === "data") && (
+        <>
       <div className="flex flex-row justify-between items-center">
         <div>
-          <div className="font-bold">Datasets</div>
-          <div className="text-xs text-foreground-500">Choose reusable data, then define visual fields below.</div>
+          <h2 className="text-sm font-semibold">Datasets</h2>
         </div>
         <div className="flex flex-row gap-1 items-center">
           {canAccess("teamAdmin", user.id, team?.TeamRoles) && addMode && (
@@ -330,6 +332,8 @@ function ChartDatasets(props) {
           </Button>
         </div>
       )}
+        </>
+      )}
 
       {chart?.ChartDatasetConfigs.length > 0 && (
         <DraggableList
@@ -341,27 +345,34 @@ function ChartDatasets(props) {
           }}
           orientation="horizontal"
           className="gap-2"
-          renderItem={(cdc, { isDragging }) => (
-            <Chip
-              key={cdc.id}
-              title={`${cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}`}
-              variant={activeCdc?.id === cdc.id ? "soft" : "secondary"}
-              color={activeCdc?.id === cdc.id ? "accent" : "default"}
-              onClick={() => setActiveCdc(cdc)}
-              className={`cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
-              size="lg"
-            >
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cdc.datasetColor }} />
-              <Chip.Label>{cdc.legend || getDatasetDisplayName(datasets.find((dataset) => dataset.id === cdc.dataset_id))}</Chip.Label>
-              <LuGripVertical size={16} className="cursor-grab" />
-            </Chip>
-          )}
+          renderItem={(cdc, { isDragging }) => {
+            const presentation = getBindingPresentation(chart, cdc);
+            const label = presentation.label || getDatasetDisplayName(
+              datasets.find((dataset) => dataset.id === cdc.dataset_id)
+            );
+
+            return (
+              <Chip
+                key={cdc.id}
+                title={label}
+                variant={activeCdc?.id === cdc.id ? "soft" : "secondary"}
+                color={activeCdc?.id === cdc.id ? "accent" : "default"}
+                onClick={() => setActiveCdc(cdc)}
+                className={`cursor-pointer select-none ${isDragging ? "cursor-grab" : ""}`}
+                size="lg"
+              >
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: presentation.color }} />
+                <Chip.Label>{label}</Chip.Label>
+                <LuGripVertical size={16} className="cursor-grab" />
+              </Chip>
+            );
+          }}
         />
       )}
 
-      <div className="h-4" />
-      <Separator />
-      <div className="h-4" />
+      {activeCdc?.id && !(section === "appearance" && chart.type === "gauge") && (
+        <Separator className="my-4" />
+      )}
 
       {activeCdc?.id && (
         <ChartDatasetConfig
@@ -369,6 +380,7 @@ function ChartDatasets(props) {
           cdcId={activeCdc.id}
           dataRequests={datasets.find((d) => d.id === activeCdc.dataset_id)?.DataRequests}
           onRemove={(cdcId) => _onRemoveCdc(cdcId)}
+          section={section}
         />
       )}
     </div>
@@ -378,6 +390,11 @@ function ChartDatasets(props) {
 ChartDatasets.propTypes = {
   chartId: PropTypes.number.isRequired,
   user: PropTypes.object.isRequired,
+  section: PropTypes.oneOf(["data", "appearance", "automation"]),
+};
+
+ChartDatasets.defaultProps = {
+  section: null,
 };
 
 const mapStateToProps = (state) => ({

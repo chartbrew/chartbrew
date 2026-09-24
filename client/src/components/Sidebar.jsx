@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react"
+import PropTypes from "prop-types"
 import { Avatar, Badge, Button, Chip, Dropdown, Separator, Tooltip } from "@heroui/react"
 import { useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
@@ -14,7 +15,7 @@ import canAccess from "../config/canAccess"
 import { getBusinessProfileLogo, getTeamMembers, saveActiveTeam, selectTeam, selectTeams } from "../slices/team"
 import { clearConnections } from "../slices/connection"
 import { clearDatasets, getDatasets } from "../slices/dataset"
-import { selectSidebarCollapsed, showFeedbackModal } from "../slices/ui"
+import { showFeedbackModal } from "../slices/ui"
 import { logout } from "../slices/user"
 import { getActivityCounts } from "../api/observations"
 import { shouldResumeOnboarding } from "../containers/Onboarding/onboardingState"
@@ -27,9 +28,8 @@ const getInitials = (name, fallback = "T") => name
   .toUpperCase() || fallback;
 
 
-function Sidebar() {
+function Sidebar({ collapsed }) {
   const { theme, setTheme } = useTheme()
-  const collapsed = useSelector(selectSidebarCollapsed);
 
   const [activityCount, setActivityCount] = useState(0);
   const [teamLogos, setTeamLogos] = useState({});
@@ -458,7 +458,7 @@ function Sidebar() {
             </div>
           </div>
 
-          <SidebarDashboards key={`${user.data.id}-${team.id}`} />
+          <SidebarDashboards collapsed={collapsed} key={`${user.data.id}-${team.id}`} />
         </div>
 
         <div className="flex shrink-0 flex-col border-t border-divider bg-surface pt-2">
@@ -641,5 +641,9 @@ function Sidebar() {
     </aside>
   );
 }
+
+Sidebar.propTypes = {
+  collapsed: PropTypes.bool.isRequired,
+};
 
 export default Sidebar

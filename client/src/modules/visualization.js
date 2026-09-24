@@ -65,6 +65,21 @@ export function getVisualizationTimeField(visualization, bindingId) {
   return layer?.encoding?.time?.field || null;
 }
 
+export function getBindingPresentation(chart, cdc) {
+  const layer = chart?.visualization?.layers?.find((item) => {
+    return `${item.bindingId}` === `${cdc.id}`;
+  });
+  const series = (chart?.render?.metadata?.availableSeries
+    || chart?.render?.metadata?.series || []).find((item) => item.layerId === layer?.id);
+  const override = layer?.style?.series?.[series?.id]
+    || layer?.style?.series?.[series?.key];
+
+  return {
+    label: layer?.name || layer?.style?.label || layer?.encoding?.value?.title || cdc.legend,
+    color: override?.color || layer?.style?.color || series?.color || cdc.datasetColor,
+  };
+}
+
 export function getLayerFieldRequirements(mark) {
   if (mark === "map") return { map: true, value: true };
   if (mark === "table") return { collection: true };

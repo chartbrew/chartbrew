@@ -11,7 +11,7 @@ import {
   TextField,
   Tooltip,
 } from "@heroui/react";
-import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuInfo, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuGitMerge, LuInfo, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -33,6 +33,7 @@ import { selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 import { findSourceForConnection, isSourceAiPowered } from "../../sources";
+import ChartbrewAiIcon from "../../components/ChartbrewAiIcon";
 
 function DatasetQuery(props) {
   const { onUpdateDataset } = props;
@@ -583,7 +584,7 @@ function DatasetQuery(props) {
                             <div className="text-lg font-semibold">{c.name}</div>
                             {isSourceAiPowered(findSourceForConnection(c)) && (
                               <Chip variant="soft" color="accent" size="sm" className="max-w-fit">
-                                <LuBrainCircuit size={14} />
+                                <ChartbrewAiIcon size={14} />
                                 <Chip.Label>{"AI-powered"}</Chip.Label>
                               </Chip>
                             )}

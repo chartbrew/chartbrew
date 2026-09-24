@@ -46,6 +46,7 @@ function UserDashboard(props) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isSettings = location.pathname.startsWith("/settings");
+  const isChartEditor = /^\/dashboard\/[^/]+\/chart\/[^/]+\/edit\/?$/.test(location.pathname);
 
   useEffect(() => {
     cleanErrors();
@@ -130,16 +131,20 @@ function UserDashboard(props) {
     <div className="dashboard bg-background">
       {team?.id && (
         <div>
-          {isSettings ? <SettingsSidebar /> : <Sidebar />}
+          {isSettings ? <SettingsSidebar /> : <Sidebar collapsed={isChartEditor || collapsed} />}
 
           <div
             className={cn(
               "min-h-screen transition-all duration-300",
-              isSettings ? "md:ml-64" : (collapsed ? "ml-16" : "ml-64")
+              isSettings ? "md:ml-64" : (isChartEditor || collapsed ? "ml-16" : "ml-64")
             )}
           >
-            {isSettings ? null : <TopNav />}
-            <div className={cn(isSettings ? "px-4 py-6 sm:px-8 md:px-10 md:py-10" : "px-6 py-4")}>
+            {isSettings || isChartEditor ? null : <TopNav />}
+            <div className={cn({
+              "px-4 py-6 sm:px-8 md:px-10 md:py-10": isSettings,
+              "p-0": !isSettings && isChartEditor,
+              "px-6 py-4": !isSettings && !isChartEditor,
+            })}>
               <Outlet />
 
               {window.location.pathname === "/user" && (
@@ -150,7 +155,7 @@ function UserDashboard(props) {
         </div>
       )}
 
-      <div className="h-4" />
+      {!isChartEditor && <div className="h-4" />}
 
       {(teams && teams.length === 0) && (
         <div className="bg-background pt-10 mt-[-20px]">
