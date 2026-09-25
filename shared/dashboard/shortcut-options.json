@@ -1,0 +1,10 @@
+{
+  "icons": [
+    "grid", "chart", "pie", "briefcase", "people", "shop", "target", "database", "activity", "line",
+    "calendar", "wallet", "globe", "package", "megaphone", "trending", "building", "monitor", "shield", "zap"
+  ],
+  "colors": [
+    "blue", "orange", "teal", "green", "rose", "purple",
+    "amber", "fuchsia", "deep_fuchsia", "pink", "lime", "slate"
+  ]
+}

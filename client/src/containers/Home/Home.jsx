@@ -6,7 +6,6 @@ import {
 import {
   LuArrowRight,
   LuChartNoAxesColumn,
-  LuChartNoAxesColumnIncreasing,
   LuChevronRight,
   LuDatabase,
   LuPlug,
@@ -27,6 +26,7 @@ import {
 } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import { completeTutorial, selectUser } from "../../slices/user";
+import { DashboardShortcutMark } from "../../components/DashboardShortcutAppearance";
 import HomeAsk from "../Ai/HomeAsk";
 import SummaryScheduleModal from "../Activity/SummaryScheduleModal";
 import {
@@ -535,9 +535,7 @@ function Home() {
                 role="button"
                 tabIndex={0}
               >
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-foreground-600">
-                  <LuChartNoAxesColumnIncreasing size={18} aria-hidden />
-                </div>
+                <DashboardShortcutMark project={dashboard} size="lg" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-row items-center gap-2">
                     <span className="truncate font-medium text-foreground">{dashboard.name}</span>

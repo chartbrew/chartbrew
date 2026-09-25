@@ -8,6 +8,7 @@ import {
   InputGroup,
   Label,
   Modal,
+  Popover,
   Separator,
   Table,
   Tabs,
@@ -16,6 +17,7 @@ import {
 } from "@heroui/react";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import {
   LuCalendarClock,
   LuChartNoAxesColumnIncreasing,
@@ -27,7 +29,6 @@ import {
   LuPanelLeftOpen,
   LuPencilLine,
   LuPin,
-  LuPinOff,
   LuPlus,
   LuRefreshCw,
   LuSearch,
@@ -49,6 +50,7 @@ import { getTemplates } from "../../slices/template";
 import { pinDashboard, selectUser, unpinDashboard } from "../../slices/user";
 import { getHome } from "../../api/observations";
 import WorkspaceAttentionPanel from "./components/WorkspaceAttentionPanel";
+import DashboardShortcutAppearance, { DashboardShortcutMark } from "../../components/DashboardShortcutAppearance";
 
 const ATTENTION_PANEL_STORAGE_KEY = "__cb_attention_panel_collapsed";
 
@@ -148,6 +150,81 @@ const getProjectTimezoneLabel = (project) => {
   }
 };
 
+function DashboardAppearancePopover({ project, canEdit }) {
+  const dispatch = useDispatch();
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [draft, setDraft] = useState({});
+
+  if (!canEdit) {
+    return <span className="flex size-8 shrink-0 items-center justify-center"><DashboardShortcutMark project={project} /></span>;
+  }
+
+  const onOpenChange = (nextOpen) => {
+    if (nextOpen) {
+      setDraft({
+        sidebarIcon: project.sidebarIcon || "grid",
+        sidebarColor: project.sidebarColor || "blue",
+        sidebarDisplay: project.sidebarDisplay || "icon",
+      });
+    }
+    setOpen(nextOpen);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await dispatch(updateProject({ project_id: project.id, data: draft })).unwrap();
+      setOpen(false);
+    } catch {
+      toast.error("Could not save the dashboard appearance. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Popover isOpen={open} onOpenChange={onOpenChange}>
+      <Button
+        isIconOnly
+        size="sm"
+        variant="ghost"
+        aria-label={`Change appearance for ${project.name}`}
+        className="size-8 shrink-0 rounded-md! bg-transparent! p-0"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        <DashboardShortcutMark project={project} />
+      </Button>
+      <Popover.Content
+        placement="bottom start"
+        className="w-80 max-h-[calc(100vh-32px)] max-w-[calc(100vw-32px)] overflow-y-auto"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        <Popover.Dialog>
+          <Popover.Heading className="mb-4">Dashboard appearance</Popover.Heading>
+          <DashboardShortcutAppearance value={draft} onChange={setDraft} logo={project.logo} />
+          <div className="mt-4 flex justify-end gap-2">
+            <Button size="sm" variant="secondary" onPress={() => setOpen(false)}>Cancel</Button>
+            <Button
+              size="sm"
+              variant="primary"
+              isPending={saving}
+              isDisabled={saving || (draft.sidebarIcon === (project.sidebarIcon || "grid")
+                && draft.sidebarColor === (project.sidebarColor || "blue")
+                && draft.sidebarDisplay === (project.sidebarDisplay || "icon"))}
+              onPress={save}
+            >
+              Save changes
+            </Button>
+          </div>
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
+  );
+}
+
 function DashboardList() {
   const [addProject, setAddProject] = useState(false);
   const [search, setSearch] = useState({});
@@ -155,6 +232,7 @@ function DashboardList() {
   const [projectToEdit, setProjectToEdit] = useState(null);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [modifyingProject, setModifyingProject] = useState(false);
+  const [pinSaving, setPinSaving] = useState(false);
   const [attentionPanelCollapsed, setAttentionPanelCollapsed] = useState(getInitialAttentionPanelState);
   const [workspaceHome, setWorkspaceHome] = useState(null);
 
@@ -261,7 +339,15 @@ function DashboardList() {
   const _onEditProjectSubmit = () => {
     if (projectToEdit && projectToEdit.id) {
       setModifyingProject(true);
-      dispatch(updateProject({ project_id: projectToEdit.id, data: { name: projectToEdit.name } }))
+      dispatch(updateProject({
+        project_id: projectToEdit.id,
+        data: {
+          name: projectToEdit.name.trim(),
+          sidebarIcon: projectToEdit.sidebarIcon || "grid",
+          sidebarColor: projectToEdit.sidebarColor || "blue",
+          sidebarDisplay: projectToEdit.sidebarDisplay || "icon",
+        },
+      })).unwrap()
         .then(() => dispatch(getTeams()))
         .then(() => {
           setModifyingProject(false);
@@ -269,6 +355,7 @@ function DashboardList() {
         })
         .catch(() => {
           setModifyingProject(false);
+          toast.error("Could not save the dashboard. Try again.");
         });
     }
   };
@@ -301,17 +388,23 @@ function DashboardList() {
     window.location.href = url;
   };
 
-  const _onPinDashboard = (projectId) => {
+  const _onPinDashboard = async (projectId) => {
+    if (pinSaving) return;
     const pin = pinnedDashboards.find((pinnedDashboard) => pinnedDashboard.project_id === projectId);
-
-    if (pin) {
-      dispatch(unpinDashboard({ pin_id: pin.id }));
-    } else {
-      dispatch(pinDashboard({ project_id: projectId, user_id: user.id }));
+    setPinSaving(true);
+    try {
+      await dispatch(pin
+        ? unpinDashboard({ user_id: user.id, pin_id: pin.id })
+        : pinDashboard({ user_id: user.id, project_id: projectId })).unwrap();
+    } catch {
+      toast.error(pin ? "Could not unpin the dashboard. Try again." : "Could not pin the dashboard. Try again.");
+    } finally {
+      setPinSaving(false);
     }
   };
 
   const canManageDashboards = _canAccess("teamAdmin", team?.TeamRoles);
+  const canEditAppearance = _canAccess("projectEditor", team?.TeamRoles);
   const filteredProjects = _getFilteredProjects();
   const showAttentionRail = !!workspaceHome && !attentionPanelCollapsed;
   const gridClassName = showAttentionRail
@@ -417,76 +510,78 @@ function DashboardList() {
                     role="button"
                     tabIndex={0}
                     className="cursor-pointer gap-0 border border-divider shadow-none transition-[border-color,background-color,box-shadow] duration-200 hover:border-default-300 hover:bg-default-50/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-soft-hover"
-                    onClick={() => directToProject(project.id)}
+                    onClick={(event) => {
+                      if (event.currentTarget.contains(event.target)) directToProject(project.id);
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
+                      if (e.currentTarget.contains(e.target) && (e.key === "Enter" || e.key === " ")) {
                         e.preventDefault();
                         directToProject(project.id);
                       }
                     }}
                   >
-                    <Card.Header className="flex flex-row justify-between items-start gap-3 pb-2">
-                      <div className="min-w-0 flex flex-row items-start gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-row items-center gap-2">
-                            {isPinned && (
-                              <LuPin className="shrink-0 text-secondary" size={16} fill="currentColor" />
-                            )}
-                            <Link to={`/dashboard/${project.id}`} className="min-w-0 cursor-pointer text-foreground! hover:underline">
-                              <Card.Title className="truncate font-tw text-lg font-semibold">
-                                {project.name}
-                              </Card.Title>
-                            </Link>
-                          </div>
-                        </div>
+                    <Card.Header className="flex flex-row items-center justify-between gap-3 pb-2">
+                      <div className="flex min-w-0 flex-row items-center gap-2">
+                        <DashboardAppearancePopover project={project} canEdit={canEditAppearance} />
+                        <Link to={`/dashboard/${project.id}`} className="min-w-0 cursor-pointer text-foreground! hover:underline">
+                          <Card.Title className="truncate font-tw text-lg font-semibold">
+                            {project.name}
+                          </Card.Title>
+                        </Link>
                       </div>
-                      {canManageDashboards && (
-                        <Dropdown size="sm">
-                          <Dropdown.Trigger
-                            aria-label={`Open options for ${project.name}`}
-                            className="flex size-8 items-center justify-center rounded-lg hover:bg-surface-secondary"
-                            onClick={(event) => event.stopPropagation()}
-                          >
-                            <LuEllipsis className="text-foreground-400" />
-                          </Dropdown.Trigger>
-                          <Dropdown.Popover>
-                            <Dropdown.Menu>
-                              <Dropdown.Item
-                                id="settings"
-                                onPress={() => navigate(`/dashboard/${project.id}/settings`)}
-                                textValue="Dashboard settings"
-                              >
-                                <div className="flex flex-row items-center gap-2">
-                                  <LuSettings />
-                                  <span>Dashboard settings</span>
-                                </div>
-                              </Dropdown.Item>
-                              <Dropdown.Item
-                                id="pin"
-                                onPress={() => _onPinDashboard(project.id)}
-                                textValue={isPinned ? "Unpin" : "Pin"}
-                                showDivider
-                              >
-                                <div className="flex flex-row items-center gap-2">
-                                  {isPinned ? <LuPinOff /> : <LuPin />}
-                                  <span>{isPinned ? "Unpin" : "Pin"}</span>
-                                </div>
-                              </Dropdown.Item>
-                              <Dropdown.Item
-                                id="delete"
-                                onPress={() => _onDeleteProject(project)}
-                                variant="danger"
-                                textValue="Delete"
-                              >
-                                <div className="flex flex-row items-center gap-2">
-                                  <LuTrash />
-                                  <span>Delete</span>
-                                </div>
-                              </Dropdown.Item>
-                            </Dropdown.Menu>
-                          </Dropdown.Popover>
-                        </Dropdown>
-                      )}
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="ghost"
+                          isDisabled={pinSaving}
+                          aria-label={`${isPinned ? "Unpin" : "Pin"} ${project.name}`}
+                          title={`${isPinned ? "Unpin" : "Pin"} dashboard`}
+                          className="size-8"
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
+                          onPress={() => _onPinDashboard(project.id)}
+                        >
+                          <LuPin className={isPinned ? "text-secondary" : "text-foreground-400"} size={17} fill={isPinned ? "currentColor" : "none"} />
+                        </Button>
+                        {canManageDashboards && (
+                          <Dropdown size="sm">
+                            <Dropdown.Trigger
+                              aria-label={`Open options for ${project.name}`}
+                              className="flex size-8 items-center justify-center rounded-lg hover:bg-surface-secondary"
+                              onClick={(event) => event.stopPropagation()}
+                              onKeyDown={(event) => event.stopPropagation()}
+                            >
+                              <LuEllipsis className="text-foreground-400" />
+                            </Dropdown.Trigger>
+                            <Dropdown.Popover>
+                              <Dropdown.Menu>
+                                <Dropdown.Item
+                                  id="settings"
+                                  onPress={() => navigate(`/dashboard/${project.id}/settings`)}
+                                  textValue="Dashboard settings"
+                                >
+                                  <div className="flex flex-row items-center gap-2">
+                                    <LuSettings />
+                                    <span>Dashboard settings</span>
+                                  </div>
+                                </Dropdown.Item>
+                                <Dropdown.Item
+                                  id="delete"
+                                  onPress={() => _onDeleteProject(project)}
+                                  variant="danger"
+                                  textValue="Delete"
+                                >
+                                  <div className="flex flex-row items-center gap-2">
+                                    <LuTrash />
+                                    <span>Delete</span>
+                                  </div>
+                                </Dropdown.Item>
+                              </Dropdown.Menu>
+                            </Dropdown.Popover>
+                          </Dropdown>
+                        )}
+                      </div>
                     </Card.Header>
                     <Card.Content>
                       <div className="flex flex-col gap-3 pb-2">
@@ -618,28 +713,22 @@ function DashboardList() {
                           <Table.Cell>
                             <div className="flex min-w-0 flex-col gap-2 py-1">
                               <div className="flex flex-row items-center gap-2">
-                                {isPinned ? (
-                                  <Tooltip>
-                                    <Tooltip.Trigger>
-                                      <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="ghost">
-                                        <LuPin className="text-secondary" size={18} fill="currentColor" />
-                                      </Button>
-                                    </Tooltip.Trigger>
-                                    <Tooltip.Content placement="left start">Unpin dashboard</Tooltip.Content>
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip>
-                                    <Tooltip.Trigger>
-                                      <Button isIconOnly size="sm" onPress={() => _onPinDashboard(project.id)} variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <LuPin className="text-secondary" size={18} />
-                                      </Button>
-                                    </Tooltip.Trigger>
-                                    <Tooltip.Content placement="left start">Pin dashboard</Tooltip.Content>
-                                  </Tooltip>
-                                )}
+                                <DashboardAppearancePopover project={project} canEdit={canEditAppearance} />
                                 <Link to={`/dashboard/${project.id}`} className="min-w-0 cursor-pointer flex flex-row items-center select-none">
                                   <span className="truncate text-foreground font-medium">{project.name}</span>
                                 </Link>
+                                <Button
+                                  isIconOnly
+                                  size="sm"
+                                  variant="ghost"
+                                  isDisabled={pinSaving}
+                                  aria-label={`${isPinned ? "Unpin" : "Pin"} ${project.name}`}
+                                  title={`${isPinned ? "Unpin" : "Pin"} dashboard`}
+                                  className={cn("size-8 shrink-0", !isPinned && "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100")}
+                                  onPress={() => _onPinDashboard(project.id)}
+                                >
+                                  <LuPin className={isPinned ? "text-secondary" : "text-foreground-400"} size={17} fill={isPinned ? "currentColor" : "none"} />
+                                </Button>
                               </div>
 
                               <div className="flex flex-wrap items-center gap-1.5 pl-10">
@@ -720,7 +809,7 @@ function DashboardList() {
                                       <LuPencilLine />
                                     </Button>
                                   </Tooltip.Trigger>
-                                  <Tooltip.Content>Rename dashboard</Tooltip.Content>
+                                  <Tooltip.Content>Edit dashboard</Tooltip.Content>
                                 </Tooltip>
                                 <Tooltip>
                                   <Tooltip.Trigger>
@@ -769,7 +858,7 @@ function DashboardList() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading className="font-bold">
-                  Rename your dashboard
+                  Edit dashboard
                 </Modal.Heading>
               </Modal.Header>
               <Modal.Body className="p-1">
@@ -783,6 +872,15 @@ function DashboardList() {
                     fullWidth
                   />
                 </TextField>
+                {projectToEdit && (
+                  <div className="mt-5">
+                    <DashboardShortcutAppearance
+                      value={projectToEdit}
+                      onChange={setProjectToEdit}
+                      logo={projectToEdit.logo}
+                    />
+                  </div>
+                )}
               </Modal.Body>
               <Modal.Footer>
                 <Button
@@ -794,10 +892,10 @@ function DashboardList() {
                 <Button
                   variant="primary"
                   onPress={() => _onEditProjectSubmit()}
-                  isDisabled={!projectToEdit?.name || modifyingProject}
+                  isDisabled={!projectToEdit?.name?.trim() || modifyingProject}
                   isPending={modifyingProject}
                 >
-                  Save
+                  Save changes
                 </Button>
               </Modal.Footer>
             </Modal.Dialog>

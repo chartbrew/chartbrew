@@ -19,6 +19,7 @@ import Callout from "../components/Callout";
 import Row from "../components/Row";
 import { ButtonSpinner } from "../components/ButtonSpinner";
 import { selectTeam } from "../slices/team";
+import DashboardShortcutAppearance from "../components/DashboardShortcutAppearance";
 
 /*
   Project settings page
@@ -29,6 +30,7 @@ function ProjectSettings(props) {
   } = props;
 
   const [projectName, setProjectName] = useState("");
+  const [shortcutAppearance, setShortcutAppearance] = useState({});
   const [nameError, setNameError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [removeModal, setRemoveModal] = useState(false);
@@ -50,26 +52,39 @@ function ProjectSettings(props) {
     cleanErrors();
   }, []);
 
+  useEffect(() => {
+    setShortcutAppearance({
+      sidebarIcon: project.sidebarIcon || "grid",
+      sidebarColor: project.sidebarColor || "blue",
+      sidebarDisplay: project.sidebarDisplay || "icon",
+    });
+  }, [project.id, project.sidebarIcon, project.sidebarColor, project.sidebarDisplay]);
+
+  useEffect(() => {
+    setProjectName(project.name || "");
+  }, [project.id, project.name]);
+
   const _onSaveName = () => {
-    if (!projectName) {
+    const name = projectName.trim();
+    if (!name) {
       setNameError(true);
       return;
     }
 
     setLoading(true);
 
-    dispatch(updateProject({ project_id: project.id, data: { name: projectName } }))
+    dispatch(updateProject({ project_id: project.id, data: { name, ...shortcutAppearance } }))
       .then((data) => {
         if (data.error) {
           throw new Error(data.error);
         }
         setLoading(false);
         dispatch(changeActiveProject(project.id));
-        toast.success("Dashboard name updated!");
+        toast.success("Dashboard updated.");
       })
       .catch(() => {
         setLoading(false);
-        toast.error("There was a problem updating the dashboard name. Please try again.");
+        toast.error("Could not save the dashboard. Try again.");
       });
   };
 
@@ -154,23 +169,31 @@ function ProjectSettings(props) {
             <Label>Dashboard name</Label>
             <Input
               placeholder="Type a name for your dashboard"
-              value={projectName ? projectName
-                : project.name ? project.name : ""}
-              onChange={(e) => setProjectName(e.target.value)}
+              value={projectName}
+              onChange={(e) => {
+                setProjectName(e.target.value);
+                setNameError(false);
+              }}
               variant="secondary"
               isInvalid={nameError}
               description={nameError ? "Dashboard name is required" : ""}
               className="max-w-md"
             />
           </TextField>
-          <div className="h-2" />
+          <div className="my-5">
+            <DashboardShortcutAppearance
+              value={shortcutAppearance}
+              onChange={setShortcutAppearance}
+              logo={project.logo}
+              disabled={!project.id || !_canAccess("projectEditor")}
+            />
+          </div>
           <Button
-            type="submit" isDisabled={!_canAccess("projectEditor")}
+            type="submit" isDisabled={!project.id || !_canAccess("projectEditor")}
             isPending={loading}
-            onPress={_onSaveName}
           >
             {loading ? <ButtonSpinner /> : null}
-            {"Save name"}
+            {"Save changes"}
           </Button>
         </form>
       </Row>

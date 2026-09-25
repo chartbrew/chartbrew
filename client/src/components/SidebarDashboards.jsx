@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { Button, Checkbox, Popover, SearchField, Tooltip } from "@heroui/react";
-import { LuGrid2X2Plus, LuLayers2, LuLayoutGrid, LuPin, LuPinOff, LuPlus, LuUnplug } from "react-icons/lu";
+import { LuGrid2X2Plus, LuLayers2, LuPin, LuPinOff, LuPlus, LuUnplug } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import toast from "react-hot-toast";
@@ -12,6 +12,7 @@ import { getSidebarDashboards, readDashboardVisits } from "../modules/sidebarDas
 import { getProjects, selectProjects } from "../slices/project";
 import { selectTeam } from "../slices/team";
 import { pinDashboard, selectUser, unpinDashboard } from "../slices/user";
+import { DashboardShortcutMark } from "./DashboardShortcutAppearance";
 
 function SidebarDashboards({ collapsed }) {
   const team = useSelector(selectTeam);
@@ -119,6 +120,7 @@ function SidebarDashboards({ collapsed }) {
                       <Checkbox.Control>
                         <Checkbox.Indicator />
                       </Checkbox.Control>
+                      <DashboardShortcutMark project={dashboard} />
                       <span className="min-w-0 break-words text-sm">{dashboard.name}</span>
                     </Checkbox.Content>
                   </Checkbox>
@@ -162,7 +164,7 @@ function SidebarDashboards({ collapsed }) {
                   isActive && "bg-default-100 font-medium",
                 )}
               >
-                <LuLayoutGrid aria-hidden className="shrink-0" size={18} />
+                <DashboardShortcutMark project={dashboard} />
                 {!collapsed && <span className="truncate">{dashboard.name}</span>}
               </NavLink>
               {!collapsed && (

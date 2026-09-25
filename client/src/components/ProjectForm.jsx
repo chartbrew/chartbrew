@@ -23,6 +23,7 @@ import ChartMogulTemplate from "../containers/Connections/ChartMogul/ChartMogulT
 import MailgunTemplate from "../containers/Connections/Mailgun/MailgunTemplate";
 import GaTemplate from "../sources/googleAnalytics/googleAnalytics-template";
 import PlausibleTemplate from "../containers/Connections/Plausible/PlausibleTemplate";
+import DashboardShortcutAppearance from "./DashboardShortcutAppearance";
 
 /*
   Contains the project creation functionality
@@ -128,6 +129,11 @@ function ProjectForm(props) {
                       value={newProject.name}
                     />
                   </TextField>
+                  <div className="h-4" />
+                  <DashboardShortcutAppearance
+                    value={newProject}
+                    onChange={setNewProject}
+                  />
                   {error && (
                     <Row>
                       <p className="text-sm text-red-500">

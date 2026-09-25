@@ -21,6 +21,9 @@ const settings = process.env.NODE_ENV === "production" ? require("../settings") 
 
 const PROJECT_UPDATE_FIELDS = new Set([
   "name",
+  "sidebarIcon",
+  "sidebarColor",
+  "sidebarDisplay",
   "brewName",
   "dashboardTitle",
   "description",

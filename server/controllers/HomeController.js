@@ -421,8 +421,12 @@ class HomeController {
         chartCount: project.Charts?.length || 0,
         id: project.id,
         lastUpdatedAt: project.lastUpdatedAt || project.updatedAt,
+        logo: project.logo,
         name: project.name,
         pinned: pinnedIds.includes(project.id),
+        sidebarIcon: project.sidebarIcon,
+        sidebarColor: project.sidebarColor,
+        sidebarDisplay: project.sidebarDisplay,
       }));
   }
 
