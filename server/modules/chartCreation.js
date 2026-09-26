@@ -1,4 +1,6 @@
 const db = require("../models/models");
+const { getAvailableChartLayout } = require("../../shared/dashboard/layout.mjs");
+const { lockDashboard } = require("./dashboardLayout");
 const ChartController = require("../controllers/ChartController");
 const DatasetController = require("../controllers/DatasetController");
 const { getObservationAccess, canEditProject, createHttpError } = require("./observations/access");
@@ -172,6 +174,7 @@ function validateInput(body, chartId) {
     || (runtime.variables && (typeof runtime.variables !== "object" || Array.isArray(runtime.variables)))) throw fail("Invalid dashboard filters.");
   return { requestId: body.requestId, mode: body.mode, prompt: body.prompt?.trim() || "", datasetId: Number(body.datasetId) || null,
     connectionId: Number(body.connectionId) || null, expectedVersion: body.expectedVersion,
+    ...(!chartId && body.layout != null ? { layout: getAvailableChartLayout(body.layout) } : {}),
     choices: Object.fromEntries(["name", "type", "xAxis", "yAxis", "yAxisOperation", "timeInterval"].filter((key) => choices[key] != null).map((key) => [key, choices[key]])),
     runtime: { filters: runtime.filters || [], variables: runtime.variables || {} } };
 }
@@ -434,7 +437,14 @@ async function run(projectId, userId, body, chartId = null) {
         updates.visualization = remapVisualizationBindings(chartData.visualization, bindings, existing);
         await chart.update(updates, { transaction });
       } else {
-        chart = await chartController.createWithChartDatasetConfigs(chartData, { id: userId }, { transaction, skipBackgroundUpdate: true });
+        let layout;
+        if (input.layout) {
+          const { charts } = await lockDashboard(projectId, transaction);
+          layout = getAvailableChartLayout(input.layout, charts);
+        }
+        chart = await chartController.createWithChartDatasetConfigs({ ...chartData, ...(layout ? { layout } : {}) }, { id: userId }, {
+          transaction, skipBackgroundUpdate: true, preserveLayout: Boolean(layout),
+        });
       }
       const current = await db.Project.findByPk(projectId, { transaction });
       await locked.update({ state: "succeeded", chart_id: chart.id, phase: "saved", result: { layoutRevision: current.layoutRevision, fields } }, { transaction });

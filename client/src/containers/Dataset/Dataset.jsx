@@ -337,7 +337,7 @@ function Dataset() {
           {!editDatasetName && (
             <>
               <Link onPress={() => setEditDatasetName(true)} className="text-default-500 cursor-pointer flex flex-row items-center gap-2">
-                <div className="font-tw font-bold text-foreground text-lg">{getDatasetDisplayName(dataset)}</div>
+                <div className="font-tight font-bold text-foreground text-lg">{getDatasetDisplayName(dataset)}</div>
                 <LuPencil size={16} className="text-foreground-500" />
               </Link>
             </>

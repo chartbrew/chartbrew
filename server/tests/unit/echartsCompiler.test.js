@@ -270,15 +270,14 @@ describe("ECharts compiler", () => {
       label: { color: "#71717a", fontSize: 10, fontWeight: 400, lineHeight: 15 },
       percent: {
         color: "#71717a",
-        fontFamily: "Inter Tight, sans-serif",
         fontSize: 11,
         fontWeight: 400,
         lineHeight: 16,
       },
       value: {
-        fontFamily: "Inter Tight, sans-serif",
+        fontFamily: "Titillium Web, sans-serif",
         fontSize: 26,
-        fontWeight: 700,
+        fontWeight: 600,
         lineHeight: 31,
       },
     });
@@ -854,8 +853,8 @@ describe("ECharts compiler", () => {
     expect(pointer.splitLine.show).toBe(false);
     expect(pointer.data[0].value).toBe(72);
     expect(pointer.detail).toMatchObject({
-      fontFamily: "Inter Tight, sans-serif",
-      fontWeight: 700,
+      fontFamily: "Titillium Web, sans-serif",
+      fontWeight: 600,
       offsetCenter: [0, "0%"],
       show: false,
     });
@@ -877,9 +876,9 @@ describe("ECharts compiler", () => {
       label: { color: "#71717a", fontWeight: 400 },
       marker: { color: "#22c55e", padding: [0, 0, 0, 8] },
       value: {
-        fontFamily: "Inter Tight, sans-serif",
+        fontFamily: "Titillium Web, sans-serif",
         fontSize: 42,
-        fontWeight: 700,
+        fontWeight: 600,
       },
     });
   });

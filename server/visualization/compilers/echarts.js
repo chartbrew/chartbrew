@@ -21,7 +21,7 @@ const {
 
 const CARTESIAN_PRESETS = new Set(["bar", "horizontalBar", "line"]);
 const PIE_PRESETS = new Set(["doughnut", "pie"]);
-const CENTRAL_VALUE_FONT = "Inter Tight, sans-serif";
+const KPI_VALUE_FONT = "Titillium Web, sans-serif";
 const DASHED_LAST_SERIES_SUFFIX = "--dashed-last";
 const LATEST_POINT_SERIES_SUFFIX = "--latest-point";
 const BAR_APPEARANCE = Object.freeze({
@@ -972,14 +972,13 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
             lineHeight: 15,
           },
           value: {
-            fontFamily: CENTRAL_VALUE_FONT,
+            fontFamily: KPI_VALUE_FONT,
             fontSize: 26,
-            fontWeight: 700,
+            fontWeight: 600,
             lineHeight: 31,
           },
           percent: {
             color: dark ? "#a1a1aa" : "#71717a",
-            fontFamily: CENTRAL_VALUE_FONT,
             fontSize: 11,
             fontWeight: 400,
             lineHeight: 16,
@@ -1368,9 +1367,9 @@ function buildGaugeOption({ chart, preparedData, visualization, renderContext })
       center: ["50%", "55%"],
       data: [{ id: seriesDefinition.id, name: label, value }],
       detail: {
-        fontFamily: CENTRAL_VALUE_FONT,
+        fontFamily: KPI_VALUE_FONT,
         fontSize: 28,
-        fontWeight: 700,
+        fontWeight: 600,
         formatter: `${formula.prefix}{value}${formula.suffix}`,
         offsetCenter: [0, "0%"],
         show: false,
@@ -1414,9 +1413,9 @@ function buildGaugeOption({ chart, preparedData, visualization, renderContext })
             padding: [0, 0, 0, 8],
           },
           value: {
-            fontFamily: CENTRAL_VALUE_FONT,
+            fontFamily: KPI_VALUE_FONT,
             fontSize: 42,
-            fontWeight: 700,
+            fontWeight: 600,
             lineHeight: 48,
           },
         },

@@ -418,7 +418,7 @@ function PlatformSettings() {
         return (
           <section className="rounded-3xl border border-divider bg-surface p-4" key={group.id}>
             <div className="mb-4 flex min-h-8 flex-wrap items-center justify-between gap-2">
-              <h2 className="text-lg font-semibold font-tw">{group.label}</h2>
+              <h2 className="text-lg font-semibold">{group.label}</h2>
               {renderSectionReset(group)}
             </div>
             {renderSettings(group)}

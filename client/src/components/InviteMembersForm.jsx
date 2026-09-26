@@ -114,7 +114,7 @@ function InviteMembersForm(props) {
 
   return (
     <div>
-      <div className="text-lg font-semibold font-tw">Invite team members</div>
+      <div className="text-lg font-semibold font-tight">Invite team members</div>
       <div className="text-sm text-gray-500">Generate a link that can be used to invite team members to your team.</div>
       {!selectedProjects && (
         <>

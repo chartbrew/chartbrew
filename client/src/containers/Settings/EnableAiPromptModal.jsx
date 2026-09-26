@@ -23,7 +23,7 @@ function EnableAiPromptModal({ isOpen, isPending, onCancel, onConfirm, scope }) 
           <Modal.Dialog>
             <Modal.CloseTrigger isDisabled={isPending} />
             <Modal.Header>
-              <Modal.Heading className="font-tw text-xl font-semibold">
+              <Modal.Heading className="text-xl font-semibold">
                 {copy.title}
               </Modal.Heading>
             </Modal.Header>

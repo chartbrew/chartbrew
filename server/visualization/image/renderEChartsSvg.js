@@ -10,7 +10,7 @@ const {
 } = require("../../modules/chartImage/imageLimits");
 const { buildEChartsImageTheme } = require("./imageTheme");
 const { canonicalizeSvgIds } = require("./safeSvg");
-const { FONT_FAMILY } = require("./fontAsset");
+const { FONT_FAMILY, KPI_FONT_FAMILY } = require("./fontAsset");
 
 const DETAIL_KEYS = new Set([
   "axisNameGap",
@@ -71,7 +71,11 @@ function applyStaticFont(value) {
   if (Array.isArray(value)) return value.map((item) => applyStaticFont(item));
   if (!value || typeof value !== "object") return value;
   return Object.fromEntries(Object.entries(value).map(([key, item]) => {
-    return [key, key === "fontFamily" ? FONT_FAMILY : applyStaticFont(item)];
+    if (key === "fontFamily") {
+      return [key, typeof item === "string" && item.startsWith("Titillium Web")
+        ? KPI_FONT_FAMILY : FONT_FAMILY];
+    }
+    return [key, applyStaticFont(item)];
   }));
 }
 

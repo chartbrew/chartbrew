@@ -66,7 +66,7 @@ function SlackAuth() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-lg font-semibold font-tw">
+      <div className="text-lg font-semibold font-tight">
         Authenticate Slack
       </div>
       <div className="text-sm text-foreground-500">

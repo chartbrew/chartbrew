@@ -182,7 +182,7 @@ function TeamAiDataControls() {
 
   return (
     <section className="rounded-3xl border border-divider bg-surface p-4" aria-labelledby="ai-data-heading">
-      <h2 className="font-tw text-lg font-semibold" id="ai-data-heading">AI data</h2>
+      <h2 className="text-lg font-semibold" id="ai-data-heading">AI data</h2>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button isPending={exporting} onPress={exportData} variant="secondary">
           <LuArrowDownToLine size={17} aria-hidden />

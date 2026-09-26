@@ -110,7 +110,7 @@ function HomeGreeting({ subtitle, title }) {
 
   return (
     <header aria-label={`${title} ${subtitle}`} className="flex flex-col gap-1">
-      <h1 className="font-tw text-2xl font-semibold">
+      <h1 className="text-2xl font-semibold">
         <span aria-hidden>
           {title.slice(0, titleLength)}
           {phase === "title" ? <Caret /> : null}

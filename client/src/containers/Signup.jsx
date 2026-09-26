@@ -119,7 +119,7 @@ function Signup() {
         <main className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-md">
             <div className="space-y-2 text-center">
-              <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground font-tw">
+              <h1 className="text-balance text-3xl font-semibold text-foreground">
                 Create your Chartbrew account
               </h1>
               <p className="text-sm text-muted">

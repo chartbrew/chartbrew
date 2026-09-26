@@ -100,7 +100,7 @@ function AiComposer({
       {suggestions.map((suggestion) => (
         framed ? (
           <Button
-            className="h-auto min-h-8 rounded-full border border-divider bg-surface px-3 py-1 font-normal text-foreground shadow-none"
+            className="h-auto min-h-8 max-w-full whitespace-normal rounded-full border border-divider bg-surface px-3 py-1 text-left font-normal text-foreground shadow-none"
             key={suggestion}
             onPress={() => fillSuggestion(suggestion)}
             size="sm"

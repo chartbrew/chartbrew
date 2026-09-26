@@ -914,6 +914,7 @@ function PublicDashboard() {
                           isPublic
                           chart={chart}
                           charts={charts}
+                          deferRendering
                           className="chart-card"
                           dashboardFilters={dashboardFilters?.[project.id] || []}
                           chartFilters={chartFilters?.[chart.id] || []}

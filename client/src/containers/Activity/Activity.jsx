@@ -40,7 +40,7 @@ function Activity() {
   return (
     <main className="flex w-full flex-col gap-4">
       <header className="flex flex-col gap-1">
-        <h1 className="font-tw text-2xl font-semibold">Activity</h1>
+        <h1 className="text-2xl font-semibold">Activity</h1>
       </header>
 
       <Tabs

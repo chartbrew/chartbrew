@@ -423,7 +423,7 @@ function DashboardList() {
           <div className="flex flex-row justify-between items-center gap-4">
             <div className="flex flex-row items-center">
               <div className="flex flex-col gap-1">
-                <div className="text-2xl font-semibold font-tw">
+                <div className="text-2xl font-semibold font-tight">
                   Dashboards
                 </div>
                 <div className="text-sm text-foreground-500">
@@ -524,7 +524,7 @@ function DashboardList() {
                       <div className="flex min-w-0 flex-row items-center gap-2">
                         <DashboardAppearancePopover project={project} canEdit={canEditAppearance} />
                         <Link to={`/dashboard/${project.id}`} className="min-w-0 cursor-pointer text-foreground! hover:underline">
-                          <Card.Title className="truncate font-tw text-lg font-semibold">
+                          <Card.Title className="truncate text-lg font-semibold">
                             {project.name}
                           </Card.Title>
                         </Link>

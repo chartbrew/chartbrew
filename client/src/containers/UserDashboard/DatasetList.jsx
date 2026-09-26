@@ -278,7 +278,7 @@ function DatasetList() {
     <div className="flex flex-col">
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-col gap-1">
-          <div className="text-2xl font-semibold font-tw">
+          <div className="text-2xl font-semibold font-tight">
             Datasets
           </div>
           <div className="text-sm text-foreground-500">

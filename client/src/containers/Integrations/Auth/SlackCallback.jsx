@@ -47,7 +47,7 @@ function SlackCallback() {
 
   return (
     <div>
-      <div className="text-lg font-semibold font-tw">
+      <div className="text-lg font-semibold font-tight">
         Add Chartbrew to your Slack workspace
       </div>
       <div className="text-sm text-foreground-500">

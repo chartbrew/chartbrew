@@ -295,7 +295,7 @@ function ManageUser() {
       <Separator />
       <div className="h-4" />
 
-      <div className="text-lg font-semibold font-tw">Two-factor authentication</div>
+      <div className="text-lg font-semibold font-tight">Two-factor authentication</div>
       <div className="h-2" />
 
       {!qrCode && authMethods?.length === 0 && (
@@ -428,7 +428,7 @@ function ManageUser() {
           <Modal.Container>
             <Modal.Dialog className="sm:max-w-xl">
               <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
+                <Modal.Heading className="text-lg font-semibold">
                   Delete Account
                 </Modal.Heading>
               </Modal.Header>
@@ -474,7 +474,7 @@ function ManageUser() {
           <Modal.Container>
             <Modal.Dialog>
               <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
+                <Modal.Heading className="text-lg font-semibold">
                   Update email
                 </Modal.Heading>
               </Modal.Header>
@@ -517,7 +517,7 @@ function ManageUser() {
           <Modal.Container>
             <Modal.Dialog>
               <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
+                <Modal.Heading className="text-lg font-semibold">
                   Remove 2FA method
                 </Modal.Heading>
               </Modal.Header>

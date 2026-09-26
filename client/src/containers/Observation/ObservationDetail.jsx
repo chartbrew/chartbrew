@@ -232,7 +232,7 @@ function ObservationDetail() {
                 ? <LuTrendingUp size={19} aria-hidden />
                 : <LuTrendingDown size={19} aria-hidden />}
             </div>
-            <h1 className="min-w-0 font-tw text-2xl font-semibold leading-tight md:text-3xl">
+            <h1 className="min-w-0 text-2xl font-semibold leading-tight md:text-3xl">
               {metricName}
             </h1>
           </div>
@@ -413,7 +413,7 @@ function ObservationDetail() {
 
         <aside className="overflow-hidden rounded-3xl border border-divider bg-surface lg:sticky lg:top-20 lg:col-start-2 lg:row-span-3 lg:row-start-1">
           <section className="p-5" aria-labelledby="data-details-heading">
-            <h2 className="font-tw text-base font-semibold" id="data-details-heading">
+            <h2 className="text-base font-semibold" id="data-details-heading">
               Data details
             </h2>
             <dl className="mt-4 divide-y divide-divider text-sm">
@@ -443,7 +443,7 @@ function ObservationDetail() {
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">
                 Source chart
               </p>
-              <h2 className="mt-1 truncate font-tw text-lg font-semibold" id="source-chart-heading">
+              <h2 className="mt-1 truncate text-lg font-semibold" id="source-chart-heading">
                 {observation.chart.name}
               </h2>
               <div className="mt-2 flex flex-col gap-2">
@@ -538,7 +538,7 @@ function ObservationDetail() {
 
         <section className="rounded-3xl border border-divider bg-surface p-5 md:p-6 lg:col-start-1 lg:row-start-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-tw text-lg font-semibold">Drivers</h2>
+            <h2 className="text-lg font-semibold">Drivers</h2>
             <Button
               isPending={driverLoading}
               onPress={exploreDrivers}
@@ -591,7 +591,7 @@ function ObservationDetail() {
         </section>
 
         <section className="rounded-3xl border border-divider bg-surface p-5 md:p-6 lg:col-start-1 lg:row-start-3">
-          <h2 className="font-tw text-lg font-semibold">Investigate this change</h2>
+          <h2 className="text-lg font-semibold">Investigate this change</h2>
           <div className="mt-4">
             <ObservationInvestigation observationId={observation.id} teamId={team.id} />
           </div>

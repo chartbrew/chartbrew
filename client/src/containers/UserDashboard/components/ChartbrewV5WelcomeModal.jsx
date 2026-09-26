@@ -134,7 +134,7 @@ function ChartbrewV5WelcomeModal() {
                   <div className="text-xs font-semibold uppercase tracking-[0.24em] text-foreground-500">
                     {activeStep.eyebrow}
                   </div>
-                  <Modal.Heading className="text-2xl font-semibold font-tw">
+                  <Modal.Heading className="text-2xl font-semibold">
                     {activeStep.title}
                   </Modal.Heading>
                 </div>

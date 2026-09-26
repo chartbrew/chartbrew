@@ -122,7 +122,7 @@ function KpiMode(props) {
 
             <div className={`flex items-center ${hasGoal ? "justify-between" : "justify-center"} gap-4`}>
               <div
-                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-bold font-tight`}
+                className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800 font-semibold font-tw`}
                 key={item.id}
               >
                 {item.value ?? "—"}

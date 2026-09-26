@@ -315,7 +315,7 @@ function ProjectNavigation(props) {
                 style={{ color: "white" }}
                 title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
               >
-                <div className={"text-default-600 text-xs font-tw font-bold"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+                <div className={"text-default-600 text-xs font-bold"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                   {update && update.tag_name && (
                     <LuChevronsUp color={secondary} />
                   )}
@@ -333,7 +333,7 @@ function ProjectNavigation(props) {
                 style={{ color: "white" }}
                 title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
               >
-                <div className={"text-default-600 text-xs font-tw font-bold"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+                <div className={"text-default-600 text-xs font-bold"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                   {update && update.tag_name && (
                     <LuChevronsUp color={secondary} />
                   )}

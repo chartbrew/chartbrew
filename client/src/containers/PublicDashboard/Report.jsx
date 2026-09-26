@@ -517,7 +517,7 @@ function Report({ editMode = false }) {
         {passwordRequired && (
           <div className="container mx-auto max-w-xl p-16">
             <div>
-              <h3 className="text-xl font-bold font-tw">
+              <h3 className="text-xl font-bold">
                 Please enter the password to access this report
               </h3>
             </div>
@@ -603,7 +603,7 @@ function Report({ editMode = false }) {
           <div className="flex flex-col items-center justify-center">
             <img src={logo} height={50} width={50} alt="Chartbrew logo" className="rounded-none" />
             <div className="h-2" />
-            <h3 className="text-xl font-bold font-tw">{"This report is not available"}</h3>
+            <h3 className="text-xl font-bold">{"This report is not available"}</h3>
             <p className="text-sm">{"This report is not available because it has no charts or it is not public."}</p>
           </div>
           <div className="h-2" />
@@ -925,6 +925,7 @@ function Report({ editMode = false }) {
                           isPublic
                           chart={chart}
                           charts={charts}
+                          deferRendering
                           dashboardFilters={dashboardFilters?.[project.id] || []}
                           chartFilters={chartFilters?.[chart.id] || []}
                           onAddChartFilter={_onChartFilterChange}

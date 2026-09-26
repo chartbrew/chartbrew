@@ -10,6 +10,7 @@ import PixelLoader from "../../../components/PixelLoader";
 import getConnectionLogo from "../../../modules/getConnectionLogo";
 import { useTheme } from "../../../modules/ThemeContext";
 import AiComposer from "../../Ai/AiComposer";
+import { reserveChartLayout } from "../../../modules/autoLayout";
 
 const TYPES = { kpi: "Number", line: "Line", bar: "Bar", horizontalBar: "Horizontal bar", table: "Table", pie: "Pie", doughnut: "Doughnut", avg: "Average", map: "Map" };
 const OPERATIONS = { none: "As provided", sum: "Total", avg: "Average", min: "Minimum", max: "Maximum", count: "Count", count_unique: "Unique count" };
@@ -47,7 +48,7 @@ function ChartSelect({ label, value, items, onChange, isDisabled, compact = fals
 
 ChartSelect.propTypes = { label: PropTypes.string, value: PropTypes.string, items: PropTypes.array, onChange: PropTypes.func, isDisabled: PropTypes.bool, compact: PropTypes.bool };
 
-function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClose, onSaved, onChartContainer, onPublish, runtime }) {
+function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClose, onSaved, onChartContainer, onPublish, runtime, layout }) {
   const navigate = useNavigate();
   const { isDark } = useTheme();
   const storageKey = `chart-creation:${userId}:${projectId}:${sessionId}`;
@@ -182,6 +183,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
     if (busy) return;
     const body = {
       requestId: uuid(), mode: "prompt", prompt, runtime,
+      ...(!targetChartId && layout ? { layout } : {}),
       ...(dataset ? { datasetId: dataset.dataset_id } : { connectionId: source === "auto" ? null : Number(source) }),
       ...(settings ? { expectedVersion: settings.version } : {}),
       ...changes,
@@ -271,7 +273,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
         }}
         className={settings
           ? "inline-chart-panel"
-          : `min-w-0 rounded-3xl border border-divider bg-surface p-4${busy ? " relative isolate overflow-hidden" : ""}`}
+          : `flex h-full min-w-0 flex-col rounded-3xl border border-divider bg-surface p-4${busy ? " relative isolate" : ""}`}
       >
         {!settings && busy && (
           <div className="inline-chart-loading-field" aria-hidden="true">
@@ -295,7 +297,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
           </header>
         )}
 
-        <div className={settings ? "min-h-0 flex-1 overflow-y-auto px-6 py-4" : ""}>
+        <div className={settings ? "min-h-0 flex-1 overflow-y-auto px-6 py-4" : "flex min-h-0 flex-1 flex-col"}>
         {settings && (
           <div className="mb-6 flex flex-col gap-4">
             <TextField
@@ -356,6 +358,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
             onSubmitQuestion={() => { submit(); return false; }}
             rows={3}
             framed
+            fill={!settings}
             leadingControl={!settings && (
               <ChartSelect compact label={dataset ? "Dataset" : "Connection"} value={source} isDisabled={busy || Boolean(dataset)}
                 items={[{ value: "auto", label: dataset?.name || "Auto connection" }, ...options.connections.map((item) => ({
@@ -409,7 +412,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
           </div>
         )}
         </div>
-        <footer className={settings ? "flex shrink-0 items-center justify-between gap-3 bg-surface px-6 py-4" : `flex flex-wrap items-center gap-2${options?.aiEnabled ? " mt-4" : ""}`}>
+        <footer className={settings ? "flex shrink-0 items-center justify-between gap-3 bg-surface px-6 py-4" : `flex shrink-0 flex-wrap items-center gap-2${options?.aiEnabled ? " mt-4" : ""}`}>
           {!settings ? (
             <>
               <Button variant={options?.aiEnabled ? "secondary" : "primary"} isDisabled={busy || !options} onPress={() => setPicker(true)}>
@@ -528,42 +531,48 @@ InlineChartSession.propTypes = {
   projectId: PropTypes.string.isRequired, userId: PropTypes.number.isRequired,
   sessionId: PropTypes.string.isRequired, targetChartId: PropTypes.number,
   onClose: PropTypes.func.isRequired, onSaved: PropTypes.func.isRequired,
-  onChartContainer: PropTypes.func.isRequired, onPublish: PropTypes.func.isRequired, runtime: PropTypes.object.isRequired,
+  onChartContainer: PropTypes.func.isRequired, onPublish: PropTypes.func.isRequired, runtime: PropTypes.object.isRequired, layout: PropTypes.object,
 };
 
-function InlineChartCreator({ open, onClose, selectedChartId, onSelectChart, ...props }) {
+function InlineChartCreator({ open, onClose, selectedChartId, onSelectChart, charts, children, onSessionsChange, ...props }) {
   const storageKey = `chart-creations:${props.userId}:${props.projectId}`;
   const [sessions, setSessions] = useState(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem(storageKey));
-      return Array.isArray(saved) ? saved : [];
+      return Array.isArray(saved) ? saved.reduce((items, item) => {
+        const session = typeof item === "string" ? { id: item } : item;
+        return [...items, { ...session, layout: session.layout || reserveChartLayout([...charts, ...items]) }];
+      }, []) : [];
     } catch (_) { return []; }
   });
 
   useEffect(() => {
     sessionStorage.setItem(storageKey, JSON.stringify(sessions));
+    onSessionsChange(sessions.length);
   }, [sessions, storageKey]);
 
   useEffect(() => {
     if (!open) return;
-    setSessions((current) => [...current, uuid()]);
+    setSessions((current) => [...current, { id: uuid(), layout: reserveChartLayout([...charts, ...current]) }]);
     onClose();
   }, [open]);
 
   return (
     <>
-      {sessions.length > 0 && (
-        <div className="grid grid-cols-1 items-start gap-3 px-px lg:grid-cols-2">
-          {sessions.map((id) => (
-            <InlineChartSession
-              {...props}
-              key={id}
-              sessionId={id}
-              onClose={() => setSessions((current) => current.filter((item) => item !== id))}
-            />
-          ))}
+      {children(sessions, sessions.map((session) => (
+        <div key={session.id}>
+          <InlineChartSession
+            {...props}
+            sessionId={session.id}
+            layout={session.layout}
+            onSaved={async (chartId) => {
+              setSessions((current) => current.map((item) => item.id === session.id ? { ...item, chartId } : item));
+              await props.onSaved(chartId);
+            }}
+            onClose={() => setSessions((current) => current.filter((item) => item.id !== session.id))}
+          />
         </div>
-      )}
+      )))}
       {selectedChartId && (
         <InlineChartSession
           {...props}
@@ -587,6 +596,7 @@ InlineChartCreator.propTypes = {
   projectId: PropTypes.string.isRequired, userId: PropTypes.number.isRequired,
   open: PropTypes.bool.isRequired, onClose: PropTypes.func.isRequired,
   selectedChartId: PropTypes.number, onSelectChart: PropTypes.func.isRequired,
+  charts: PropTypes.array.isRequired, children: PropTypes.func.isRequired, onSessionsChange: PropTypes.func.isRequired,
 };
 
 export default InlineChartCreator;

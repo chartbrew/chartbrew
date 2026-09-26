@@ -1,0 +1,52 @@
+.chartbrew-ai-icon[data-motion="halo"] rect:not(:nth-child(5)) {
+  --chartbrew-spark-rest: 1;
+  fill: #048bde;
+  animation: chartbrew-spark-pass 0.4s cubic-bezier(0.25, 1, 0.5, 1) calc(0.12s + var(--phase) * 0.105s) both;
+}
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(2),
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(8) {
+  --chartbrew-spark-rest: 0.45;
+}
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(1),
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(3),
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(7),
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(9) {
+  opacity: 0;
+  animation: chartbrew-spark-corner-pass 0.4s cubic-bezier(0.25, 1, 0.5, 1) calc(0.12s + var(--phase) * 0.105s) both,
+    chartbrew-spark-merge-corner 0.3s ease-out 1.26s forwards;
+}
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(5) {
+  animation: chartbrew-spark-double-blink 0.48s ease-in-out 1.56s forwards;
+}
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(2) { --phase: 0; }
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(3) { --phase: 1; }
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(6) { --phase: 2; }
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(9) { --phase: 3; }
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(8) { --phase: 4; }
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(7) { --phase: 5; }
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(4) { --phase: 6; }
+.chartbrew-ai-icon[data-motion="halo"] rect:nth-child(1) { --phase: 7; }
+
+@keyframes chartbrew-spark-pass {
+  0%, 100% { opacity: var(--chartbrew-spark-rest); }
+  25% { opacity: 1; }
+  60% { opacity: 0.55; }
+}
+@keyframes chartbrew-spark-corner-pass {
+  0% { opacity: 0; }
+  25% { opacity: 0.85; }
+  100% { opacity: 0.24; }
+}
+@keyframes chartbrew-spark-merge-corner {
+  from { opacity: 0.24; }
+  to { opacity: 0; }
+}
+@keyframes chartbrew-spark-double-blink {
+  0%, 45%, 100% { opacity: 1; }
+  22% { opacity: 0.45; }
+  72% { opacity: 0.65; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chartbrew-ai-icon[data-motion="halo"] rect { animation: none; }
+}

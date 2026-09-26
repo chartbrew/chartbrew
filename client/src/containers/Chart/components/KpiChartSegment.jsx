@@ -55,7 +55,7 @@ function KpiChartSegment(props) {
                 style={{ gap: Math.round(8 * detailScale) }}
               >
                 <div
-                  className="font-tight font-bold text-default-800"
+                  className="font-tw font-semibold text-default-800"
                   style={{ fontSize: Math.round(24 * detailScale), lineHeight: 1.25 }}
                 >
                   {`${c.value ?? "—"}`}

@@ -4,9 +4,9 @@ import grid from "react-grid-layout/build/utils.js";
 import React from "react";
 import gridLayout from "react-grid-layout/build/ReactGridLayout.js";
 import responsiveGrid from "react-grid-layout/build/ResponsiveReactGridLayout.js";
-import { cols, getBreakpoint, widths } from "../../../shared/dashboard/layout.mjs";
+import { breakpoints, cols, getAvailableChartLayout, getBreakpoint, getLayouts, validateLayout, widths } from "../../../shared/dashboard/layout.mjs";
 
-import { getLayoutPreviewGeometry } from "./autoLayout.js";
+import { getLayoutPreviewGeometry, reserveChartLayout } from "./autoLayout.js";
 
 test("sets the current screen size even when the grid does not cross a breakpoint", () => {
   let breakpoint = null;
@@ -63,4 +63,48 @@ test("vertical compaction swaps charts during a drag instead of pushing the rema
     layout, layout.find((item) => item.i === "first"), 0, 0, true, false, "vertical", 12
   ), "vertical", 12);
   assert.deepEqual(layout.map(({ i, y }) => [i, y]), [["first", 0], ["second", 2], ["third", 4]]);
+});
+
+test("replaces concurrent creators in place in any completion order on every screen size", () => {
+  const first = { id: "creator-1", layout: reserveChartLayout([]) };
+  const second = { id: "creator-2", layout: reserveChartLayout([first]) };
+  const third = { id: "creator-3", layout: reserveChartLayout([first, second]) };
+  const before = getLayouts([first, second, third]);
+  for (const order of [[first, second, third], [third, second, first], [second, first, third]]) {
+    const saved = [];
+    for (const creator of order) {
+      const layout = getAvailableChartLayout(creator.layout, saved);
+      assert.deepEqual(layout, creator.layout);
+      saved.push({ id: `saved-${creator.id}`, layout });
+      const remaining = [first, second, third].filter((item) => !saved.some((chart) => chart.id === `saved-${item.id}`));
+      const layouts = getLayouts([...saved, ...remaining]);
+      for (const bp of breakpoints) {
+        validateLayout(layouts[bp], bp);
+        const children = [...saved, ...remaining].map(({ id }) => React.createElement("div", { key: id }));
+        const rendered = grid.synchronizeLayoutWithChildren(layouts[bp], children, cols[bp], null);
+        for (const item of rendered) {
+          const original = before[bp].find((entry) => entry.i === item.i.replace("saved-", ""));
+          assert.deepEqual([item.x, item.y, item.w, item.h], [original.x, original.y, original.w, original.h]);
+        }
+      }
+    }
+  }
+  assert.deepEqual(getLayouts([third]).lg[0], before.lg[2]);
+});
+
+test("reserves space beside the last widget only when it does not overlap taller widgets", () => {
+  const charts = [
+    { id: "tall", layout: { lg: [6, 0, 6, 6] } },
+    { id: "short", layout: { lg: [0, 2, 6, 2] } },
+  ];
+  assert.deepEqual(reserveChartLayout(charts).lg, [0, 6, 6, 2]);
+});
+
+test("rejects invalid chart positions and falls back when another chart has taken the space", () => {
+  const layout = reserveChartLayout([]);
+  assert.equal(getAvailableChartLayout(layout, [{ id: "existing", layout }]), null);
+  for (const rect of [null, [0, 0, 6], [-1, 0, 6, 2], [0, -1, 6, 2], [0, 0, 99, 2], [0, 0, 6, 0], [0, 0.5, 6, 2]]) {
+    assert.throws(() => getAvailableChartLayout({ ...layout, lg: rect }));
+  }
+  assert.throws(() => getAvailableChartLayout({ lg: layout.lg }));
 });

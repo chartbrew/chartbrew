@@ -24,7 +24,6 @@ import {
 
 import moment from "moment";
 import _ from "lodash";
-import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
 import {
@@ -64,6 +63,38 @@ const getFiltersFromStorage = (projectId) => {
   }
 };
 
+function DeferredChartContent({ children, deferred }) {
+  const containerRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!deferred || visible) return undefined;
+    if (!window.IntersectionObserver) {
+      setVisible(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setVisible(true);
+    }, { rootMargin: "240px" });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [deferred, visible]);
+
+  if (!deferred) return children;
+
+  return (
+    <div ref={containerRef} className="h-full w-full">
+      {visible ? children : <div className="h-full w-full rounded-xl bg-default-100" aria-hidden="true" />}
+    </div>
+  );
+}
+
+DeferredChartContent.propTypes = {
+  children: PropTypes.node.isRequired,
+  deferred: PropTypes.bool.isRequired,
+};
+
 /*
   This is the container that generates the Charts together with the menu
 */
@@ -83,6 +114,7 @@ function Chart(props) {
     onClearChartFilter = null,
     onRefreshRuntimeChart = null,
     embedded = false,
+    deferRendering = false,
   } = props;
 
   const team = useSelector(selectTeam);
@@ -642,12 +674,7 @@ function Chart(props) {
   const showChartTitle = !isCompact || !hasKpiSegment;
 
   return (
-    <motion.div
-      animate={{ opacity: [0, 1] }}
-      transition={{ duration: 0.7 }}
-      style={styles.container}
-      ref={containerRef}
-    >
+    <div style={styles.container} ref={containerRef}>
       {error && (
         <Text color="danger" onClick={() => setError(false)}>
           {"There was a problem with your request. Please refresh the page and try again."}
@@ -979,13 +1006,15 @@ function Chart(props) {
           >
             <div className="flex h-full w-full items-center justify-center">
               <div ref={chartContentRef} className="h-full w-full min-h-0">
-                <ChartRenderer
-                  chart={chart}
-                  height={height}
-                  loading={chartLoading || chart.loading}
-                  redraw={redraw}
-                  redrawComplete={() => setRedraw(false)}
-                />
+                <DeferredChartContent deferred={deferRendering}>
+                  <ChartRenderer
+                    chart={chart}
+                    height={height}
+                    loading={chartLoading || chart.loading}
+                    redraw={redraw}
+                    redrawComplete={() => setRedraw(false)}
+                  />
+                </DeferredChartContent>
               </div>
             </div>
           </Card.Content>
@@ -1316,7 +1345,7 @@ function Chart(props) {
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
-    </motion.div>
+    </div>
   );
 }
 
@@ -1358,6 +1387,7 @@ Chart.propTypes = {
   onClearChartFilter: PropTypes.func,
   onRefreshRuntimeChart: PropTypes.func,
   embedded: PropTypes.bool,
+  deferRendering: PropTypes.bool,
 };
 
 export default Chart;

@@ -505,7 +505,7 @@ function TeamMembers(props) {
                     <div className="h-2" />
 
                     <div className="flex flex-row items-center gap-1">
-                      <div className="text-lg font-semibold font-tw">{"Data export permissions "}</div>
+                      <div className="text-lg font-semibold font-tight">{"Data export permissions "}</div>
                       <Tooltip>
                         <Tooltip.Trigger>
                           <div><LuInfo /></div>

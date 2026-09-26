@@ -392,7 +392,7 @@ function ChartDescription(props) {
     <div className="flex flex-col rounded-3xl border border-divider bg-surface p-4">
       <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
         <div className="flex flex-col gap-1">
-          <div className="font-tw text-2xl font-semibold">
+          <div className="font-tight text-2xl font-semibold">
             Create a new chart
           </div>
           <div className="text-sm text-foreground-500">

@@ -14,6 +14,7 @@ import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
 import { registerOptionMap } from "../../../visualization/mapAssets";
 import { addMapWheelZoom } from "../../../visualization/mapWheelZoom";
+import { getEChartsAnimation } from "../../../visualization/echartsRenderState";
 
 import { semanticColors } from "../../../lib/themeTokens";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -310,8 +311,8 @@ function applyCategoryLayout(option, width, height, themeColors) {
           value: {
             ...option.title.textStyle?.rich?.value,
             color: themeColors?.text,
-            fontFamily: "Inter Tight, sans-serif",
-            fontWeight: 700,
+            fontFamily: "Titillium Web, sans-serif",
+            fontWeight: 600,
             ...(centered ? {} : composition === "stacked-breakdown"
               ? { fontSize: 16, lineHeight: 20 }
               : { fontSize: 22, lineHeight: 27 }),
@@ -319,7 +320,6 @@ function applyCategoryLayout(option, width, height, themeColors) {
           percent: {
             ...option.title.textStyle?.rich?.percent,
             color: themeColors?.muted,
-            fontFamily: "Inter Tight, sans-serif",
             fontWeight: 400,
             ...(centered ? {} : composition === "stacked-breakdown"
               ? { fontSize: 9, lineHeight: 13 }
@@ -600,6 +600,8 @@ function EChartsRenderer({
 }) {
   const containerRef = useRef(null);
   const instanceRef = useRef(null);
+  const hasRenderedRef = useRef(false);
+  const renderedSizeRef = useRef({ width: 0, height: 0 });
   const compactTooltipRef = useRef(false);
   const categoryCompositionRef = useRef(null);
   const [activeCategoryKey, setActiveCategoryKey] = useState(null);
@@ -631,8 +633,8 @@ function EChartsRenderer({
         detail: {
           ...series.detail,
           color: colors.foreground.DEFAULT,
-          fontFamily: "Inter Tight, sans-serif",
-          fontWeight: 700,
+          fontFamily: "Titillium Web, sans-serif",
+          fontWeight: 600,
         },
         itemStyle: { ...series.itemStyle, color: colors.foreground.DEFAULT },
         title: { ...series.title, color: colors.foreground[500] },
@@ -675,9 +677,14 @@ function EChartsRenderer({
     const finalOption = compactAxes ? compactEChartsAxes(laidOut) : laidOut;
     if (clear) instance.clear();
     instance.setOption(
-      scaleEChartsDetails(finalOption, detailScale),
+      {
+        ...scaleEChartsDetails(finalOption, detailScale),
+        ...getEChartsAnimation(finalOption, !hasRenderedRef.current, reducedMotion, renderer),
+      },
       { lazyUpdate: false, notMerge: true }
     );
+    hasRenderedRef.current = true;
+    renderedSizeRef.current = { width, height };
     instance.resize();
     setMapMoved(false);
   };
@@ -688,12 +695,17 @@ function EChartsRenderer({
     try {
       const instance = echarts.init(containerRef.current, themeName, { renderer });
       instanceRef.current = instance;
+      hasRenderedRef.current = false;
+      renderedSizeRef.current = { width: 0, height: 0 };
       resizeObserver = new ResizeObserver(() => {
         const current = optionRef.current;
         const container = containerRef.current;
-        const compact = container
-          ? isCompactTooltipLayout(container.clientWidth, container.clientHeight)
-          : false;
+        if (!container) return;
+        if (
+          container.clientWidth === renderedSizeRef.current.width
+          && container.clientHeight === renderedSizeRef.current.height
+        ) return;
+        const compact = isCompactTooltipLayout(container.clientWidth, container.clientHeight);
         if (
           !instance.getOption()?.series?.length
           || isMatrixSeries(current?.series?.[0])
@@ -705,6 +717,10 @@ function EChartsRenderer({
           applyOption(instance, current);
         } else {
           instance.resize();
+          renderedSizeRef.current = {
+            width: container.clientWidth,
+            height: container.clientHeight,
+          };
         }
       });
       resizeObserver.observe(containerRef.current);

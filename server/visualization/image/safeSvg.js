@@ -1,4 +1,5 @@
 const FORBIDDEN_SERVER_SVG = /<(?:script|foreignObject|iframe|object|embed)\b|\b(?:href|xlink:href)\s*=\s*["'](?:https?:|\/\/)/i;
+const { FONT_FAMILY } = require("./fontAsset");
 
 function isForbiddenControlCharacter(character) {
   const codePoint = character.codePointAt(0);
@@ -55,6 +56,7 @@ function splitTextLines(value, { fontSize, maxLines = 1, width }) {
 function renderText({
   anchor = "start",
   color,
+  fontFamily = FONT_FAMILY,
   fontSize,
   fontWeight = 400,
   lineHeight = fontSize * 1.2,
@@ -69,7 +71,7 @@ function renderText({
   const spans = lines.map((line, index) => {
     return `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`;
   }).join("");
-  return `<text x="${x}" y="${y}" fill="${color}" font-family="Chartbrew Inter Tight" `
+  return `<text x="${x}" y="${y}" fill="${color}" font-family="${fontFamily}" `
     + `font-size="${fontSize}" font-weight="${fontWeight}" text-anchor="${anchor}">${spans}</text>`;
 }
 

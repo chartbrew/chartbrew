@@ -2,10 +2,23 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getEChartsAnimation,
   getEChartsPreset,
   isCompatibleEChartsRender,
   selectEChartsRender,
 } from "./echartsRenderState.js";
+
+test("animates only the first canvas render when motion is allowed", () => {
+  assert.deepEqual(getEChartsAnimation({ animation: true }, true, false, "canvas"), {
+    animation: true,
+    animationDuration: 380,
+    animationEasing: "cubicOut",
+  });
+  assert.equal(getEChartsAnimation({ animation: true }, false, false, "canvas").animation, false);
+  assert.equal(getEChartsAnimation({ animation: true }, true, true, "canvas").animation, false);
+  assert.equal(getEChartsAnimation({ animation: true }, true, false, "svg").animation, false);
+  assert.equal(getEChartsAnimation({ animation: false }, true, false, "canvas").animation, false);
+});
 
 test("distinguishes pie and doughnut ECharts options", () => {
   assert.equal(getEChartsPreset({ series: [{ radius: "70%", type: "pie" }] }), "pie");

@@ -43,3 +43,11 @@ export function selectEChartsRender({ loading, previous, render, type }) {
   if (isCompatibleEChartsRender(type, render)) return { ...render, type };
   return loading ? previous : null;
 }
+
+export function getEChartsAnimation(option, firstRender, reducedMotion, renderer) {
+  return {
+    animation: option.animation !== false && firstRender && !reducedMotion && renderer === "canvas",
+    animationDuration: 380,
+    animationEasing: "cubicOut",
+  };
+}

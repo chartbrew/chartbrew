@@ -191,3 +191,19 @@ export function validateLayout(items, bp, previous = []) {
     ids.add(String(item.i));
   });
 }
+
+export function getAvailableChartLayout(layout, charts = []) {
+  const requested = breakpoints.map((bp) => {
+    const rect = layout?.[bp];
+    if (!Array.isArray(rect) || rect.length !== 4) {
+      throw Object.assign(new Error("Invalid chart position."), { statusCode: 400 });
+    }
+    const [x, y, w, h] = rect;
+    const item = { i: "new", x, y, w, h };
+    validateLayout([item], bp);
+    return [bp, item];
+  });
+  const existing = getLayouts(charts);
+  if (requested.some(([bp, item]) => existing[bp].some((other) => overlap(item, other)))) return null;
+  return Object.fromEntries(requested.map(([bp, { x, y, w, h }]) => [bp, [x, y, w, h]]));
+}

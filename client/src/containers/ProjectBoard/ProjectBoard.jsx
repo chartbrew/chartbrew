@@ -34,18 +34,21 @@ function ProjectBoard() {
   const initRef = useRef(null);
 
   useEffect(() => {
-    if (params.projectId && !initRef.current && team?.id) {
-      initRef.current = true;
+    if (params.projectId && initRef.current !== params.projectId && team?.id) {
+      const firstLoad = !initRef.current;
+      initRef.current = params.projectId;
 
       _init();
 
-      checkForUpdates()
-        .then((release) => {
-          if (release && release.upToDate) return true;
+      if (firstLoad) {
+        checkForUpdates()
+          .then((release) => {
+            if (release && release.upToDate) return true;
 
-          setUpdate(release);
-          return release;
-        });
+            setUpdate(release);
+            return release;
+          });
+      }
     }
   }, [params, team]);
 

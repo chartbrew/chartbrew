@@ -136,6 +136,7 @@ const getFiltersFromStorage = () => {
 */
 function ProjectDashboard() {
   const [creationOpen, setCreationOpen] = useState(false);
+  const [creationCount, setCreationCount] = useState(0);
   const [selectedInlineChart, setSelectedInlineChart] = useState(null);
   const [inlineChartContainer, setInlineChartContainer] = useState(null);
   const inlineRefresh = useRef(Promise.resolve());
@@ -308,7 +309,7 @@ function ProjectDashboard() {
   }, [charts, layouts, pendingScrollWidgetId]);
 
   const _onEditLayout = async () => {
-    if (editingLayout || layoutSaving || creationOpen || selectedInlineChart) return;
+    if (editingLayout || layoutSaving || creationOpen || creationCount || selectedInlineChart) return;
     setLayoutError("");
     try {
       const current = await dispatch(getProject({ project_id: params.projectId })).unwrap();
@@ -808,7 +809,7 @@ function ProjectDashboard() {
 
   return (
     <div className="w-full bg-background">
-      {charts && currentDashboardCharts.length > 0
+      {charts && (currentDashboardCharts.length > 0 || creationCount > 0)
         && (
           <div>
             <div
@@ -1009,6 +1010,7 @@ function ProjectDashboard() {
                           <Dropdown.Menu>
                             <Dropdown.Item
                               id="edit-layout"
+                              isDisabled={creationOpen || creationCount > 0 || Boolean(selectedInlineChart)}
                               onPress={() => _onEditLayout()}
                               textValue="Edit layout"
                             >
@@ -1162,115 +1164,126 @@ function ProjectDashboard() {
             }}
             ref={dashboardRef}
           >
-            {currentDashboardCharts.length === 0 && !chartsLoading && (
+            {currentDashboardCharts.length === 0 && !creationCount && !chartsLoading && (
               <div className="flex min-h-48 flex-col items-center justify-center gap-4">
                 <h2 className="text-lg font-semibold">{_canAccess("projectEditor") ? "Add your first chart" : "No charts yet"}</h2>
               </div>
             )}
 
-            {layouts && currentDashboardCharts.length > 0 && (
-              <ResponsiveGridLayout
-                className="layout dashboard-tutorial"
-                layouts={layouts}
-                margin={margin}
-                breakpoints={widthSize}
-                cols={cols}
-                rowHeight={rowHeight}
-                compactType={movingLayout ? "vertical" : null}
-                onDragStart={() => setMovingLayout(true)}
-                transformScale={previewScale}
-                onDragStop={_onManualLayout}
-                onResizeStop={_onManualLayout}
-                breakpoint={editingLayout ? previewSize.breakpoint : undefined}
-                onBreakpointChange={setGridBreakpoint}
-                onWidthChange={(width) => setGridBreakpoint(getBreakpoint(width))}
-                resizeHandle={(
-                  <div className="react-resizable-handle react-resizable-handle-se">
-                    <LuArrowDownRight className="text-accent" size={20} />
-                  </div>
-                )}
-                isDraggable={editingLayout && !layoutSaving}
-                isResizable={editingLayout && !layoutSaving}
-                style={{
-                  marginLeft: -11,
-                  paddingLeft: -1,
-                  marginRight: -11,
-                  paddingRight: -1,
-                }}
-              >
-                {getReportOrder(charts, editingLayout ? layoutOrder : project.layoutOrder).map((id) => charts.find((chart) => String(chart.id) === id)).map((chart, index) => (
-                  <div
-                    key={chart.id}
-                    id={`dashboard-widget-${chart.id}`}
-                    className={editingLayout ? "border-2 border-dashed border-primary rounded-3xl" : ""}
-                  >
-                    {chart.type === "markdown" ? (
-                      <TextWidget
-                        chart={chart}
-                        onEditLayout={() => _onEditLayout()}
-                        editingLayout={editingLayout}
-                        onCancelChanges={_onCancelChanges}
-                        onSaveChanges={() => _onSaveChanges()}
-                        onEditContent={(content) => setStagedContent({
-                          ...stagedContent,
-                          [chart.id]: content,
-                        })}
-                      />
-                    ) : (
-                      <>
-                        {_shouldRenderChartSkeleton(chart) ? (
-                          <DashboardChartSkeleton height={_onGetChartHeight(chart)} />
-                        ) : (
-                          <InlineChartPlacement container={selectedInlineChart === chart.id ? inlineChartContainer : null}>
-                            <Chart
-                              key={chart.id}
-                              chart={chart}
-                              charts={charts}
-                              dashboardFilters={filters?.[params.projectId] || []}
-                              chartFilters={chartFilters?.[chart.id] || []}
-                              onAddChartFilter={_onChartFilterChange}
-                              onClearChartFilter={_onChartFilterChange}
-                              onRefreshRuntimeChart={(chartId, options = {}) => {
-                                const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
-                                if (!selectedChart) return Promise.resolve(null);
-                                return _runChartRequest(selectedChart, filters, chartFilters, options);
-                              }}
-                              onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
-                              height={() => selectedInlineChart === chart.id && inlineChartContainer ? inlineChartContainer.clientHeight : _onGetChartHeight(chart)}
-                              onConfigure={_canAccess("projectEditor") && !selectedInlineChart ? () => setSelectedInlineChart(chart.id) : undefined}
-                              editingLayout={editingLayout}
-                              onEditLayout={() => _onEditLayout()}
-                            />
-                          </InlineChartPlacement>
-                        )}
-                      </>
+            <InlineChartCreator
+              key={params.projectId}
+              projectId={params.projectId}
+              userId={user.id}
+              open={creationOpen && _canAccess("projectEditor")}
+              onClose={() => setCreationOpen(false)}
+              selectedChartId={selectedInlineChart}
+              onSelectChart={setSelectedInlineChart}
+              onChartContainer={setInlineChartContainer}
+              onSaved={_onInlineChartSaved}
+              onPublish={async (chartId) => {
+                await dispatch(updateChart({ project_id: params.projectId, chart_id: chartId, data: { draft: false } })).unwrap();
+                toast.success("Chart published");
+              }}
+              runtime={_buildRuntimeRequest({ id: selectedInlineChart }).cacheableChartPayload}
+              charts={currentDashboardCharts}
+              onSessionsChange={setCreationCount}
+            >
+              {(sessions, creators) => {
+                // A refresh can include a chart before its creator receives the completion response.
+                const gridCharts = currentDashboardCharts.filter((chart) => !sessions.some((session) => (
+                  session.chartId === chart.id || isEqual(session.layout, chart.layout)
+                )));
+                return layouts && (gridCharts.length > 0 || sessions.length > 0) ? (
+                  <ResponsiveGridLayout
+                    className="layout dashboard-tutorial"
+                    layouts={editingLayout ? layouts : getLayouts([...gridCharts, ...sessions])}
+                    margin={margin}
+                    breakpoints={widthSize}
+                    cols={cols}
+                    rowHeight={rowHeight}
+                    compactType={movingLayout ? "vertical" : null}
+                    onDragStart={() => setMovingLayout(true)}
+                    transformScale={previewScale}
+                    onDragStop={_onManualLayout}
+                    onResizeStop={_onManualLayout}
+                    breakpoint={editingLayout ? previewSize.breakpoint : undefined}
+                    onBreakpointChange={setGridBreakpoint}
+                    onWidthChange={(width) => setGridBreakpoint(getBreakpoint(width))}
+                    resizeHandle={(
+                      <div className="react-resizable-handle react-resizable-handle-se">
+                        <LuArrowDownRight className="text-accent" size={20} />
+                      </div>
                     )}
-                  </div>
-                ))}
-              </ResponsiveGridLayout>
-            )}
+                    isDraggable={editingLayout && !layoutSaving}
+                    isResizable={editingLayout && !layoutSaving}
+                    style={{
+                      marginLeft: -11,
+                      paddingLeft: -1,
+                      marginRight: -11,
+                      paddingRight: -1,
+                    }}
+                  >
+                    {getReportOrder(gridCharts, editingLayout ? layoutOrder : project.layoutOrder).map((id) => gridCharts.find((chart) => String(chart.id) === id)).map((chart, index) => (
+                      <div
+                        key={chart.id}
+                        id={`dashboard-widget-${chart.id}`}
+                        className={editingLayout ? "border-2 border-dashed border-primary rounded-3xl" : ""}
+                      >
+                        {chart.type === "markdown" ? (
+                          <TextWidget
+                            chart={chart}
+                            onEditLayout={() => _onEditLayout()}
+                            editingLayout={editingLayout}
+                            onCancelChanges={_onCancelChanges}
+                            onSaveChanges={() => _onSaveChanges()}
+                            onEditContent={(content) => setStagedContent({
+                              ...stagedContent,
+                              [chart.id]: content,
+                            })}
+                          />
+                        ) : (
+                          <>
+                            {_shouldRenderChartSkeleton(chart) ? (
+                              <DashboardChartSkeleton height={_onGetChartHeight(chart)} />
+                            ) : (
+                              <InlineChartPlacement container={selectedInlineChart === chart.id ? inlineChartContainer : null}>
+                                <Chart
+                                  key={chart.id}
+                                  chart={chart}
+                                  charts={charts}
+                                  deferRendering
+                                  dashboardFilters={filters?.[params.projectId] || []}
+                                  chartFilters={chartFilters?.[chart.id] || []}
+                                  onAddChartFilter={_onChartFilterChange}
+                                  onClearChartFilter={_onChartFilterChange}
+                                  onRefreshRuntimeChart={(chartId, options = {}) => {
+                                    const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
+                                    if (!selectedChart) return Promise.resolve(null);
+                                    return _runChartRequest(selectedChart, filters, chartFilters, options);
+                                  }}
+                                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                                  height={() => selectedInlineChart === chart.id && inlineChartContainer ? inlineChartContainer.clientHeight : _onGetChartHeight(chart)}
+                                  onConfigure={_canAccess("projectEditor") && !selectedInlineChart ? () => setSelectedInlineChart(chart.id) : undefined}
+                                  editingLayout={editingLayout}
+                                  onEditLayout={() => _onEditLayout()}
+                                />
+                              </InlineChartPlacement>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                    {creators}
+                  </ResponsiveGridLayout>
+                ) : null;
+              }}
+            </InlineChartCreator>
           </div>
         </div>
       </div>
 
       {_canAccess("projectEditor") && !editingLayout && (
         <>
-          <InlineChartCreator
-            key={params.projectId}
-            projectId={params.projectId}
-            userId={user.id}
-            open={creationOpen}
-            onClose={() => setCreationOpen(false)}
-            selectedChartId={selectedInlineChart}
-            onSelectChart={setSelectedInlineChart}
-            onChartContainer={setInlineChartContainer}
-            onSaved={_onInlineChartSaved}
-            onPublish={async (chartId) => {
-              await dispatch(updateChart({ project_id: params.projectId, chart_id: chartId, data: { draft: false } })).unwrap();
-              toast.success("Chart published");
-            }}
-            runtime={_buildRuntimeRequest({ id: selectedInlineChart }).cacheableChartPayload}
-          />
           {!creationOpen && !selectedInlineChart && (
             <Button
               data-add-chart

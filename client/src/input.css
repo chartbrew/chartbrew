@@ -87,6 +87,8 @@
 .inline-chart-loading-field {
   position: absolute;
   inset: 0;
+  overflow: clip;
+  border-radius: inherit;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-content: center;
@@ -220,6 +222,18 @@
   --color-field-foreground: var(--field-foreground);
   --color-field-placeholder: var(--field-placeholder);
   --color-field-border: var(--field-border);
+}
+
+@layer base {
+  :is(h1, h2, h3, h4, h5, h6) {
+    font-family: "Inter Tight", Inter, -apple-system, system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  :is(.card__title, .modal__heading, .alert-dialog__heading) {
+    font-family: "Inter Tight", Inter, -apple-system, system-ui, sans-serif;
+  }
 }
 
 @layer base {

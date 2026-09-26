@@ -1,5 +1,6 @@
 const { buildMetricItems } = require("../metricProjection");
 const { assertImageDimensions, assertPreparedRows } = require("../../modules/chartImage/imageLimits");
+const { KPI_FONT_FAMILY } = require("./fontAsset");
 const { escapeXml, renderText } = require("./safeSvg");
 
 function formatValue(value, locale) {
@@ -52,8 +53,9 @@ function renderKpiOverlaySvg({
     const valueWidth = Math.min(itemWidth, estimateTextWidth(valueText, valueSize));
     const value = renderText({
       color: colors.foreground,
+      fontFamily: KPI_FONT_FAMILY,
       fontSize: valueSize,
-      fontWeight: 700,
+      fontWeight: 600,
       text: valueText,
       width: itemWidth,
       x,
@@ -157,8 +159,9 @@ function renderMetricSvg({
     const value = renderText({
       anchor: "middle",
       color: colors.foreground,
+      fontFamily: KPI_FONT_FAMILY,
       fontSize: valueSize,
-      fontWeight: 700,
+      fontWeight: 600,
       text: formatValue(item.value, locale),
       width: cellWidth - (40 * scale),
       x: centerX,

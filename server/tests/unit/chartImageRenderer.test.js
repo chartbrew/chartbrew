@@ -296,6 +296,7 @@ describe("chart image rendering", () => {
       /<svg x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g
     )];
     expect(svg).toContain('data-kpi-overlay="true"');
+    expect(svg).toContain('font-family="Chartbrew Titillium Web"');
     expect(svg).toContain('data-kpi-growth="positive"');
     expect(svg).toContain('data-kpi-growth="negative"');
     expect(svg).toContain('fill="#048BDE"');
@@ -328,6 +329,8 @@ describe("chart image rendering", () => {
     const svg = renderImageSvg(document);
     expect(svg).toContain("5,755");
     expect(svg).toContain("Revenue");
+    expect(svg).toContain("font-family:'Chartbrew Titillium Web'");
+    expect(svg).toContain('font-family="Chartbrew Titillium Web"');
     expect(normalizeGolden(svg)).toMatchSnapshot();
     const png = await renderImagePng(document);
     expect((await sharp(png).metadata()).format).toBe("png");

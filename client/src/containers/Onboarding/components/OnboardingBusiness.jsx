@@ -30,7 +30,7 @@ function OnboardingBusiness({
   return (
     <div className="w-full max-w-xl rounded-3xl bg-surface p-6 md:p-8">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Step 1 of 2</div>
-      <h1 className="mt-2 text-balance font-tw text-3xl font-bold tracking-tight">
+      <h1 className="mt-2 text-balance text-3xl font-bold">
         Add your business website
       </h1>
       <p className="mt-2 max-w-md text-sm leading-6 text-muted">

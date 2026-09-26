@@ -128,7 +128,7 @@ function OnboardingTeam({
   return (
     <div className="w-full max-w-2xl rounded-3xl bg-surface p-6 md:p-8">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Step 2 of 2</div>
-      <h1 className="mt-2 text-balance font-tw text-3xl font-bold tracking-tight">
+      <h1 className="mt-2 text-balance text-3xl font-bold">
         Set up your team
       </h1>
 

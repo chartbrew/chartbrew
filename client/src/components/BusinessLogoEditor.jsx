@@ -107,7 +107,7 @@ function BusinessLogoEditor({
             src={logoUrl}
           />
         ) : (
-          <span className="font-tw text-xl font-semibold text-muted" aria-hidden="true">
+          <span className="text-xl font-semibold text-muted" aria-hidden="true">
             {(businessName.trim()[0] || "T").toUpperCase()}
           </span>
         )}

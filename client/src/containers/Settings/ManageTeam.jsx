@@ -21,7 +21,7 @@ import McpSettings from "./McpSettings";
 function SettingsPage({ children, title, wide = false }) {
   return (
     <div className={cn("mx-auto flex w-full flex-col gap-6", wide ? "max-w-5xl" : "max-w-3xl")}>
-      <h1 className="font-tw text-3xl font-semibold tracking-tight">{title}</h1>
+      <h1 className="text-3xl font-semibold">{title}</h1>
       {children}
     </div>
   );

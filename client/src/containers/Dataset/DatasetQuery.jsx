@@ -498,7 +498,7 @@ function DatasetQuery(props) {
                   <LuArrowLeft size={16} />
                 </Button>
               )}
-              <div className="text-lg font-tw font-semibold">Select a connection</div>
+              <div className="text-lg font-tight font-semibold">Select a connection</div>
             </div>
             <div className="h-4" />
             {connections.length > 0 && (

@@ -96,7 +96,7 @@ export default function McpConsent() {
         ) : null}
         {info ? (
           <>
-            <h1 className="font-tw text-2xl font-semibold break-words">
+            <h1 className="text-2xl font-semibold break-words">
               Allow {info.app.name} to access Chartbrew?
             </h1>
             <p className="mt-3 text-sm text-muted break-words">

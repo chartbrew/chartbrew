@@ -143,7 +143,7 @@ function ConnectionList() {
     <div className="flex flex-col">
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-col gap-1">
-          <div className="text-2xl font-semibold font-tw">
+          <div className="text-2xl font-semibold font-tight">
             Data connections
           </div>
           <div className="text-sm text-foreground-500">
@@ -192,7 +192,7 @@ function ConnectionList() {
                         <LuPlug />
                       </Avatar.Fallback>
                     </Avatar>
-                    <Link to={`/connections/${connection.id}`} className="text-lg font-semibold text-foreground! font-tw cursor-pointer">{connection.name}</Link>
+                    <Link to={`/connections/${connection.id}`} className="text-lg font-semibold text-foreground! font-tight cursor-pointer">{connection.name}</Link>
                   </div>
                   <div>
                     {_getRelatedDatasets(connection.id).length > 0 && (

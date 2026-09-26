@@ -224,7 +224,7 @@ function Login() {
             {!view2FaApp && (
               <>
                 <div className="space-y-2 text-center">
-                  <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground font-tw">
+                  <h1 className="text-balance text-4xl font-semibold text-foreground">
                     Welcome back
                   </h1>
                   <p className="text-sm text-muted">
@@ -340,7 +340,7 @@ function Login() {
             {view2FaApp && (
               <>
                 <div className="space-y-2 text-center">
-                  <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">
+                  <h1 className="text-balance text-3xl font-semibold text-foreground">
                     Two-factor authentication
                   </h1>
                   <p className="text-sm text-muted">

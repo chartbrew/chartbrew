@@ -14,6 +14,7 @@ import { selectProjects } from "../../slices/project";
 import { selectConnections } from "../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
 import PixelLoader from "../../components/PixelLoader";
+import ChartbrewAiIcon from "../../components/ChartbrewAiIcon";
 import {
   clearAiModalConversationId, selectAiModalConversationId, selectActiveAiConversation,
   setActiveAiConversation, updateActiveAiConversation, dismissAiConversation,
@@ -850,6 +851,52 @@ function AiModal({ isOpen, onClose }) {
   };
 
 
+  const selectedContextChips = (selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) ? (
+    <div className="flex flex-wrap items-center gap-2">
+      {selectedContext.multiSelect.map((entity) => (
+        <Chip
+          key={`${entity.entity_type}-${entity.id}`}
+          variant="soft"
+          color="accent"
+          size="sm"
+        >
+          <Chip.Label>{entity.label}</Chip.Label>
+          <button
+            type="button"
+            aria-label={`Remove ${entity.label}`}
+            className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            onClick={() => {
+              setSelectedContext(prev => ({
+                ...prev,
+                multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
+              }));
+            }}
+          >
+            <LuX size={14} aria-hidden />
+          </button>
+        </Chip>
+      ))}
+      {selectedContext.singleSelect && (
+        <Chip variant="soft" color="accent" size="sm">
+          <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
+          <button
+            type="button"
+            aria-label={`Remove ${selectedContext.singleSelect.label}`}
+            className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            onClick={() => {
+              setSelectedContext(prev => ({
+                ...prev,
+                singleSelect: null
+              }));
+            }}
+          >
+            <LuX size={14} aria-hidden />
+          </button>
+        </Chip>
+      )}
+    </div>
+  ) : null;
+
   return (
     <Modal>
       <Modal.Backdrop
@@ -865,21 +912,21 @@ function AiModal({ isOpen, onClose }) {
           <Modal.Dialog className={conversation ? "h-[min(880px,92vh)] sm:max-w-[1180px]" : "sm:max-w-2xl"}>
             <Modal.CloseTrigger className="z-20" />
             {!conversation && (
-              <Modal.Body className="flex flex-col gap-5 pb-6 pt-8">
-                <div className="flex w-full flex-col gap-1.5">
-                  <h2 className="font-tw text-2xl font-semibold text-foreground">
-                    What do you want to understand?
-                  </h2>
-                  <p className="text-sm leading-6 text-muted">
-                    Ask about a metric, compare a period, investigate a change, or create a visualization.
-                  </p>
+              <Modal.Body className="flex flex-col gap-5 px-2 pt-4">
+                <div className="flex items-center gap-3">
+                  <ChartbrewAiIcon className="shrink-0" data-motion="halo" size={28} />
+                  <Modal.Heading className="text-2xl font-medium text-foreground">
+                    What are we exploring today?
+                  </Modal.Heading>
                 </div>
                 <AiComposer
+                  framed
                   id="ai-form"
                   name="aiQuestion"
                   placeholder={questionPlaceholder}
                   isLoading={isLoading}
-                  rows={2}
+                  rows={4}
+                  leadingContent={selectedContextChips}
                   selectedContext={selectedContext}
                   status={(
                     <AiAvailabilityStatus
@@ -914,8 +961,8 @@ function AiModal({ isOpen, onClose }) {
                     />
                   )}
                   suggestions={[
-                    "Summarize the metrics that changed recently",
-                    "Compare this month with the previous month"
+                    "What changed recently?",
+                    "Compare this month with last month"
                   ]}
                 />
                 <AiAccessNotice
@@ -929,59 +976,14 @@ function AiModal({ isOpen, onClose }) {
                   onRetry={reloadAvailability}
                 />
 
-                {(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) && (
-                  <div className="flex flex-row flex-wrap items-center gap-1">
-                    {selectedContext.multiSelect.map((entity) => (
-                      <Chip
-                        key={`${entity.entity_type}-${entity.id}`}
-                        variant="primary"
-                        size="sm"
-                      >
-                        <Chip.Label>{entity.label}</Chip.Label>
-                        <button
-                          type="button"
-                          aria-label={`Remove ${entity.label}`}
-                          className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                          onClick={() => {
-                            setSelectedContext(prev => ({
-                              ...prev,
-                              multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                            }));
-                          }}
-                        >
-                          <LuX size={14} aria-hidden />
-                        </button>
-                      </Chip>
-                    ))}
-                    {selectedContext.singleSelect && (
-                      <Chip variant="secondary" size="sm">
-                        <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
-                        <button
-                          type="button"
-                          aria-label={`Remove ${selectedContext.singleSelect.label}`}
-                          className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                          onClick={() => {
-                            setSelectedContext(prev => ({
-                              ...prev,
-                              singleSelect: null
-                            }));
-                          }}
-                        >
-                          <LuX size={14} aria-hidden />
-                        </button>
-                      </Chip>
-                    )}
-                  </div>
-                )}
-                <Separator />
-                <Accordion>
+                <Accordion variant="surface">
                   <Accordion.Item
                     id="previous_conversations"
-                    textValue={`Previous Conversations (${conversations.length})`}
+                    textValue={`Previous conversations (${conversations.length})`}
                   >
                     <Accordion.Heading>
                       <Accordion.Trigger>
-                        <span className="text-sm font-medium flex-1 text-start">{`Previous Conversations (${conversations.length})`}</span>
+                        <span className="text-sm font-medium flex-1 text-start">{`Previous conversations (${conversations.length})`}</span>
                         <Accordion.Indicator />
                       </Accordion.Trigger>
                     </Accordion.Heading>
@@ -1116,9 +1118,10 @@ function AiModal({ isOpen, onClose }) {
                   <div className="relative flex min-w-0 flex-1 flex-col">
                     <header className="shrink-0 border-b border-divider px-5 py-3 pr-12">
                       <div className="mx-auto flex w-full max-w-3xl flex-row items-start gap-3">
+                        <ChartbrewAiIcon className="mt-1 shrink-0" data-motion="halo" size={24} />
                         <div className="flex flex-col gap-1 flex-1 min-w-0">
                           <div className="flex flex-row items-center gap-2">
-                            <div className="truncate text-base font-semibold text-foreground">{conversation.title}</div>
+                            <Modal.Heading className="truncate text-base font-medium text-foreground">{conversation.title}</Modal.Heading>
                             <Dropdown>
                               <Dropdown.Trigger>
                                 <Button isIconOnly size="sm" variant="tertiary">
@@ -1243,6 +1246,7 @@ function AiModal({ isOpen, onClose }) {
                         />
                         {isAccessNoticeVisible ? <div className="h-3" /> : null}
                         <AiComposer
+                          framed
                           id="ai-conversation-form"
                           name="aiConversationQuestion"
                           inputRef={inputRef}
@@ -1265,51 +1269,7 @@ function AiModal({ isOpen, onClose }) {
                             }
                           }}
                           showEnterHint
-                          leadingContent={(selectedContext.multiSelect.length > 0 || selectedContext.singleSelect) ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                              {selectedContext.multiSelect.map((entity) => (
-                                <Chip
-                                  key={`${entity.entity_type}-${entity.id}`}
-                                  variant="soft"
-                                  color="accent"
-                                  size="sm"
-                                >
-                                  <Chip.Label>{entity.label}</Chip.Label>
-                                  <button
-                                    type="button"
-                                    aria-label={`Remove ${entity.label}`}
-                                    className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                                    onClick={() => {
-                                      setSelectedContext(prev => ({
-                                        ...prev,
-                                        multiSelect: prev.multiSelect.filter(e => !(e.id === entity.id && e.entity_type === entity.entity_type))
-                                      }));
-                                    }}
-                                  >
-                                    <LuX size={14} aria-hidden />
-                                  </button>
-                                </Chip>
-                              ))}
-                              {selectedContext.singleSelect && (
-                                <Chip variant="soft" color="accent" size="sm">
-                                  <Chip.Label>{selectedContext.singleSelect.label}</Chip.Label>
-                                  <button
-                                    type="button"
-                                    aria-label={`Remove ${selectedContext.singleSelect.label}`}
-                                    className="inline-flex shrink-0 rounded-full p-0.5 text-foreground hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                                    onClick={() => {
-                                      setSelectedContext(prev => ({
-                                        ...prev,
-                                        singleSelect: null
-                                      }));
-                                    }}
-                                  >
-                                    <LuX size={14} aria-hidden />
-                                  </button>
-                                </Chip>
-                              )}
-                            </div>
-                          ) : null}
+                          leadingContent={selectedContextChips}
                           leadingControl={(
                             <AiContextPicker
                               isOpen={isSecondContextPopoverOpen}
@@ -1327,8 +1287,7 @@ function AiModal({ isOpen, onClose }) {
                               contentClassName="z-[100] w-80"
                               triggerVariant="outline"
                               triggerSize="sm"
-                              triggerIsIconOnly
-                              triggerTooltip="Add context"
+                              showTriggerLabel
                             />
                           )}
                         />
