@@ -3,6 +3,7 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const { nanoid } = require("nanoid");
 const fs = require("fs");
+const { resolveReportMode } = require("../../shared/reportAppearance.mjs");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -64,7 +65,9 @@ module.exports.snapDashboard = async (dashboard, options = {}) => {
       height,
     });
 
-    let url = `${settings.client}/b/${dashboard.brewName}?theme=${theme}&accessToken=${accessToken}`;
+    const reportTheme = resolveReportMode({ query: theme, mode: dashboard.reportAppearance?.mode, prefersDark: false });
+    const reportPath = dashboard.reportAppearance ? "report" : "b";
+    let url = `${settings.client}/${reportPath}/${dashboard.brewName}?theme=${reportTheme}&accessToken=${accessToken}`;
 
     // apply options
     if (removeStyling) {

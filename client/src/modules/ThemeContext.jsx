@@ -1,6 +1,19 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { reportColorVariables } from "../../../shared/reportAppearance.mjs";
 
 const ThemeContext = createContext();
+
+export function ReportThemeProvider({ mode, colors, children }) {
+  const parent = useContext(ThemeContext);
+  const value = useMemo(() => ({
+    ...parent,
+    theme: mode,
+    isDark: mode === "dark",
+    reportColors: colors,
+    reportThemeProps: { "data-theme": mode, style: reportColorVariables(colors) },
+  }), [parent, mode, colors]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
 
 export const ThemeProvider = ({ children }) => {
   const THEME_KEY = "cb_theme";

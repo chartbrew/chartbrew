@@ -13,6 +13,7 @@ import { LuArrowRight, LuListFilter } from "react-icons/lu";
 import moment from "moment";
 import { operators } from "../../../modules/filterOperations";
 import DashboardFilterLabel from "./DashboardFilterLabel";
+import { useTheme } from "../../../modules/ThemeContext";
 
 function FieldFilter({
   filter,
@@ -20,6 +21,7 @@ function FieldFilter({
   onApply = () => {},
 }) {
   const { field, operator, value, dataType } = filter;
+  const { reportThemeProps } = useTheme();
   const [currentOperator, setCurrentOperator] = useState(operator);
   const [currentValue, setCurrentValue] = useState(value);
   const [textValue, setTextValue] = useState(value);
@@ -55,7 +57,7 @@ function FieldFilter({
             </DashboardFilterLabel>
           </div>
         </Dropdown.Trigger>
-        <Dropdown.Popover>
+        <Dropdown.Popover {...reportThemeProps}>
           <Dropdown.Menu
             onSelectionChange={(keys) => _handleOperatorChange(keys.currentKey)}
             selectedKeys={[currentOperator]}
@@ -123,7 +125,7 @@ function FieldFilter({
                 </DatePicker.Trigger>
               </DateField.Suffix>
             </DateField.Group>
-            <DatePicker.Popover>
+            <DatePicker.Popover {...reportThemeProps}>
               <Calendar aria-label="Filter date value">
                 <Calendar.Header>
                   <Calendar.YearPickerTrigger>

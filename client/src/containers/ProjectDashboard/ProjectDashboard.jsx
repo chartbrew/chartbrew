@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useWindowSize } from "react-use";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import {
@@ -35,7 +36,7 @@ import {
   LuSettings,
   LuPlus,
 } from "react-icons/lu";
-import { WidthProvider, Responsive } from "react-grid-layout";
+import GridLayout, { WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
@@ -83,7 +84,7 @@ function InlineChartPlacement({ container, children }) {
 InlineChartPlacement.propTypes = { container: PropTypes.object, children: PropTypes.node };
 
 
-const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
+const DashboardGridLayout = WidthProvider(GridLayout);
 
 function DashboardChartSkeleton({ height }) {
   const skeletonHeight = Math.max(height || 150, 150);
@@ -164,7 +165,9 @@ function ProjectDashboard() {
   const [previewSize, setPreviewSize] = useState({});
   const [previewGeometry, setPreviewGeometry] = useState({ scale: 1, height: 0 });
   const [snapshotScheduleVisible, setSnapshotScheduleVisible] = useState(false);
-  const [gridBreakpoint, setGridBreakpoint] = useState(null);
+  const { width: windowWidth } = useWindowSize();
+  const gridBreakpoint = getBreakpoint(windowWidth);
+  const activeBreakpoint = (editingLayout && previewSize.breakpoint) || gridBreakpoint;
   const [pendingScrollWidgetId, setPendingScrollWidgetId] = useState(null);
   const [chartFilters, setChartFilters] = useState({});
   const [initialRuntimeHydrationPending, setInitialRuntimeHydrationPending] = useState(false);
@@ -321,7 +324,6 @@ function ProjectDashboard() {
       setLayouts(getLayouts(currentCharts));
       setLayoutUndo(null);
       setPreviewSize({ size: null });
-      setGridBreakpoint(getBreakpoint(dashboardRef.current.querySelector(".react-grid-layout")?.offsetWidth || dashboardRef.current.offsetWidth));
       setMovingLayout(false);
       setEditingLayout(true);
     } catch (error) {
@@ -713,7 +715,7 @@ function ProjectDashboard() {
 
   const _onSaveChanges = async () => {
     if (layoutSaving) return;
-    const bp = previewSize.breakpoint || getBreakpoint(dashboardRef.current.querySelector(".react-grid-layout")?.offsetWidth || dashboardRef.current.offsetWidth);
+    const bp = previewSize.breakpoint || gridBreakpoint;
     const { null: currentWindowLayout, ...screenLayouts } = layouts;
     if (currentWindowLayout) screenLayouts[bp] = currentWindowLayout;
     setLayoutSaving(true);
@@ -1194,21 +1196,17 @@ function ProjectDashboard() {
                   session.chartId === chart.id || isEqual(session.layout, chart.layout)
                 )));
                 return layouts && (gridCharts.length > 0 || sessions.length > 0) ? (
-                  <ResponsiveGridLayout
+                  <DashboardGridLayout
                     className="layout dashboard-tutorial"
-                    layouts={editingLayout ? layouts : getLayouts([...gridCharts, ...sessions])}
-                    margin={margin}
-                    breakpoints={widthSize}
-                    cols={cols}
+                    layout={(editingLayout ? layouts : getLayouts([...gridCharts, ...sessions]))[activeBreakpoint]}
+                    margin={margin[activeBreakpoint]}
+                    cols={cols[activeBreakpoint]}
                     rowHeight={rowHeight}
                     compactType={movingLayout ? "vertical" : null}
                     onDragStart={() => setMovingLayout(true)}
                     transformScale={previewScale}
                     onDragStop={_onManualLayout}
                     onResizeStop={_onManualLayout}
-                    breakpoint={editingLayout ? previewSize.breakpoint : undefined}
-                    onBreakpointChange={setGridBreakpoint}
-                    onWidthChange={(width) => setGridBreakpoint(getBreakpoint(width))}
                     resizeHandle={(
                       <div className="react-resizable-handle react-resizable-handle-se">
                         <LuArrowDownRight className="text-accent" size={20} />
@@ -1274,7 +1272,7 @@ function ProjectDashboard() {
                       </div>
                     ))}
                     {creators}
-                  </ResponsiveGridLayout>
+                  </DashboardGridLayout>
                 ) : null;
               }}
             </InlineChartCreator>

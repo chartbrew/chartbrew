@@ -1,6 +1,7 @@
 const team = require("./TeamRoute");
 const user = require("./UserRoute");
 const project = require("./ProjectRoute");
+const reportTheme = require("./ReportThemeRoute");
 const connection = require("./ConnectionRoute");
 const chart = require("./ChartRoute");
 const chartCreation = require("./ChartCreationRoute");
@@ -25,6 +26,7 @@ module.exports = {
   team,
   user,
   project,
+  reportTheme,
   connection,
   chart,
   chartCreation,

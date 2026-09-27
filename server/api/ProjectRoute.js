@@ -12,6 +12,7 @@ const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const SharePolicyController = require("../controllers/SharePolicyController");
 const verifyToken = require("../modules/verifyToken");
+const { saveReportAppearance } = require("../modules/reportAppearance");
 const accessControl = require("../modules/accessControl");
 const getUserFromToken = require("../modules/getUserFromToken");
 const db = require("../models/models");
@@ -96,6 +97,14 @@ module.exports = (app) => {
       return res.status(403).json({ message: "Access denied" });
     };
   };
+
+  app.put("/project/:id/report-appearance", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      return res.json(await saveReportAppearance(req.params.id, req.body));
+    } catch (error) {
+      return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "The appearance could not be saved. Try again." });
+    }
+  });
 
   app.put("/project/:id/layout", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
     try {

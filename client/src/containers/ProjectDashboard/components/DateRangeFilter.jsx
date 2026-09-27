@@ -12,6 +12,7 @@ import moment from "moment";
 import { parseDateTime } from "@internationalized/date";
 import { LuArrowRight, LuCalendarRange } from "react-icons/lu";
 import DashboardFilterLabel from "./DashboardFilterLabel";
+import { useTheme } from "../../../modules/ThemeContext";
 
 function DateRangeFilter({
   startDate,
@@ -23,6 +24,7 @@ function DateRangeFilter({
   isEdit = false,
   label = "Date range",
 }) {
+  const { reportThemeProps } = useTheme();
   // This is the actual value that is displayed to the user
   const [currentValue, setCurrentValue] = useState({
     start: startDate ? parseDateTime(moment.utc(startDate).format("YYYY-MM-DDTHH:mm:ss")) : null,
@@ -167,7 +169,7 @@ function DateRangeFilter({
           </DateRangePicker.Trigger>
         </DateField.Suffix>
       </DateField.Group>
-      <DateRangePicker.Popover className="flex max-h-[85dvh] max-w-[calc(100vw-24px)] flex-col overflow-y-auto">
+      <DateRangePicker.Popover {...reportThemeProps} className="flex max-h-[85dvh] max-w-[calc(100vw-24px)] flex-col overflow-y-auto">
         <RangeCalendar
           aria-label="Select a date range"
           className="@container-normal w-full max-w-none overflow-x-auto"

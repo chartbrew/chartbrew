@@ -24,8 +24,10 @@ import determineType from "../../../modules/determineType";
 import * as operations from "../../../modules/filterOperations";
 import Row from "../../../components/Row";
 import { getExposedChartFilters } from "../../../modules/getChartDatasetConditions";
+import { useTheme } from "../../../modules/ThemeContext";
 
 function ChartFilters(props) {
+  const { reportThemeProps } = useTheme();
   const { contains } = useFilter({ sensitivity: "base" });
   const {
     chart, onAddFilter, onClearFilter, conditions, inline, size, amount,
@@ -145,7 +147,7 @@ function ChartFilters(props) {
                       <Autocomplete.ClearButton onClick={() => _onOptionSelected("", condition, true)} />
                       <Autocomplete.Indicator />
                     </Autocomplete.Trigger>
-                    <Autocomplete.Popover>
+                    <Autocomplete.Popover {...reportThemeProps}>
                       <Autocomplete.Filter filter={contains}>
                         <SearchField autoFocus name={`chart-filter-${condition.id}`} variant="secondary">
                           <SearchField.Group>
@@ -222,7 +224,7 @@ function ChartFilters(props) {
                             </DatePicker.Trigger>
                           </DateField.Suffix>
                         </DateField.Group>
-                        <DatePicker.Popover>
+                        <DatePicker.Popover {...reportThemeProps}>
                           <Calendar aria-label="Date filter">
                             <Calendar.Header>
                               <Calendar.YearPickerTrigger>
@@ -295,7 +297,7 @@ function ChartFilters(props) {
                             </DatePicker.Trigger>
                           </DateField.Suffix>
                         </DateField.Group>
-                        <DatePicker.Popover>
+                        <DatePicker.Popover {...reportThemeProps}>
                           <Calendar aria-label="Date filter">
                             <Calendar.Header>
                               <Calendar.YearPickerTrigger>

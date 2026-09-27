@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
+import { useTheme } from "../../modules/ThemeContext";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router";
 import {
@@ -123,6 +124,7 @@ function Chart(props) {
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { reportThemeProps } = useTheme();
 
   const [chartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -712,12 +714,12 @@ function Chart(props) {
                     <Chip variant="secondary" size="sm" className="shrink-0 rounded-sm">Draft</Chip>
                   )}
                   <>
-                    {_canAccess("projectEditor") && !editingLayout && (
+                    {!isPublic && _canAccess("projectEditor") && !editingLayout && (
                       <Link className="min-w-0" to={`/dashboard/${params.projectId}/chart/${chart.id}/edit`}>
                         <div className="truncate text-foreground font-medium text-sm">{chart.name}</div>
                       </Link>
                     )}
-                    {(!_canAccess("projectEditor") || editingLayout) && (
+                    {(isPublic || !_canAccess("projectEditor") || editingLayout) && (
                       <Text className="block min-w-0 truncate text-sm font-medium">{chart.name}</Text>
                     )}
                   </>
@@ -759,7 +761,7 @@ function Chart(props) {
                         </Badge.Anchor>
                       </LinkNext>
                     </Popover.Trigger>
-                    <Popover.Content className="pt-3">
+                    <Popover.Content {...reportThemeProps} className="pt-3">
                       <Popover.Dialog>
                         <ChartFilters
                           chart={chart}
@@ -779,7 +781,7 @@ function Chart(props) {
                       <LuEllipsisVertical size={16} className="text-default-500" />
                     </LinkNext>
                   </Dropdown.Trigger>
-                  <Dropdown.Popover>
+                  <Dropdown.Popover {...reportThemeProps}>
                     <Dropdown.Menu disabledKeys={["status"]}>
                       <Dropdown.Section>
                         <Dropdown.Item
@@ -986,7 +988,7 @@ function Chart(props) {
                       <LuEllipsis className="text-default-500" />
                     </LinkNext>
                   </Dropdown.Trigger>
-                  <Dropdown.Popover>
+                  <Dropdown.Popover {...reportThemeProps}>
                   <Dropdown.Menu>
                     <Dropdown.Item
                       id="export-excel"

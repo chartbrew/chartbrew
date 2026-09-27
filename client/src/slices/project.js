@@ -244,7 +244,9 @@ export const getReport = createAsyncThunk(
   "project/getReport",
   async ({ brewName, password, token, queryParams }, thunkAPI) => {
     const authToken = getAuthToken();
-    let url = `${API_HOST}/project/${brewName}/report`;
+    let url = queryParams?.accessToken
+      ? `${API_HOST}/project/dashboard/${brewName}`
+      : `${API_HOST}/project/${brewName}/report`;
     const headers = new Headers({
       "Accept": "application/json",
       "Cache-Control": "no-cache",

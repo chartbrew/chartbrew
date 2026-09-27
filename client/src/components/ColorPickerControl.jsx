@@ -19,6 +19,7 @@ function ColorPickerControl(props) {
     className,
     clearLabel = "Remove color",
     fallbackColor = "#000000",
+    isDisabled = false,
     onChange,
     onClear,
     popoverClassName,
@@ -52,7 +53,7 @@ function ColorPickerControl(props) {
 
   return (
     <ColorPicker value={pickerColor} onChange={handleChange}>
-      <ColorPicker.Trigger aria-label={ariaLabel} className={cn("inline-flex cursor-pointer", className)}>
+      <ColorPicker.Trigger aria-label={ariaLabel} isDisabled={isDisabled} className={cn("inline-flex cursor-pointer", className)}>
         {triggerContent}
       </ColorPicker.Trigger>
       <ColorPicker.Popover className={cn("w-[280px] gap-3 rounded-2xl p-3", popoverClassName)}>
@@ -132,6 +133,7 @@ ColorPickerControl.propTypes = {
   className: PropTypes.string,
   clearLabel: PropTypes.string,
   fallbackColor: PropTypes.string,
+  isDisabled: PropTypes.bool,
   onChange: PropTypes.func.isRequired,
   onClear: PropTypes.func,
   popoverClassName: PropTypes.string,

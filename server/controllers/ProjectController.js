@@ -139,6 +139,8 @@ class ProjectController {
     let newProject = {};
     const { transaction } = options;
     const projectData = await applyTeamBrandDefaults(data, { transaction });
+    projectData.reportAppearance = null;
+    projectData.reportAppearanceRevision = 0;
     projectData.layoutCustom = ["lg"];
     projectData.layoutOrder = [];
     projectData.layoutRevision = 0;

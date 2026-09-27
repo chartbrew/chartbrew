@@ -8,6 +8,28 @@ import { breakpoints, cols, getAvailableChartLayout, getBreakpoint, getLayouts, 
 
 import { getLayoutPreviewGeometry, reserveChartLayout } from "./autoLayout.js";
 
+test("dashboard and report keep the window layout when their sidebars have different widths", () => {
+  const charts = [
+    { id: "first", type: "kpi" },
+    { id: "second", type: "line" },
+    { id: "third", type: "table" },
+  ];
+  const layouts = getLayouts(charts);
+  const children = charts.map(({ id }) => React.createElement("div", { key: id }));
+  for (const windowWidth of [390, 1024, 1440, 1640, 1728, 2560, 4000]) {
+    const breakpoint = getBreakpoint(windowWidth);
+    for (const width of [windowWidth, windowWidth - 64, Math.max(240, windowWidth - 360)]) {
+      const props = {
+        ...gridLayout.default.defaultProps,
+        width, cols: cols[breakpoint], layout: layouts[breakpoint], children, compactType: null,
+      };
+      const dashboard = new gridLayout.default(props);
+      const positions = (items) => items.map(({ i, x, y, w, h }) => ({ i, x, y, w, h }));
+      assert.deepEqual(positions(dashboard.state.layout), positions(layouts[breakpoint]));
+    }
+  }
+});
+
 test("sets the current screen size even when the grid does not cross a breakpoint", () => {
   let breakpoint = null;
   let breakpointChanges = 0;

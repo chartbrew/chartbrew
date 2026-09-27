@@ -18,6 +18,7 @@ import { getEChartsAnimation } from "../../../visualization/echartsRenderState";
 
 import { semanticColors } from "../../../lib/themeTokens";
 import { useTheme } from "../../../modules/ThemeContext";
+import { applyReportChartColors } from "../../../visualization/reportChartColors";
 import {
   getResponsiveGeometry,
   resolveCategoryComposition,
@@ -147,16 +148,16 @@ function isCompactTooltipLayout(width, height) {
   return geometry.width === "narrow" || geometry.height === "shallow";
 }
 
-function getTooltipColors(themeMode) {
+function getTooltipColors(themeMode, reportColors) {
   const colors = semanticColors[themeMode];
   return {
-    background: colors.content1.DEFAULT,
-    border: colors.content3.DEFAULT,
-    muted: colors.foreground[500],
+    background: reportColors?.surface || colors.content1.DEFAULT,
+    border: reportColors?.border || colors.content3.DEFAULT,
+    muted: reportColors?.mutedText || colors.foreground[500],
     shadow: themeMode === "dark"
       ? "0 6px 18px rgba(0,0,0,0.28)"
       : "0 6px 18px rgba(17,24,39,0.12)",
-    text: colors.foreground.DEFAULT,
+    text: reportColors?.text || colors.foreground.DEFAULT,
   };
 }
 
@@ -610,7 +611,9 @@ function EChartsRenderer({
   const restoreCategoryRef = useRef(() => {});
   const [renderError, setRenderError] = useState(null);
   const [mapMoved, setMapMoved] = useState(false);
-  const { isDark } = useTheme();
+  const { isDark, reportColors } = useTheme();
+  const reportColorsRef = useRef(reportColors);
+  reportColorsRef.current = reportColors;
   const themeMode = theme || (isDark ? "dark" : "light");
   const themeName = `chartbrew-${themeMode}`;
   const reducedMotion = useMemo(() => {
@@ -619,32 +622,34 @@ function EChartsRenderer({
   }, []);
   const effectiveOption = useMemo(() => {
     const colors = semanticColors[themeMode];
+    const textColor = reportColors?.text || colors.foreground.DEFAULT;
+    const mutedColor = reportColors?.mutedText || colors.foreground[500];
     const mapStyle = {
-      areaColor: colors.content2.DEFAULT,
-      borderColor: colors.foreground[400],
+      areaColor: reportColors?.page || colors.content2.DEFAULT,
+      borderColor: reportColors?.border || colors.foreground[400],
       borderWidth: 0.5,
     };
     return {
-      ...option,
+      ...applyReportChartColors(option, reportColors),
       ...(option.geo ? { geo: { ...option.geo, roam: option.geo.roam ? "move" : option.geo.roam, itemStyle: mapStyle } } : {}),
       ...(renderer === "svg" || reducedMotion ? { animation: false } : {}),
       series: option.series?.map((series) => series.type === "gauge" ? {
         ...series,
         detail: {
           ...series.detail,
-          color: colors.foreground.DEFAULT,
+          color: textColor,
           fontFamily: "Titillium Web, sans-serif",
           fontWeight: 600,
         },
-        itemStyle: { ...series.itemStyle, color: colors.foreground.DEFAULT },
-        title: { ...series.title, color: colors.foreground[500] },
+        itemStyle: { ...series.itemStyle, color: textColor },
+        title: { ...series.title, color: mutedColor },
       } : series.type === "map" ? { ...series, roam: series.roam ? "move" : series.roam, itemStyle: mapStyle } : series),
       ...(option.visualMap && (option.geo || option.series?.some((series) => series.type === "map")) ? {
-        visualMap: { ...option.visualMap, textStyle: { color: colors.foreground.DEFAULT } },
+        visualMap: { ...option.visualMap, textStyle: { color: textColor } },
       } : {}),
-      tooltip: getEChartsTooltipOption(option, getTooltipColors(themeMode)),
+      tooltip: getEChartsTooltipOption(option, getTooltipColors(themeMode, reportColors)),
     };
-  }, [option, reducedMotion, renderer, themeMode]);
+  }, [option, reducedMotion, renderer, themeMode, reportColors]);
   const optionRef = useRef(effectiveOption);
   optionRef.current = effectiveOption;
   const categoryItems = useMemo(() => {
@@ -669,7 +674,7 @@ function EChartsRenderer({
       setCategoryComposition(nextCategoryComposition);
       setActiveCategoryKey(null);
     }
-    const themeColors = getTooltipColors(themeMode);
+    const themeColors = getTooltipColors(themeMode, reportColorsRef.current);
     const laidOut = applyChartLayout({
       ...nextOption,
       tooltip: getEChartsTooltipOption(nextOption, themeColors, { compact }),
@@ -832,7 +837,7 @@ function EChartsRenderer({
         optionRef.current,
         container.clientWidth,
         container.clientHeight,
-        getTooltipColors(themeMode)
+        getTooltipColors(themeMode, reportColors)
       );
       instance.setOption({ title: laidOut.title });
     };
@@ -858,7 +863,7 @@ function EChartsRenderer({
         optionRef.current,
         container.clientWidth,
         container.clientHeight,
-        getTooltipColors(themeMode)
+        getTooltipColors(themeMode, reportColors)
       );
       const composition = resolveCategoryComposition({
         height: container.clientHeight,

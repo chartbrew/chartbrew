@@ -35,6 +35,15 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     layoutRevision: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    reportAppearance: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      get() {
+        const value = this.getDataValue("reportAppearance");
+        return typeof value === "string" ? JSON.parse(value) : value;
+      },
+    },
+    reportAppearanceRevision: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     name: {
       type: DataTypes.STRING,
     },
