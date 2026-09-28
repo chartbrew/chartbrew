@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const db = require("../../models/models");
+const chartVersions = require("../../modules/chartVersions");
 const ChartController = require("../../controllers/ChartController");
 const DatasetController = require("../../controllers/DatasetController");
 const createChart = require("../../modules/ai/orchestrator/tools/createChart");
@@ -40,6 +41,7 @@ describe("AI map tools", () => {
   let originalClient;
 
   beforeEach(() => {
+    vi.spyOn(chartVersions, "saveChartVersion").mockImplementation(async (_id, _context, save) => save({ transaction: {} }));
     originalClient = global.openaiClient;
     const dataset = { id: 20, team_id: 7, project_ids: [10], name: "Places", DataRequests: [{ id: 30 }], update: vi.fn() };
     vi.spyOn(db.Dataset, "findByPk").mockResolvedValue(dataset);
@@ -92,7 +94,7 @@ describe("AI map tools", () => {
     vi.spyOn(ChartController.prototype, "findById").mockResolvedValue(chart);
     vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue(null);
     const visualization = mapSpec(pointEncoding, { area: "RO", mode: "points", coordinates: "geojson" }, 60);
-    await updateChart({ team_id: 7, chart_id: 50, type: "map", spec: {}, visualization });
+    await updateChart({ team_id: 7, user_id: 1, chart_id: 50, type: "map", spec: {}, visualization });
     const saved = db.Chart.update.mock.calls.find(([fields]) => fields.visualization)[0].visualization;
     expect(saved.layers[0]).toMatchObject(visualization.layers[0]);
     expect(render({ ...chart, visualization: saved }).configuration.geo.map).toBe("RO");
@@ -116,7 +118,7 @@ describe("AI map tools", () => {
     vi.spyOn(ChartController.prototype, "findById").mockResolvedValue(chart);
     vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue(null);
 
-    const result = await updateChart({ team_id: 7, chart_id: 50, name: "Renamed" });
+    const result = await updateChart({ team_id: 7, user_id: 1, chart_id: 50, name: "Renamed" });
     const chartFieldUpdate = db.Chart.update.mock.calls.find(([fields]) => fields.name);
 
     expect(chartFieldUpdate[0]).toEqual({ name: "Renamed" });

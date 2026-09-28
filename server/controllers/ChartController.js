@@ -1,6 +1,6 @@
 const { getReportOrder, getLayouts, arrangeRows, deriveLayouts, breakpoints } = require("../../shared/dashboard/layout.mjs");
 const { nanoid } = require("nanoid");
-const { v4: uuid } = require("uuid");
+const { v4: uuid, v5: uuidFromName } = require("uuid");
 const { Op } = require("sequelize");
 
 const { createPlacedChart, removePlacedChart, lockDashboard, saveMetadata } = require("../modules/dashboardLayout");
@@ -21,11 +21,11 @@ const { findSourceForConnection } = require("../sources");
 const { assertSourceServerEnabled } = require("../sources/sourceAvailability");
 const {
   markChartDatasetIntelligenceStale,
-  markDatasetIntelligenceStale,
 } = require("../modules/datasetIntelligence/profileLifecycle");
 const { processChartResult } = require("../modules/observations/processChartResult");
 
 const db = require("../models/models");
+const { CHART_FIELDS, BINDING_FIELDS, pickFields, saveChartVersion, initializeHistory } = require("../modules/chartVersions");
 const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
@@ -48,7 +48,6 @@ const {
 } = require("../visualization/compatibilityUpdates");
 const {
   isLegacyOwnedVisualization,
-  shouldSyncLegacyCdc,
   shouldSyncLegacyChart,
 } = require("../visualization/legacyVisualizationSync");
 const { remapVisualizationBindings } = require("../visualization/remapBindings");
@@ -342,19 +341,13 @@ class ChartController {
     }));
   }
 
-  create(data, user) {
-    return createPlacedChart(removeRuntimeChartFields(data))
-      .then((chart) => {
-        // delete chart cache
-        if (user) {
-          this.chartCache.remove(user.id, chart.id);
-        }
-
-        return this.findById(chart.id);
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+  async create(data, user) {
+    const chart = await db.sequelize.transaction(async (transaction) => {
+      const created = await createPlacedChart(removeRuntimeChartFields(data), { transaction });
+      await initializeHistory(created, { userId: user?.id }, transaction);
+      return created;
+    });
+    return this.findById(chart.id);
   }
 
   findAll(conditions = {}) {
@@ -484,7 +477,7 @@ class ChartController {
     return this.findById(chartId, null, options);
   }
 
-  async repairVisualization(chartId, bindingId) {
+  async repairVisualization(chartId, bindingId, context) {
     const chart = await this.findById(chartId, null, {
       reconcileVisualizationBindings: false,
     });
@@ -495,118 +488,31 @@ class ChartController {
     });
     if (!binding) throw new Error("Dataset configuration not found");
 
-    return this.syncLegacyVisualization(chartId, {}, {
-      addBinding: binding.id,
-    });
+    const saveContext = context || { expectedVersion: chart.configurationVersion, internal: true };
+    await saveChartVersion(chartId, saveContext, ({ transaction }) => this.syncLegacyVisualization(
+      chartId, { transaction }, { addBinding: binding.id }
+    ));
+    return this.findById(chartId);
   }
 
-  update(id, data, user, justUpdates) {
-    const chartUpdates = removeRuntimeChartFields(data);
-    ["layout", "dashboardOrder", "project_id"].forEach((field) => delete chartUpdates[field]);
-
-    if (data.autoUpdate || data.autoUpdate === 0) {
-      return db.Chart.update(chartUpdates, {
-        where: { id },
-      })
-        .then(() => {
-          const updatePromises = [];
-
-          if (data.ChartDatasets || data.dataRequests) {
-            if (data.ChartDatasets) {
-              updatePromises
-                .push(this.updateDatasets(id, data.ChartDatasets));
-            }
-            if (data.dataRequests) {
-              data.dataRequests.forEach((dataRequest) => {
-                if (dataRequest.id) {
-                  updatePromises
-                    .push(this.dataRequestController.update(dataRequest.id, dataRequest));
-                }
-              });
-            }
-
-            return Promise.all(updatePromises).then(() => this.findById(id));
-          } else {
-            return this.findById(id);
-          }
-        })
-        .then(async (chart) => {
-          const updatedChart = shouldSyncLegacyChart(data)
-            ? await this.syncLegacyVisualization(id, {}, { chartChanges: data })
-            : chart;
-          await markChartDatasetIntelligenceStale(id);
-          return updatedChart;
-        })
-        .catch((error) => {
-          return new Promise((resolve, reject) => reject(error));
-        });
+  async update(id, data, user, justUpdates, context) {
+    const updates = pickFields(removeRuntimeChartFields(data), [
+      ...CHART_FIELDS, "public", "shareable", "draft", "disabledExport", "onReport", "lastAutoUpdate",
+    ]);
+    let saveContext = context;
+    if (!saveContext) {
+      const chart = await db.Chart.findByPk(id);
+      saveContext = { userId: user?.id, expectedVersion: chart?.configurationVersion, internal: !user };
     }
-
-    return db.Chart.update(chartUpdates, {
-      where: { id },
-    })
-      .then(() => {
-        // clear chart cache
-        if (user) {
-          this.chartCache.remove(user.id, id);
-        }
-
-        const updatePromises = [];
-        if (data.ChartDatasetConfigs || data.dataRequests) {
-          if (data.ChartDatasetConfigs) {
-            const datasetsToUpdate = [];
-            for (const dataset of data.ChartDatasetConfigs) {
-              if (!dataset.deleted && !dataset.id) {
-                dataset.chart_id = id;
-                updatePromises.push(this.datasetController.create(dataset));
-              } else if (!dataset.deleted && dataset.id) {
-                datasetsToUpdate.push(dataset);
-              }
-            }
-
-            if (datasetsToUpdate.length > 0) {
-              updatePromises
-                .push(this.updateDatasets(id, data.ChartDatasetConfigs));
-            }
-          }
-          if (data.dataRequests) {
-            data.dataRequests.forEach((dataRequest) => {
-              if (dataRequest.id) {
-                updatePromises
-                  .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
-              }
-            });
-          }
-
-          if (data.dataRequests) {
-            data.dataRequests.forEach((dataRequest) => {
-              if (!dataRequest.id) {
-                const newDataRequest = { ...data.dataRequest, chart_id: id };
-                updatePromises.push(this.dataRequestController.create(newDataRequest));
-              }
-            });
-          }
-
-          return Promise.all(updatePromises).then(() => this.findById(id));
-        } else if (justUpdates) {
-          return this.findById(id, {
-            where: { id },
-            attributes: ["id"].concat(Object.keys(chartUpdates)),
-          });
-        } else {
-          return this.findById(id);
-        }
-      })
-      .then(async (chart) => {
-        const updatedChart = shouldSyncLegacyChart(data)
-          ? await this.syncLegacyVisualization(id, {}, { chartChanges: data })
-          : chart;
-        await markChartDatasetIntelligenceStale(id);
-        return updatedChart;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
+    await saveChartVersion(id, saveContext, async ({ transaction }) => {
+      await db.Chart.update(updates, { where: { id }, transaction });
+      if (shouldSyncLegacyChart(pickFields(updates, CHART_FIELDS))) {
+        await this.syncLegacyVisualization(id, { transaction }, { chartChanges: updates });
+      }
+    });
+    if (user) await this.chartCache.remove(user.id, id);
+    await markChartDatasetIntelligenceStale(id);
+    return this.findById(id);
   }
 
   addConnection(chartId, connection) {
@@ -616,30 +522,6 @@ class ChartController {
       })
       .then((chart) => {
         return this.findById(chart.id);
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
-  }
-
-  updateDatasets(chartId, datasets) {
-    const updatePromises = [];
-    for (const dataset of datasets) {
-      if (dataset.id && !dataset.deleted) {
-        if (parseInt(dataset.chart_id, 10) === parseInt(chartId, 10)) {
-          updatePromises.push(this.datasetController.update(dataset.id, dataset));
-        }
-      } else if (dataset.id && dataset.deleted) {
-        updatePromises.push(this.datasetController.remove(dataset.id));
-      } else if (!dataset.id && !dataset.deleted) {
-        dataset.chart_id = chartId;
-        updatePromises.push(this.datasetController.create(dataset));
-      }
-    }
-
-    return Promise.all(updatePromises)
-      .then(() => {
-        return this.findById(chartId);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -1140,7 +1022,7 @@ class ChartController {
                   datasetsPromises.push(
                     db.ChartDatasetConfig.update(
                       { conditions: newConditions },
-                      { where: { id: cdc.id } }
+                      { where: { id: cdc.id, updatedAt: cdc.updatedAt } }
                     )
                   );
                 }
@@ -1751,63 +1633,51 @@ class ChartController {
     });
   }
 
-  async createChartDatasetConfig(chartId, data) {
-    if (!data.dataset_id) {
-      return Promise.reject("Dataset ID is required");
+  async changeChartDatasetConfig(chartId, bindingId, data, action, context) {
+    let saveContext = context;
+    if (!saveContext) {
+      const chart = await db.Chart.findByPk(chartId);
+      saveContext = { expectedVersion: chart?.configurationVersion, internal: true };
     }
-
-    const dataset = await db.Dataset.findByPk(data.dataset_id);
-
-    return db.ChartDatasetConfig.create({
-      ...data,
-      legend: data.legend || getDatasetName(dataset),
-      chart_id: chartId,
-    })
-      .then(async (chartDatasetConfig) => {
-        await this.syncLegacyVisualization(chartId, {}, {
-          addBinding: chartDatasetConfig.id,
-        });
-        await markDatasetIntelligenceStale(chartDatasetConfig.dataset_id);
-        return chartDatasetConfig;
-      })
-      .catch((err) => {
-        return Promise.reject(err);
-      });
+    const saved = await saveChartVersion(chartId, saveContext, async ({ transaction }) => {
+      const values = pickFields(data, BINDING_FIELDS.filter((field) => field !== "id"));
+      let binding;
+      if (action === "create") {
+        const dataset = await db.Dataset.findByPk(values.dataset_id, { transaction });
+        if (!dataset) throw new Error("Choose an available dataset.");
+        binding = await db.ChartDatasetConfig.create({
+          ...values, ...(bindingId ? { id: bindingId } : {}), chart_id: chartId, legend: values.legend || getDatasetName(dataset),
+        }, { transaction });
+      } else {
+        binding = await db.ChartDatasetConfig.findOne({ where: { id: bindingId, chart_id: chartId }, transaction });
+        if (!binding) throw Object.assign(new Error("Chart dataset not found."), { statusCode: 404 });
+        if (action === "delete") await binding.destroy({ transaction });
+        else await binding.update(values, { transaction });
+      }
+      let compatibility = { bindingId: binding.id, cdcData: values };
+      if (action === "create") compatibility = { addBinding: binding.id };
+      if (action === "delete") compatibility = { removeBinding: binding.id };
+      await this.syncLegacyVisualization(chartId, { transaction }, compatibility);
+      return binding.toJSON();
+    });
+    await markChartDatasetIntelligenceStale(chartId);
+    const binding = saved.result || (bindingId ? await db.ChartDatasetConfig.findByPk(bindingId) : null);
+    return { ...(binding?.toJSON ? binding.toJSON() : binding), configurationVersion: saved.configurationVersion };
   }
 
-  async updateChartDatasetConfig(id, data) {
-    return db.ChartDatasetConfig.update(data, { where: { id } })
-      .then(async () => {
-        const chartDatasetConfig = await db.ChartDatasetConfig.findByPk(id);
-        if (chartDatasetConfig && shouldSyncLegacyCdc(data)) {
-          await this.syncLegacyVisualization(chartDatasetConfig.chart_id, {}, {
-            bindingId: chartDatasetConfig.id,
-            cdcData: data,
-          });
-        }
-        await markDatasetIntelligenceStale(chartDatasetConfig?.dataset_id);
-        return chartDatasetConfig;
-      })
-      .catch((err) => {
-        return Promise.reject(err);
-      });
+  createChartDatasetConfig(chartId, data, context) {
+    const id = context?.operationId ? uuidFromName(`${chartId}:${context.operationId}`, uuidFromName.URL) : null;
+    return this.changeChartDatasetConfig(chartId, id, data, "create", context);
   }
 
-  async deleteChartDatasetConfig(id) {
-    const chartDatasetConfig = await db.ChartDatasetConfig.findByPk(id);
-    return db.ChartDatasetConfig.destroy({ where: { id } })
-      .then(async (result) => {
-        if (chartDatasetConfig) {
-          await this.syncLegacyVisualization(chartDatasetConfig.chart_id, {}, {
-            removeBinding: chartDatasetConfig.id,
-          });
-          await markDatasetIntelligenceStale(chartDatasetConfig.dataset_id);
-        }
-        return result;
-      })
-      .catch((err) => {
-        return Promise.reject(err);
-      });
+  async updateChartDatasetConfig(id, data, context) {
+    const binding = await db.ChartDatasetConfig.findByPk(id);
+    return this.changeChartDatasetConfig(context?.chartId || binding?.chart_id, id, data, "update", context);
+  }
+
+  async deleteChartDatasetConfig(id, context) {
+    const binding = await db.ChartDatasetConfig.findByPk(id);
+    return this.changeChartDatasetConfig(context?.chartId || binding?.chart_id, id, {}, "delete", context);
   }
 
   async takeSnapshot(id) {
@@ -1838,7 +1708,7 @@ class ChartController {
       }
       return this.findById(chart.id);
     }
-    const { transaction, skipBackgroundUpdate = false, waitForData = false } = options;
+    const { transaction } = options;
     const {
       chartDatasetConfigs = [],
       ...chartData
@@ -1925,13 +1795,7 @@ class ChartController {
     }
 
     await this.syncLegacyVisualization(chart.id, { transaction });
-
-    // AI previews need the prepared snapshot before they can be returned or exported.
-    if (!skipBackgroundUpdate) {
-      const update = this.updateChartData(chart.id, user, waitForData ? { getCache: true } : {});
-      if (waitForData) await update;
-      else update.catch(() => null);
-    }
+    await initializeHistory(chart, { userId: user?.id, origin: options.origin || "manual" }, transaction);
 
     // Return the full chart with all chart dataset configs
     return this.findById(chart.id, null, { transaction });

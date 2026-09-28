@@ -145,6 +145,12 @@ function getBlockValue(block) {
   return null;
 }
 
+function isConversationIdBlock(value) {
+  const row = Array.isArray(value) && value.length === 1 ? value[0] : value;
+  return row && typeof row === "object" && !Array.isArray(row)
+    && Object.keys(row).length === 1 && typeof row.conversation_id === "string";
+}
+
 function normalizeToolResult(result) {
   if (result?.task || ["task", "input_required"].includes(result?.resultType)) {
     throw createMcpError(
@@ -170,7 +176,8 @@ function normalizeToolResult(result) {
     throw createMcpError("MCP_UNSUPPORTED_RESULT", "HTML tool results cannot be used as dataset data.");
   }
 
-  const values = content.map(getBlockValue).filter((value) => value !== null);
+  let values = content.map(getBlockValue).filter((value) => value !== null);
+  if (values.length > 1) values = values.filter((value) => !isConversationIdBlock(value));
   if (values.length === 0) return [];
   if (values.length === 1) {
     const table = unwrapContentTable(values[0]);

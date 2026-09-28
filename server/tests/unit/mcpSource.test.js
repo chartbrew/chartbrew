@@ -613,6 +613,23 @@ describe("MCP result and variable handling", () => {
       .toEqual([{ content: "No rows" }]);
   });
 
+  it("keeps query rows when a separate conversation ID block follows them", () => {
+    const rows = [{ day: "2026-09-01", visits: 12 }];
+    for (const conversationBlock of [
+      JSON.stringify({ conversation_id: "chat-1" }),
+      "conversation_id\nchat-1",
+    ]) {
+      const result = normalizeToolResult({ content: [
+        { type: "text", text: JSON.stringify(rows) },
+        { type: "text", text: conversationBlock },
+      ] });
+      expect(selectToolOutput(result)).toEqual(rows);
+    }
+    expect(normalizeToolResult({ content: [
+      { type: "text", text: JSON.stringify({ conversation_id: "chat-1" }) },
+    ] })).toEqual({ conversation_id: "chat-1" });
+  });
+
   it("turns pipe, markdown, and CSV text tables into object rows", () => {
     expect(normalizeToolResult({
       content: [{ type: "text", text: "day|visits\n2026-07-15|42\n2026-07-16|191" }],

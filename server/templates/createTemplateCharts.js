@@ -1,3 +1,4 @@
+const { initializeHistory } = require("../modules/chartVersions");
 const db = require("../models/models");
 const { createPlacedChart, lockDashboard } = require("../modules/dashboardLayout");
 const { appendCharts, breakpoints } = require("../../shared/dashboard/layout.mjs");
@@ -8,6 +9,7 @@ async function createTemplateChart(chart, projectId, datasetMapping, transaction
   const chartData = { ...chart, project_id: projectId };
   delete chartData.ChartDatasetConfigs;
   [
+    "configurationVersion",
     "chartData",
     "chartDataUpdated",
     "preparedData",
@@ -32,6 +34,7 @@ async function createTemplateChart(chart, projectId, datasetMapping, transaction
       visualization: remapVisualizationBindings(chart.visualization, sourceConfigs, createdConfigs),
     }, { transaction });
   }
+  await initializeHistory(createdChart, {}, transaction);
   return createdChart;
 }
 

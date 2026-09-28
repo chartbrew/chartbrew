@@ -1,3 +1,4 @@
+const { initializeHistory } = require("./chartVersions");
 const db = require("../models/models");
 const { appendCharts, getReportOrder, breakpoints, validateLayout, getLayouts } = require("../../shared/dashboard/layout.mjs");
 
@@ -25,7 +26,7 @@ async function createPlacedChart(data, options = {}) {
   const { transaction, preserveLayout = false } = options;
   const { project, charts } = await lockDashboard(data.project_id, transaction);
   const layout = preserveLayout && data.layout ? data.layout : appendCharts(charts, [{ ...data, id: "new" }], project.layoutCustom || breakpoints).new;
-  const chart = await db.Chart.create({ ...data, layout, dashboardOrder: null }, { transaction });
+  const chart = await db.Chart.create({ ...data, configurationVersion: 0, layout, dashboardOrder: null }, { transaction });
   const order = getReportOrder(charts, project.layoutOrder);
   const visual = getReportOrder([...charts, chart]);
   const next = preserveLayout ? visual[visual.indexOf(String(chart.id)) + 1] : null;
@@ -81,6 +82,7 @@ async function saveDashboardLayout(projectId, data) {
         project_id: project.id, type: "markdown", name: item.name || "Text",
         content: item.content || "", draft: false, onReport: true,
       }, { transaction });
+      await initializeHistory(created, {}, transaction);
       idMap.set(item.id, String(created.id));
     }));
     const order = data.order.map((id) => idMap.get(String(id)) || String(id));

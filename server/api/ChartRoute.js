@@ -1,6 +1,8 @@
 const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
 
+const chartVersions = require("../controllers/ChartVersionController");
+const { mutationContext } = require("../modules/chartVersions");
 const ChartController = require("../controllers/ChartController");
 const { getPreview, placePreview } = require("../controllers/ChartPreviewController");
 const ProjectController = require("../controllers/ProjectController");
@@ -536,20 +538,37 @@ module.exports = (app) => {
   });
   // --------------------------------------------------------
 
+  const historyPath = "/project/:project_id/chart/:chart_id/versions";
+  const historyHandler = (action) => async (req, res) => {
+    res.set("Cache-Control", "private, no-store");
+    try {
+      const context = { userId: req.user.id, projectId: req.params.project_id };
+      const args = [req.params.chart_id, req.params.version, context];
+      if (action === "list") args[1] = req.query.before;
+      if (action === "restore") args[2] = mutationContext(req);
+      return res.json(await chartVersions[action](...args));
+    } catch (error) {
+      return res.status(error.statusCode || 500).json({
+        message: error.statusCode ? error.message : "Chart history could not load. Try again.",
+      });
+    }
+  };
+  app.get(historyPath, verifyToken, checkPermissions("updateOwn"), historyHandler("list"));
+  app.get(`${historyPath}/:version`, verifyToken, checkPermissions("updateOwn"), historyHandler("detail"));
+  app.post(`${historyPath}/:version/preview`, verifyToken, checkPermissions("updateOwn"), historyHandler("preview"));
+  app.post(`${historyPath}/:version/restore`, verifyToken, checkPermissions("updateOwn"), historyHandler("restore"));
+
   /*
   ** Route to update a chart
   */
-  app.put("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return chartController.update(req.params.chart_id, req.body, req.user, req.query.justUpdates)
-      .then((chart) => {
-        return res.status(200).send(chart);
-      })
-      .catch((error) => {
-        if (error.message.indexOf("406") > -1) {
-          return res.status(406).send(error);
-        }
-        return res.status(400).send(error);
-      });
+  app.put("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      const chart = await chartController.update(req.params.chart_id, req.body, req.user, req.query.justUpdates, mutationContext(req));
+      return res.status(200).send(chart);
+    } catch (error) {
+      return res.status(error.statusCode || 400).send({ message: error.message });
+    }
+
   });
   // --------------------------------------------------------
 
@@ -561,12 +580,14 @@ module.exports = (app) => {
     verifyToken,
     checkPermissions("updateOwn"),
     (req, res) => {
-      return chartController.repairVisualization(req.params.chart_id, req.body.bindingId)
+      return Promise.resolve().then(() => chartController.repairVisualization(
+        req.params.chart_id, req.body.bindingId, mutationContext(req)
+      ))
         .then((chart) => {
           return res.status(200).send(chart);
         })
         .catch((error) => {
-          return res.status(400).send({ message: error.message });
+          return res.status(error.statusCode || 400).send({ message: error.message });
         });
     }
   );
@@ -1215,11 +1236,11 @@ module.exports = (app) => {
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        const cdc = await chartController.createChartDatasetConfig(req.params.chart_id, req.body);
+        const cdc = await chartController.createChartDatasetConfig(req.params.chart_id, req.body, mutationContext(req));
 
         return res.status(200).send(cdc);
       } catch (error) {
-        return res.status(400).send({ error: (error && error.message) || error });
+        return res.status(error.statusCode || 400).send({ message: error.message || "The chart could not be saved. Try again." });
       }
     });
   // --------------------------------------------------------
@@ -1232,11 +1253,11 @@ module.exports = (app) => {
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        const cdc = await chartController.updateChartDatasetConfig(req.params.cdc_id, req.body);
+        const cdc = await chartController.updateChartDatasetConfig(req.params.cdc_id, req.body, mutationContext(req));
 
         return res.status(200).send(cdc);
       } catch (error) {
-        return res.status(400).send({ error: (error && error.message) || error });
+        return res.status(error.statusCode || 400).send({ message: error.message || "The chart could not be saved. Try again." });
       }
     });
   // --------------------------------------------------------
@@ -1249,11 +1270,11 @@ module.exports = (app) => {
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        await chartController.deleteChartDatasetConfig(req.params.cdc_id);
+        const saved = await chartController.deleteChartDatasetConfig(req.params.cdc_id, mutationContext(req));
 
-        return res.status(200).send({ removed: true });
+        return res.status(200).send({ removed: true, configurationVersion: saved.configurationVersion });
       } catch (error) {
-        return res.status(400).send({ error: (error && error.message) || error });
+        return res.status(error.statusCode || 400).send({ message: error.message || "The chart could not be saved. Try again." });
       }
     });
   // --------------------------------------------------------

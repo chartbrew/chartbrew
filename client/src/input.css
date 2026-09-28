@@ -778,6 +778,38 @@
     font-weight: 600;
   }
 
+  .chart-history-banner {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator);
+    background: var(--accent-soft);
+  }
+
+  .chart-studio-main.is-history-preview {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .is-history-preview .chart-studio-preview {
+    min-height: 320px;
+  }
+
+  .is-history-preview .chart-studio-data-view {
+    max-height: 40%;
+  }
+
+  @media (max-width: 900px) {
+    .chart-history-banner button,
+    .chart-studio-actions > button {
+      min-height: 44px;
+    }
+  }
+
   .chart-studio-chat textarea:focus,
   .chart-studio-chat textarea:focus-visible {
     outline: none !important;

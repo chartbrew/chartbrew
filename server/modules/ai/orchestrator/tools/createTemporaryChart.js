@@ -312,7 +312,7 @@ async function createTemporaryChart(payload) {
         goal: spec.goal,
         configuration: seriesConfiguration ?? spec.configuration ?? {}
       }]
-    }, null, { waitForData: true });
+    }, { id: payload.user_id }, { waitForData: true, origin: "ai" });
 
     // Take a snapshot of the temporary chart for visualization
     let snapshot = null;
@@ -326,6 +326,7 @@ async function createTemporaryChart(payload) {
       status: "ok",
       chart_created: true,
       chart_id: chart.id,
+      configurationVersion: chart.configurationVersion,
       dataset_id: dataset.id,
       data_request_id: dataRequestId,
       datasets: [{

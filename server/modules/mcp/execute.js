@@ -264,6 +264,7 @@ async function createPreview(req, args) {
     spec: chartOptions,
     team_id: access.teamId,
     dataset_id: datasetId,
+    user_id: access.userId,
     skipSnapshot: true,
   });
   const result = {

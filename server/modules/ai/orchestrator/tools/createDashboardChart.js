@@ -258,6 +258,7 @@ async function prepareDashboardChart(payload, options = {}) {
           status: "ok",
           chart_created: true,
           chart_id: chart.id,
+          configurationVersion: chart.configurationVersion,
           dataset_id: dataset.id,
           data_request_id: dataRequestId,
           name: chart.name,
@@ -294,7 +295,7 @@ async function createDashboardChart(payload) {
   }))];
   const prepared = await Promise.all(inputs.map(prepareDashboardChart));
   if (prepared.length === 1) {
-    const chart = await chartController.createWithChartDatasetConfigs(prepared[0].chartData, null, { waitForData: true });
+    const chart = await chartController.createWithChartDatasetConfigs(prepared[0].chartData, { id: payload.user_id }, { waitForData: true, origin: "ai" });
     return prepared[0].finish(chart);
   }
 
@@ -306,7 +307,7 @@ async function createDashboardChart(payload) {
       // oxlint-disable-next-line no-await-in-loop
       created.push(await chartController.createWithChartDatasetConfigs({
         ...item.chartData, layout: layouts[String(index)],
-      }, null, { transaction, skipBackgroundUpdate: true, preserveLayout: true }));
+      }, { id: payload.user_id }, { transaction, skipBackgroundUpdate: true, preserveLayout: true, origin: "ai" }));
     }
     return created;
   });

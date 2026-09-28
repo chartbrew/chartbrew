@@ -666,7 +666,7 @@ function DashboardList() {
           )}
 
           {projects && viewMode === "table" && (
-            <Table className="h-auto min-w-full border border-content3 rounded-xl shadow-none">
+            <Table className="h-auto min-w-full border border-content3 rounded-3xl shadow-none">
               <Table.ScrollContainer>
                 <Table.Content
                   aria-label="Dashboard list"

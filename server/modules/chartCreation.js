@@ -1,3 +1,4 @@
+const { saveChartVersion } = require("./chartVersions");
 const db = require("../models/models");
 const { getAvailableChartLayout } = require("../../shared/dashboard/layout.mjs");
 const { lockDashboard } = require("./dashboardLayout");
@@ -433,9 +434,14 @@ async function run(projectId, userId, body, chartId = null) {
         if (existing.length !== 1) throw fail("Use More options to change this chart.", 422);
         const updates = { ...chartData };
         ["chartDatasetConfigs", "project_id", "layout", "draft", "onReport"].forEach((key) => delete updates[key]);
-        await existing[0].update({ ...bindings[0], id: existing[0].id, chart_id: chart.id }, { transaction });
-        updates.visualization = remapVisualizationBindings(chartData.visualization, bindings, existing);
-        await chart.update(updates, { transaction });
+        await saveChartVersion(chart.id, {
+          userId, projectId, transaction, expectedVersion: chart.configurationVersion,
+          operationId: operation.id, origin: input.mode === "prompt" ? "ai" : "manual",
+        }, async () => {
+          await existing[0].update({ ...bindings[0], id: existing[0].id, chart_id: chart.id }, { transaction });
+          updates.visualization = remapVisualizationBindings(chartData.visualization, bindings, existing);
+          await chart.update(updates, { transaction });
+        });
       } else {
         let layout;
         if (input.layout) {
@@ -443,7 +449,7 @@ async function run(projectId, userId, body, chartId = null) {
           layout = getAvailableChartLayout(input.layout, charts);
         }
         chart = await chartController.createWithChartDatasetConfigs({ ...chartData, ...(layout ? { layout } : {}) }, { id: userId }, {
-          transaction, skipBackgroundUpdate: true, preserveLayout: Boolean(layout),
+          transaction, skipBackgroundUpdate: true, preserveLayout: Boolean(layout), origin: input.mode === "prompt" ? "ai" : "manual",
         });
       }
       const current = await db.Project.findByPk(projectId, { transaction });

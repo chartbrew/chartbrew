@@ -241,6 +241,10 @@ const TEAM_SCOPED_TOOLS = new Set([
 ]);
 
 const USER_SCOPED_TOOLS = new Set([
+  "update_chart",
+  "create_chart",
+  "create_dashboard_chart",
+  "create_temporary_chart",
   "list_connections",
   "create_dashboard",
   "create_dashboard_from_template",
@@ -2310,7 +2314,7 @@ async function buildSemanticLayer(teamId, options = {}) {
     include: [
       {
         model: db.Chart,
-        attributes: ["id", "name", "type", "subType", "timeInterval", "stacked", "horizontal", "ranges"],
+        attributes: ["id", "name", "type", "subType", "timeInterval", "stacked", "horizontal", "ranges", "configurationVersion"],
       },
     ],
   });
@@ -2404,6 +2408,14 @@ async function orchestrate(
     allowedProjectIds,
     canConfigureTeam,
   });
+  const temporaryCharts = await db.Chart.findAll({
+    attributes: ["id", "configurationVersion"],
+    include: [{ model: db.Project, attributes: [], required: true, where: { team_id: teamId, ghost: true } }],
+  });
+  const chartVersions = new Map([
+    ...semanticLayer.projects.flatMap((project) => project.Charts),
+    ...temporaryCharts,
+  ].map((chart) => [String(chart.id), chart.configurationVersion]));
 
   // Check if this is a capability question
   if (isCapabilityQuestion(question)) {
@@ -2655,6 +2667,10 @@ async function orchestrate(
         if (USER_SCOPED_TOOLS.has(toolName)) {
           toolArgs.user_id = userId;
         }
+        if (toolName === "update_chart") {
+          toolArgs.expectedVersion = chartVersions.get(String(toolArgs.chart_id));
+          toolArgs.operationId = toolCall.id;
+        }
         if (PREVIEW_TOOLS.has(toolName)) {
           toolArgs.ai_session_id = aiSessionId;
         }
@@ -2679,6 +2695,9 @@ async function orchestrate(
         try {
           serverToolCallCount += 1;
           const result = await callTool(toolName, toolArgs);
+          if (result?.chart_id && Number.isInteger(result.configurationVersion)) {
+            chartVersions.set(String(result.chart_id), result.configurationVersion);
+          }
 
           if (toolName === "get_workspace_activity") manifestContext.activity = result;
           if (toolName === "get_workspace_context") Object.assign(manifestContext, result);

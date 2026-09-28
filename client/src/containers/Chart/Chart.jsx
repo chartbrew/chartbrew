@@ -12,7 +12,6 @@ import {
   Label,
   ListBox,
   Spinner,
-  Alert,
 } from "@heroui/react";
 import {
   LuBell, LuCalendarClock, LuCheck, LuChevronDown, LuEllipsis, LuFileDown,
@@ -21,6 +20,7 @@ import {
   LuCircleCheck, LuVariable,
   LuEllipsisVertical,
   LuActivity,
+  LuTriangleAlert,
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -145,6 +145,7 @@ function Chart(props) {
   const [autoUpdateError, setAutoUpdateError] = useState("");
   const [exportLoading, setExportLoading] = useState(false);
   const [alertsModal, setAlertsModal] = useState(false);
+  const [refreshErrorModal, setRefreshErrorModal] = useState(false);
   const [monitorModal, setMonitorModal] = useState(false);
   const [monitorOptions, setMonitorOptions] = useState([]);
   const [monitorLoading, setMonitorLoading] = useState(false);
@@ -212,6 +213,10 @@ function Chart(props) {
       setDashboardFilters(externalDashboardFilters);
     }
   }, [externalDashboardFilters]);
+
+  useEffect(() => {
+    if (!chart.refreshError) setRefreshErrorModal(false);
+  }, [chart.refreshError]);
 
   const _onGetChartData = () => {
     if (isRuntimeManaged) {
@@ -688,26 +693,8 @@ function Chart(props) {
             ? "relative h-full border-none bg-transparent shadow-none"
             : `relative h-full bg-surface border-solid border border-divider shadow-none ${print && "min-h-[350px] border-solid border border-content4"}`}
         >
-          {chart.refreshError && !isPublic && (
-            <Alert status="warning" className="shrink-0">
-              <Alert.Indicator />
-              <Alert.Content>
-                <Alert.Title>Chart could not be updated</Alert.Title>
-                <Alert.Description>
-                  {chart.refreshError.message}
-                  {chart.render && chart.preparedDataUpdatedAt ? ` Showing data from ${moment(chart.preparedDataUpdatedAt).format("lll")}.` : ""}
-                </Alert.Description>
-                {chart.refreshError.action === "dataset" && chart.refreshError.datasetId && _canAccess("projectEditor") ? (
-                  <Button className="mt-2" size="sm" variant="secondary"
-                    render={(buttonProps) => <a {...buttonProps} href={`/datasets/${encodeURIComponent(chart.refreshError.datasetId)}`} target="_blank" rel="noopener noreferrer" />}>
-                    Fix dataset
-                  </Button>
-                ) : null}
-              </Alert.Content>
-            </Alert>
-          )}
           {(showChartTitle || (chart.draft && onConfigure)) && !embedded && (
-            <Card.Header className="min-w-0 pb-0 pr-8 flex flex-row items-center">
+            <Card.Header className={`min-w-0 pb-0 flex flex-row items-center ${chart.refreshError && !isPublic && !print ? "pr-12" : "pr-8"}`}>
               <div className="min-w-0 flex-1" title={chart.name}>
                 <Row align="center" className="min-w-0 flex-nowrap gap-1">
                   {chart.draft && (
@@ -732,7 +719,18 @@ function Chart(props) {
               )}
             </Card.Header>
           )}
-          <div className={`absolute right-2 top-2 z-10 flex items-center justify-end gap-1${embedded ? " hidden" : ""}`}>
+          <div className={`absolute right-2 top-2 z-10 flex items-start justify-end gap-1${embedded ? " hidden" : ""}`}>
+              {chart.refreshError && !isPublic && !print && (
+                <LinkNext
+                  className="cursor-pointer pt-0.5"
+                  aria-label={`Show update error for ${chart.name}`}
+                  aria-haspopup="dialog"
+                  title="Chart could not be updated"
+                  onPress={() => setRefreshErrorModal(true)}
+                >
+                  <LuTriangleAlert size={16} className="text-warning" aria-hidden />
+                </LinkNext>
+              )}
               {_checkIfFilters() && (
                 <div className="flex items-center gap-1">
                   {chartSize?.[2] > 3 && (
@@ -1022,6 +1020,37 @@ function Chart(props) {
           </Card.Content>
         </Card>
       )}
+
+      <Modal.Backdrop isOpen={refreshErrorModal && Boolean(chart.refreshError)} onOpenChange={setRefreshErrorModal}>
+        <Modal.Container>
+          <Modal.Dialog>
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Heading>Chart could not be updated</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body className="flex flex-col gap-3">
+              <p className="text-sm text-foreground">
+                {chart.refreshError?.message || "The chart could not be updated. Try again."}
+              </p>
+              {chart.render && chart.preparedDataUpdatedAt && (
+                <p className="text-sm text-muted">
+                  Showing data from {moment(chart.preparedDataUpdatedAt).format("lll")}.
+                </p>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button slot="close" variant="secondary">Close</Button>
+              {chart.refreshError?.action === "dataset" && chart.refreshError.datasetId && _canAccess("projectEditor") && (
+                <Button
+                  render={(buttonProps) => <a {...buttonProps} href={`/datasets/${encodeURIComponent(chart.refreshError.datasetId)}`} target="_blank" rel="noopener noreferrer" />}
+                >
+                  Fix dataset
+                </Button>
+              )}
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
 
       <WatchMetricModal
         chartName={chart.name}

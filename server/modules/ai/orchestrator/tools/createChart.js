@@ -227,7 +227,7 @@ async function createChart(payload, options = {}) {
       }]
     };
     if (options.prepareOnly) return { chartData };
-    const chart = await chartController.createWithChartDatasetConfigs(chartData, null, { waitForData: true });
+    const chart = await chartController.createWithChartDatasetConfigs(chartData, { id: payload.user_id }, { waitForData: true, origin: "ai" });
 
     // Take a snapshot of the chart for visualization
     let snapshot = null;
@@ -241,6 +241,7 @@ async function createChart(payload, options = {}) {
       status: "ok",
       chart_created: true,
       chart_id: chart.id,
+      configurationVersion: chart.configurationVersion,
       dataset_id,
       datasets: [{
         id: dataset.id,

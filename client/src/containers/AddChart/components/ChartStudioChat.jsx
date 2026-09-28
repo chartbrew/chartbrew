@@ -17,7 +17,7 @@ import { selectUser } from "../../../slices/user";
 import { didAiUpdateActiveChart } from "../chartStudioState";
 import ChartbrewAiIcon from "../../../components/ChartbrewAiIcon";
 
-function ChartStudioChat({ chartId, projectId }) {
+function ChartStudioChat({ chartId, projectId, disabled = false }) {
   const dispatch = useDispatch();
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -54,7 +54,7 @@ function ChartStudioChat({ chartId, projectId }) {
   };
 
   const onSubmit = (message) => {
-    if (!canSubmitAiMessage(availability)) {
+    if (disabled || !canSubmitAiMessage(availability)) {
       setAccessRequested(true);
       return false;
     }
@@ -64,7 +64,7 @@ function ChartStudioChat({ chartId, projectId }) {
   };
 
   const onChangeAction = (action) => {
-    if (!canSubmitAiMessage(availability)) {
+    if (disabled || !canSubmitAiMessage(availability)) {
       setAccessRequested(true);
       return null;
     }
@@ -73,7 +73,7 @@ function ChartStudioChat({ chartId, projectId }) {
   };
 
   const onConfirmAction = async (action) => {
-    if (!canSubmitAiMessage(availability)) {
+    if (disabled || !canSubmitAiMessage(availability)) {
       setAccessRequested(true);
       return null;
     }
@@ -140,6 +140,7 @@ function ChartStudioChat({ chartId, projectId }) {
 }
 
 ChartStudioChat.propTypes = {
+  disabled: PropTypes.bool,
   chartId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   projectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };

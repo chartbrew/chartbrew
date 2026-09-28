@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Button, Tabs } from "@heroui/react";
+import { Button, Modal, Tabs, Tooltip } from "@heroui/react";
 import {
-  LuArrowLeft, LuChevronDown, LuChevronUp, LuPanelLeftClose, LuSlidersHorizontal,
+  LuArrowLeft, LuHistory, LuInfo, LuChevronDown, LuChevronUp, LuPanelLeftClose, LuSlidersHorizontal,
 } from "react-icons/lu";
 
 import { getChartStudioPreviewState } from "../chartStudioState";
+import { ChartHistoryList } from "./ChartHistory";
 import ChartbrewAiIcon from "../../../components/ChartbrewAiIcon";
 
 function useViewportWidth() {
@@ -25,12 +26,16 @@ function ChartStudio({
   chat,
   dataView,
   identity,
+  history,
+  historyBanner,
   onBack,
   onSettingsSectionChange,
   renderPreview,
   settings,
   settingsSection,
 }) {
+  const [panel, setPanel] = useState("chat");
+  const historical = history?.selected != null;
   const viewportWidth = useViewportWidth();
   const [chatOpen, setChatOpen] = useState(() => !window.matchMedia("(max-width: 900px)").matches);
   const [chatWidth, setChatWidth] = useState(320);
@@ -50,9 +55,9 @@ function ChartStudio({
   }, [mobile]);
 
   useEffect(() => {
-    if (!mobile || !chatOpen) return undefined;
-    const panel = chatPanelRef.current;
-    const focusable = () => [...panel.querySelectorAll(
+    if (!mobile || !chatOpen || panel === "history") return undefined;
+    const panelElement = chatPanelRef.current;
+    const focusable = () => [...panelElement.querySelectorAll(
       "button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])"
     )];
     const focusTimer = window.setTimeout(() => focusable()[0]?.focus(), 50);
@@ -79,14 +84,30 @@ function ChartStudio({
         first.focus();
       }
     };
-    panel.addEventListener("keydown", onKeyDown);
+    panelElement.addEventListener("keydown", onKeyDown);
     return () => {
       window.clearTimeout(focusTimer);
-      panel.removeEventListener("keydown", onKeyDown);
+      panelElement.removeEventListener("keydown", onKeyDown);
     };
-  }, [chatOpen, mobile]);
+  }, [chatOpen, mobile, panel]);
+
+  useEffect(() => {
+    if (panel === "history" && chatOpen) history.reload();
+  }, [panel, chatOpen, history?.configurationVersion, history?.reload]);
+
+  const openHistory = () => {
+    previousFocusRef.current = document.activeElement;
+    setPanel("history");
+    setChatOpen(true);
+  };
+
+  const selectVersion = (version) => {
+    history.select(version);
+    if (mobile) setChatOpen(false);
+  };
 
   const openChat = () => {
+    setPanel("chat");
     previousFocusRef.current = document.activeElement;
     setChatOpen(true);
   };
@@ -131,38 +152,86 @@ function ChartStudio({
             </Button>
             {identity}
           </div>
-          <div className="chart-studio-actions">{actions}</div>
+          <div className="chart-studio-actions">
+            <Button
+              aria-pressed={panel === "history" && chatOpen}
+              onPress={panel === "history" && chatOpen ? openChat : openHistory}
+              size="sm"
+              variant={panel === "history" && chatOpen ? "secondary" : "ghost"}
+            >
+              <LuHistory aria-hidden />
+              History
+            </Button>
+            {actions}
+          </div>
         </header>
 
         <div className="chart-studio-body" ref={bodyRef} style={{ "--chart-studio-chat-width": `${chatWidth}px` }}>
           {mobile || !chatOpen ? (
             <nav className="chart-studio-tool-rail" aria-label="Chart Studio tools">
-              <Button onPress={openChat} ref={chatTriggerRef} variant="ghost">
+              <Button isDisabled={historical} onPress={openChat} ref={chatTriggerRef} variant="ghost">
                 <ChartbrewAiIcon />
                 <span>Ask AI</span>
               </Button>
             </nav>
           ) : null}
 
-          {mobile && chatOpen ? (
+          {mobile && chatOpen && panel === "chat" ? (
             <button aria-label="Close chart assistant" className="chart-studio-chat-backdrop" onClick={closeChat} type="button" />
           ) : null}
 
           <aside
-            aria-label="Chart assistant"
+            aria-label={panel === "history" ? "Version history" : "Chart assistant"}
             aria-modal={mobile && chatOpen ? "true" : undefined}
-            className={`chart-studio-side ${chatOpen ? "is-open" : "is-closed"}`}
+            className={`chart-studio-side ${chatOpen && !(mobile && panel === "history") ? "is-open" : "is-closed"}`}
             ref={chatPanelRef}
             role={mobile ? "dialog" : undefined}
           >
             <div className="chart-studio-panel-heading">
-              <span><ChartbrewAiIcon />Chart assistant</span>
-              <Button aria-label="Close chart assistant" isIconOnly onPress={closeChat} size="sm" variant="ghost">
-                <LuPanelLeftClose aria-hidden />
-              </Button>
+              <span>
+                {panel === "history" ? <LuHistory aria-hidden /> : <ChartbrewAiIcon />}
+                {panel === "history" ? "Version history" : "Chart assistant"}
+                {panel === "history" ? (
+                  <Tooltip>
+                    <Tooltip.Trigger aria-label="History limit" className="rounded-md p-2 text-muted">
+                      <LuInfo aria-hidden />
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Keeps the latest 100 versions</Tooltip.Content>
+                  </Tooltip>
+                ) : null}
+              </span>
+              {panel === "history" ? (
+                <Tooltip>
+                  <Button aria-label="Ask AI" isDisabled={historical} isIconOnly onPress={openChat} size="sm" variant="ghost">
+                    <ChartbrewAiIcon />
+                  </Button>
+                  <Tooltip.Content>Ask AI</Tooltip.Content>
+                </Tooltip>
+              ) : (
+                <Button aria-label="Close side panel" isIconOnly onPress={closeChat} size="sm" variant="ghost">
+                  <LuPanelLeftClose aria-hidden />
+                </Button>
+              )}
             </div>
-            <div className="min-h-0 flex-1">{chat}</div>
+            <div className={`min-h-0 flex-1 ${panel === "chat" ? "" : "hidden"}`}>{chat}</div>
+            {panel === "history" ? (
+              <ChartHistoryList history={history} onSelect={selectVersion} />
+            ) : null}
           </aside>
+
+          <Modal.Backdrop isOpen={mobile && chatOpen && panel === "history"} onOpenChange={(open) => { if (!open) closeChat(); }}>
+            <Modal.Container size="sm">
+              <Modal.Dialog>
+                <Modal.CloseTrigger />
+                <Modal.Header>
+                  <Modal.Heading>Version history</Modal.Heading>
+                </Modal.Header>
+                <Modal.Body className="min-h-0 p-0">
+                  <ChartHistoryList history={history} onSelect={selectVersion} />
+                </Modal.Body>
+              </Modal.Dialog>
+            </Modal.Container>
+          </Modal.Backdrop>
 
           {chatOpen && !mobile ? (
             <div
@@ -190,9 +259,10 @@ function ChartStudio({
           ) : null}
 
           <div
-            className={`chart-studio-main ${settingsOpen ? "" : "is-settings-hidden"}`}
+            className={`chart-studio-main ${settingsOpen ? "" : "is-settings-hidden"} ${historical ? "is-history-preview" : ""}`}
             style={{ "--chart-studio-settings-height": settingsHeight === null ? "calc(50% - 3.5px)" : `${settingsHeight}px` }}
           >
+            {historyBanner}
             <section className={`chart-studio-preview ${previewState.showChart ? "" : "is-hidden"}`}>
               {renderPreview(previewState.showTabs && previewState.showChart ? previewTabs : null)}
             </section>
@@ -204,7 +274,7 @@ function ChartStudio({
               <div className="chart-studio-data-content">{dataView}</div>
             </section>
 
-            {settingsOpen && !mobile && !wide ? (
+            {settingsOpen && !historical && !mobile && !wide ? (
               <div
                 aria-label="Resize chart settings"
                 aria-orientation="horizontal"
@@ -232,7 +302,7 @@ function ChartStudio({
               ><span /></div>
             ) : null}
 
-            <section className={`chart-studio-settings ${settingsOpen ? "" : "is-hidden"}`} aria-label="Chart settings">
+            <section className={`chart-studio-settings ${settingsOpen && !historical ? "" : "is-hidden"}`} aria-label="Chart settings">
               <div className="chart-studio-settings-heading">
                 <Tabs
                   aria-label="Chart settings"
@@ -263,7 +333,7 @@ function ChartStudio({
               <div className="chart-studio-settings-content">{settings}</div>
             </section>
 
-            {!settingsOpen ? (
+            {!settingsOpen && !historical ? (
               <div className="chart-studio-settings-collapsed">
                 <span>Chart settings</span>
                 <Button onPress={() => setSettingsOpen(true)} size="sm" variant="ghost">
@@ -285,6 +355,8 @@ ChartStudio.propTypes = {
   chat: PropTypes.node.isRequired,
   dataView: PropTypes.node.isRequired,
   identity: PropTypes.node.isRequired,
+  history: PropTypes.object.isRequired,
+  historyBanner: PropTypes.node,
   onBack: PropTypes.func.isRequired,
   onSettingsSectionChange: PropTypes.func.isRequired,
   renderPreview: PropTypes.func.isRequired,
