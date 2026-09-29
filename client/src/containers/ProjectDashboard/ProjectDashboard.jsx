@@ -42,6 +42,7 @@ import "react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
 
 import Chart from "../Chart/Chart";
+import AddChart from "../AddChart/AddChart";
 import AddFilters from "./components/AddFilters";
 import {
   runQueryWithFilters, runQuery, changeOrder, updateChart, selectCharts,
@@ -1166,10 +1167,17 @@ function ProjectDashboard() {
             }}
             ref={dashboardRef}
           >
-            {currentDashboardCharts.length === 0 && !creationCount && !chartsLoading && (
-              <div className="flex min-h-48 flex-col items-center justify-center gap-4">
-                <h2 className="text-lg font-semibold">{_canAccess("projectEditor") ? "Add your first chart" : "No charts yet"}</h2>
-              </div>
+            {currentDashboardCharts.length === 0 && !creationCount && (
+              _canAccess("projectEditor") ? (
+                <div hidden={chartsLoading}>
+                  <AddChart />
+                </div>
+              ) : (
+                <div className="flex min-h-64 flex-col items-center justify-center gap-2 text-center">
+                  <h2 className="font-tight text-2xl font-semibold">No charts yet</h2>
+                  <p className="text-sm text-muted">Ask a dashboard editor to add the first chart.</p>
+                </div>
+              )
             )}
 
             <InlineChartCreator
@@ -1280,7 +1288,7 @@ function ProjectDashboard() {
         </div>
       </div>
 
-      {_canAccess("projectEditor") && !editingLayout && (
+      {_canAccess("projectEditor") && !editingLayout && (currentDashboardCharts.length > 0 || creationCount > 0) && (
         <>
           {!creationOpen && !selectedInlineChart && (
             <Button

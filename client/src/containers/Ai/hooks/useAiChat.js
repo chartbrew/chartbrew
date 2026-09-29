@@ -13,6 +13,7 @@ import {
 import { isProgressForConversation, normalizeProgressEvent } from "../aiMessageUtils";
 
 function useAiChat({
+  activeChartId,
   context = [],
   persistence = "persistent",
   teamId,
@@ -130,6 +131,7 @@ function useAiChat({
     }
     try {
       const response = await respondAi({
+        activeChartId,
         aiConversationId,
         context,
         message: question,
@@ -180,6 +182,7 @@ function useAiChat({
       }
     }
   }, [
+    activeChartId,
     aiConversationId,
     context,
     ensureSessionId,

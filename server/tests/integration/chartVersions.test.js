@@ -58,6 +58,27 @@ describe("Chart version history", () => {
     expect((await db.ChartVersion.findOne({ where: { version: 4 } })).summary).toBe("Restored version 1");
   });
 
+  it("attaches the first dataset to an empty chart through AI without duplicate bindings", async () => {
+    const f = await fixture();
+    const empty = await db.Chart.create({ project_id: f.project.id, name: "Untitled chart", type: "line" });
+    vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue(null);
+    vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
+    const payload = {
+      chart_id: empty.id, team_id: f.team.id, user_id: f.user.id,
+      dataset_id: f.dataset.id, name: "Revenue", legend: "Revenue",
+      xAxis: "root[].month", yAxis: "root[].amount", yAxisOperation: "sum",
+    };
+    await updateChart(payload);
+    const bindings = await db.ChartDatasetConfig.findAll({ where: { chart_id: empty.id } });
+    expect(bindings).toHaveLength(1);
+    expect(bindings[0]).toMatchObject({ dataset_id: f.dataset.id, yAxis: "root[].amount", yAxisOperation: "sum" });
+    const chart = await empty.reload();
+    expect(chart.visualization.layers).toHaveLength(1);
+    expect(String(chart.visualization.layers[0].bindingId)).toBe(String(bindings[0].id));
+    await updateChart({ ...payload, name: "Updated revenue" });
+    expect(await db.ChartDatasetConfig.count({ where: { chart_id: empty.id } })).toBe(1);
+  });
+
   it("rolls back failed changes and keeps the newest 100 complete versions", async () => {
     const f = await fixture();
     await expect(versions.saveChartVersion(f.chart.id, f.context, async ({ chart, transaction }) => {

@@ -6,7 +6,7 @@ import {
 import toast from "react-hot-toast";
 import _ from "lodash";
 import { LuCheck, LuPencilLine } from "react-icons/lu";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import ChartPreview, { ChartPreviewAppearance } from "./components/ChartPreview";
@@ -83,6 +83,7 @@ function AddChart() {
   const [useCache, setUseCache] = useState(true);
   const [creatingDatasetId, setCreatingDatasetId] = useState(null);
   const [creatingNewDataset, setCreatingNewDataset] = useState(false);
+  const [startingChat, setStartingChat] = useState(false);
   const [settingsSection, setSettingsSection] = useState("data");
 
   const charts = useSelector(selectCharts);
@@ -92,6 +93,7 @@ function AddChart() {
   const user = useSelector(selectUser);
 
   const params = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const projectId = parseInt(params.projectId, 10);
@@ -208,13 +210,28 @@ function AddChart() {
         getCache: true,
       })).unwrap();
 
-      navigate(`${chart.id}/edit`);
+      navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`);
     } catch (error) {
       toast.error(initialDataFetchStarted
         ? "We couldn't fetch data for this chart yet. Please check the dataset and try again."
         : "Oups! Can't create the chart. Please try again.");
     } finally {
       setCreatingDatasetId(null);
+    }
+  };
+
+  const _onStartChat = async (prompt) => {
+    if (!prompt.trim() || startingChat) return;
+    setStartingChat(true);
+    try {
+      const chart = await _createChart("Untitled chart");
+      navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`, {
+        state: { chartPrompt: prompt.trim(), openChat: true },
+      });
+    } catch (_error) {
+      toast.error("The chart could not be created. Try again.");
+    } finally {
+      setStartingChat(false);
     }
   };
 
@@ -454,6 +471,8 @@ function AddChart() {
       <div className="pt-2">
         <ChartDescription
           datasets={datasets}
+          startingChat={startingChat}
+          onStartChat={_onStartChat}
           creatingDatasetId={creatingDatasetId}
           creatingNewDataset={creatingNewDataset}
           onCreateFromDataset={_onCreateFromDataset}
@@ -503,6 +522,7 @@ function AddChart() {
         </div>
       ) : null}
       <ChartStudio
+        initiallyOpenChat={location.state?.openChat === true}
         history={history}
         historyBanner={historical ? (
           <ChartHistoryBanner history={history} onRestored={() => {

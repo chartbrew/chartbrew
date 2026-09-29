@@ -107,6 +107,7 @@ module.exports = (app) => {
 
   app.post("/ai/respond", apiLimiter(3), verifyToken, checkAccess, requireTeamAiEnabled, async (req, res) => {
     const {
+      activeChartId,
       action,
       aiConversationId,
       context,
@@ -133,6 +134,7 @@ module.exports = (app) => {
 
     try {
       const orchestration = await respond({
+        activeChartId,
         action,
         aiConversationId,
         context,

@@ -5,6 +5,7 @@ const { normalizeTeamId, requireDatasetForTeam } = require("./teamScope");
 const { applyCdcCompatibilityUpdate, applyChartCompatibilityUpdate } = require("../../../../visualization/compatibilityUpdates");
 const { legacyChartToVisualization } = require("../../../../visualization/legacyChartToVisualization");
 const { isLegacyOwnedVisualization } = require("../../../../visualization/legacyVisualizationSync");
+const { remapVisualizationBindings } = require("../../../../visualization/remapBindings");
 const { finalizeAiVisualization } = require("../../../../visualization/aiVisualization");
 
 async function updateChart(payload) {
@@ -184,6 +185,7 @@ async function updateChart(payload) {
         || chartSpec.formula !== undefined
         || chartSpec.configuration !== undefined;
 
+      let createdBinding = false;
       let updatedCdcId = null;
       let appliedConfigUpdates = {};
       if (shouldUpdateCdc) {
@@ -192,9 +194,22 @@ async function updateChart(payload) {
           configWhere.dataset_id = dataset_id;
         }
 
-        const chartDatasetConfig = await db.ChartDatasetConfig.findOne({
+        let chartDatasetConfig = await db.ChartDatasetConfig.findOne({
           where: configWhere, transaction,
         });
+
+        if (!chartDatasetConfig && dataset_id
+          && !await db.ChartDatasetConfig.count({ where: { chart_id }, transaction })) {
+          chartDatasetConfig = await db.ChartDatasetConfig.create({
+            chart_id,
+            dataset_id,
+            legend: legend || name || chart.name,
+            datasetColor: "#048BDE",
+            fill: false,
+            order: 0,
+          }, { transaction });
+          createdBinding = true;
+        }
 
         if (chartDatasetConfig) {
           updatedCdcId = chartDatasetConfig.id;
@@ -339,7 +354,7 @@ async function updateChart(payload) {
       let canonicalVisualization;
       if (visualization || chartSpec.visualization) {
         canonicalVisualization = visualization || chartSpec.visualization;
-      } else if (!refreshedChart.visualization || isLegacyOwnedVisualization(refreshedChart.visualization)) {
+      } else if (createdBinding || !refreshedChart.visualization || isLegacyOwnedVisualization(refreshedChart.visualization)) {
         canonicalVisualization = legacyChartToVisualization(refreshedChart).visualization;
       } else {
         canonicalVisualization = refreshedChart.visualization;
@@ -356,6 +371,11 @@ async function updateChart(payload) {
             appliedConfigUpdates
           );
         }
+      }
+      if (createdBinding) {
+        canonicalVisualization = remapVisualizationBindings(
+          canonicalVisualization, [], [{ id: updatedCdcId }]
+        );
       }
       const semanticEncoding = encoding || chartSpec.encoding;
       if (semanticEncoding) {

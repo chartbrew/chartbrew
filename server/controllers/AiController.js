@@ -263,6 +263,7 @@ async function getOrchestration(
   userId,
   context = null,
   clientSessionId = null,
+  activeChartId = null,
 ) {
   const access = await getObservationAccess(teamId, userId);
   const requestedContext = Array.isArray(context)
@@ -318,6 +319,7 @@ async function getOrchestration(
     userId,
     getAiSessionBinding("conversation", conversation.id)
   );
+  orchestrationOptions.activeChartId = activeChartId;
 
   const fullHistory = messages.filter((msg) => {
     return !msg.sensitive_workspace_context
@@ -823,6 +825,7 @@ async function confirmTypedEphemeralAction({ sessionId, teamId, userId }) {
 }
 
 async function respond({
+  activeChartId,
   action,
   aiConversationId,
   context,
@@ -877,6 +880,7 @@ async function respond({
       userId,
       context,
       sessionId ? validateSessionId(sessionId) : null,
+      activeChartId,
     );
     return {
       ...orchestration,
@@ -920,6 +924,7 @@ async function respond({
     userId,
     getAiSessionBinding("session", resolvedSessionId)
   );
+  orchestrationOptions.activeChartId = activeChartId;
   const memoryResult = await runMemoryCommand({
     question: `${message}`.trim(), teamId, userId, history: existingSession?.history || [],
   });

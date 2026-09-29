@@ -583,3 +583,15 @@ describe("orchestrator Responses API adapters", () => {
     });
   });
 });
+it("limits Chart Studio to the active chart without changing general chat tools", async () => {
+  const tools = await availableTools({ activeChartId: 42 });
+  const names = tools.map((tool) => tool.name);
+  expect(names).toContain("create_dataset");
+  expect(names).toContain("update_chart");
+  for (const name of ["create_chart", "create_temporary_chart", "create_dashboard", "create_dashboard_chart", "create_dashboard_from_template", "move_chart_to_dashboard"]) {
+    expect(names).not.toContain(name);
+  }
+  expect(tools.find((tool) => tool.name === "update_chart").parameters.properties.chart_id)
+    .toEqual({ type: "string", enum: ["42"] });
+  expect((await availableTools()).map((tool) => tool.name)).toContain("create_temporary_chart");
+});

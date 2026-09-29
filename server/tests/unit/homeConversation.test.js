@@ -20,6 +20,7 @@ beforeEach(() => {
   createDashboard = vi.spyOn(ProjectController.prototype, "create").mockResolvedValue({ id: 55, name: "Sales" });
   vi.spyOn(db.Team, "findByPk").mockResolvedValue({ id: 7 });
   vi.spyOn(db.Project, "findAll").mockResolvedValue([{ id: 1, name: "First Dashboard", Charts: [] }]);
+  vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
   vi.spyOn(db.Connection, "findAll").mockResolvedValue([]);
   vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({ role: "teamOwner" });
   vi.spyOn(db.Connection, "count").mockResolvedValue(0);
@@ -41,6 +42,13 @@ const call = (name, args) => ({
 });
 
 describe("normal conversation with an empty team", () => {
+  it("rejects a Chart Studio target outside the authorized context", async () => {
+    await expect(orchestrate(7, "Build this chart", [], null, [
+      { entityType: "chart", entityId: "41" },
+    ], { userId: 3, activeChartId: 42 })).rejects.toMatchObject({ statusCode: 400 });
+    expect(createResponse).not.toHaveBeenCalled();
+  });
+
   it("uses the agent for open help and short follow-ups without a forced form or tool", async () => {
     const first = await orchestrate(7, "How do I get started?", [], null, null, { userId: 3 });
     await orchestrate(7, "Build a dashboard", first.conversationHistory, null, null, { userId: 3 });

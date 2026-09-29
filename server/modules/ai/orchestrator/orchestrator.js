@@ -306,7 +306,7 @@ function filterToolDefinitionsForUser(
   return toolDefinitions.filter((tool) => !WORKSPACE_INTELLIGENCE_TOOLS.has(tool.name));
 }
 
-async function availableTools() {
+async function availableTools({ activeChartId } = {}) {
   const supportedSourceList = formatSupportedSourceList();
   const supportedDialectIds = getSupportedDialectIds();
   const supportedSourceIds = getSupportedSourceIds();
@@ -1254,6 +1254,14 @@ async function availableTools() {
     description: "Remaining charts for this dashboard, in reading order. Submit a dashboard batch in one call so its charts are placed together. Each entry specifies its own connection and chart settings.",
     items: { type: "object", properties: chartProperties, required: ["connection_id", "name"] },
   };
+  if (activeChartId) {
+    const update = tools.find((tool) => tool.name === "update_chart");
+    update.parameters.properties.chart_id = { type: "string", enum: [String(activeChartId)] };
+    return tools.filter((tool) => ![
+      "create_chart", "create_temporary_chart", "create_dashboard", "create_dashboard_chart",
+      "create_dashboard_from_template", "move_chart_to_dashboard",
+    ].includes(tool.name));
+  }
   return tools;
 }
 
@@ -2395,6 +2403,15 @@ async function orchestrate(
     throw new Error("OpenAI client is not initialized. Please check your environment variables.");
   }
 
+  const activeChart = options.activeChartId == null ? null : context?.find((entity) => (
+    entity.entityType === "chart" && String(entity.entityId) === String(options.activeChartId)
+  ));
+  if (options.activeChartId != null && !activeChart) {
+    const error = new Error("Select an accessible chart before using Chart Studio.");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Sanitize conversation history to ensure OpenAI API compliance
   // This removes any assistant messages with tool_calls that don't have complete tool responses
   const sanitizedHistory = sanitizeConversationHistory(conversationHistory.map(redactMemoryCommand));
@@ -2472,7 +2489,15 @@ async function orchestrate(
   const scopedSystemPrompt = Array.isArray(allowedToolNames)
     ? `${baseSystemPrompt}\n\n## Authorized capability scope\nOnly use these tools for this user: ${allowedToolNames.join(", ")}. Do not describe or propose unavailable connection, schema, query-generation, or creation actions.`
     : baseSystemPrompt;
-  const systemPrompt = `${scopedSystemPrompt}\n\n${MEMORY_INSTRUCTIONS}`;
+  const chartStudioInstructions = activeChart ? [
+    "You are working inside Chart Studio on the existing chart below.",
+    `Active chart ID: ${JSON.stringify(activeChart.entityId)}. Dashboard ID: ${JSON.stringify(activeChart.projectId)}.`,
+    "For chart creation or changes, update this chart with update_chart. This overrides the default temporary-preview workflow.",
+    "If the chart is empty, find or create a dataset, then attach it with update_chart using dataset_id and the required field bindings or semantic encoding.",
+    "Do not create another chart or offer dashboard placement. The active chart already belongs to its dashboard.",
+    "Only report completion after update_chart succeeds for the active chart. If it fails, explain the failure and the next action.",
+  ].join("\n") : "";
+  const systemPrompt = `${scopedSystemPrompt}\n\n${MEMORY_INSTRUCTIONS}\n\n${chartStudioInstructions}`;
   const modelName = openAiModel || "gpt-5.4-nano";
   const persistedMessages = [...sanitizedHistory];
   const modelMessages = sanitizedHistory.filter((message) => message.role !== "system");
@@ -2530,7 +2555,7 @@ async function orchestrate(
   modelMessages.push(userMessage);
 
   // Get available tools in Responses API format
-  const allToolDefinitions = await availableTools();
+  const allToolDefinitions = await availableTools({ activeChartId: activeChart?.entityId });
   let toolDefinitions = Array.isArray(allowedToolNames)
     ? allToolDefinitions.filter((tool) => allowedToolNames.includes(tool.name))
     : allToolDefinitions;
@@ -2668,6 +2693,7 @@ async function orchestrate(
           toolArgs.user_id = userId;
         }
         if (toolName === "update_chart") {
+          if (activeChart) toolArgs.chart_id = activeChart.entityId;
           toolArgs.expectedVersion = chartVersions.get(String(toolArgs.chart_id));
           toolArgs.operationId = toolCall.id;
         }

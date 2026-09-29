@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { Chip } from "@heroui/react";
 import { LuChartNoAxesColumn } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import { useLocation, useNavigate } from "react-router";
 
 import AiAccessNotice from "../../Ai/AiAccessNotice";
 import AiAvailabilityStatus from "../../Ai/AiAvailabilityStatus";
@@ -11,7 +12,7 @@ import AiChat from "../../Ai/AiChat";
 import { canSubmitAiMessage } from "../../Ai/aiAvailability";
 import useAiChat from "../../Ai/hooks/useAiChat";
 import useAiAvailability from "../../Ai/hooks/useAiAvailability";
-import { runQuery } from "../../../slices/chart";
+import { getChart } from "../../../slices/chart";
 import { selectTeam } from "../../../slices/team";
 import { selectUser } from "../../../slices/user";
 import { didAiUpdateActiveChart } from "../chartStudioState";
@@ -19,11 +20,14 @@ import ChartbrewAiIcon from "../../../components/ChartbrewAiIcon";
 
 function ChartStudioChat({ chartId, projectId, disabled = false }) {
   const dispatch = useDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const submittedPrompt = useRef(false);
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const [accessRequested, setAccessRequested] = useState(false);
   const context = useMemo(() => [{ entity_type: "chart", id: chartId }], [chartId]);
-  const chat = useAiChat({ context, teamId: team?.id });
+  const chat = useAiChat({ activeChartId: chartId, context, teamId: team?.id });
   const messages = useMemo(() => chat.messages.map((message) => ({
     ...message,
     chartPreviews: [],
@@ -40,13 +44,7 @@ function ChartStudioChat({ chartId, projectId, disabled = false }) {
   const refreshAfterChange = async (orchestration) => {
     if (!didAiUpdateActiveChart(orchestration, chartId)) return orchestration;
     try {
-      await dispatch(runQuery({
-        project_id: projectId,
-        chart_id: chartId,
-        noSource: false,
-        skipParsing: false,
-        getCache: true,
-      })).unwrap();
+      await dispatch(getChart({ project_id: projectId, chart_id: chartId })).unwrap();
     } catch (_error) {
       toast.error("The chart changed, but this editor could not refresh it. Reload the page to see the saved change.");
     }
@@ -62,6 +60,18 @@ function ChartStudioChat({ chartId, projectId, disabled = false }) {
     chat.sendMessage(message).then(refreshAfterChange);
     return true;
   };
+
+  useEffect(() => {
+    const prompt = location.state?.chartPrompt;
+    if (!prompt || submittedPrompt.current || disabled || !team?.id
+      || !canSubmitAiMessage(availability)) return;
+    submittedPrompt.current = true;
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: { ...location.state, chartPrompt: null },
+    });
+    chat.sendMessage(`Build this chart: ${prompt}`).then(refreshAfterChange);
+  }, [availability, disabled, team?.id, location.state?.chartPrompt]);
 
   const onChangeAction = (action) => {
     if (disabled || !canSubmitAiMessage(availability)) {

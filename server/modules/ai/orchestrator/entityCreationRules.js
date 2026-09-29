@@ -125,6 +125,7 @@ ${MAP_CHART_RULES}
 
 **CRITICAL RULES:**
 - Use the EXACT project specified by the user or context. Never create charts in different projects.
+- When asked to build a selected empty chart, use update_chart with dataset_id and series bindings to fill that chart. Create a dataset first if needed. Do not create a separate chart.
 - Create entities exactly once. Do not create test/validation versions first.
 - Respect user instructions precisely - if they specify a project, use that exact project.
 - No trial runs, no validation charts, no test datasets - create the final entity directly.

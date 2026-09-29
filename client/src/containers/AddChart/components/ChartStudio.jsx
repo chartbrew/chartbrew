@@ -23,6 +23,7 @@ function useViewportWidth() {
 
 function ChartStudio({
   actions,
+  initiallyOpenChat = false,
   chat,
   dataView,
   identity,
@@ -37,7 +38,7 @@ function ChartStudio({
   const [panel, setPanel] = useState("chat");
   const historical = history?.selected != null;
   const viewportWidth = useViewportWidth();
-  const [chatOpen, setChatOpen] = useState(() => !window.matchMedia("(max-width: 900px)").matches);
+  const [chatOpen, setChatOpen] = useState(() => initiallyOpenChat || !window.matchMedia("(max-width: 900px)").matches);
   const [chatWidth, setChatWidth] = useState(320);
   const [previewView, setPreviewView] = useState("chart");
   const [settingsHeight, setSettingsHeight] = useState(null);
@@ -51,8 +52,8 @@ function ChartStudio({
   const wide = previewState.mode === "wide";
 
   useEffect(() => {
-    if (mobile) setChatOpen(false);
-  }, [mobile]);
+    if (mobile) setChatOpen(initiallyOpenChat);
+  }, [mobile, initiallyOpenChat]);
 
   useEffect(() => {
     if (!mobile || !chatOpen || panel === "history") return undefined;
@@ -351,6 +352,7 @@ function ChartStudio({
 }
 
 ChartStudio.propTypes = {
+  initiallyOpenChat: PropTypes.bool,
   actions: PropTypes.node.isRequired,
   chat: PropTypes.node.isRequired,
   dataView: PropTypes.node.isRequired,
