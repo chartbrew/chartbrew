@@ -255,6 +255,51 @@ function assertConversationOwnership(conversation, userId) {
   }
 }
 
+async function getStudioChart(access, chartId) {
+  if (chartId == null) return null;
+  if (!Number.isSafeInteger(Number(chartId)) || Number(chartId) < 1) {
+    throw createAiError("Select a valid chart", 400);
+  }
+  try {
+    const context = await validateAiContext(access, [{ entity_type: "chart", id: chartId }]);
+    return context[0];
+  } catch (error) {
+    if ([403, 404].includes(error.statusCode)) return null;
+    throw error;
+  }
+}
+
+async function requireStudioChart(access, conversation, activeChartId) {
+  const chartId = conversation.studio_chart_id;
+  if (activeChartId != null && String(activeChartId) !== String(chartId)) {
+    throw createAiError("Open the conversation for this chart", 409);
+  }
+  if (chartId == null) return null;
+  const chart = await getStudioChart(access, chartId);
+  if (!chart) throw createAiError("This chart is no longer available", 403);
+  return chart;
+}
+
+async function assignStudioChart(conversationId, teamId, userId, chartId) {
+  const conversation = await db.AiConversation.findOne({ where: { id: conversationId, team_id: teamId } });
+  assertConversationOwnership(conversation, userId);
+  const access = await getObservationAccess(teamId, userId);
+  if (conversation.studio_chart_id != null) {
+    await requireStudioChart(access, conversation, chartId);
+    return getConversation(conversationId, teamId, userId);
+  }
+  const { context } = await loadAiConversationContext(access, conversationId);
+  const charts = context.filter((item) => item.entityType === "chart");
+  if (charts.length !== 1 || String(charts[0].entityId) !== String(chartId)) {
+    throw createAiError("Select a conversation with one accessible chart", 400);
+  }
+  const [updated] = await db.AiConversation.update({ studio_chart_id: Number(chartId) }, {
+    where: { id: conversationId, team_id: teamId, user_id: userId, studio_chart_id: null },
+  });
+  if (!updated) throw createAiError("The conversation changed. Open it again.", 409);
+  return getConversation(conversationId, teamId, userId);
+}
+
 async function getOrchestration(
   teamId,
   question,
@@ -270,6 +315,7 @@ async function getOrchestration(
     ? await validateAiContext(access, context)
     : null;
   let conversation;
+  let studioChart;
 
   // Load existing conversation or create new one
   if (aiConversationId) {
@@ -281,12 +327,15 @@ async function getOrchestration(
       throw createAiError("Conversation does not belong to this team", 403);
     }
     assertConversationOwnership(conversation, userId);
+    studioChart = await requireStudioChart(access, conversation, activeChartId);
   } else {
+    studioChart = await requireStudioChart(access, { studio_chart_id: activeChartId });
     // Create new conversation
     conversation = await db.AiConversation.create({
       team_id: teamId,
       user_id: userId,
       title: getConversationTitle(null, question),
+      studio_chart_id: studioChart ? Number(studioChart.entityId) : null,
       status: "active",
     });
 
@@ -307,6 +356,9 @@ async function getOrchestration(
     ? await loadAiConversationContext(access, conversation.id)
     : { context: [] };
   const validatedContext = requestedContext || storedContext.context;
+  if (studioChart && !validatedContext.some((item) => (
+    item.entityType === "chart" && item.entityId === studioChart.entityId
+  ))) validatedContext.push(studioChart);
 
   // Conversation history is always rebuilt on the server.
   const messages = await db.AiMessage.findAll({
@@ -319,7 +371,7 @@ async function getOrchestration(
     userId,
     getAiSessionBinding("conversation", conversation.id)
   );
-  orchestrationOptions.activeChartId = activeChartId;
+  orchestrationOptions.activeChartId = conversation.studio_chart_id;
 
   const fullHistory = messages.filter((msg) => {
     return !msg.sensitive_workspace_context
@@ -336,7 +388,7 @@ async function getOrchestration(
     return redactMemoryCommand(messageObj);
   });
 
-  if (Array.isArray(context)) {
+  if (Array.isArray(context) || studioChart) {
     await replaceAiConversationContext(conversation.id, teamId, validatedContext);
   }
 
@@ -560,6 +612,7 @@ async function confirmPersistentAction({ action, aiConversationId, teamId, userI
   }
   assertConversationOwnership(conversation, userId);
   const access = await getObservationAccess(teamId, userId);
+  await requireStudioChart(access, conversation);
   const envelope = await getWorkspaceAccessEnvelope(access);
   const result = await executePendingAction({
     access,
@@ -683,6 +736,7 @@ async function placeChartPreview({ action, aiConversationId, persistence, sessio
       where: { id: aiConversationId, team_id: teamId },
     });
     assertConversationOwnership(conversation, userId);
+    await requireStudioChart(access, conversation);
     history = await db.AiMessage.findAll({
       order: [["sequence", "ASC"]],
       where: { conversation_id: conversation.id },
@@ -838,6 +892,11 @@ async function respond({
   if (!getWorkspaceOrchestratorPolicy().enabled
     && (action || isTypedConfirmation(message))) {
     return buildAiDisabledOrchestration({ persistence, sessionId });
+  }
+  if (aiConversationId && activeChartId != null && (action || isTypedConfirmation(message))) {
+    const conversation = await db.AiConversation.findOne({ where: { id: aiConversationId, team_id: teamId } });
+    assertConversationOwnership(conversation, userId);
+    await requireStudioChart(await getObservationAccess(teamId, userId), conversation, activeChartId);
   }
   if (action) {
     const confirmation = validateConfirmationAction(action);
@@ -1070,16 +1129,26 @@ async function getAvailableTools() {
   return tools;
 }
 
-async function getConversations(teamId, userId, limit = 20, offset = 0) {
+async function getConversations(teamId, userId, limit = 20, offset = 0, studioChartId) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0) {
+    throw createAiError("Select a valid conversation page", 400);
+  }
+  const access = await getObservationAccess(teamId, userId);
+  const studioCharts = new Map();
+  if (studioChartId != null) {
+    const chart = await requireStudioChart(access, { studio_chart_id: studioChartId });
+    studioCharts.set(String(studioChartId), chart);
+  }
   const conversations = await db.AiConversation.findAll({
     where: {
       team_id: teamId,
       user_id: userId,
+      ...(studioChartId != null ? { studio_chart_id: Number(studioChartId) } : {}),
     },
     order: [["updatedAt", "DESC"]],
     limit,
     offset,
-    attributes: ["id", "title", "status", "message_count", "createdAt", "updatedAt", "source"],
+    attributes: ["id", "title", "status", "message_count", "createdAt", "updatedAt", "source", "studio_chart_id"],
     include: [
       {
         model: db.AiUsage,
@@ -1087,6 +1156,10 @@ async function getConversations(teamId, userId, limit = 20, offset = 0) {
       }
     ],
   });
+
+  await Promise.all([...new Set(conversations.map((item) => item.studio_chart_id).filter(Boolean))].map(async (id) => {
+    if (!studioCharts.has(String(id))) studioCharts.set(String(id), await getStudioChart(access, id));
+  }));
 
   // Compute token totals from AiUsage for each conversation
   const conversationsWithUsage = await Promise.all(conversations.map(async (conv) => {
@@ -1110,6 +1183,8 @@ async function getConversations(teamId, userId, limit = 20, offset = 0) {
       id: conv.id,
       title: getConversationTitle(conv.title, firstQuestion?.content),
       source: conv.source,
+      studio_chart_id: conv.studio_chart_id,
+      studioChart: serializeAiContext([studioCharts.get(String(conv.studio_chart_id))].filter(Boolean))[0] || null,
       status: conv.status,
       message_count: conv.message_count,
       total_tokens: parseInt(stats.total_tokens, 10) || 0,
@@ -1193,6 +1268,7 @@ async function getConversation(conversationId, teamId, userId) {
   // Return conversation with messages and usage stats
   return {
     ...conversation.toJSON(),
+    studioChart: serializeAiContext([await getStudioChart(access, conversation.studio_chart_id)].filter(Boolean))[0] || null,
     title: getConversationTitle(conversation.title, messages.find((message) => message.role === "user")?.content),
     context: serializeAiContext(activeContext.context),
     contextNotice: activeContext.removedCount > 0
@@ -1307,6 +1383,7 @@ async function getAiUsage(teamId, startDate, endDate) {
 }
 
 module.exports = {
+  assignStudioChart,
   getConversationTitle,
   applyDirectMetricInstruction,
   getOrchestration,

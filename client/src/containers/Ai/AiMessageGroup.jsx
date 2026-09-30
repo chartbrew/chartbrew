@@ -26,6 +26,7 @@ function AiMessageGroup({
   onConfirmAction,
   completedActionIds,
   isLoading,
+  readOnly = false,
 }) {
   if (group.type === "user") {
     const message = group.items[0].message;
@@ -37,6 +38,7 @@ function AiMessageGroup({
   }
 
   if (["chart_created", "chart_updated", "chart_temporary"].includes(group.type)) {
+    if (readOnly) return null;
     const { parsed } = group.items[0];
     const chartData = createdCharts.find((chart) => `${chart.id}` === `${parsed.chartId}`);
     return (
@@ -93,7 +95,7 @@ function AiMessageGroup({
   return (
     <article className="mx-auto mb-6 w-full max-w-3xl px-4">
       <AiAnswer
-        after={(
+        after={readOnly ? null : (
           <>
             <AiToolOperations
               groupIndex={groupIndex}
@@ -170,6 +172,7 @@ AiMessageGroup.propTypes = {
   onConfirmAction: PropTypes.func.isRequired,
   completedActionIds: PropTypes.instanceOf(Set).isRequired,
   isLoading: PropTypes.bool.isRequired,
+  readOnly: PropTypes.bool,
 };
 
 export default AiMessageGroup;

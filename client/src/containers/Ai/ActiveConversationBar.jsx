@@ -42,13 +42,16 @@ export default function ActiveConversationBar() {
   useEffect(() => {
     if (!scope || loadedScope !== scope || (active && !inScope)) return;
     writeActiveConversation(user.id, team.id, active);
-  }, [active?.id, active?.key, inScope, loadedScope, scope]);
+  }, [active?.id, active?.key, active?.studio_chart_id, inScope, loadedScope, scope]);
 
   useEffect(() => {
     if (!inScope || !active?.id || active.busy) return undefined;
     let cancelled = false;
     getAiConversation(active.id, team.id).then(({ conversation }) => {
-      if (!cancelled) dispatch(updateActiveAiConversation({ key: active.key, title: conversation.title }));
+      if (cancelled) return;
+      dispatch(updateActiveAiConversation({
+        key: active.key, title: conversation.title, studio_chart_id: conversation.studio_chart_id,
+      }));
     }).catch((error) => {
       if (!cancelled && [403, 404].includes(error.status)) dispatch(dismissAiConversation(active.key));
     });
@@ -57,7 +60,8 @@ export default function ActiveConversationBar() {
 
   const publicPage = /^\/(login|signup|passwordReset|b|report|share|google-auth|invite)(\/|$)/.test(pathname)
     || /\/(embedded|share)(\/|$)/.test(pathname);
-  if (!inScope || (!active.id && !active.busy) || publicPage || modalOpen || active.key === inlineKey) return null;
+  if (!inScope || active.studio_chart_id !== null || (!active.id && !active.busy)
+    || publicPage || modalOpen || active.key === inlineKey) return null;
 
   return (
     <div className="active-conversation-bar" role="region" aria-label="Active conversation">

@@ -4,6 +4,7 @@ const db = require("../models/models");
 const connectionSetup = require("../modules/ai/connectionSetup");
 const memory = require("../modules/ai/memory");
 const {
+  assignStudioChart,
   getOrchestration,
   placeChartPreview,
   respond,
@@ -308,7 +309,7 @@ module.exports = (app) => {
   // Get user conversations for a team
   app.get("/ai/conversations", apiLimiter(10), verifyToken, checkAccess, async (req, res) => {
     const {
-      teamId, limit = 20, offset = 0
+      teamId, limit = 20, offset = 0, studioChartId
     } = req.query;
 
     if (!teamId || !req.user.id) {
@@ -317,7 +318,7 @@ module.exports = (app) => {
 
     try {
       const conversations = await getConversations(
-        teamId, req.user.id, parseInt(limit, 10), parseInt(offset, 10)
+        teamId, req.user.id, Number(limit), Number(offset), studioChartId
       );
       return res.json({ conversations });
     } catch (error) {
@@ -336,6 +337,17 @@ module.exports = (app) => {
 
     try {
       const conversation = await getConversation(conversationId, teamId, req.user.id);
+      return res.json({ conversation });
+    } catch (error) {
+      return sendAiError(res, error);
+    }
+  });
+
+  app.patch("/ai/conversations/:conversationId/studio", apiLimiter(10), verifyToken, checkAccess, async (req, res) => {
+    try {
+      const conversation = await assignStudioChart(
+        req.params.conversationId, req.body.teamId, req.user.id, req.body.chartId
+      );
       return res.json({ conversation });
     } catch (error) {
       return sendAiError(res, error);

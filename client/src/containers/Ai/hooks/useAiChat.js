@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
-  getAiTools, placeAiChartPreview, promoteAiSession, respondAi,
+  getAiConversation, getAiTools, placeAiChartPreview, promoteAiSession, respondAi,
 } from "../../../api/ai";
 import socketClient from "../../../modules/socketClient";
 import { selectUser } from "../../../slices/user";
@@ -28,6 +28,9 @@ function useAiChat({
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [title, setTitle] = useState(null);
+  const [savedContext, setSavedContext] = useState(null);
   const [progressEvents, setProgressEvents] = useState([]);
   const [sessionId, setSessionId] = useState(null);
   const [toolDisplayNames, setToolDisplayNames] = useState({});
@@ -117,9 +120,10 @@ function useAiChat({
     const chatKey = chatKeyRef.current;
     dispatch(setActiveAiConversation({
       key: chatKey, id: aiConversationId, userId: user.id, teamId,
-      title: question.slice(0, 100), busy: true,
+      title: question.slice(0, 100), busy: true, studio_chart_id: activeChartId || null,
     }));
     dispatch(setInlineAiConversationKey(chatKey));
+    setTitle((current) => current || question.slice(0, 100));
     setError(null);
     setIsLoading(true);
     setProgressEvents([]);
@@ -133,7 +137,7 @@ function useAiChat({
       const response = await respondAi({
         activeChartId,
         aiConversationId,
-        context,
+        context: savedContext || context,
         message: question,
         persistence: aiConversationId ? "persistent" : persistence,
         sessionId: activeSessionId,
@@ -185,6 +189,7 @@ function useAiChat({
     activeChartId,
     aiConversationId,
     context,
+    savedContext,
     ensureSessionId,
     isLoading,
     joinProgressRoom,
@@ -207,16 +212,62 @@ function useAiChat({
     setError(null);
     setIsLoading(false);
     setMessages([]);
+    setHistory([]);
+    setTitle(null);
+    setSavedContext(null);
     setProgressEvents([]);
     setSessionId(null);
   }, []);
+
+  const load = useCallback(async (conversationId) => {
+    const requestId = ++requestIdRef.current;
+    if (sessionIdRef.current) socketClient.leaveConversation(sessionIdRef.current);
+    sessionIdRef.current = null;
+    setSessionId(null);
+    setSavedContext(null);
+    setIsLoading(true);
+    setError(null);
+    setMessages([]);
+    setHistory([]);
+    setTitle(null);
+    setProgressEvents([]);
+    setAiConversationId(null);
+    try {
+      const { conversation } = await getAiConversation(conversationId, teamId);
+      if (requestId !== requestIdRef.current) return null;
+      if (activeChartId && String(conversation.studio_chart_id) !== String(activeChartId)) {
+        throw new Error("This conversation belongs to another chart. Select a conversation or start a new one.");
+      }
+      if (activeChartId && !conversation.studioChart) throw new Error("This chart is no longer available.");
+      sessionIdRef.current = conversation.id;
+      setAiConversationId(conversation.id);
+      setHistory(conversation.full_history || []);
+      setTitle(conversation.title);
+      setSavedContext(conversation.context || []);
+      dispatch(setInlineAiConversationKey(chatKeyRef.current));
+      await joinProgressRoom(conversation.id);
+      if (requestId !== requestIdRef.current) {
+        socketClient.leaveConversation(conversation.id);
+        return null;
+      }
+      return conversation;
+    } catch (loadError) {
+      if (requestId === requestIdRef.current) setError(loadError.message);
+      return null;
+    } finally {
+      if (requestId === requestIdRef.current) setIsLoading(false);
+    }
+  }, [activeChartId, dispatch, joinProgressRoom, teamId]);
 
   const confirmAction = useCallback(async (pendingAction) => {
     if (!pendingAction?.actionId || isLoading || !teamId) return null;
     const requestId = ++requestIdRef.current;
     const activeSessionId = ensureSessionId();
     const chatKey = chatKeyRef.current;
-    dispatch(updateActiveAiConversation({ key: chatKey, busy: true }));
+    dispatch(setActiveAiConversation({
+      key: chatKey, id: aiConversationId, userId: user.id, teamId,
+      title: "Continue conversation", busy: true, studio_chart_id: activeChartId || null,
+    }));
     setError(null);
     setIsLoading(true);
     setProgressEvents([]);
@@ -228,6 +279,7 @@ function useAiChat({
     }
     try {
       const response = await respondAi({
+        activeChartId,
         action: {
           actionId: pendingAction.actionId,
           type: "confirm_pending_action",
@@ -264,7 +316,7 @@ function useAiChat({
         setProgressEvents([]);
       }
     }
-  }, [aiConversationId, ensureSessionId, isLoading, joinProgressRoom, persistence, teamId]);
+  }, [activeChartId, aiConversationId, ensureSessionId, isLoading, joinProgressRoom, persistence, teamId]);
 
   const runChartAction = useCallback(async ({ action }) => {
     const chartPreview = await placeAiChartPreview({
@@ -323,6 +375,9 @@ function useAiChat({
     clear,
     confirmAction,
     error,
+    history,
+    load,
+    selectedContext: savedContext || context,
     isLoading,
     messages,
     progressEvents,
@@ -331,6 +386,7 @@ function useAiChat({
     sendMessage,
     sessionId,
     toolDisplayNames,
+    title,
   };
 }
 

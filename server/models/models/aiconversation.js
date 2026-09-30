@@ -33,6 +33,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: "app",
     },
+    studio_chart_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM("active", "completed", "error", "cancelled"),
       defaultValue: "active",
@@ -66,6 +70,7 @@ module.exports = (sequelize, DataTypes) => {
     freezeTableName: true,
     indexes: [
       { fields: ["team_id", "user_id", "updatedAt"] },
+      { fields: ["team_id", "user_id", "studio_chart_id", "updatedAt"] },
       { fields: ["status", "updatedAt"] }
     ]
   });

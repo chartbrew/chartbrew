@@ -5,6 +5,7 @@ import {
 import { testDbManager } from "../helpers/index.js";
 import { getModels } from "../helpers/dbHelpers.js";
 import { userFactory } from "../factories/userFactory.js";
+import { projectFactory } from "../factories/projectFactory.js";
 import { teamFactory } from "../factories/teamFactory.js";
 
 const AiController = require("../../controllers/AiController.js");
@@ -213,4 +214,88 @@ describe("AI conversation ownership", () => {
       count.mockRestore();
     }
   });
+  it("assigns an older chat explicitly, filters chart history before pagination, and keeps its target fixed", async () => {
+    const { owner, otherUser, team, conversation } = await createOwnedConversation(models);
+    const project = await models.Project.create(projectFactory.build({ team_id: team.id }));
+    const chart = await models.Chart.create({ name: "Revenue", type: "bar", project_id: project.id });
+    const otherChart = await models.Chart.create({ name: "Orders", type: "bar", project_id: project.id });
+    await models.AiConversationContext.create({
+      conversation_id: conversation.id, team_id: team.id, entity_type: "chart", entity_id: String(chart.id),
+    });
+    const unassigned = await AiController.getConversation(conversation.id, team.id, owner.id);
+    expect(unassigned.studio_chart_id).toBeNull();
+    await expect(AiController.assignStudioChart(conversation.id, team.id, otherUser.id, chart.id))
+      .rejects.toMatchObject({ statusCode: 403 });
+    const assigned = await AiController.assignStudioChart(conversation.id, team.id, owner.id, chart.id);
+    expect(assigned.studio_chart_id).toBe(chart.id);
+    expect(assigned.studioChart).toMatchObject({ id: chart.id, project_id: project.id, name: "Revenue" });
+    await expect(AiController.assignStudioChart(conversation.id, team.id, owner.id, otherChart.id))
+      .rejects.toMatchObject({ statusCode: 409 });
+    await models.AiConversation.create({ team_id: team.id, user_id: owner.id, title: "Other chart", studio_chart_id: otherChart.id });
+    const page = await AiController.getConversations(team.id, owner.id, 1, 0, chart.id);
+    expect(page.map((item) => item.id)).toEqual([conversation.id]);
+    expect(page[0].studioChart.id).toBe(chart.id);
+    expect(await AiController.getConversations(team.id, owner.id, 1, 1, chart.id)).toEqual([]);
+    expect(await AiController.getConversations(team.id, otherUser.id, 20, 0, chart.id)).toEqual([]);
+    await expect(AiController.respond({
+      teamId: team.id, userId: owner.id, aiConversationId: conversation.id,
+      activeChartId: otherChart.id, message: "Change this chart",
+    })).rejects.toMatchObject({ statusCode: 409 });
+    const otherTeam = await models.Team.create(teamFactory.build());
+    await expect(AiController.getConversation(conversation.id, otherTeam.id, owner.id))
+      .rejects.toMatchObject({ statusCode: 404 });
+    await chart.destroy();
+    const unavailable = await AiController.getConversation(conversation.id, team.id, owner.id);
+    expect(unavailable.studio_chart_id).toBe(chart.id);
+    expect(unavailable.studioChart).toBeNull();
+    expect(unavailable.full_history[0].content).toBe("Summarize private revenue notes");
+    await expect(AiController.respond({
+      teamId: team.id, userId: owner.id, aiConversationId: conversation.id, message: "Continue",
+    })).rejects.toMatchObject({ statusCode: 403 });
+    await expect(AiController.respond({
+      teamId: team.id, userId: owner.id, aiConversationId: conversation.id,
+      action: { type: "confirm_pending_action", actionId: "11111111-1111-4111-8111-111111111111" },
+    })).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("rejects ambiguous legacy chats and removes a lost chart destination without exposing its name", async () => {
+    const { owner, team, conversation } = await createOwnedConversation(models);
+    const project = await models.Project.create(projectFactory.build({ team_id: team.id }));
+    const chart = await models.Chart.create({ name: "Private chart", type: "bar", project_id: project.id });
+    const otherChart = await models.Chart.create({ name: "Other", type: "bar", project_id: project.id });
+    await models.AiConversationContext.bulkCreate([chart, otherChart].map((item) => ({
+      conversation_id: conversation.id, team_id: team.id, entity_type: "chart", entity_id: String(item.id),
+    })));
+    await expect(AiController.assignStudioChart(conversation.id, team.id, owner.id, chart.id))
+      .rejects.toMatchObject({ statusCode: 400 });
+    await conversation.update({ studio_chart_id: chart.id });
+    await models.TeamRole.update({ role: "projectViewer", projects: [] }, { where: { team_id: team.id, user_id: owner.id } });
+    expect((await AiController.getConversation(conversation.id, team.id, owner.id)).studioChart).toBeNull();
+    expect((await AiController.getConversations(team.id, owner.id))[0].studioChart).toBeNull();
+    await expect(AiController.getConversations(team.id, owner.id, 20, 0, chart.id))
+      .rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("saves a new studio target and resumes it without a client chart target", async () => {
+    const { owner, team } = await createOwnedConversation(models);
+    const project = await models.Project.create(projectFactory.build({ team_id: team.id }));
+    const chart = await models.Chart.create({ name: "Read-only chart", type: "bar", project_id: project.id });
+    await models.TeamRole.update({ role: "projectViewer", projects: [project.id] }, {
+      where: { user_id: owner.id, team_id: team.id },
+    });
+    const result = await AiController.respond({
+      teamId: team.id, userId: owner.id, activeChartId: chart.id, message: "Create a dashboard",
+    });
+    const saved = await AiController.getConversation(result.aiConversationId, team.id, owner.id);
+    expect(saved.studio_chart_id).toBe(chart.id);
+    expect(saved.context).toContainEqual(expect.objectContaining({ entity_type: "chart", id: chart.id }));
+    await AiController.respond({
+      teamId: team.id, userId: owner.id, aiConversationId: saved.id, context: [], message: "Create a chart",
+    });
+    const resumed = await AiController.getConversation(saved.id, team.id, owner.id);
+    expect(resumed.studio_chart_id).toBe(chart.id);
+    expect(resumed.context).toContainEqual(expect.objectContaining({ entity_type: "chart", id: chart.id }));
+    expect(resumed.full_history.filter((message) => message.role === "user")).toHaveLength(2);
+  });
+
 });

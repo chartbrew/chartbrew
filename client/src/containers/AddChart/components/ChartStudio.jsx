@@ -52,7 +52,10 @@ function ChartStudio({
   const wide = previewState.mode === "wide";
 
   useEffect(() => {
-    if (mobile) setChatOpen(initiallyOpenChat);
+    if (initiallyOpenChat) {
+      setChatOpen(true);
+      setPanel("chat");
+    } else if (mobile) setChatOpen(false);
   }, [mobile, initiallyOpenChat]);
 
   useEffect(() => {

@@ -43,6 +43,7 @@ export async function getAiConversations(teamId, options = {}) {
   const params = new URLSearchParams({ teamId: String(teamId) });
   if (options.limit != null) params.set("limit", String(options.limit));
   if (options.offset != null) params.set("offset", String(options.offset));
+  if (options.studioChartId != null) params.set("studioChartId", String(options.studioChartId));
   const url = `${API_HOST}/ai/conversations?${params.toString()}`;
   const headers = new Headers({
     "Accept": "application/json",
@@ -73,6 +74,17 @@ export async function getAiConversation(conversationId, teamId) {
   }
 
   return response.json();
+}
+
+export async function assignAiStudioChart(conversationId, teamId, chartId) {
+  const response = await fetch(`${API_HOST}/ai/conversations/${conversationId}/studio`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${getAuthToken()}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, chartId }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Could not open this conversation. Try again.");
+  return data;
 }
 
 export async function getAiTools(teamId) {

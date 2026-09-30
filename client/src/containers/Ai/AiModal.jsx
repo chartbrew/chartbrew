@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import { Accordion, Button, Chip, Dropdown, Modal, Separator } from "@heroui/react"
-import { LuClock, LuMessageSquare, LuPlus, LuTrash2, LuEllipsis, LuSlack, LuX } from "react-icons/lu"
+import { LuChartNoAxesColumn, LuMessageSquare, LuPlus, LuTrash2, LuEllipsis, LuSlack, LuX } from "react-icons/lu"
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
-import { getAiConversation, getAiConversations, getAiTools, getChartPreview, placeAiChartPreview, respondAi, deleteAiConversation, searchAiContext } from "../../api/ai";
+import { assignAiStudioChart, getAiConversation, getAiConversations, getAiTools, getChartPreview, placeAiChartPreview, respondAi, deleteAiConversation, searchAiContext } from "../../api/ai";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import { selectCharts } from "../../slices/chart";
@@ -22,6 +22,7 @@ import {
 import socketClient from "../../modules/socketClient";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import canAccess from "../../config/canAccess";
+import { getStudioConversationPath } from "./activeConversation";
 import AiAccessNotice from "./AiAccessNotice";
 import AiAvailabilityStatus from "./AiAvailabilityStatus";
 import AiComposer from "./AiComposer";
@@ -73,6 +74,7 @@ function AiModal({ isOpen, onClose }) {
   const [showAccessNotice, setShowAccessNotice] = useState(false);
 
   const params = useParams();
+  const navigate = useNavigate();
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const pendingConversationId = useSelector(selectAiModalConversationId);
@@ -112,6 +114,8 @@ function AiModal({ isOpen, onClose }) {
     params?.connectionId,
     params?.datasetId,
   ].join(":");
+  const readOnly = Boolean(conversation?.studio_chart_id);
+  const legacyChart = !readOnly && conversation?.context?.filter((item) => item.entity_type === "chart");
   const conversationGroups = useMemo(() => (
     groupAiMessages(conversation?.full_history || [])
   ), [conversation?.full_history]);
@@ -161,6 +165,7 @@ function AiModal({ isOpen, onClose }) {
     setConversation({ ...nextConversation, ...overrides });
     dispatch(updateActiveAiConversation({
       key: activeKeyRef.current, id: nextConversation.id, title: nextConversation.title,
+      studio_chart_id: nextConversation.studio_chart_id || null,
     }));
     setSelectedContext({
       multiSelect: nextConversation.context || [],
@@ -174,6 +179,9 @@ function AiModal({ isOpen, onClose }) {
     dispatch(setActiveAiConversation({
       key: activeKeyRef.current, id, userId: user.id, teamId: team.id,
       title: title || "Continue conversation", busy: true,
+      studio_chart_id: conversation && conversation.id === id
+        ? conversation.studio_chart_id || null
+        : (id ? conversations.find((item) => item.id === id)?.studio_chart_id : null),
     }));
   };
 
@@ -198,6 +206,7 @@ function AiModal({ isOpen, onClose }) {
 
   // Fetch chart data for newly created charts
   useEffect(() => {
+    if (readOnly) return;
     const fetchNewCharts = async () => {
       const allMessages = [
         ...(conversation?.full_history || []),
@@ -235,7 +244,7 @@ function AiModal({ isOpen, onClose }) {
     };
 
     fetchNewCharts();
-  }, [conversation?.full_history, localMessages]);
+  }, [conversation?.full_history, localMessages, readOnly]);
 
   // Initialize Socket.IO connection
   useEffect(() => {
@@ -280,11 +289,20 @@ function AiModal({ isOpen, onClose }) {
 
   // Load conversations when modal opens
   useEffect(() => {
-    if (isOpen && aiEnabled && team?.id) {
+    if (isOpen && team?.id) {
+      if (activeConversation?.studio_chart_id && !pendingConversationId) {
+        setConversation(null);
+        setLocalMessages([]);
+        setProgressEvents([]);
+        setPendingActions([]);
+      }
       loadConversations();
-      if (isTeamAdmin) loadAiToolDisplayNames();
     }
-  }, [aiEnabled, isOpen, team?.id]);
+  }, [isOpen, team?.id]);
+
+  useEffect(() => {
+    if (isOpen && aiEnabled && isTeamAdmin) loadAiToolDisplayNames();
+  }, [aiEnabled, isOpen, isTeamAdmin, team?.id]);
 
   useEffect(() => {
     if (!isOpen || !aiEnabled || !team?.id || !isAnyContextPickerOpen) return undefined;
@@ -448,7 +466,7 @@ function AiModal({ isOpen, onClose }) {
     const submittedText = questionText || "";
     // Allow submission if there's either a question or a selected context
     const hasContent = submittedText.trim() || selectedContext.multiSelect.length > 0 || selectedContext.singleSelect;
-    if (!hasContent || isLoading) return;
+    if (!hasContent || isLoading || activeConversation?.busy || readOnly) return;
     if (!ensureAiAvailable()) return;
     setShowAccessNotice(false);
 
@@ -597,7 +615,7 @@ function AiModal({ isOpen, onClose }) {
   };
 
   const _onSelectConversation = async (conversationId) => {
-    if (isLoading) return;
+    if (isLoading || activeConversation?.busy) return;
     beginActiveConversation("Continue conversation", conversationId);
     const activeKey = activeKeyRef.current;
     setConversation(null);
@@ -620,6 +638,15 @@ function AiModal({ isOpen, onClose }) {
       const response = await getAiConversation(conversationId, team.id);
       if (activeKey !== activeKeyRef.current) return;
       if (response?.conversation) {
+        const destination = getStudioConversationPath(response.conversation);
+        dispatch(updateActiveAiConversation({
+          key: activeKey, studio_chart_id: response.conversation.studio_chart_id || null,
+        }));
+        if (destination) {
+          onClose();
+          navigate(destination, { state: { openChat: true } });
+          return;
+        }
         applyLoadedConversation(response.conversation);
       } else {
         toast.error("Failed to fetch conversation");
@@ -633,13 +660,31 @@ function AiModal({ isOpen, onClose }) {
     }
   };
 
+  const openLegacyConversationInStudio = async () => {
+    if (isLoading || legacyChart?.length !== 1) return;
+    setIsLoading(true);
+    try {
+      const { conversation: assigned } = await assignAiStudioChart(conversation.id, team.id, legacyChart[0].id);
+      dispatch(updateActiveAiConversation({ key: activeKeyRef.current, studio_chart_id: assigned.studio_chart_id }));
+      const destination = getStudioConversationPath(assigned);
+      if (destination) {
+        onClose();
+        navigate(destination, { state: { openChat: true } });
+      } else applyLoadedConversation(assigned);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Open a specific conversation when requested from outside the modal
   useEffect(() => {
-    if (!isOpen || !aiEnabled || isLoading || !team?.id || !pendingConversationId) return;
+    if (!isOpen || isLoading || activeConversation?.busy || !team?.id || !pendingConversationId) return;
     const conversationId = pendingConversationId;
     dispatch(clearAiModalConversationId());
     _onSelectConversation(conversationId);
-  }, [aiEnabled, isOpen, isLoading, team?.id, pendingConversationId]);
+  }, [aiEnabled, isOpen, isLoading, activeConversation?.busy, team?.id, pendingConversationId]);
 
   const _onDeleteConversation = async (conversationId) => {
     try {
@@ -668,7 +713,7 @@ function AiModal({ isOpen, onClose }) {
   };
 
   const _onConfirmPendingAction = async (pendingAction) => {
-    if (!ensureAiAvailable()) return;
+    if (readOnly || !ensureAiAvailable()) return;
     if (isLoading || !conversation?.id || !pendingAction?.actionId) return;
     setIsLoading(true);
     setProgressEvents([]);
@@ -708,7 +753,7 @@ function AiModal({ isOpen, onClose }) {
   };
 
   const _onChartAction = async ({ action }) => {
-    if (!conversation?.id) return null;
+    if (readOnly || !conversation?.id) return null;
     const chartPreview = await placeAiChartPreview({
       action,
       aiConversationId: conversation.id,
@@ -724,6 +769,7 @@ function AiModal({ isOpen, onClose }) {
   };
 
   const _onSuggestionClick = async (suggestion) => {
+    if (readOnly) return;
     if (isLoading) return;
 
     // Check if this is a quick reply (set as context)
@@ -994,27 +1040,31 @@ function AiModal({ isOpen, onClose }) {
                         <div
                           key={conv.id}
                           className="flex flex-row gap-2 cursor-pointer p-2 rounded-lg hover:bg-surface-secondary transition-colors group"
-                          onClick={() => _onSelectConversation(conv.id)}
                         >
                           <div className="pt-1">
-                            {conv.source === "slack" ? <LuSlack size={16} /> : <LuMessageSquare size={16} />}
+                            {conv.studio_chart_id ? (
+                              <LuChartNoAxesColumn aria-label="Chart Studio conversation" role="img" size={16} />
+                            ) : conv.source === "slack" ? <LuSlack size={16} /> : <LuMessageSquare size={16} />}
                           </div>
-                          <div className="flex flex-col gap-1 flex-1">
-                            <div className="text-sm text-foreground font-medium">{conv.title}</div>
-                            <div className="flex flex-row items-center gap-3 text-xs text-foreground-500">
-                              <div className="flex items-center gap-1">
-                                <LuClock size={12} />
-                                <span>{formatDate(conv.createdAt)}</span>
-                              </div>
+                          <Button
+                            className="h-auto min-w-0 flex-1 flex-col items-start gap-1 rounded-none p-0 text-left font-normal whitespace-normal [--button-bg-hover:transparent] [--button-bg-pressed:transparent]"
+                            isDisabled={isLoading || activeConversation?.busy}
+                            onPress={() => _onSelectConversation(conv.id)}
+                            variant="ghost"
+                          >
+                            <span className="text-sm text-foreground font-medium">{conv.title}</span>
+                            {conv.studio_chart_id ? (
+                              <span className="text-xs text-muted">{conv.studioChart ? `${conv.studioChart.name} · Open in chart studio` : "Chart unavailable · View history"}</span>
+                            ) : null}
+                            <div className="flex items-center gap-1 text-xs text-muted">
+                              <span>{formatDate(conv.createdAt)}</span>
                             </div>
-                          </div>
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          </Button>
+                          <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                             <Dropdown>
-                              <Dropdown.Trigger>
-                                <Button isIconOnly size="sm" variant="tertiary">
-                                  <LuEllipsis size={16} />
-                                </Button>
-                              </Dropdown.Trigger>
+                              <Button aria-label="Conversation actions" isIconOnly size="sm" variant="tertiary">
+                                <LuEllipsis size={16} />
+                              </Button>
                               <Dropdown.Popover>
                                 <Dropdown.Menu>
                                   <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(conv.id)} textValue="Delete conversation">
@@ -1076,27 +1126,31 @@ function AiModal({ isOpen, onClose }) {
                           <div
                             key={c.id}
                             className={`group relative flex cursor-pointer flex-row gap-2 rounded-lg px-2 py-2.5 transition-colors ${c.id === conversation.id ? "bg-surface-secondary" : "hover:bg-surface-secondary/60"}`}
-                            onClick={() => _onSelectConversation(c.id)}
                           >
                             <div className="pt-1">
-                              {c.source === "slack" ? <LuSlack size={14} /> : <LuMessageSquare size={14} />}
+                              {c.studio_chart_id ? (
+                                <LuChartNoAxesColumn aria-label="Chart Studio conversation" role="img" size={14} />
+                              ) : c.source === "slack" ? <LuSlack size={14} /> : <LuMessageSquare size={14} />}
                             </div>
-                            <div className="flex flex-col gap-1 flex-1 min-w-0">
-                              <div className="text-sm text-foreground truncate pr-6">{c.title}</div>
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-1 text-xs text-muted">
-                                  <LuClock size={10} />
-                                  <span className="truncate">{formatDate(c.createdAt)}</span>
-                                </div>
+                            <Button
+                              className="h-auto min-w-0 flex-1 flex-col items-start gap-1 rounded-none p-0 pr-6 text-left font-normal whitespace-normal [--button-bg-hover:transparent] [--button-bg-pressed:transparent]"
+                              isDisabled={isLoading || activeConversation?.busy}
+                              onPress={() => _onSelectConversation(c.id)}
+                              variant="ghost"
+                            >
+                              <span className="max-w-full truncate text-sm text-foreground">{c.title}</span>
+                              {c.studio_chart_id ? (
+                                <span className="text-xs text-muted">{c.studioChart ? `${c.studioChart.name} · Open in chart studio` : "Chart unavailable · View history"}</span>
+                              ) : null}
+                              <div className="flex items-center gap-1 text-xs text-muted">
+                                <span className="truncate">{formatDate(c.createdAt)}</span>
                               </div>
-                            </div>
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            </Button>
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                               <Dropdown>
-                                <Dropdown.Trigger>
-                                  <Button isIconOnly size="sm" variant="tertiary">
-                                    <LuEllipsis size={16} />
-                                  </Button>
-                                </Dropdown.Trigger>
+                                <Button aria-label="Conversation actions" isIconOnly size="sm" variant="tertiary">
+                                  <LuEllipsis size={16} />
+                                </Button>
                                 <Dropdown.Popover>
                                   <Dropdown.Menu>
                                     <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(c.id)} textValue="Delete conversation">
@@ -1123,13 +1177,16 @@ function AiModal({ isOpen, onClose }) {
                           <div className="flex flex-row items-center gap-2">
                             <Modal.Heading className="truncate text-base font-medium text-foreground">{conversation.title}</Modal.Heading>
                             <Dropdown>
-                              <Dropdown.Trigger>
-                                <Button isIconOnly size="sm" variant="tertiary">
-                                  <LuEllipsis size={16} />
-                                </Button>
-                              </Dropdown.Trigger>
+                              <Button aria-label="Conversation actions" isIconOnly size="sm" variant="tertiary">
+                                <LuEllipsis size={16} />
+                              </Button>
                               <Dropdown.Popover>
                                 <Dropdown.Menu>
+                                  {legacyChart?.length === 1 ? (
+                                    <Dropdown.Item id="open_studio" onPress={openLegacyConversationInStudio} textValue="Open in chart studio">
+                                      Open in chart studio
+                                    </Dropdown.Item>
+                                  ) : null}
                                   <Dropdown.Item id="delete_conversation" onPress={() => _onDeleteConversation(conversation.id)} textValue="Delete conversation">
                                     <div className="flex flex-row items-center gap-2">
                                       <LuTrash2 size={16} />
@@ -1142,7 +1199,6 @@ function AiModal({ isOpen, onClose }) {
                           </div>
                           <div className="flex flex-row items-center gap-3 text-xs text-muted">
                             <div className="flex items-center gap-1">
-                              <LuClock size={12} />
                               <span>{formatDate(conversation.createdAt)}</span>
                             </div>
                             {conversation.message_count > 0 && (
@@ -1166,6 +1222,7 @@ function AiModal({ isOpen, onClose }) {
                               <AiMessageGroup
                                 key={`group-${index}`}
                                 group={group}
+                                readOnly={readOnly}
                                 groupIndex={index}
                                 createdCharts={createdCharts}
                                 chartLoadErrors={chartLoadErrors}
@@ -1232,6 +1289,11 @@ function AiModal({ isOpen, onClose }) {
                         )}
                       </div>
                     </div>
+                    {readOnly ? (
+                      <p className="shrink-0 border-t border-divider px-4 py-3 text-sm text-muted" role="status">
+                        This chart is no longer available. You can read the available conversation history.
+                      </p>
+                    ) : (
                     <div className="shrink-0 border-t border-divider bg-surface px-4 py-3">
                       <div className="w-full">
                         <AiAccessNotice
@@ -1293,6 +1355,7 @@ function AiModal({ isOpen, onClose }) {
                         />
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
               </Modal.Body>

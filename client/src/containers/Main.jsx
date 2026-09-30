@@ -5,6 +5,8 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router"
 import { semanticColors } from "../lib/themeTokens";
 import { Helmet } from "react-helmet-async";
 
+import { getAiConversation } from "../api/ai";
+import { getStudioConversationPath } from "./Ai/activeConversation";
 import SuspenseLoader from "../components/SuspenseLoader";
 import UserDashboard from "./UserDashboard/UserDashboard";
 
@@ -13,7 +15,7 @@ import {
   selectUser,
 } from "../slices/user";
 import { getTeams, saveActiveTeam, selectTeam, selectTeams } from "../slices/team";
-import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal, toggleAiModal, setActiveAiConversation } from "../slices/ui";
+import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal, toggleAiModal, setActiveAiConversation, showAiModal } from "../slices/ui";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { useTheme } from "../modules/ThemeContext";
 import { IconContext } from "react-icons";
@@ -25,7 +27,7 @@ import Dataset from "./Dataset/Dataset";
 // import { getProjects } from "../slices/project";
 import ConnectionWizard from "./Connections/ConnectionWizard";
 import ConnectionTemplates from "./Connections/ConnectionTemplates";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import ConnectionList from "./UserDashboard/ConnectionList";
 import DatasetList from "./UserDashboard/DatasetList";
 import DashboardList from "./UserDashboard/DashboardList";
@@ -201,17 +203,31 @@ function Main(props) {
     const returnKey = `${user.id}:${location.pathname}${location.search}`;
     if (oauthReturnRef.current === returnKey) return;
     oauthReturnRef.current = returnKey;
-    if (String(team?.id) !== String(returnTeam.id)) {
-      dispatch(saveActiveTeam(returnTeam));
-    }
-    dispatch(hideAiModal());
-    dispatch(setActiveAiConversation({
-      id: conversationId, key: conversationId, userId: user.id,
-      teamId: returnTeam.id, title: "Continue conversation",
-    }));
-    query.delete("aiConversationId");
-    query.delete("aiTeamId");
-    navigate({ pathname: location.pathname, search: query.toString() }, { replace: true });
+    let cancelled = false;
+    getAiConversation(conversationId, returnTeam.id).then(({ conversation }) => {
+      if (cancelled) return;
+      if (String(team?.id) !== String(returnTeam.id)) dispatch(saveActiveTeam(returnTeam));
+      dispatch(hideAiModal());
+      dispatch(setActiveAiConversation({
+        id: conversationId, key: conversationId, userId: user.id,
+        teamId: returnTeam.id, title: conversation.title, studio_chart_id: conversation.studio_chart_id || null,
+      }));
+      query.delete("aiConversationId");
+      query.delete("aiTeamId");
+      const destination = getStudioConversationPath(conversation);
+      if (destination) {
+        navigate(destination, { replace: true, state: { openChat: true } });
+      } else {
+        navigate({ pathname: location.pathname, search: query.toString() }, { replace: true });
+        dispatch(showAiModal({ conversationId }));
+      }
+    }).catch(() => {
+      if (!cancelled) toast.error("Could not open the conversation. Reload the page to try again.");
+    });
+    return () => {
+      cancelled = true;
+      if (oauthReturnRef.current === returnKey) oauthReturnRef.current = null;
+    };
   }, [dispatch, location.pathname, location.search, team?.id, teams, user?.id]);
 
   return (

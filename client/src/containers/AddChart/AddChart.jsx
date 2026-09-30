@@ -522,7 +522,7 @@ function AddChart() {
         </div>
       ) : null}
       <ChartStudio
-        initiallyOpenChat={location.state?.openChat === true}
+        initiallyOpenChat={location.state?.openChat === true || new URLSearchParams(location.search).has("conversation")}
         history={history}
         historyBanner={historical ? (
           <ChartHistoryBanner history={history} onRestored={() => {

@@ -47,7 +47,7 @@ export const uiSlice = createSlice({
     },
     showAiModal: (state, action) => {
       state.aiModalOpen = true;
-      state.aiModalConversationId = action.payload?.conversationId || state.activeAiConversation?.id || null;
+      state.aiModalConversationId = action.payload?.conversationId || (state.activeAiConversation?.studio_chart_id === null ? state.activeAiConversation.id : null) || null;
     },
     hideAiModal: (state) => {
       state.aiModalOpen = false;
@@ -58,7 +58,7 @@ export const uiSlice = createSlice({
       if (!state.aiModalOpen) {
         state.aiModalConversationId = null;
       } else {
-        state.aiModalConversationId = state.activeAiConversation?.id || null;
+        state.aiModalConversationId = (state.activeAiConversation?.studio_chart_id === null ? state.activeAiConversation.id : null) || null;
       }
     },
     clearAiModalConversationId: (state) => {

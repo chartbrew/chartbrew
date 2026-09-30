@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import { Button, ScrollShadow } from "@heroui/react";
 import { LuBookmark } from "react-icons/lu";
 import { getChartPreview } from "../../api/ai";
+import AiMessageGroup from "./AiMessageGroup";
 import AiComposer from "./AiComposer";
 import AiChartPreview from "./AiChartPreview";
 import AiConnectionCard from "./AiConnectionCard";
@@ -13,7 +14,7 @@ import AiActionPreviewCard from "./AiActionPreviewCard";
 import AiProgress from "./AiProgress";
 import AiToolOperations from "./AiToolOperations";
 import { AiAnswer, AiUserPrompt } from "./AiTranscript";
-import { getCompletedActionIds, parseAiMessage } from "./aiMessageUtils";
+import { getCompletedActionIds, groupAiMessages, parseAiMessage } from "./aiMessageUtils";
 import useChatAutoScroll from "./hooks/useChatAutoScroll";
 import {
   getChartPreviewKey,
@@ -33,6 +34,7 @@ function AiChat({
   id,
   isLoading,
   messages,
+  history = [],
   onSave,
   onEnsureSaved,
   conversationId,
@@ -59,15 +61,17 @@ function AiChat({
   const fetchedChartsRef = useRef(new Set());
   const loadedPreviewCountRef = useRef(0);
   const [chartStates, setChartStates] = useState({});
-  const completedActionIds = getCompletedActionIds(messages);
+  const completedActionIds = getCompletedActionIds([...history, ...messages]);
+  const historyGroups = useMemo(() => groupAiMessages(history).filter((group) => !group.type.startsWith("chart_")), [history]);
+  const hasMessages = history.length > 0 || messages.length > 0;
   const chartPreviews = useMemo(() => messages.flatMap((message) => (
     Array.isArray(message.chartPreviews) ? message.chartPreviews : []
   )), [messages]);
   const chartPreviewKey = chartPreviews
     .map(getChartPreviewKey)
     .join("|");
-  const scrollVersion = `${messages.length}:${isLoading}:${progressEvents.length}:${chartPreviewKey}`;
-  const scrollResetKey = `${id}:${messages.length === 0 ? "empty" : "active"}`;
+  const scrollVersion = `${history.length}:${messages.length}:${isLoading}:${progressEvents.length}:${chartPreviewKey}`;
+  const scrollResetKey = `${id}:${conversationId || "new"}:${hasMessages ? "active" : "empty"}`;
   const { containerRef, contentRef } = useChatAutoScroll(scrollVersion, scrollResetKey);
 
   const loadChartPreview = useCallback(async (preview, retry = false) => {
@@ -111,7 +115,7 @@ function AiChat({
       ? "flex h-full min-h-0 min-w-0 flex-1 flex-col justify-end gap-3"
       : "flex min-w-0 flex-col gap-3"}
     >
-      {messages.length > 0 ? (
+      {hasMessages ? (
         <ScrollShadow
           aria-live="polite"
           className={fill
@@ -122,6 +126,26 @@ function AiChat({
           size={28}
         >
           <div className="flex min-w-0 w-full flex-col gap-5" ref={contentRef}>
+            {historyGroups.map((group, index) => (
+              <AiMessageGroup
+                key={`history-${index}`}
+                group={group}
+                groupIndex={index}
+                createdCharts={[]}
+                chartLoadErrors={{}}
+                toolDisplayNames={toolDisplayNames}
+                teamId={teamId}
+                conversationId={conversationId}
+                selectedContext={selectedContext}
+                onChartAction={onChartAction || (() => {})}
+                onSuggestionClick={(suggestion) => onSubmit(suggestion.label)}
+                onContinue={onSubmit}
+                onChangeAction={onChangeAction}
+                onConfirmAction={onConfirmAction}
+                completedActionIds={completedActionIds}
+                isLoading={isLoading}
+              />
+            ))}
             {messages.map((message, index) => {
               if (message.role === "user") {
                 return (
@@ -238,12 +262,13 @@ function AiChat({
         </ScrollShadow>
       ) : emptyState}
 
-      <div className={fill && fillComposer && messages.length === 0
+      <div className={fill && fillComposer && !hasMessages
         ? "flex min-h-0 flex-1 flex-col"
         : undefined}
       >
         <AiComposer
-          fill={fill && fillComposer && messages.length === 0}
+          key={conversationId || id}
+          fill={fill && fillComposer && !hasMessages}
           framed={framed}
           id={id}
           isLoading={isLoading}
@@ -254,7 +279,7 @@ function AiChat({
           onSubmitQuestion={onSubmit}
           placeholder={placeholder}
           selectedContext={selectedContext}
-          showEnterHint={messages.length > 0}
+          showEnterHint={hasMessages}
           status={status}
           suggestions={suggestions}
         />
@@ -266,6 +291,7 @@ function AiChat({
 AiChat.propTypes = {
   id: PropTypes.string.isRequired,
   isLoading: PropTypes.bool.isRequired,
+  history: PropTypes.arrayOf(PropTypes.object),
   messages: PropTypes.arrayOf(PropTypes.shape({
     chartPreviews: PropTypes.arrayOf(PropTypes.object),
     content: PropTypes.string,
