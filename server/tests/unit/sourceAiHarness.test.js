@@ -460,7 +460,7 @@ function setupGoogleAnalyticsToolRuntime() {
   vi.spyOn(googleAnalyticsProtocol, "getOAuth").mockResolvedValue({
     refreshToken: "redacted-refresh-token",
   });
-  vi.spyOn(googleAnalyticsConnection, "getAnalytics").mockResolvedValue([{
+  vi.spyOn(googleAnalyticsProtocol, "fetchAnalytics").mockResolvedValue([{
     date: "20260501",
     activeUsers: 12,
   }]);
@@ -731,6 +731,8 @@ function getQueryGenerationConnection(fixture) {
 describe("Source AI harness", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    const execution = require("../../modules/sourceExecution");
+    vi.spyOn(execution, "runSourceExecution").mockImplementation((_options, operation) => operation());
     delete global.openaiClient;
   });
 
@@ -1331,7 +1333,7 @@ describe("Source AI harness", () => {
         dataset_id: 99,
         yAxis: "root[].conversion_rate",
       })],
-    }), null, { waitForData: true });
+    }), { id: undefined }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       chart_created: true,
       chart_id: 55,

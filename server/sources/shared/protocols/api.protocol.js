@@ -1,4 +1,6 @@
 const querystring = require("querystring");
+const sourceExecution = require("../../../modules/sourceExecution");
+const { parseSourceResponse } = require("../../../modules/sourceResponse");
 const moment = require("moment");
 
 const db = require("../../../models/models");
@@ -204,32 +206,19 @@ async function previewDataRequest({
     if ((options.url.indexOf(`?${items}=`) || options.url.indexOf(`&${items}=`))
       && (options.url.indexOf(`?${offset}=`) || options.url.indexOf(`&${offset}=`))
     ) {
-      return paginateRequests(dataRequest.template, {
-        options,
-        limit,
-        items,
-        offset,
-        paginationField,
-        policyContext,
+      return sourceExecution.runSourceExecution({ connection: savedConnection, dataRequest, cacheHit: false }, () => {
+        return paginateRequests(dataRequest.template, { options, limit, items, offset, paginationField, policyContext });
       });
     }
   }
 
-  const response = await safeRequest(options, policyContext);
-
-  if (pagination) {
-    return response;
-  }
-
-  if (response.statusCode < 300) {
-    try {
-      return JSON.parse(response.body);
-    } catch {
-      return Promise.reject(400);
-    }
-  }
-
-  return Promise.reject(response.statusCode);
+  return sourceExecution.runSourceExecution({
+    connection: savedConnection, dataRequest, cacheHit: false,
+  }, async () => {
+    const response = await safeRequest(options, policyContext);
+    const data = parseSourceResponse(response);
+    return pagination ? response : data;
+  });
 }
 
 async function runDataRequest({
@@ -488,14 +477,16 @@ async function runDataRequest({
     }
 
     if (dataRequest.pagination) {
-      const paginatedResponse = await paginateRequests(dataRequest.template, {
+      const paginatedResponse = await sourceExecution.runSourceExecution({
+        connection: savedConnection, dataRequest, auditContext, chartId, cacheHit: false,
+      }, () => paginateRequests(dataRequest.template, {
         options,
         limit,
         items: dataRequest.items,
         offset: dataRequest.offset,
         paginationField: dataRequest.paginationField,
         policyContext,
-      });
+      }));
 
       const dataToCache = {
         dataRequest,
@@ -516,36 +507,30 @@ async function runDataRequest({
       return dataToCache;
     }
 
-    const response = await safeRequest(options, policyContext);
+    const { response, data } = await sourceExecution.runSourceExecution({
+      connection: savedConnection, dataRequest, auditContext, chartId, cacheHit: false,
+    }, async () => {
+      const fetchedResponse = await safeRequest(options, policyContext);
+      return { response: fetchedResponse, data: parseSourceResponse(fetchedResponse) };
+    });
 
-    if (response.statusCode < 300) {
-      let responseData = JSON.parse(response.body);
+    const responseData = determineType(data) === "object" && !isArrayPresent(data) ? [data] : data;
+    const dataToCache = {
+      dataRequest,
+      responseData: { data: responseData },
+      connection_id: savedConnection.id,
+    };
 
-      if (determineType(responseData) === "object" && !isArrayPresent(responseData)) {
-        responseData = [responseData];
-      }
+    await drCacheController.create(dataRequest.id, dataToCache);
+    await completeConnectorAudit(auditContext, {
+      cacheHit: false,
+      connectionType: "api",
+      statusCode: response.statusCode,
+      bodySnippet: sanitizeSnippet(response.body),
+      ...serializeResponsePreview(dataToCache.responseData),
+    });
 
-      const dataToCache = {
-        dataRequest,
-        responseData: {
-          data: responseData,
-        },
-        connection_id: savedConnection.id,
-      };
-
-      await drCacheController.create(dataRequest.id, dataToCache);
-      await completeConnectorAudit(auditContext, {
-        cacheHit: false,
-        connectionType: "api",
-        statusCode: response.statusCode,
-        bodySnippet: sanitizeSnippet(response.body),
-        ...serializeResponsePreview(dataToCache.responseData),
-      });
-
-      return dataToCache;
-    }
-
-    return Promise.reject(response.statusCode);
+    return dataToCache;
   } catch (error) {
     await failConnectorAudit(auditContext, error, error.auditStage || "connection", {
       cacheHit: false,

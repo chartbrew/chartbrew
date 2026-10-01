@@ -3,6 +3,7 @@ const { cleanupExpiredRuns } = require("../modules/updateAudit");
 const { cleanupObservationData } = require("../modules/observations/retention");
 const { cleanupWorkspaceLearning } = require("../modules/workspaceContext/retention");
 const { cleanupExpiredGrants } = require("../modules/mcp/oauth");
+const { cleanupSourceExecutions, reportPendingExecutions } = require("../modules/sourceExecution");
 
 function readOption(name) {
   const prefix = `--${name}=`;
@@ -16,11 +17,17 @@ function hasFlag(name) {
 
 async function run() {
   const category = readOption("category") || "all";
-  if (!["all", "observations", "update-runs", "workspace-learning", "mcp-oauth"].includes(category)) {
+  if (!["all", "observations", "update-runs", "workspace-learning", "mcp-oauth", "source-executions"].includes(category)) {
     throw new Error(`Unknown retention category: ${category}`);
   }
 
   try {
+    if (hasFlag("report-pending")) {
+      if (category !== "source-executions") throw new Error("Select source-executions to report pending records.");
+      const report = await reportPendingExecutions({ limit: readOption("limit") });
+      process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+      return;
+    }
     const sharedOptions = {
       batchSize: process.env.CB_DATA_RETENTION_BATCH_SIZE,
       dryRun: hasFlag("dry-run"),
@@ -28,6 +35,7 @@ async function run() {
       maxRuntimeSeconds: process.env.CB_DATA_RETENTION_MAX_RUNTIME_SECONDS,
     };
     const report = {};
+    if (["all", "source-executions"].includes(category)) report.sourceExecutions = await cleanupSourceExecutions(sharedOptions);
     if (["all", "mcp-oauth"].includes(category)) report.mcpOAuth = await cleanupExpiredGrants(sharedOptions);
     if (["all", "update-runs"].includes(category)) {
       report.updateRuns = await cleanupExpiredRuns({

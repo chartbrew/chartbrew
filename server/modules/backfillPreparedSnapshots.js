@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("./sourceExecution");
 const { Op } = require("sequelize");
 
 const ChartController = require("../controllers/ChartController");
@@ -69,7 +70,7 @@ async function backfillPreparedSnapshots(options = {}) {
       if (options.refreshUnresolved) {
         try {
           const result = await withExecutionDeadline(({ signal, deadlineAt }) => { // oxlint-disable-line no-await-in-loop
-            return controller.updateChartData(chart.id, null, {
+            return withSourceExecutionContext({ activity: "background", chartId: chart.id }, () => controller.updateChartData(chart.id, null, {
               deadlineAt,
               finalizeRun: false,
               getCache: false,
@@ -80,7 +81,7 @@ async function backfillPreparedSnapshots(options = {}) {
               signal,
               skipSave: Boolean(options.dryRun),
               traceContext: null,
-            });
+            }), false);
           }, timeoutMs);
           if (options.dryRun) {
             const serialized = serializePreparedDataSnapshot(result.preparedData);

@@ -1,5 +1,5 @@
 import {
-  beforeAll, describe, expect, it,
+  beforeAll, describe, expect, it, vi,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -104,6 +104,38 @@ describe("updateAudit", () => {
     expect(persistedRun.errorCode).toBe("SQLITE_BUSY");
     expect(persistedRun.events).toHaveLength(1);
     expect(persistedRun.events[0].stage).toBe("run_failed");
+  });
+
+  it("keeps events from retried jobs and concurrent copies of the same trace", async () => {
+    const trace = await updateAudit.startRun({ triggerType: "chart_auto", entityType: "chart" });
+    const queuedTrace = JSON.parse(JSON.stringify(trace));
+    await updateAudit.recordInstantEvent(trace, "worker_started");
+    const events = await Promise.all(Array.from({ length: 5 }, () => (
+      updateAudit.recordInstantEvent({ ...queuedTrace }, "worker_started")
+    )));
+
+    expect(events.every((event) => event.id)).toBe(true);
+    const stored = await models.UpdateRunEvent.findAll({
+      where: { runId: trace.runId }, order: [["sequence", "ASC"]],
+    });
+    expect(stored.map((event) => event.sequence)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(stored.every((event) => event.status === "success")).toBe(true);
+  });
+
+  it("logs the database error code without query text or request data", async () => {
+    const trace = await updateAudit.startRun({ triggerType: "chart_auto", entityType: "chart" });
+    const write = vi.spyOn(models.UpdateRunEvent, "create").mockRejectedValueOnce({
+      original: { code: "ER_DATA_TOO_LONG", sql: "private query" },
+      message: "private request data",
+    });
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await updateAudit.startEvent(trace, "worker_started");
+      expect(log).toHaveBeenCalledWith("[updateAudit] failed to create event", { code: "ER_DATA_TOO_LONG" });
+    } finally {
+      write.mockRestore();
+      log.mockRestore();
+    }
   });
 
   it("redacts sensitive snippets", () => {

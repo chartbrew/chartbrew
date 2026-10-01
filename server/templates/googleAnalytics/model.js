@@ -1,6 +1,4 @@
 const builder = require("./builder");
-const googleConnector = require("../../sources/plugins/googleAnalytics/googleAnalytics.connection");
-const db = require("../../models/models");
 const { chartColors } = require("../../charts/colors");
 
 const template = (configuration = {}) => ({
@@ -1642,33 +1640,6 @@ module.exports.build = async (teamId, projectId, {
   configuration, charts, connection_id,
 }) => {
   if (!configuration || !connection_id) return Promise.reject("Missing required parameters");
-
-  let checkErrored = false;
-  const connection = await db.Connection.findOne({
-    where: { id: connection_id },
-    include: [{ model: db.OAuth }]
-  });
-
-  const dataRequest = {
-    configuration: {
-      accountId: configuration.accountId,
-      propertyId: configuration.propertyId,
-      viewId: configuration.viewId,
-      startDate: "30daysAgo",
-      endDate: "yesterday",
-      metrics: "ga:users",
-    },
-  };
-
-  try {
-    await googleConnector.getAnalytics(connection.OAuth, dataRequest);
-  } catch (error) {
-    checkErrored = true;
-  }
-
-  if (!connection_id && checkErrored) {
-    return Promise.reject(new Error("Request cannot be authenticated"));
-  }
 
   return builder(teamId, projectId, configuration, template, charts, connection_id)
     .catch((err) => {

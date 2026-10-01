@@ -1,3 +1,4 @@
+const sourceExecution = require("../../../modules/sourceExecution");
 const Ajv2020 = require("ajv/dist/2020");
 const addFormats = require("ajv-formats");
 
@@ -432,26 +433,25 @@ async function executeTool(connection, dataRequest, approvalUse = "datasets") {
     assertToolApproved(connection, tool, approvalUse);
     validateArguments(tool, config.arguments);
 
-    const result = await client.callTool({
-      name: tool.name,
-      arguments: config.arguments,
-    }, {
-      timeout: MCP_LIMITS.callTimeoutMs,
-      maxTotalTimeout: MCP_LIMITS.callTimeoutMs,
-      toolDefinition: {
+    const normalizedResult = await sourceExecution.runSourceExecution({ connection, dataRequest, cacheHit: false }, async () => {
+      const result = await client.callTool({
         name: tool.name,
-        title: tool.title || undefined,
-        description: tool.description || undefined,
-        inputSchema: tool.inputSchema,
-        outputSchema: tool.outputSchema || undefined,
-        annotations: tool.annotations,
-      },
+        arguments: config.arguments,
+      }, {
+        timeout: MCP_LIMITS.callTimeoutMs,
+        maxTotalTimeout: MCP_LIMITS.callTimeoutMs,
+        toolDefinition: {
+          name: tool.name,
+          title: tool.title || undefined,
+          description: tool.description || undefined,
+          inputSchema: tool.inputSchema,
+          outputSchema: tool.outputSchema || undefined,
+          annotations: tool.annotations,
+        },
+      });
+      return normalizeToolResult(result);
     });
-    return {
-      data: selectToolOutput(normalizeToolResult(result), config.output),
-      config,
-      tool,
-    };
+    return { data: selectToolOutput(normalizedResult, config.output), config, tool };
   });
 }
 

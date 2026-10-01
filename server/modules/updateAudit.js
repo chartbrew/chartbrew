@@ -268,7 +268,10 @@ function emitStructuredAuditLog(action, payload) {
 }
 
 function emitAuditInternalError(message, error) {
-  return { message, error };
+  const code = error?.original?.code || error?.parent?.code || error?.code;
+  console.error(message, { // eslint-disable-line no-console
+    code: /^[A-Z0-9_]{1,64}$/.test(code || "") ? code : "AUDIT_WRITE_ERROR",
+  });
 }
 
 function cloneTraceContext(traceContext = {}) {
@@ -441,15 +444,29 @@ async function startEvent(traceContext, stage, payload = {}, status = "started")
 
   try {
     if (db.UpdateRunEvent && traceContext.runId) {
-      const createdEvent = await db.UpdateRunEvent.create({
-        runId: traceContext.runId,
-        sequence: event.sequence,
-        stage,
-        status,
-        startedAt,
-        payload: eventPayload,
+      const createdEvent = await db.sequelize.transaction(async (transaction) => {
+        // Queued jobs and retries can hold different copies of the same trace.
+        const run = await db.UpdateRun.findByPk(traceContext.runId, {
+          attributes: ["id"],
+          lock: transaction.LOCK.UPDATE,
+          transaction,
+        });
+        if (!run) return null;
+
+        const lastSequence = await db.UpdateRunEvent.max("sequence", {
+          where: { runId: traceContext.runId },
+          transaction,
+        });
+        return db.UpdateRunEvent.create({
+          ...event,
+          sequence: (lastSequence || 0) + 1,
+        }, { transaction });
       });
-      event.id = createdEvent.id;
+      if (createdEvent) {
+        event.id = createdEvent.id;
+        event.sequence = createdEvent.sequence;
+        mutableTraceContext.nextSequence = Math.max(mutableTraceContext.nextSequence, event.sequence + 1);
+      }
     }
   } catch (error) {
     emitAuditInternalError("[updateAudit] failed to create event", error);
@@ -646,14 +663,14 @@ function buildExpiredRunWhere(options) {
 
   if (failedCutoff) {
     conditions.push({
-      status: "failed",
+      status: { [Op.in]: ["failed", "partial_failure"] },
       startedAt: { [Op.lt]: failedCutoff },
     });
   }
 
   if (standardCutoff) {
     conditions.push({
-      status: { [Op.ne]: "failed" },
+      status: { [Op.in]: ["success", "deduplicated", "cancelled", "skipped"] },
       startedAt: { [Op.lt]: standardCutoff },
     });
   }

@@ -19,7 +19,7 @@ describe("team deletion", () => {
     vi.spyOn(db.AiConversation, "findAll").mockResolvedValue([{ id: "conversation-7" }]);
     vi.spyOn(runtimeCache, "clearPendingAiActions").mockResolvedValue(undefined);
     [
-      "AiMessage", "AiUsage", "AiConversation", "PinnedDashboard", "SavedQuery",
+      "SourceExecution", "AiMessage", "AiUsage", "AiConversation", "PinnedDashboard", "SavedQuery",
       "Integration", "OAuth", "Template", "Apikey", "Connection", "Dataset",
       "Project", "TeamRole", "Team",
     ].forEach((model) => vi.spyOn(db[model], "destroy").mockResolvedValue(1));
@@ -45,6 +45,7 @@ describe("team deletion", () => {
       expect(model.destroy.mock.invocationCallOrder[0])
         .toBeLessThan(db.AiConversation.destroy.mock.invocationCallOrder[0]);
     });
+    expect(db.SourceExecution.destroy).toHaveBeenCalledWith({ where: { teamId: 7 }, transaction });
     expect(transaction.commit).toHaveBeenCalledOnce();
     expect(transaction.rollback).not.toHaveBeenCalled();
   });

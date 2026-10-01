@@ -198,6 +198,7 @@ async function discoverAndCall(endpoint, connectionOverrides = {}, output = { mo
     allowedTools: { [tool.name]: approval },
   });
   const connection = {
+    id: 12, team_id: 7, type: "mcp",
     ...baseConnection,
     schema: { mcp: discovery },
   };
@@ -357,7 +358,7 @@ describe("MCP HTTP fixture", () => {
     ];
     const fixture = await startFixture({ tools });
     try {
-      const connection = { host: fixture.endpoint, authentication: { type: "none" } };
+      const connection = { id: 12, team_id: 7, type: "mcp", host: fixture.endpoint, authentication: { type: "none" } };
       const discovery = await discoverMcpConnection(connection, {
         loadIcon: false,
         allowedTools: { "query-trends": { ask: true, datasets: true, confirmedReadOnly: true } },

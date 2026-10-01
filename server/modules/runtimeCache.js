@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("./sourceExecution");
 const crypto = require("crypto");
 const Redis = require("ioredis");
 
@@ -1066,7 +1067,7 @@ class RuntimeCacheService {
       return;
     }
 
-    this.runSingleFlight(key, factory).catch(() => {
+    this.runSingleFlight(key, () => withSourceExecutionContext({ activity: "background" }, factory, false)).catch(() => {
       // Ignore background refresh failures so dashboard responses stay non-blocking.
     });
   }

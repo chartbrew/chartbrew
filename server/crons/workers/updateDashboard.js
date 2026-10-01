@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../../modules/sourceExecution");
 const { DateTime } = require("luxon");
 const { Op } = require("sequelize");
 
@@ -122,7 +123,9 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
     if (variantsToPrewarm.length > 0) {
       await runWithConcurrency(
         variantsToPrewarm,
-        (variant) => chartController.updateChartData(chart.id, null, {
+        (variant) => withSourceExecutionContext({
+          activity: "background", teamId: dashboard.team_id, projectId: dashboard.id, chartId: chart.id,
+        }, () => chartController.updateChartData(chart.id, null, {
           noSource: false,
           skipParsing: false,
           filters: variant?.payload?.filters || [],
@@ -132,7 +135,7 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
           runtimeOnly: true,
           traceContext: null,
           finalizeRun: false,
-        }).catch(() => null),
+        }), false).catch(() => null),
         1
       );
     }

@@ -1,4 +1,5 @@
 const db = require("../../../models/models");
+const sourceExecution = require("../../../modules/sourceExecution");
 const drCacheController = require("../../../controllers/DataRequestCacheController");
 const { applySqlVariables } = require("../../shared/sql/sql.variables");
 const { generateClickhouseQuery } = require("../../../modules/ai/generateClickhouseQuery");
@@ -108,7 +109,9 @@ async function runDataRequest({
     const savedConnection = await getSavedConnection(connection);
     const queryToExecute = getQueryToExecute({ processedQuery, dataRequest });
     const result = await withConnector(savedConnection, (clickhouse) => {
-      return clickhouse.query(queryToExecute);
+      return sourceExecution.runSourceExecution({
+        connection: savedConnection, dataRequest, auditContext, cacheHit: false,
+      }, () => clickhouse.query(queryToExecute));
     });
 
     const dataToCache = {
@@ -138,8 +141,9 @@ async function runDataRequest({
 }
 
 function runChartQuery({ connection, query }) {
-  return withConnector(connection, (clickhouse) => {
-    return clickhouse.query(getQueryToExecute({ dataRequest: { query } }));
+  const queryToExecute = getQueryToExecute({ dataRequest: { query } });
+  return withConnector(connection, (clickhouse, savedConnection) => {
+    return sourceExecution.runSourceExecution({ connection: savedConnection, cacheHit: false }, () => clickhouse.query(queryToExecute));
   });
 }
 

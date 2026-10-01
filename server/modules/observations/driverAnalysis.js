@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../sourceExecution");
 const _ = require("lodash");
 
 const DatasetController = require("../../controllers/DatasetController");
@@ -196,12 +197,12 @@ async function runDriverAnalysis(observation) {
   let result;
   try {
     result = await withTimeout(
-      datasetController.runRequest({
+      withSourceExecutionContext({ activity: "alert", teamId: observation.team_id }, () => datasetController.runRequest({
         dataset_id: monitor.dataset_id,
         getCache: true,
         team_id: observation.team_id,
         viewerScope: `observation-${observation.id}`,
-      }),
+      })),
       QUERY_TIMEOUT_MS,
     );
   } catch (error) {

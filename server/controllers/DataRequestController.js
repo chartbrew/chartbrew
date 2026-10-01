@@ -205,6 +205,7 @@ class RequestController {
 
         const sourceResponse = runSourceDataRequest({
           connection,
+          teamId: gDataset.team_id,
           dataRequest: originalDataRequest,
           chartId,
           getCache,

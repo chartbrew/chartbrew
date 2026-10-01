@@ -1,3 +1,4 @@
+const sourceExecution = require("../../../modules/sourceExecution");
 const request = require("request-promise");
 const moment = require("moment");
 
@@ -227,34 +228,14 @@ function getCampaignActions(connection, { campaignId }) {
 
 // ----------------------------
 
-function getCustomersAttributes(ids, options, result = {}) {
-  if (!ids) return result;
-
-  const newOpt = options;
-  if (ids.length <= 100) {
-    newOpt.body = JSON.stringify({ ids });
-  } else {
-    newOpt.body = JSON.stringify({ ids: ids.slice(0, 100) });
-  }
-
-  return request(newOpt)
-    .then((response) => {
-      try {
-        const parsedRes = JSON.parse(response.body);
-        const newResult = { ...result };
-        if (!newResult.customers) newResult.customers = [];
-
-        newResult.customers = [...newResult.customers, ...parsedRes.customers];
-        if (ids.length <= 100) return newResult;
-
-        return getCustomersAttributes(ids.slice(100), options, newResult);
-      } catch (e) {
-        return result;
-      }
-    })
-    .catch(() => {
-      return result;
-    });
+async function getCustomersAttributes(ids, options, result = { customers: [] }) {
+  if (!ids?.length) return result;
+  const response = await request({ ...options, body: JSON.stringify({ ids: ids.slice(0, 100) }) });
+  const parsed = JSON.parse(response.body);
+  if (!Array.isArray(parsed.customers)) throw new Error("Customer attributes were not returned.");
+  const customers = [...result.customers, ...parsed.customers];
+  if (ids.length <= 100) return { customers };
+  return getCustomersAttributes(ids.slice(100), options, { customers });
 }
 
 async function getCustomers(connection, dr) {
@@ -309,7 +290,7 @@ async function getCustomers(connection, dr) {
   return result;
 }
 
-function getCampaignMetrics(connection, dr) {
+async function getCampaignMetrics(connection, dr) {
   const options = getConnectionOpt(connection, dr);
 
   if (dr && dr.configuration) {
@@ -328,31 +309,21 @@ function getCampaignMetrics(connection, dr) {
     }
   }
 
-  return request(options)
-    .then((data) => {
-      try {
-        const parsedData = JSON.parse(data.body);
-        return parsedData;
-      } catch (e) { /** */ }
+  const metrics = await sourceExecution.runSourceExecution({ connection, dataRequest: dr, cacheHit: false }, async () => {
+    const response = await request(options);
+    return JSON.parse(response.body);
+  });
 
-      return Promise.reject("Metrics not found");
-    })
-    .then((metrics) => {
-      // process the metrics in CB-style based on the request type
-      if (options.url.substring(options.url.lastIndexOf("/") === "/metrics") && metrics.metric) {
-        return processSeriesData(metrics.metric, dr);
-      }
-      if (options.url.substring(options.url.lastIndexOf("/") === "/journey_metrics") && metrics.journey_metric) {
-        return processSeriesData(metrics.journey_metric, dr);
-      }
-      if (options.url.indexOf("/metrics/links") > -1 && metrics.links) {
-        return processCampaignLinksMetrics(metrics.links, dr);
-      }
-      return metrics;
-    })
-    .catch((err) => {
-      return err;
-    });
+  if (metrics.metric) {
+    return processSeriesData(metrics.metric, dr);
+  }
+  if (metrics.journey_metric) {
+    return processSeriesData(metrics.journey_metric, dr);
+  }
+  if (options.url.includes("/metrics/links") && metrics.links) {
+    return processCampaignLinksMetrics(metrics.links, dr);
+  }
+  return metrics;
 }
 
 async function getActivities(connection, dr) {
@@ -417,12 +388,16 @@ function getAllObjectTypes(connection) {
 
 module.exports = {
   getConnectionOpt,
-  getCustomers,
+  getCustomers(connection, dataRequest) {
+    return sourceExecution.runSourceExecution({ connection, dataRequest, cacheHit: false }, () => getCustomers(connection, dataRequest));
+  },
   getAllSegments,
   getAllCampaigns,
   getCampaignMetrics,
   getCampaignLinks,
   getCampaignActions,
-  getActivities,
+  getActivities(connection, dataRequest) {
+    return sourceExecution.runSourceExecution({ connection, dataRequest, cacheHit: false }, () => getActivities(connection, dataRequest));
+  },
   getAllObjectTypes,
 };

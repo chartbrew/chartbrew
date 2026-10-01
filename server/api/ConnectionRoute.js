@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const multer = require("multer");
 const fs = require("fs");
 
@@ -549,7 +550,9 @@ module.exports = (app) => {
   /*
   ** Route to test a potential api request
   */
-  app.post("/team/:team_id/connections/:connection_id/apiTest", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/apiTest", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, _res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.connection.team_id }, next);
+  }, (req, res) => {
     const requestData = req.body;
     requestData.connection_id = req.params.connection_id;
     const source = findSourceForConnection(req.connection);
@@ -564,7 +567,7 @@ module.exports = (app) => {
     const testRequest = source?.backend?.previewDataRequest
       ? source.backend.previewDataRequest({
         connection: req.connection,
-        dataRequest: requestData.dataRequest,
+        dataRequest: { ...requestData.dataRequest, id: undefined, dataset_id: undefined },
         itemsLimit: requestData.itemsLimit,
         items: requestData.items,
         offset: requestData.offset,
@@ -710,7 +713,9 @@ module.exports = (app) => {
   /*
   ** Route to run plugin-owned actions for a source connection
   */
-  app.post("/team/:team_id/connections/:connection_id/source-action", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, async (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/source-action", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.connection.team_id }, next);
+  }, async (req, res) => {
     try {
       const source = getSourceForConnection(req.connection);
       assertSourceServerEnabled(source);

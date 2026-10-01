@@ -572,6 +572,8 @@ class DatasetController {
 
                   const sourceResponse = runSourceDataRequest({
                     connection,
+                    teamId: gDataset.team_id,
+                    projectId,
                     dataRequest: originalDataRequest,
                     chartId: chart_id,
                     getCache,
@@ -701,6 +703,8 @@ class DatasetController {
 
             const sourceResponse = runSourceDataRequest({
               connection,
+              teamId: gDataset.team_id,
+              projectId,
               dataRequest: originalDataRequest,
               chartId: chart_id,
               getCache,

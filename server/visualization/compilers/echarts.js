@@ -902,6 +902,7 @@ function buildPieOption({ preparedData, visualization, renderContext }, presetId
     datasets.push({
       dimensions: ["id", "category", "value", "formattedValue", "formattedPercent"],
       source,
+      sourceHeader: false,
     });
     series.push({
       colorBy: "data",
@@ -1037,6 +1038,7 @@ function buildPolarOption({ preparedData, visualization, renderContext }) {
     angleAxis: { data: projection.labels, type: "category" },
     dataset: {
       dimensions: ["category", ...projection.series.map((series) => series.id)],
+      sourceHeader: false,
       source: projection.labels.map((label, index) => [
         label,
         ...projection.series.map((series) => series.values[index] ?? null),
@@ -1215,6 +1217,7 @@ function buildMatrixOption({ preparedData, visualization, renderContext }) {
   return {
     ...getBaseOption(visualization, renderContext, "item"),
     dataset: [{
+      sourceHeader: false,
       dimensions: isCalendar
         ? ["week", "day", "value", "date"]
         : ["column", "row", "value", "columnLabel", "rowLabel"],

@@ -1,3 +1,4 @@
+const sourceExecution = require("../../../modules/sourceExecution");
 const { google } = require("googleapis");
 const { formatISO } = require("date-fns");
 const { BetaAnalyticsDataClient } = require("@google-analytics/data");
@@ -141,7 +142,7 @@ module.exports.getMetadata = async (refreshToken, propertyId) => {
   }
 };
 
-module.exports.getAnalytics = async (oauth, dataRequest) => {
+module.exports.getAnalytics = async (oauth, dataRequest, { connection, auditContext } = {}) => {
   const oauth2Client = getOAuthClient();
 
   const { configuration = {} } = dataRequest;
@@ -180,7 +181,9 @@ module.exports.getAnalytics = async (oauth, dataRequest) => {
       }];
     }
 
-    const [response] = await analyticsDataClient.runReport(getOptions);
+    const [response] = await sourceExecution.runSourceExecution({ connection, dataRequest, auditContext, cacheHit: false }, () => {
+      return analyticsDataClient.runReport(getOptions);
+    });
 
     return this.formatGaData(response);
   } catch (e) {
@@ -196,7 +199,7 @@ module.exports.formatGaData = (data) => {
     const xAxis = data?.dimensionHeaders?.[0] && data?.dimensionHeaders?.[0].name;
     const yAxis = data?.metricHeaders?.[0] && data?.metricHeaders?.[0].name;
 
-    if (!rows) return Promise.reject("No data found");
+    if (!rows) return [];
 
     rows.forEach((row) => {
       const newRow = {};

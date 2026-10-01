@@ -1,5 +1,6 @@
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -38,6 +39,10 @@ const {
 } = require("../../sources/sourceAvailability");
 
 describe("source registry", () => {
+  beforeEach(() => {
+    const execution = require("../../modules/sourceExecution");
+    vi.spyOn(execution, "runSourceExecution").mockImplementation((_options, operation) => operation());
+  });
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
@@ -720,7 +725,8 @@ describe("source registry", () => {
     expect(findOAuthSpy).toHaveBeenCalledWith(7);
     expect(getAnalyticsSpy).toHaveBeenCalledWith(
       { id: 7, refreshToken: "refresh-token" },
-      { id: 2, configuration: { metrics: "activeUsers" } }
+      { id: 2, configuration: { metrics: "activeUsers" } },
+      { connection: { type: "googleAnalytics", subType: "googleAnalytics", oauth_id: 7 }, auditContext: null }
     );
     expect(cacheSpy).toHaveBeenCalledWith(2, expect.objectContaining({
       responseData: { data: [{ date: "2026-05-01", activeUsers: "12" }] },

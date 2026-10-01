@@ -97,6 +97,7 @@ class TeamController {
         transaction,
       });
       await db.AiUsage.destroy({ where: { team_id: teamId }, transaction });
+      await db.SourceExecution.destroy({ where: { teamId }, transaction });
       await db.AiConversation.destroy({ where: { team_id: teamId }, transaction });
 
       // Delete all related models with team_id

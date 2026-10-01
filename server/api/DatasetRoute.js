@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const DatasetController = require("../controllers/DatasetController");
 const DatasetIntelligenceController = require("../controllers/DatasetIntelligenceController");
 const TeamController = require("../controllers/TeamController");
@@ -319,7 +320,9 @@ module.exports = (app) => {
   /*
   ** [DEPRECATED] Route to run the request attached to the dataset
   */
-  app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res) => {
+  app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.params.team_id }, next);
+  }, (req, res) => {
     return datasetController.runRequest(
       {
         dataset_id: req.params.dataset_id,
@@ -366,7 +369,9 @@ module.exports = (app) => {
   /*
   ** [NEW] Route to run the request attached to the dataset
   */
-  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res) => {
+  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.params.team_id }, next);
+  }, (req, res) => {
     return datasetController.runRequest({
       dataset_id: req.params.dataset_id,
       chart_id: req.body.chart_id,

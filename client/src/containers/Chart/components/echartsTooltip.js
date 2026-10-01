@@ -1,5 +1,9 @@
 const MONO_FONT = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
 
+function formatValue(value) {
+  return typeof value === "number" ? value.toLocaleString() : value;
+}
+
 function escapeHtml(value) {
   return `${value ?? ""}`
     .replaceAll("&", "&amp;")
@@ -43,7 +47,7 @@ function row(label, value, color, textColor, mutedColor) {
     + `<span style="color:${mutedColor};font-weight:400;white-space:nowrap">`
     + `${escapeHtml(label)}</span><span style="color:${textColor};font-family:${MONO_FONT};`
     + `font-size:11px;font-weight:400;margin-left:auto;padding-left:8px;white-space:nowrap">`
-    + `${escapeHtml(value)}</span></div>`;
+    + `${escapeHtml(formatValue(value))}</span></div>`;
 }
 
 function getMatrixHeading(param) {
@@ -169,7 +173,7 @@ function categoryLine(param, colors) {
   return `<div style="display:flex;align-items:center;gap:5px;font-size:11px;`
     + `font-weight:400;line-height:16px;white-space:nowrap">${marker(param.color)}`
     + `<span style="color:${colors.muted}">${escapeHtml(trimLabel(param.name))}:</span>`
-    + `<span style="color:${colors.text};font-family:${MONO_FONT}">${escapeHtml(value)}</span>`
+    + `<span style="color:${colors.text};font-family:${MONO_FONT}">${escapeHtml(formatValue(value))}</span>`
     + `<span style="color:${colors.muted};font-family:${MONO_FONT}">${escapeHtml(percent)}</span></div>`;
 }
 
@@ -179,7 +183,7 @@ function categoryMetricRow(label, value, colors) {
     + `<span style="color:${colors.muted};font-weight:400;white-space:nowrap">`
     + `${escapeHtml(label)}</span><span style="color:${colors.text};font-family:${MONO_FONT};`
     + `font-size:11px;font-weight:400;margin-left:auto;padding-left:8px;white-space:nowrap">`
-    + `${escapeHtml(value)}</span></div>`;
+    + `${escapeHtml(formatValue(value))}</span></div>`;
 }
 
 function categoryTooltip(param, colors, compact) {
@@ -196,7 +200,7 @@ function categoryTooltip(param, colors, compact) {
 
 function compactLine(title, items, textColor, mutedColor) {
   const values = items.map((param) => {
-    const value = `<span style="color:${textColor};font-family:${MONO_FONT}">${escapeHtml(getValue(param))}</span>`;
+    const value = `<span style="color:${textColor};font-family:${MONO_FONT}">${escapeHtml(formatValue(getValue(param)))}</span>`;
     if (items.length === 1) return value;
     return `<span style="display:inline-flex;align-items:center;gap:4px">${marker(param.color)}${value}</span>`;
   }).join("<span style=\"padding:0 4px\">·</span>");

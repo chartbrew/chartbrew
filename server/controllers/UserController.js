@@ -218,6 +218,10 @@ class UserController {
           db.AiUsage.destroy({
             where: { "team_id": teamId },
             transaction
+          }),
+          db.SourceExecution.destroy({
+            where: { teamId },
+            transaction
           })
         ]);
 

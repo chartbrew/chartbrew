@@ -551,3 +551,7 @@ cd client && npm run build
 ```
 
 Add source-specific focused tests when templates, protocol behavior, schema loading, frontend flows, or AI behavior are touched.
+
+## Source execution records
+
+Every analytical fetch must use the shared source execution helper after a confirmed cache miss. Wrap the complete logical fetch, including required pages, and finish it before cache writes and downstream processing. Exclude connection tests and metadata discovery. Reuse an existing counted source method for previews and AI calls to avoid nested records. Preserve the original activity and verified team context. See [Source execution records](server/docs/agents/source-execution.md) for the source boundaries, failure rules and checks.

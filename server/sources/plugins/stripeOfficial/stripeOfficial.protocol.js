@@ -1,3 +1,4 @@
+const sourceExecution = require("../../../modules/sourceExecution");
 const moment = require("moment-timezone");
 const request = require("request-promise");
 
@@ -533,7 +534,13 @@ function buildSearchParams(config) {
   return params;
 }
 
-async function fetchStripeRows(connection, config, resource) {
+function fetchStripeRows(connection, config, resource) {
+  return sourceExecution.runSourceExecution({ connection, cacheHit: false }, () => {
+    return fetchStripeData(connection, config, resource);
+  });
+}
+
+async function fetchStripeData(connection, config, resource) {
   if (config.queryMode === "search") {
     const maxRecords = Math.max(1, Number(config.pagination?.maxRecords || DEFAULT_MAX_RECORDS));
     const rows = [];
@@ -547,11 +554,14 @@ async function fetchStripeRows(connection, config, resource) {
         ...params,
         ...(page ? { page } : {}),
       });
-      const pageRows = Array.isArray(response?.data) ? response.data : [];
+      if (!Array.isArray(response?.data)) throw new Error("Stripe did not return a valid records page.");
+      const pageRows = response.data;
       rows.push(...applyLocalFilters(pageRows, config.filters));
 
       hasMore = response?.has_more === true && pageRows.length > 0;
-      page = response?.next_page || null;
+      const nextPage = response?.next_page || null;
+      if (hasMore && (!nextPage || nextPage === page)) throw new Error("Stripe did not return the next records page.");
+      page = nextPage;
     }
 
     const capped = rows.length > maxRecords || hasMore;
@@ -578,7 +588,8 @@ async function fetchStripeRows(connection, config, resource) {
       ...params,
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
-    const pageRows = Array.isArray(response?.data) ? response.data : [];
+    if (!Array.isArray(response?.data)) throw new Error("Stripe did not return a valid records page.");
+    const pageRows = response.data;
     scannedRows += pageRows.length;
     rows.push(...(hasLocalFilters ? applyLocalFilters(pageRows, config.filters) : pageRows));
 
@@ -1226,7 +1237,20 @@ async function calculateCompiledMetric(connection, config) {
   return calculateRecurringCompiledMetric(connection, config, metricKey);
 }
 
-async function runDataRequest({
+function runDataRequest(options) {
+  const trace = options.auditContext?.traceContext || {};
+  return sourceExecution.withSourceExecutionContext({
+    dataRequestId: options.dataRequest?.id,
+    datasetId: options.dataRequest?.dataset_id,
+    teamId: trace.teamId,
+    triggerType: trace.triggerType,
+    projectId: trace.projectId,
+    chartId: trace.chartId,
+    runId: trace.runId,
+  }, () => executeDataRequest(options));
+}
+
+async function executeDataRequest({
   connection,
   dataRequest,
   getCache,

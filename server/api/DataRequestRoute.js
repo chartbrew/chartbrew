@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const rateLimit = require("express-rate-limit");
 
 const DataRequestController = require("../controllers/DataRequestController");
@@ -215,7 +216,9 @@ module.exports = (app) => {
   /*
   ** Route to run a request
   */
-  app.post(`${root}/:id/request`, verifyToken, checkPermissions, (req, res) => {
+  app.post(`${root}/:id/request`, verifyToken, checkPermissions, (req, _res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.params.team_id }, next);
+  }, (req, res) => {
     return dataRequestController.runRequest({
       id: req.params.id,
       chart_id: req.params.chart_id,

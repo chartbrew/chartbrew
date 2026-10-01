@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const crypto = require("crypto");
 
 const db = require("../models/models");
@@ -556,29 +557,31 @@ class MonitorController {
     return { removed: true };
   }
 
-  async refresh(access, monitorId, user) {
-    const monitor = await this.findById(access, monitorId);
-    assertCanEditProject(access, monitor.project_id);
-    if (monitor.chart_id) {
-      const chartController = new ChartController();
-      await chartController.updateChartData(monitor.chart_id, user, {
-        getCache: false,
-        noSource: false,
-      });
-    } else if (monitor.dataset_id) {
-      const datasetController = new DatasetController();
-      await datasetController.runRequest({
-        dataset_id: monitor.dataset_id,
-        getCache: false,
-        noSource: false,
-        projectId: monitor.project_id,
-        teamId: access.teamId,
-        team_id: access.teamId,
-      });
-    } else {
-      throw createHttpError("This metric has no data to refresh", 400);
-    }
-    return this.findById(access, monitorId).then(serializeMonitor);
+  refresh(access, monitorId, user) {
+    return withSourceExecutionContext({ activity: "alert", teamId: access.teamId }, async () => {
+      const monitor = await this.findById(access, monitorId);
+      assertCanEditProject(access, monitor.project_id);
+      if (monitor.chart_id) {
+        const chartController = new ChartController();
+        await chartController.updateChartData(monitor.chart_id, user, {
+          getCache: false,
+          noSource: false,
+        });
+      } else if (monitor.dataset_id) {
+        const datasetController = new DatasetController();
+        await datasetController.runRequest({
+          dataset_id: monitor.dataset_id,
+          getCache: false,
+          noSource: false,
+          projectId: monitor.project_id,
+          teamId: access.teamId,
+          team_id: access.teamId,
+        });
+      } else {
+        throw createHttpError("This metric has no data to refresh", 400);
+      }
+      return this.findById(access, monitorId).then(serializeMonitor);
+    });
   }
 }
 

@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../../../sourceExecution");
 const _ = require("lodash");
 
 const DatasetController = require("../../../../controllers/DatasetController");
@@ -91,7 +92,9 @@ async function runExistingDataset(payload) {
   };
 }
 
-module.exports = runExistingDataset;
+module.exports = (payload) => {
+  return withSourceExecutionContext({ activity: "ai", teamId: payload.team_id }, () => runExistingDataset(payload));
+};
 module.exports.findRows = findRows;
 module.exports.getSafeViewerFields = getSafeViewerFields;
 module.exports.projectRows = projectRows;

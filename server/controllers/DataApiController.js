@@ -1,4 +1,5 @@
 const db = require("../models/models");
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const ChartController = require("./ChartController");
 const DatasetController = require("./DatasetController");
 const {
@@ -85,7 +86,9 @@ class DataApiController {
 
     try {
       const response = await withExecutionDeadline(async (executionContext) => {
-        const result = await operation(traceContext, executionContext);
+        const result = await withSourceExecutionContext({
+          activity: "api", teamId: req.apiKeyAccess.teamId, ...identifiers,
+        }, () => operation(traceContext, executionContext));
         const notModified = req.method === "GET"
           && matchesEtag(req.get("if-none-match"), result.etag);
         if (notModified) {

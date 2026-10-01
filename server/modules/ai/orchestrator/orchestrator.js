@@ -16,6 +16,7 @@ const OpenAI = require("openai");
 const { aggregateUsage, callAiProvider, withAiUsageContext } = require("../usage");
 const { Op } = require("sequelize");
 const db = require("../../../models/models");
+const { withSourceExecutionContext } = require("../../sourceExecution");
 const { MEMORY_INSTRUCTIONS, getMemoryContext, redactMemoryCommand } = require("../memory");
 const socketManager = require("../../socketManager");
 const { sanitizeSnippet } = require("../../updateAudit");
@@ -1266,7 +1267,11 @@ async function availableTools({ activeChartId } = {}) {
   return tools;
 }
 
-async function callTool(name, payload) {
+function callTool(name, payload) {
+  return withSourceExecutionContext({ activity: "ai", teamId: payload.team_id }, () => executeTool(name, payload));
+}
+
+async function executeTool(name, payload) {
   try {
     if (!getWorkspaceOrchestratorPolicy().enabled) {
       throw new Error(CHARTBREW_AI_DISABLED_MESSAGE);

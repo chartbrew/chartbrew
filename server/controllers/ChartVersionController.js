@@ -1,6 +1,7 @@
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const DatasetController = require("./DatasetController");
 const {
   VERSION_LIMIT, chartAccess, getVersion, restoreVersion, captureConfiguration, sameConfiguration,
@@ -66,7 +67,7 @@ async function preview(chartId, version, context) {
     (binding.configuration?.variables || []).forEach(({ name, value }) => {
       if (variables[name] == null || variables[name] === "") variables[name] = value;
     });
-    const result = await controller.runRequest({
+    const result = await withSourceExecutionContext({ activity: "preview", teamId: project.team_id }, () => controller.runRequest({
       dataset_id: binding.dataset_id,
       chart_id: chart.id,
       projectId: project.id,
@@ -80,7 +81,7 @@ async function preview(chartId, version, context) {
       maintainDatasetMetadata: false,
       readRuntimeSourceCache: false,
       writeRuntimeSourceCache: false,
-    });
+    }));
     return { ...result, options: resolveChartDatasetOptions(binding, result.options) };
   }));
   const compiled = new VisualizationEngine({ chart, datasets: results, timezone: project.timezone })

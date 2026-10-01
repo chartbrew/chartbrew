@@ -1,5 +1,6 @@
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -13,6 +14,11 @@ const jiraConnection = require("../../sources/plugins/jira/jira.connection");
 const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
 
 describe("Jira protocol", () => {
+  beforeEach(() => {
+    const execution = require("../../modules/sourceExecution");
+    vi.spyOn(execution, "runSourceExecution").mockImplementation((_options, operation) => operation());
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

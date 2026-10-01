@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../sourceExecution");
 const { Op } = require("sequelize");
 const db = require("../../models/models");
 const DataApiController = require("../../controllers/DataApiController");
@@ -346,7 +347,13 @@ async function execute(req, name, args) {
   return { result: response.body };
 }
 
-async function callMcpTool(req, name, args) {
+function callMcpTool(req, name, args) {
+  return withSourceExecutionContext({ activity: "mcp", teamId: req.apiKeyAccess.teamId }, () => {
+    return executeMcpTool(req, name, args);
+  });
+}
+
+async function executeMcpTool(req, name, args) {
   const access = req.apiKeyAccess;
   const definition = TOOLS.find((item) => item.name === name);
   const summary = {

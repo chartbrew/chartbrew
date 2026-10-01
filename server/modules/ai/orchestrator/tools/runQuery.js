@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../../../sourceExecution");
 const db = require("../../../../models/models");
 const drCacheController = require("../../../../controllers/DataRequestCacheController");
 const {
@@ -152,4 +153,6 @@ async function runQuery(payload, options = {}) {
   }
 }
 
-module.exports = runQuery;
+module.exports = (payload, options) => {
+  return withSourceExecutionContext({ activity: "ai", teamId: payload.team_id }, () => runQuery(payload, options));
+};

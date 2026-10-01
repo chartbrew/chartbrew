@@ -1,3 +1,4 @@
+const sourceExecution = require("../../../modules/sourceExecution");
 const firebase = require("firebase-admin");
 const moment = require("moment");
 
@@ -72,6 +73,7 @@ function populateReferences(docs, subData = []) {
 
 class FirestoreConnection {
   constructor(connection, dataRequestId) {
+    this.connection = connection;
     const firebaseAppName = `${connection.name}_${connection.project_id}_${connection.id}_${dataRequestId}`;
     // first check if there is a firebase app already created for this dataset
     firebase.apps.forEach((firebaseApp) => {
@@ -241,6 +243,14 @@ class FirestoreConnection {
   }
 
   async get(dataRequest) {
+    const { docs, ...result } = await sourceExecution.runSourceExecution({ connection: this.connection, dataRequest, cacheHit: false }, () => {
+      return this.fetchData(dataRequest);
+    });
+    const subCollections = await this.getSubCollectionsRefs(docs);
+    return { ...result, configuration: { ...result.configuration, subCollections } };
+  }
+
+  async fetchData(dataRequest) {
     const { configuration } = dataRequest;
 
     let docsRef;
@@ -314,12 +324,10 @@ class FirestoreConnection {
       finalDocs = populateReferences(mainDocs, subData);
     }
 
-    const subRefs = await this.getSubCollectionsRefs(docs);
-
     return {
+      docs,
       data: finalDocs,
       configuration: {
-        subCollections: subRefs,
         mainCollectionSample: mainDocs.slice(0, 5),
         subCollectionSample: subDocData.slice(0, 5),
       },

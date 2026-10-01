@@ -2,6 +2,7 @@ const cron = require("node-cron");
 
 const { cleanupExpiredRuns } = require("./updateAudit");
 const { cleanupObservationData } = require("./observations/retention");
+const { cleanupSourceExecutions } = require("./sourceExecution");
 
 function getCleanupOptions() {
   return {
@@ -15,6 +16,7 @@ function getCleanupOptions() {
 async function runCleanup() {
   const options = getCleanupOptions();
   const updateRuns = await cleanupExpiredRuns(options);
+  const sourceExecutions = await cleanupSourceExecutions(options);
   const observations = await cleanupObservationData({
     auditDays: process.env.CB_OBSERVATION_AUDIT_RETENTION_DAYS,
     batchSize: process.env.CB_DATA_RETENTION_BATCH_SIZE,
@@ -24,7 +26,7 @@ async function runCleanup() {
     resolvedObservationDays: process.env.CB_OBSERVATION_RESOLVED_RETENTION_DAYS,
     rollupDays: process.env.CB_METRIC_ROLLUP_RETENTION_DAYS,
   });
-  const report = { observations, updateRuns };
+  const report = { observations, updateRuns, sourceExecutions };
   console.info("[retention] Cleanup completed", report); // eslint-disable-line no-console
   return report;
 }

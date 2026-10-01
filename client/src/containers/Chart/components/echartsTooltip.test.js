@@ -15,6 +15,18 @@ const colors = {
   text: "#27272a",
 };
 
+test("formats tooltip numbers without changing source values or formatted text", () => {
+  for (const compact of [false, true]) {
+    const formatter = createEChartsTooltipFormatter(colors, { compact });
+    for (const value of [1.306578947368421, 0.152, 12000, -1.306578947368421, 0, "1.30 s"]) {
+      const param = { seriesType: "line", seriesName: "Mean request time", value };
+      const expected = typeof value === "number" ? value.toLocaleString() : value;
+      assert.ok(formatter(param).includes(`>${expected}</span>`));
+      assert.equal(param.value, value);
+    }
+  }
+});
+
 test("formats cartesian tooltips with one heading and regular-weight rows", () => {
   const html = createEChartsTooltipFormatter(colors)([{
     axisValueLabel: "Aug 11",
