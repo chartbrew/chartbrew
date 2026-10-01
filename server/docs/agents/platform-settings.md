@@ -10,9 +10,45 @@ control cannot override a disabled platform control.
 
 - Only a user with `User.admin = true` can use the API.
 - `GET /platform/settings` returns the safe settings registry and effective values.
+- `GET /platform/analytics?days=30` returns request and AI usage totals and daily charts across all teams.
 - `PUT /platform/settings` saves validated overrides.
 - `POST /platform/settings/reset` removes selected overrides and restores deployment defaults.
 - These routes cannot change `User.admin`.
+
+## Platform Analytics
+
+Open **Settings → Platform analytics** as a platform admin. Choose 7, 30, or 90 days
+(default: 30), or refresh to load current records. Charts use `VisualizationEngine` and the
+shared client renderer; KPI values use the same metric formatting as dashboard charts.
+
+`server/modules/platformAnalytics.js` aggregates `SourceExecution` in the database:
+
+- Only `cacheHit: false` records with a confirmed `success` or `failed` outcome are included.
+- Periods start at UTC midnight, include today, and end at the response snapshot time (exclusive).
+  Requests belong to the day they finish. Pending outcomes are excluded.
+- Success rate is successful requests divided by all completed requests. An empty period has no rate.
+- Mean time is the sum of valid durations divided by the number of timed requests, across both outcomes.
+  Durations run from `startedAt` to `finishedAt`, including pagination and pre-execution overhead.
+  Negative durations are excluded from means but still count toward request totals.
+- Days without requests show zero counts and a gap for mean time. Missing means are never zero-filled.
+- Daily values and period KPIs come from the same aggregate query. No request payloads or identifiers are returned.
+- Existing record retention and team deletion rules apply. Records from before execution tracking began are unavailable.
+
+The **AI usage** tab uses the response's `ai` object, aggregated from `AiUsage`:
+
+- Calls, input tokens, output tokens, and total tokens share the selected period. Days use record creation time in UTC.
+- All activities are included. One user task can make several provider calls.
+- `reported` and `unknown` records count as calls. `pending` records are shown separately; `rejected` records are excluded.
+- Older `legacy` records count only when at least one token count is positive. Old zero-token records can represent work without a provider call.
+- Token totals include `reported` and included `legacy` records. Partial counts from `unknown` records are excluded.
+  Missing counts and records without a final result are shown in a warning and in the daily and model tables.
+- Cached input and reasoning tokens are already included in input and output. They are not added again.
+- Model totals group by provider and model. Prompts, answers, and team identifiers are not returned.
+- No prices or credits are calculated. These remain in Cloud. Existing AI usage migration and retention rules apply.
+
+Run `npm --prefix server run db:migrate` to add the `source_execution_finished` date index.
+No new environment variables are needed. Tests run against an isolated database:
+`npm --prefix server run test:database -- tests/integration/platformAnalytics.test.js`.
 
 ## Product Controls
 

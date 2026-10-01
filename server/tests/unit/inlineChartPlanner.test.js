@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const db = require("../../models/models");
 const orchestrator = require("../../modules/ai/orchestrator/orchestrator");
 const originalProvider = orchestrator.getChartCreationProvider;
 const create = vi.fn();
@@ -16,8 +17,13 @@ const mapPlan = (field) => ({ name: "Visits around the world", type: "map", data
 const context = () => ({ access: { canConfigureTeam: true, teamId: 7 }, input: { prompt: "Map visits around the world in the last 30 days" },
   checkActive: async () => 120000, inspectDataset: vi.fn().mockResolvedValue({}), runScopedTool: vi.fn().mockResolvedValue({}) });
 
-afterEach(() => create.mockReset());
+afterEach(() => {
+  create.mockReset();
+  vi.restoreAllMocks();
+});
 beforeEach(() => {
+  vi.spyOn(db.AiUsage, "create").mockImplementation(async (record) => record);
+  vi.spyOn(db.AiUsage, "update").mockResolvedValue([1]);
   create.mockResolvedValueOnce(response("inspect_dataset", { dataset_id: 20 }));
 });
 

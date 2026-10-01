@@ -23,6 +23,10 @@ export function getPlatformSettings() {
   return platformSettingsRequest("/platform/settings");
 }
 
+export function getPlatformAnalytics(days, signal) {
+  return platformSettingsRequest(`/platform/analytics?days=${encodeURIComponent(days)}`, { signal });
+}
+
 export function updatePlatformSettings(settings) {
   return platformSettingsRequest("/platform/settings", {
     body: JSON.stringify({ settings }),

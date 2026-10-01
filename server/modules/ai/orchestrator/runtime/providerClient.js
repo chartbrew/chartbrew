@@ -1,3 +1,4 @@
+const { callAiProvider } = require("../../usage");
 const { assertNoForbiddenExternalData } = require("./egressBoundary");
 const { buildJsonSchemaFormat } = require("./responseSchemas");
 const { MEMORY_INSTRUCTIONS } = require("../../memory");
@@ -199,8 +200,14 @@ async function callProviderRole({
   }
   const startedAt = Date.now();
   try {
-    const response = await client.responses.create(request, {
-      timeout: reservation.remainingTimeMs,
+    const response = await callAiProvider({
+      client,
+      api: "responses",
+      purpose: `workspace_${role}`,
+      request,
+      options: {
+        timeout: reservation.remainingTimeMs,
+      },
     });
     reservation.complete(response);
     return {

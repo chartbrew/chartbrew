@@ -1,3 +1,4 @@
+const { callAiProvider, withAiUsageContext, getResponseUsageRecord } = require("../ai/usage");
 const crypto = require("crypto");
 const OpenAI = require("openai");
 const { col, fn, Op } = require("sequelize");
@@ -105,7 +106,11 @@ async function hasAuditBudget(teamId, policy) {
     && (Number(usage?.tokens) || 0) < policy.llmAuditDailyTokenLimit;
 }
 
-async function auditCandidate(payload) {
+function auditCandidate(payload) {
+  return withAiUsageContext({ teamId: payload.teamId, activity: "internal" }, () => executeAudit(payload));
+}
+
+async function executeAudit(payload) {
   const policy = getObservationPolicy();
   if (policy.llmAuditMode === "off" || policy.llmAuditMode === "manual") {
     return { skipped: "disabled" };
@@ -125,71 +130,65 @@ async function auditCandidate(payload) {
 
   const model = process.env.CB_OBSERVATIONS_LLM_AUDIT_MODEL || "gpt-5.4-nano";
   const featureVector = buildAuditEvidence(payload);
-  const startedAt = Date.now();
-  const response = await client.responses.create({
-    input: [{
-      content: [{
-        text: JSON.stringify(featureVector),
-        type: "input_text",
+  const response = await callAiProvider({
+    client,
+    api: "responses",
+    purpose: "observation_audit",
+    request: {
+      input: [{
+        content: [{
+          text: JSON.stringify(featureVector),
+          type: "input_text",
+        }],
+        role: "user",
       }],
-      role: "user",
-    }],
-    instructions: "Audit whether this deterministic metric-change candidate is likely useful. Judge only the supplied features. Do not infer causes or missing business context.",
-    model,
-    text: {
-      format: {
-        name: "observation_audit",
-        schema: {
-          additionalProperties: false,
-          properties: {
-            evidenceSupported: { type: "boolean" },
-            reasonCodes: {
-              items: { enum: [...ALLOWED_REASON_CODES], type: "string" },
-              type: "array",
-            },
-            relevanceScore: { maximum: 1, minimum: 0, type: "number" },
-            relevant: { type: "boolean" },
-            suggestedWeightChanges: {
-              items: {
-                additionalProperties: false,
-                properties: {
-                  direction: { enum: ["increase", "decrease"], type: "string" },
-                  feature: { enum: [...ALLOWED_FEATURES], type: "string" },
-                  rationale: { maxLength: 300, type: "string" },
-                },
-                required: ["feature", "direction", "rationale"],
-                type: "object",
+      instructions: "Audit whether this deterministic metric-change candidate is likely useful. Judge only the supplied features. Do not infer causes or missing business context.",
+      model,
+      text: {
+        format: {
+          name: "observation_audit",
+          schema: {
+            additionalProperties: false,
+            properties: {
+              evidenceSupported: { type: "boolean" },
+              reasonCodes: {
+                items: { enum: [...ALLOWED_REASON_CODES], type: "string" },
+                type: "array",
               },
-              type: "array",
+              relevanceScore: { maximum: 1, minimum: 0, type: "number" },
+              relevant: { type: "boolean" },
+              suggestedWeightChanges: {
+                items: {
+                  additionalProperties: false,
+                  properties: {
+                    direction: { enum: ["increase", "decrease"], type: "string" },
+                    feature: { enum: [...ALLOWED_FEATURES], type: "string" },
+                    rationale: { maxLength: 300, type: "string" },
+                  },
+                  required: ["feature", "direction", "rationale"],
+                  type: "object",
+                },
+                type: "array",
+              },
             },
+            required: [
+              "relevant",
+              "relevanceScore",
+              "evidenceSupported",
+              "reasonCodes",
+              "suggestedWeightChanges",
+            ],
+            type: "object",
           },
-          required: [
-            "relevant",
-            "relevanceScore",
-            "evidenceSupported",
-            "reasonCodes",
-            "suggestedWeightChanges",
-          ],
-          type: "object",
+          strict: true,
+          type: "json_schema",
         },
-        strict: true,
-        type: "json_schema",
+        verbosity: "low",
       },
-      verbosity: "low",
     },
   });
   const verdict = validateAuditVerdict(JSON.parse(response.output_text));
-  const usage = await db.AiUsage.create({
-    completion_tokens: response.usage?.output_tokens || 0,
-    conversation_id: null,
-    cost_micros: 0,
-    elapsed_ms: Date.now() - startedAt,
-    model,
-    prompt_tokens: response.usage?.input_tokens || 0,
-    purpose: "observation_audit",
-    team_id: payload.teamId,
-    total_tokens: response.usage?.total_tokens || 0,
-  });
+  const usage = getResponseUsageRecord(response);
   await db.ObservationAudit.create({
     audit_mode: policy.llmAuditMode,
     audit_version: AUDIT_VERSION,

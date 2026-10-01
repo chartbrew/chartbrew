@@ -1,5 +1,6 @@
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -34,6 +35,11 @@ const {
   applyVariablesToValue,
 } = require("../../sources/plugins/mcp/mcp.variables");
 
+beforeEach(() => {
+  vi.spyOn(db.AiUsage, "create").mockImplementation(async (record) => record);
+  vi.spyOn(db.AiUsage, "update").mockResolvedValue([1]);
+});
+
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
@@ -63,6 +69,7 @@ function createTool(overrides = {}) {
 
 function createConnection(tool, approval = {}) {
   return {
+    team_id: 7,
     schema: {
       mcp: {
         tools: [tool],

@@ -1,3 +1,4 @@
+const { withAiUsageContext } = require("../modules/ai/usage");
 const Sequelize = require("sequelize");
 
 const ConnectionController = require("./ConnectionController");
@@ -284,24 +285,26 @@ class RequestController {
           return Promise.reject(new Error("No schema found. Please test your connection first."));
         }
 
-        let aiResponse;
-        if (source?.backend?.ai?.generateQuery) {
-          assertSourceServerEnabled(source);
-          aiResponse = await source.backend.ai.generateQuery({
-            schema,
-            question,
-            conversationHistory,
-            currentQuery,
-            connection,
-            dataRequest,
-          });
-        } else {
-          aiResponse = await generateSqlQuery(
-            schema, question, conversationHistory, currentQuery
-          );
-        }
+        return withAiUsageContext({ teamId: connection.team_id }, async () => {
+          let aiResponse;
+          if (source?.backend?.ai?.generateQuery) {
+            assertSourceServerEnabled(source);
+            aiResponse = await source.backend.ai.generateQuery({
+              schema,
+              question,
+              conversationHistory,
+              currentQuery,
+              connection,
+              dataRequest,
+            });
+          } else {
+            aiResponse = await generateSqlQuery(
+              schema, question, conversationHistory, currentQuery
+            );
+          }
 
-        return aiResponse;
+          return aiResponse;
+        });
       })
       .catch((error) => {
         return Promise.reject(error);

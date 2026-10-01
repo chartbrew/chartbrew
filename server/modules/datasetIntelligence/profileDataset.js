@@ -1,3 +1,4 @@
+const { withAiUsageContext } = require("../ai/usage");
 const db = require("../../models/models");
 const { sanitizeSnippet } = require("../updateAudit");
 const { getIntelligencePolicy } = require("../intelligence/policy");
@@ -164,7 +165,7 @@ async function generateDatasetProfile({
 
     if (policy.llmEnrichment) {
       try {
-        profile = await enrichProfile(profile);
+        profile = await withAiUsageContext({ teamId, activity: "background" }, () => enrichProfile(profile));
       } catch (error) {
         profile.quality.warnings.push({ code: "enrichment_unavailable" });
       }

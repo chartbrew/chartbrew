@@ -1,3 +1,4 @@
+const { aggregateUsage, withAiUsageContext } = require("../../usage");
 const { buildContextManifest } = require("../../../workspaceContext/contextManifest");
 const { escapeMarkdown } = require("../../../workspaceContext/deterministicSummary");
 const { getWorkspaceAccessEnvelope } = require("../../../workspaceContext/accessEnvelope");
@@ -380,15 +381,11 @@ function getProjectIds(facts) {
   }).filter(Boolean);
 }
 
-function aggregateUsage(usageRecords) {
-  return usageRecords.reduce((total, item) => ({
-    completion_tokens: total.completion_tokens + Number(item?.completion_tokens || 0),
-    prompt_tokens: total.prompt_tokens + Number(item?.prompt_tokens || 0),
-    total_tokens: total.total_tokens + Number(item?.total_tokens || 0),
-  }), { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0 });
+function runSplitWorkspaceRequest(input) {
+  return withAiUsageContext({ teamId: input.access.teamId }, () => executeSplitWorkspaceRequest(input));
 }
 
-async function runSplitWorkspaceRequest({
+async function executeSplitWorkspaceRequest({
   access,
   accessEnvelopeReader = getWorkspaceAccessEnvelope,
   activityReader = readWorkspaceActivity,

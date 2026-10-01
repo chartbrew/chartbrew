@@ -12,6 +12,7 @@ import ManageUser from "./ManageUser";
 import TeamSettings from "./TeamSettings";
 import ApiKeys from "../ApiKeys/ApiKeys";
 import PlatformSettings from "./PlatformSettings";
+import PlatformAnalytics from "./PlatformAnalytics";
 import BusinessProfileSettings from "./BusinessProfileSettings";
 import TeamMembers from "./TeamMembers";
 import TeamAiSettings from "./TeamAiSettings";
@@ -134,6 +135,14 @@ function ManageTeam() {
         element={user.admin === true ? (
           <SettingsPage title="Platform settings" wide>
             <PlatformSettings />
+          </SettingsPage>
+        ) : <Navigate replace to={defaultPath} />}
+      />
+      <Route
+        path="platform/analytics"
+        element={user.admin === true ? (
+          <SettingsPage title="Platform analytics" wide>
+            <PlatformAnalytics />
           </SettingsPage>
         ) : <Navigate replace to={defaultPath} />}
       />

@@ -39,6 +39,27 @@ function buildEngine(mark, encoding, data, layer = {}, chart = {}, datasetOption
 }
 
 describe("visualization output compilers", () => {
+  it("keeps the first date when a time series starts with a missing value", () => {
+    const echarts = require("echarts");
+    const result = buildEngine("line", {
+      time: { field: "root[].date", type: "temporal" },
+      value: { field: "root[].duration", type: "quantitative", nullPolicy: "preserve" },
+    }, [
+      { date: "2026-10-01", duration: null },
+      { date: "2026-10-02", duration: 0.123 },
+    ]).render();
+    const chart = echarts.init(null, null, { renderer: "svg", ssr: true, width: 800, height: 320 });
+    try {
+      chart.setOption(result.configuration);
+      const data = chart.getModel().getSeriesByIndex(0).getData();
+      expect(data.count()).toBe(2);
+      expect(data.getName(0)).toBe("Oct 1");
+      expect(data.get(data.mapDimension("y"), 1)).toBe(0.123);
+    } finally {
+      chart.dispose();
+    }
+  });
+
   it("compiles graphical charts directly to ECharts", () => {
     const result = buildEngine("line", {
       category: { field: "root[].month", type: "nominal" },

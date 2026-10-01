@@ -13,6 +13,7 @@
  */
 
 const OpenAI = require("openai");
+const { aggregateUsage, callAiProvider, withAiUsageContext } = require("../usage");
 const { Op } = require("sequelize");
 const db = require("../../../models/models");
 const { MEMORY_INSTRUCTIONS, getMemoryContext, redactMemoryCommand } = require("../memory");
@@ -2275,18 +2276,6 @@ function attachContextManifest(usageRecords, contextManifest) {
   }));
 }
 
-function buildLegacyUsageFromResponse(response) {
-  if (!response?.usage) {
-    return null;
-  }
-
-  return {
-    prompt_tokens: response.usage.input_tokens || 0,
-    completion_tokens: response.usage.output_tokens || 0,
-    total_tokens: response.usage.total_tokens || 0,
-  };
-}
-
 async function buildSemanticLayer(teamId, options = {}) {
   const {
     allowedProjectIds,
@@ -2381,7 +2370,16 @@ async function buildSemanticLayer(teamId, options = {}) {
   return semanticLayer;
 }
 
-async function orchestrate(
+function orchestrate(teamId, question, history = [], conversation = null, context = null, options = {}) {
+  return withAiUsageContext({
+    teamId,
+    ...(options.usageConversationId ? { conversationId: options.usageConversationId } : {}),
+  }, () => {
+    return executeOrchestration(teamId, question, history, conversation, context, options);
+  });
+}
+
+async function executeOrchestration(
   teamId, question, conversationHistory = [], conversation = null, context = null, options = {}
 ) {
   if (!getWorkspaceOrchestratorPolicy().enabled) {
@@ -2604,18 +2602,23 @@ async function orchestrate(
 
   const createModelResponse = async (toolChoice = null) => {
     const startTime = Date.now();
-    const response = await openaiClient.responses.create({
-      model: modelName,
-      instructions: systemPrompt,
-      input: buildResponseInputFromMessages(modelMessages),
-      tools,
-      tool_choice: toolChoice || "auto",
-      parallel_tool_calls: true,
-      reasoning: {
-        effort: "medium",
-      },
-      text: {
-        verbosity: "low",
+    const response = await callAiProvider({
+      client: openaiClient,
+      api: "responses",
+      purpose: "ask_data",
+      request: {
+        model: modelName,
+        instructions: systemPrompt,
+        input: buildResponseInputFromMessages(modelMessages),
+        tools,
+        tool_choice: toolChoice || "auto",
+        parallel_tool_calls: true,
+        reasoning: {
+          effort: "medium",
+        },
+        text: {
+          verbosity: "low",
+        },
       },
     });
     const elapsedMs = Date.now() - startTime;
@@ -2838,7 +2841,7 @@ async function orchestrate(
         prompt: disambiguationRequest.prompt,
         options: disambiguationRequest.options,
         conversationHistory: persistedMessages,
-        usage: buildLegacyUsageFromResponse(response),
+        usage: aggregateUsage(usageRecords),
         usageRecords: attachContextManifest(usageRecords, contextManifest),
         iterations,
         snapshots,
@@ -2900,7 +2903,7 @@ async function orchestrate(
     contextManifest,
     message: assistantMessage.content,
     conversationHistory: persistedMessages,
-    usage: buildLegacyUsageFromResponse(response), // Last API call usage (backward compatibility)
+    usage: aggregateUsage(usageRecords),
     usageRecords: attachContextManifest(usageRecords, contextManifest),
     iterations,
     pendingAction: getPendingActionFromToolResults(allToolResults),

@@ -1,3 +1,4 @@
+const { callAiProvider } = require("./usage");
 const OpenAI = require("openai");
 
 const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
@@ -53,9 +54,14 @@ async function generateClickhouseQuery(schema, question, conversationHistory = [
       });
     }
 
-    const response = await openaiClient.chat.completions.create({
-      model: openAiModel || "gpt-4o-mini",
-      messages,
+    const response = await callAiProvider({
+      client: openaiClient,
+      api: "chat",
+      purpose: "generate_clickhouse",
+      request: {
+        model: openAiModel || "gpt-4o-mini",
+        messages,
+      },
     });
 
     const clickhouseQuery = response.choices[0].message.content;

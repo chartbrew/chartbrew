@@ -10,6 +10,8 @@ This is the index for agent-oriented documentation. Each topic is detailed in se
 - [Filtering Guide](docs/agents/filtering-guide.md) - Runtime filter sources, merge rules, normalization, and execution
 
 ### Features and Flows
+
+- [AI Usage Records](docs/agents/ai-usage.md) - Provider accounting and Cloud billing hooks
 - [User Authentication](docs/agents/user-authentication.md) - Signup, login, 2FA, password reset, email updates
 - [Platform Settings](docs/agents/platform-settings.md) - Platform-admin access, safe configuration registry, and runtime overrides
 

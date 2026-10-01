@@ -466,7 +466,7 @@ class SlackController {
         conversationHistory,
         conversation,
         null, // No project context - let agent decide
-        { toolProgressCallback }
+        { toolProgressCallback, usageConversationId: conversationId }
       );
 
       // Save new messages to database
@@ -491,20 +491,6 @@ class SlackController {
       });
 
       await Promise.all(messagePromises);
-
-      // Save usage records
-      const usagePromises = (result.usageRecords || []).map((usage) => db.AiUsage.create({
-        conversation_id: conversationId,
-        team_id: integration.team_id,
-        model: usage.model,
-        prompt_tokens: usage.prompt_tokens,
-        completion_tokens: usage.completion_tokens,
-        total_tokens: usage.total_tokens,
-        elapsed_ms: usage.elapsed_ms,
-        cost_micros: 0,
-      }));
-
-      await Promise.all(usagePromises);
 
       // Update conversation metadata
       await conversation.update({

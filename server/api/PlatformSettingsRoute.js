@@ -2,6 +2,7 @@ const rateLimit = require("express-rate-limit");
 
 const PlatformSettingsController = require("../controllers/PlatformSettingsController");
 const verifyToken = require("../modules/verifyToken");
+const { getPlatformAnalytics } = require("../modules/platformAnalytics");
 
 const platformSettingsLimiter = rateLimit({
   legacyHeaders: false,
@@ -29,6 +30,15 @@ function sendError(res, error) {
 module.exports = (app) => {
   const controller = new PlatformSettingsController();
   const access = [platformSettingsLimiter, verifyToken, requirePlatformAdmin];
+
+  app.get("/platform/analytics", ...access, async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    try {
+      return res.send(await getPlatformAnalytics(req.query.days));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
 
   app.get("/platform/settings", ...access, async (req, res) => {
     try {

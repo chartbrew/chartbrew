@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import {
   LuArrowLeft,
   LuBriefcaseBusiness,
+  LuChartNoAxesCombined,
   LuCode,
   LuSettings,
   LuShieldCheck,
@@ -56,6 +57,10 @@ const PLATFORM_ITEMS = [{
   icon: LuShieldCheck,
   label: "Platform settings",
   path: "/settings/platform",
+}, {
+  icon: LuChartNoAxesCombined,
+  label: "Platform analytics",
+  path: "/settings/platform/analytics",
 }];
 
 function SettingsLink({ item }) {

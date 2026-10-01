@@ -1,3 +1,4 @@
+const { callAiProvider } = require("../../usage");
 const { MAP_CHART_RULES } = require("../entityCreationRules");
 
 async function suggestChart(payload) {
@@ -26,10 +27,15 @@ For map suggestions, return the geographic roles in encodings and map settings i
 Respond with JSON only: { "type": "...", "title": "...", "encodings": {}, "options": {} }`;
 
   try {
-    const response = await global.openaiClient.chat.completions.create({
-      model: global.openAiModel || "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 300,
+    const response = await callAiProvider({
+      client: global.openaiClient,
+      api: "chat",
+      purpose: "suggest_chart",
+      request: {
+        model: global.openAiModel || "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 300,
+      },
     });
 
     const suggestion = JSON.parse(response.choices[0].message.content);

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const { withAiUsageContext } = require("../../modules/ai/usage");
 const db = require("../../models/models");
 const chartVersions = require("../../modules/chartVersions");
 const ChartController = require("../../controllers/ChartController");
@@ -41,6 +42,8 @@ describe("AI map tools", () => {
   let originalClient;
 
   beforeEach(() => {
+    vi.spyOn(db.AiUsage, "create").mockImplementation(async (record) => record);
+    vi.spyOn(db.AiUsage, "update").mockResolvedValue([1]);
     vi.spyOn(chartVersions, "saveChartVersion").mockImplementation(async (_id, _context, save) => save({ transaction: {} }));
     originalClient = global.openaiClient;
     const dataset = { id: 20, team_id: 7, project_ids: [10], name: "Places", DataRequests: [{ id: 30 }], update: vi.fn() };
@@ -140,7 +143,7 @@ describe("AI map tools", () => {
     const suggestion = { type: "map", title: "Places", encodings: pointEncoding, options: { map: { mode: "points", area: "world", coordinates: "geojson" } } };
     const completion = vi.fn().mockResolvedValue({ choices: [{ message: { content: JSON.stringify(suggestion) } }] });
     global.openaiClient = { chat: { completions: { create: completion } } };
-    expect(await suggestChart({ question: "Map these places", result_shape: { columns: ["location.geo_data"] } })).toEqual(suggestion);
+    expect(await withAiUsageContext({ teamId: 7 }, () => suggestChart({ question: "Map these places", result_shape: { columns: ["location.geo_data"] } }))).toEqual(suggestion);
     const prompt = completion.mock.calls[0][0].messages[0].content;
     expect(prompt).toContain("gauge, matrix, map");
     expect(prompt).toContain("GeoJSON coordinate order is longitude, latitude");

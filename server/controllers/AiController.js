@@ -1,5 +1,6 @@
+const { withAiUsageContext } = require("../modules/ai/usage");
 const crypto = require("crypto");
-const { fn, col, Op } = require("sequelize");
+const { fn, col, Op, literal } = require("sequelize");
 
 const {
   availableTools,
@@ -398,142 +399,128 @@ async function getOrchestration(
   });
 
   try {
-    const memoryResult = await runMemoryCommand({ question, teamId, userId, history: fullHistory });
-    const roleBoundary = memoryResult || await runDeterministicWorkspaceRequest({
-      access,
-      history: fullHistory,
-      question,
-      roleBoundaryOnly: true,
-    });
-    const preferExternalActivitySynthesis = validatedContext.length === 0
-      && shouldPreferExternalActivitySynthesis(question, orchestrationOptions);
-    const orchestration = roleBoundary || (validatedContext.length === 0
-      && !preferExternalActivitySynthesis
-      ? await runDeterministicWorkspaceRequest({
-        access,
-        allowPlannerFallback: !orchestrationOptions.canUseExternalWorkspaceContext,
-        history: fullHistory,
-        question,
-      })
-      : null);
-    let resolvedOrchestration = orchestration;
-    if (!resolvedOrchestration && validatedContext.length === 0) {
-      resolvedOrchestration = await runExternalWorkspaceOrchestration({
+    return await withAiUsageContext({ teamId, conversationId: conversation.id }, async () => {
+      const memoryResult = await runMemoryCommand({ question, teamId, userId, history: fullHistory });
+      const roleBoundary = memoryResult || await runDeterministicWorkspaceRequest({
         access,
         history: fullHistory,
-        options: orchestrationOptions,
         question,
+        roleBoundaryOnly: true,
       });
-    }
-    if (!resolvedOrchestration) {
-      try {
-        resolvedOrchestration = await orchestrate(
-          teamId,
+      const preferExternalActivitySynthesis = validatedContext.length === 0
+        && shouldPreferExternalActivitySynthesis(question, orchestrationOptions);
+      const orchestration = roleBoundary || (validatedContext.length === 0
+        && !preferExternalActivitySynthesis
+        ? await runDeterministicWorkspaceRequest({
+          access,
+          allowPlannerFallback: !orchestrationOptions.canUseExternalWorkspaceContext,
+          history: fullHistory,
           question,
-          fullHistory,
-          conversation,
-          validatedContext,
-          orchestrationOptions,
-        );
-      } catch (providerError) {
-        const fallback = validatedContext.length === 0
-          ? await runDeterministicWorkspaceRequest({
-            access,
-            allowPlannerFallback: true,
-            history: fullHistory,
-            question,
-          })
-          : null;
-        if (!fallback) throw providerError;
-        resolvedOrchestration = fallback;
+        })
+        : null);
+      let resolvedOrchestration = orchestration;
+      if (!resolvedOrchestration && validatedContext.length === 0) {
+        resolvedOrchestration = await runExternalWorkspaceOrchestration({
+          access,
+          history: fullHistory,
+          options: orchestrationOptions,
+          question,
+        });
       }
-    }
-    resolvedOrchestration = await applyDirectMetricInstruction({
-      access,
-      metricMonitorWritesEnabled: orchestrationOptions.metricMonitorWritesEnabled,
-      orchestration: resolvedOrchestration,
-      question,
-      sessionId: getAiSessionBinding("conversation", conversation.id),
-    });
+      if (!resolvedOrchestration) {
+        try {
+          resolvedOrchestration = await orchestrate(
+            teamId,
+            question,
+            fullHistory,
+            conversation,
+            validatedContext,
+            orchestrationOptions,
+          );
+        } catch (providerError) {
+          const fallback = validatedContext.length === 0
+            ? await runDeterministicWorkspaceRequest({
+              access,
+              allowPlannerFallback: true,
+              history: fullHistory,
+              question,
+            })
+            : null;
+          if (!fallback) throw providerError;
+          resolvedOrchestration = fallback;
+        }
+      }
+      resolvedOrchestration = await applyDirectMetricInstruction({
+        access,
+        metricMonitorWritesEnabled: orchestrationOptions.metricMonitorWritesEnabled,
+        orchestration: resolvedOrchestration,
+        question,
+        sessionId: getAiSessionBinding("conversation", conversation.id),
+      });
 
-    // Get the starting sequence number (0 for new conversations, or continue from existing)
-    const existingMessageCount = await db.AiMessage.count({
-      where: { conversation_id: conversation.id }
-    });
+      // Get the starting sequence number (0 for new conversations, or continue from existing)
+      const existingMessageCount = await db.AiMessage.count({
+        where: { conversation_id: conversation.id }
+      });
 
-    // Save new messages to AiMessage table
-    const currentTurnStart = resolvedOrchestration.conversationHistory.findLastIndex((item) => {
-      return item.role === "user" && item.content === question;
-    });
-    const newMessages = resolvedOrchestration.conversationHistory.slice(
-      currentTurnStart >= 0 ? currentTurnStart : fullHistory.length
-    ).filter((msg, index) => !(index === 0 && msg.role === "user" && msg.content === question));
-    const messagePromises = newMessages.map((msg, index) => {
-      const messageData = {
-        conversation_id: conversation.id,
-        role: msg.role,
-        content: msg.content,
-        sequence: existingMessageCount + index,
-        sensitive_workspace_context: msg.role !== "user"
-          && Boolean(resolvedOrchestration.contextManifest),
-        workspace_access_version: msg.role !== "user"
-          && resolvedOrchestration.contextManifest
-          ? orchestrationOptions.workspaceAccessVersion
-          : null,
+      // Save new messages to AiMessage table
+      const currentTurnStart = resolvedOrchestration.conversationHistory.findLastIndex((item) => {
+        return item.role === "user" && item.content === question;
+      });
+      const newMessages = resolvedOrchestration.conversationHistory.slice(
+        currentTurnStart >= 0 ? currentTurnStart : fullHistory.length
+      ).filter((msg, index) => !(index === 0 && msg.role === "user" && msg.content === question));
+      const messagePromises = newMessages.map((msg, index) => {
+        const messageData = {
+          conversation_id: conversation.id,
+          role: msg.role,
+          content: msg.content,
+          sequence: existingMessageCount + index,
+          sensitive_workspace_context: msg.role !== "user"
+            && Boolean(resolvedOrchestration.contextManifest),
+          workspace_access_version: msg.role !== "user"
+            && resolvedOrchestration.contextManifest
+            ? orchestrationOptions.workspaceAccessVersion
+            : null,
+        };
+
+        // Handle tool calls for assistant messages
+        if (msg.tool_calls) {
+          messageData.tool_calls = msg.tool_calls;
+        }
+
+        // Handle tool result messages
+        if (msg.role === "tool") {
+          messageData.tool_name = msg.name;
+          messageData.tool_call_id = msg.tool_call_id;
+          messageData.content = getPersistedAiMessageContent(msg);
+          // Store preview of tool result (first 500 chars)
+          const resultStr = typeof messageData.content === "string"
+            ? messageData.content
+            : JSON.stringify(messageData.content);
+          messageData.tool_result_preview = resultStr.substring(0, 500);
+        }
+
+        return db.AiMessage.create(messageData);
+      });
+
+      await Promise.all(messagePromises);
+
+      // Update conversation metadata
+      const updateData = {
+        message_count: resolvedOrchestration.conversationHistory.filter((msg) => msg.role === "user").length,
+        status: "active",
+        error_message: null,
+        title: getConversationTitle(conversation.title, messages.find((msg) => msg.role === "user")?.content || question),
       };
 
-      // Handle tool calls for assistant messages
-      if (msg.tool_calls) {
-        messageData.tool_calls = msg.tool_calls;
-      }
+      await conversation.update(updateData);
 
-      // Handle tool result messages
-      if (msg.role === "tool") {
-        messageData.tool_name = msg.name;
-        messageData.tool_call_id = msg.tool_call_id;
-        messageData.content = getPersistedAiMessageContent(msg);
-        // Store preview of tool result (first 500 chars)
-        const resultStr = typeof messageData.content === "string"
-          ? messageData.content
-          : JSON.stringify(messageData.content);
-        messageData.tool_result_preview = resultStr.substring(0, 500);
-      }
-
-      return db.AiMessage.create(messageData);
+      return {
+        ...resolvedOrchestration,
+        aiConversationId: conversation.id,
+      };
     });
-
-    await Promise.all(messagePromises);
-
-    // Save usage records to AiUsage table
-    const usagePromises = (resolvedOrchestration.usageRecords || []).map((usage) => db.AiUsage.create({
-      conversation_id: conversation.id,
-      team_id: teamId,
-      model: usage.model,
-      prompt_tokens: usage.prompt_tokens,
-      purpose: usage.purpose || "ask_data",
-      context_manifest: usage.context_manifest || resolvedOrchestration.contextManifest || null,
-      completion_tokens: usage.completion_tokens,
-      total_tokens: usage.total_tokens,
-      elapsed_ms: usage.elapsed_ms,
-      cost_micros: 0, // TODO: Calculate cost based on model pricing
-    }));
-
-    await Promise.all(usagePromises);
-
-    // Update conversation metadata
-    const updateData = {
-      message_count: resolvedOrchestration.conversationHistory.filter((msg) => msg.role === "user").length,
-      status: "active",
-      error_message: null,
-      title: getConversationTitle(conversation.title, messages.find((msg) => msg.role === "user")?.content || question),
-    };
-
-    await conversation.update(updateData);
-
-    return {
-      ...resolvedOrchestration,
-      aiConversationId: conversation.id,
-    };
   } catch (error) {
     // Update conversation status on error
     await conversation.update({
@@ -585,21 +572,6 @@ function trimSessionHistory(history = []) {
     bounded.unshift(message);
   }
   return bounded;
-}
-
-async function saveUsageRecords(teamId, conversationId, usageRecords = []) {
-  return Promise.all(usageRecords.map((usage) => db.AiUsage.create({
-    completion_tokens: usage.completion_tokens,
-    conversation_id: conversationId,
-    cost_micros: 0,
-    context_manifest: usage.context_manifest || null,
-    elapsed_ms: usage.elapsed_ms,
-    model: usage.model,
-    prompt_tokens: usage.prompt_tokens,
-    purpose: usage.purpose || "ask_data",
-    team_id: teamId,
-    total_tokens: usage.total_tokens,
-  })));
 }
 
 async function confirmPersistentAction({ action, aiConversationId, teamId, userId }) {
@@ -878,7 +850,11 @@ async function confirmTypedEphemeralAction({ sessionId, teamId, userId }) {
   });
 }
 
-async function respond({
+function respond(input) {
+  return withAiUsageContext({ teamId: input.teamId }, () => executeResponse(input));
+}
+
+async function executeResponse({
   activeChartId,
   action,
   aiConversationId,
@@ -1047,23 +1023,20 @@ async function respond({
     orchestration.conversationHistory.map(getReplaySafeAiMessage)
   );
   const messageCount = history.filter((item) => item.role === "user").length;
-  await Promise.all([
-    runtimeCache.setAiSession({
-      payload: {
-        accessVersion: envelope.accessVersion,
-        context: validatedContext.map((item) => ({
-          entityId: item.entityId,
-          entityType: item.entityType,
-        })),
-        history,
-        messageCount,
-      },
-      sessionId: resolvedSessionId,
-      teamId,
-      userId,
-    }),
-    saveUsageRecords(teamId, null, orchestration.usageRecords),
-  ]);
+  await runtimeCache.setAiSession({
+    payload: {
+      accessVersion: envelope.accessVersion,
+      context: validatedContext.map((item) => ({
+        entityId: item.entityId,
+        entityType: item.entityType,
+      })),
+      history,
+      messageCount,
+    },
+    sessionId: resolvedSessionId,
+    teamId,
+    userId,
+  });
   return {
     ...orchestration,
     conversationHistory: undefined,
@@ -1340,7 +1313,7 @@ async function getAiUsage(teamId, startDate, endDate) {
         [fn("SUM", col("prompt_tokens")), "prompt_tokens"],
         [fn("SUM", col("completion_tokens")), "completion_tokens"],
         [fn("SUM", col("cost_micros")), "total_cost_micros"],
-        [fn("COUNT", col("id")), "api_calls"],
+        [literal("SUM(CASE WHEN usage_status IN ('reported', 'unknown') OR (usage_status = 'legacy' AND total_tokens > 0) THEN 1 ELSE 0 END)"), "api_calls"],
       ],
       raw: true,
     });
@@ -1359,7 +1332,7 @@ async function getAiUsage(teamId, startDate, endDate) {
       attributes: [
         "model",
         [fn("SUM", col("total_tokens")), "total_tokens"],
-        [fn("COUNT", col("id")), "api_calls"],
+        [literal("SUM(CASE WHEN usage_status IN ('reported', 'unknown') OR (usage_status = 'legacy' AND total_tokens > 0) THEN 1 ELSE 0 END)"), "api_calls"],
       ],
       group: ["model"],
       raw: true,

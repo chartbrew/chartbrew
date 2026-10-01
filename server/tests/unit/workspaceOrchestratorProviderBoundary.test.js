@@ -1,5 +1,5 @@
 import {
-  describe, expect, it, vi,
+  afterEach, beforeEach, describe, expect, it, vi,
 } from "vitest";
 import { createRequire } from "node:module";
 
@@ -29,6 +29,13 @@ const {
 const {
   getEnvIntelligencePolicy,
 } = require("../../modules/intelligence/envPolicyProvider");
+
+const db = require("../../models/models");
+beforeEach(() => {
+  vi.spyOn(db.AiUsage, "create").mockImplementation(async (record) => record);
+  vi.spyOn(db.AiUsage, "update").mockResolvedValue([1]);
+});
+afterEach(() => vi.restoreAllMocks());
 
 const access = {
   allProjects: true,

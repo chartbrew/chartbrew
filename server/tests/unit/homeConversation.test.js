@@ -12,6 +12,8 @@ let createResponse;
 let createDashboard;
 
 beforeEach(() => {
+  vi.spyOn(db.AiUsage, "create").mockImplementation(async (record) => record);
+  vi.spyOn(db.AiUsage, "update").mockResolvedValue([1]);
   vi.stubEnv("CB_OPENAI_API_KEY_DEV", "test-key");
   setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": true });
   delete require.cache[require.resolve("../../modules/ai/orchestrator/orchestrator")];
