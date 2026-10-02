@@ -142,18 +142,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange, section }) {
   const showAppearance = !section || section === "appearance";
 
   useEffect(() => {
-    if (chart.maxValue || chart.maxValue === 0) {
-      setMax(chart.maxValue);
-    }
-    if (chart.maxValue === null) {
-      setMax("");
-    }
-    if (chart.minValue || chart.minValue === 0) {
-      setMin(chart.minValue);
-    }
-    if (chart.minValue === null) {
-      setMin("");
-    }
+    setMax(chart.maxValue == null ? "" : String(chart.maxValue));
+    setMin(chart.minValue == null ? "" : String(chart.minValue));
   }, [chart.maxValue, chart.minValue]);
 
   useEffect(() => {
@@ -584,7 +574,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange, section }) {
                 {hasMaxInput && (
                   <>
                     <Button
-                      isDisabled={Number(max) === Number(chart.maxValue)}
+                      isDisabled={chart.maxValue != null && Number(max) === Number(chart.maxValue)}
                       onPress={() => onChange({ maxValue: Number(max) })}
                       variant="secondary"
                       size="sm"
@@ -621,7 +611,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange, section }) {
                 {hasMinInput && (
                   <>
                     <Button
-                      isDisabled={Number(min) === Number(chart.minValue)}
+                      isDisabled={chart.minValue != null && Number(min) === Number(chart.minValue)}
                       onPress={() => onChange({ minValue: Number(min) })} variant="secondary"
                       size="sm"
                     >

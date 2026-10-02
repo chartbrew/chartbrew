@@ -7,11 +7,5 @@ module.exports.build = async (teamId, projectId, {
 
   return builder(teamId, projectId, {
     template_id, charts, connections, newDatasets
-  })
-    .catch((err) => {
-      if (err && err.message) {
-        return Promise.reject(err.message);
-      }
-      return Promise.reject(err);
-    });
+  });
 };

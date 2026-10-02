@@ -203,6 +203,25 @@ function getEChartsSeriesValues(mark, option) {
 }
 
 describe("ECharts compiler", () => {
+  it.each(["line", "bar", "horizontalBar"])("applies and clears value limits for %s charts", (mark) => {
+    const fixture = buildFixture(mark);
+    const valueAxis = mark === "horizontalBar" ? "xAxis" : "yAxis";
+    const categoryAxis = mark === "horizontalBar" ? "yAxis" : "xAxis";
+
+    for (const [minValue, maxValue] of [[0, 100], [-100, 0], [25, 75]]) {
+      Object.assign(fixture.visualization.settings, { minValue, maxValue });
+      const option = buildEChartsOption(fixture);
+      expect(option[valueAxis]).toMatchObject({ min: minValue, max: maxValue });
+      expect(option[categoryAxis].min).toBeUndefined();
+      expect(option[categoryAxis].max).toBeUndefined();
+    }
+
+    Object.assign(fixture.visualization.settings, { minValue: null, maxValue: null });
+    const option = buildEChartsOption(fixture);
+    expect(option[valueAxis].min).toBeUndefined();
+    expect(option[valueAxis].max).toBeUndefined();
+  });
+
   const graphicalPresets = [
     "line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
   ];

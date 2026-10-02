@@ -18,22 +18,52 @@ function findByTeam(teamId) {
   });
 }
 
-function update(id, data, teamId) {
-  const whereCondition = teamId
-    ? { id, team_id: teamId }
-    : { id };
+async function update(id, data, teamId) {
+  const integration = await findById(id, teamId);
+  if (!integration) throw new Error(404);
+  if (data.type !== undefined && data.type !== integration.type) {
+    throw new Error("Integration type cannot be changed");
+  }
 
-  return db.Integration.update(data, { where: whereCondition })
-    .then(([affectedRows]) => {
-      if (affectedRows === 0) {
-        return Promise.reject(new Error(404));
+  const updates = {};
+  if (data.name !== undefined) updates.name = data.name;
+  if (data.config !== undefined) {
+    if (integration.type === "slack") {
+      const { allowAllChannels = false, allowedChannels = [] } = data.config;
+      if (typeof allowAllChannels !== "boolean"
+        || !Array.isArray(allowedChannels)
+        || allowedChannels.some((channel) => typeof channel !== "string")) {
+        throw new Error("Invalid channel settings");
       }
-      return findById(id, teamId);
-    });
+      updates.config = { ...integration.config, allowAllChannels, allowedChannels };
+    } else {
+      updates.config = { url: data.config.url, slackMode: data.config.slackMode === true };
+    }
+  }
+
+  return integration.update(updates);
 }
 
-function create(data) {
-  return db.Integration.create(data);
+async function create(data) {
+  if (data.type !== "webhook") {
+    throw new Error("Connect Slack through the Slack app");
+  }
+
+  return db.Integration.create({
+    team_id: data.team_id,
+    name: data.name,
+    type: "webhook",
+    config: { url: data.config?.url, slackMode: data.config?.slackMode === true },
+  });
+}
+
+function toPublicIntegration(integration) {
+  const result = { ...integration.toJSON() };
+  if (result.type === "slack") {
+    result.config = { ...result.config };
+    delete result.config.bot_token;
+  }
+  return result;
 }
 
 function remove(id, teamId) {
@@ -68,4 +98,5 @@ module.exports = {
   update,
   create,
   remove,
+  toPublicIntegration,
 };

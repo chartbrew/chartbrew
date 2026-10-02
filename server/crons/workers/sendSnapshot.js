@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const request = require("request-promise");
+const safeRequest = require("../../modules/safeRequest");
 const { DateTime } = require("luxon");
 const path = require("path");
 const fs = require("fs");
@@ -32,7 +32,7 @@ async function sendToWebhook({
     }),
   };
 
-  const response = await request(options);
+  const response = await safeRequest(options, { source: "snapshot_webhook", teamId: integration.team_id });
 
   return response;
 }
