@@ -68,7 +68,7 @@ function QueryBuilder({
           className={`flex min-w-0 flex-col border-t border-divider ${expanded ? "" : "lg:border-t-0 lg:border-l"}`}
         >
           <div className="flex items-center justify-end gap-2 border-b border-divider px-4 py-3 sm:px-6">
-            <Button size="sm" variant="secondary" onPress={onSave} isPending={saving || running}>
+            <Button size="sm" variant="primary" onPress={onSave} isPending={saving || running}>
               {saving || running ? <ButtonSpinner /> : null}
               Save request
             </Button>
@@ -90,7 +90,7 @@ function QueryBuilder({
             <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-medium">Sample results</h3>
               <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="ghost" onPress={onTransform}>
+                <Button size="sm" variant="secondary" onPress={onTransform}>
                   Transform
                   {request.transform?.enabled && <span className="size-1.5 rounded-full bg-accent" aria-label="Transformations active" />}
                 </Button>

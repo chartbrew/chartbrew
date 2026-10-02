@@ -245,7 +245,7 @@ function CustomerioBuilder(props) {
                   <Tooltip.Trigger>
                     <Badge.Anchor className="relative inline-flex">
                       <Button
-                        variant="tertiary"
+                        variant="secondary"
                         size="sm"
                         onPress={() => setShowTransform(true)}
                       >

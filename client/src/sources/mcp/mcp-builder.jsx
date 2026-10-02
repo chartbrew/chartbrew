@@ -797,11 +797,11 @@ function McpBuilder({ dataRequest, onChangeRequest, onSave, onDelete }) {
               {runLoading ? <ButtonSpinner /> : <LuPlay fill="currentColor" size={16} aria-hidden />}
               Run
             </Button>
-            <Button className="h-10 rounded-full px-5" isPending={saveLoading} onPress={saveRequest} variant="outline">
+            <Button className="h-10 rounded-full px-5" isPending={saveLoading} onPress={saveRequest} variant="primary">
               {saveLoading ? <ButtonSpinner /> : <LuSave size={16} aria-hidden />}
               Save
             </Button>
-            <Button className="h-10 rounded-full px-4" onPress={() => setShowTransform(true)} variant="ghost">
+            <Button className="h-10 rounded-full px-4" onPress={() => setShowTransform(true)} variant="secondary">
               <LuWrench size={16} aria-hidden />
               Transform
             </Button>
