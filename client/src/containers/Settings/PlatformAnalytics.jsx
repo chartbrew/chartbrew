@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Button, ListBox, ProgressCircle, Select, Table, Tabs, Tooltip } from "@heroui/react";
-import { LuInfo, LuRefreshCw } from "react-icons/lu";
+import { Alert, Button, ListBox, ProgressCircle, Select, Table, Tabs } from "@heroui/react";
+import { LuRefreshCw } from "react-icons/lu";
 
 import { getPlatformAnalytics } from "../../api/platformSettings";
 import EChartsRenderer from "../Chart/components/EChartsRenderer";
@@ -83,31 +83,8 @@ function PlatformAnalytics() {
         </Tabs.List>
       </Tabs.ListContainer>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">All teams</span>
-          <Tooltip>
-            <Button aria-label="About these metrics" isIconOnly size="sm" variant="ghost">
-              <LuInfo aria-hidden size={16} />
-            </Button>
-            <Tooltip.Content className="max-w-xs text-sm">
-              {isAi ? (
-                <>
-                  AI calls across all teams, including background work. One task can use several calls.
-                  Tokens include complete counts and older recorded usage. Older records with no tokens
-                  are excluded. Cached input and reasoning tokens are already part of the total.
-                  Calls belong to the day they start. Today is a partial day, in UTC.
-                </>
-              ) : (
-                <>
-                  Completed data requests, excluding cached results. Success rate is successful requests
-                  divided by all completed requests. Mean time includes successful and failed requests.
-                  Requests without a confirmed outcome are excluded. Today is a partial day, in UTC.
-                </>
-              )}
-            </Tooltip.Content>
-          </Tooltip>
-        </div>
-        <div className="flex items-center gap-2">
+        <p className="text-sm text-muted">{period}</p>
+        <div className="flex shrink-0 items-center gap-2">
           <Select
             aria-label="Period"
             className="w-40"
@@ -151,7 +128,6 @@ function PlatformAnalytics() {
         )}
         {analytics && !loading && (
           <>
-            <p className="text-sm text-muted">{period}</p>
             {isAi && analytics.summary.unknown + analytics.summary.pending > 0 && (
               <Alert status="warning">
                 <Alert.Indicator />
