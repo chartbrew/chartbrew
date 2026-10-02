@@ -3,14 +3,9 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button,
-  Modal,
   Input,
   Tooltip,
-  Checkbox,
-  Separator,
-  Tabs,
   ProgressCircle,
-  Badge,
   Drawer,
   Label,
   ListBox,
@@ -19,22 +14,18 @@ import {
 } from "@heroui/react";
 import AceEditor from "../../components/CodeEditor";
 import toast from "react-hot-toast";
-import { LuCheck, LuInfo, LuPlay, LuPlus, LuTrash, LuChevronsRight } from "react-icons/lu";
+import { LuChevronsRight } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import { createVariableBinding, runDataRequest, selectDataRequests, updateVariableBinding } from "../../slices/dataset";
-import SavedQueries from "../../components/SavedQueries";
-import Row from "../../components/Row";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
-import Text from "../../components/Text";
 import { useTheme } from "../../modules/ThemeContext";
-import { createSavedQuery, updateSavedQuery } from "../../slices/savedQuery";
 import { getConnection } from "../../slices/connection";
-import AiQuery from "../../containers/Dataset/AiQuery";
 import QueryResultsTable from "../../containers/AddChart/components/QueryResultsTable";
 import DataTransform from "../../containers/Dataset/DataTransform";
 import SqlAceEditor from "../../components/SqlAceEditor";
 import { selectTeam } from "../../slices/team";
+import QueryBuilder from "../shared/query-builder";
 
 const initialQuery =
 `-- Write your ClickHouse query here with variables
@@ -47,7 +38,7 @@ WHERE date >= {{start_date}}
   AND status = {{event_status}}
 GROUP BY event_name;
 
--- Or ask the AI assistant below to generate one for you
+-- Or ask AI to generate a query
 `;
 
 function ClickHouseBuilder(props) {
@@ -60,11 +51,6 @@ function ClickHouseBuilder(props) {
   const [sqlRequest, setSqlRequest] = useState({
     query: initialQuery,
   });
-  const [savedQuery, setSavedQuery] = useState(null);
-  const [savedQuerySummary, setSavedQuerySummary] = useState("");
-  const [saveQueryModal, setSaveQueryModal] = useState(false);
-  const [savingQuery, setSavingQuery] = useState(false);
-  const [updatingSavedQuery, setUpdatingSavedQuery] = useState(false);
   const [, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
@@ -122,51 +108,6 @@ function ClickHouseBuilder(props) {
       _onTest(dataRequest, true);
     }
   }, [dataRequest, storedConnection]);
-
-  const _onSaveQueryConfirmation = () => {
-    setSaveQueryModal(true);
-  };
-
-  const _onSaveQuery = () => {
-    setSavingQuery(true);
-    dispatch(createSavedQuery({
-      team_id: team?.id,
-      data: {
-        query: sqlRequest.query,
-        summary: savedQuerySummary,
-        type: connection.type,
-      },
-    }))
-      .then((savedQuery) => {
-        setSavingQuery(false);
-        setSavedQuery(savedQuery.id);
-        setSaveQueryModal(false);
-      })
-      .catch(() => {
-        setSavingQuery(false);
-        setSaveQueryModal(false);
-        toast.error("There was a problem with saving your query 😳");
-      });
-  };
-
-  const _onUpdateSavedQuery = () => {
-    setUpdatingSavedQuery(true);
-    dispatch(updateSavedQuery({
-      team_id: team?.id,
-      data: {
-        ...savedQuery,
-        query: sqlRequest.query,
-      },
-    }))
-      .then(() => {
-        setUpdatingSavedQuery(false);
-        toast.success("The query was updated 👍");
-      })
-      .catch(() => {
-        setUpdatingSavedQuery(false);
-        toast.error("There was a problem with saving your query 😿");
-      });
-  };
 
   const _onChangeQuery = (value, testAfter = false, noError = false) => {
     const newSqlRequest = { ...sqlRequest, query: value };
@@ -297,270 +238,47 @@ function ClickHouseBuilder(props) {
     );
   }
 
-  const blockResultsTabSwitch = saveLoading || requestLoading;
-
   return (
-    <div style={styles.container} className="px-1 pt-4 sm:px-4">
-      <div className="grid grid-cols-12 gap-8">
-        <div className="col-span-12 sm:col-span-6 md:col-span-5">
-          <Row justify="space-between" align="center">
-            <Text b size={"lg"}>{connection.name}</Text>
-            <div className="flex flex-row items-center gap-2">
-              <Button auto
-                size="sm"
-                onPress={() => _onSavePressed()}
-                isPending={saveLoading || requestLoading}
-              >
-                {(saveLoading || requestLoading) ? <ButtonSpinner /> : null}
-                {"Save"}
-              </Button>
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <Badge.Anchor className="relative inline-flex">
-                    <Button
-                      variant="tertiary"
-                      size="sm"
-                      onPress={() => setShowTransform(true)}
-                    >
-                      Transform
-                    </Button>
-                    {sqlRequest.transform?.enabled && (
-                      <Badge
-                        size="sm"
-                        className="min-h-2 min-w-2 p-0"
-                        aria-label="Transformations active"
-                      />
-                    )}
-                  </Badge.Anchor>
-                </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
-                  Apply transformations to the data
-                </Tooltip.Content>
-              </Tooltip>
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <Button isIconOnly
-                    auto
-                    size="sm"
-                    variant="danger-soft"
-                    onPress={() => onDelete()}
-                  >
-                    <LuTrash />
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-[99999]">
-                  Delete this data request
-                </Tooltip.Content>
-              </Tooltip>
-            </div>
-          </Row>
-          <div className="h-4" />
-          <Separator />
-          <div className="h-8" />
-          <div>
-            <Row>
-              <SqlAceEditor
-                mode="sql"
-                theme={isDark ? "one_dark" : "tomorrow"}
-                height="300px"
-                width="none"
-                value={sqlRequest.query || ""}
-                onChange={(value) => {
-                  _onChangeQuery(value);
-                }}
-                onVariableClick={_onVariableClick}
-                name="queryEditor"
-                className="sqlbuilder-query-tut"
-              />
-            </Row>
-          </div>
-          <div className="h-4" />
-          <div className="sqlbuilder-buttons-tut flex flex-row items-center gap-1">
-            <Button
-              onPress={() => _onTest()}
-              isPending={requestLoading}
-              fullWidth
-            >
-              {requestLoading ? <ButtonSpinner /> : null}
-              Run query
-              {!requestLoading ? <LuPlay /> : null}
-            </Button>
-          </div>
-          <div className="h-4" />
-          <Row align="center">
-            <Checkbox
-              id="clickhouse-use-cache"
-              isSelected={!invalidateCache}
-              onChange={(selected) => setInvalidateCache(!selected)}
-            >
-              <Checkbox.Content>
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                Use cached data
-              </Checkbox.Content>
-            </Checkbox>
-            <div className="w-1" />
-            <Tooltip>
-              <Tooltip.Trigger>
-                <div><LuInfo /></div>
-              </Tooltip.Trigger>
-              <Tooltip.Content className="max-w-[400px]">
-                Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any query settings.
-              </Tooltip.Content>
-            </Tooltip>
-          </Row>
-
-          <div className="flex flex-col gap-2">
-            <AiQuery
-              query={sqlRequest.query}
-              dataRequest={dataRequest}
-              onChangeQuery={_onChangeQuery}
-            />
-          </div>
-
-          <div className="h-8" />
-          <Separator />
-          <div className="h-8" />
-          <Row>
-            <Text b>Saved queries</Text>
-          </Row>
-          <div className="h-4" />
-          <div className="flex flex-row gap-2">
-            <Button
-              isPending={savingQuery}
-              onPress={_onSaveQueryConfirmation}
-              variant="tertiary"
-              size="sm"
-            >
-              {savingQuery ? <ButtonSpinner /> : null}
-              {!savedQuery && "Save this query"}
-              {savedQuery && "Save as new"}
-              {!savingQuery ? <LuPlus /> : null}
-            </Button>
-
-            {savedQuery && (
-              <>
-                <Button
-                  variant="tertiary"
-                  onPress={_onUpdateSavedQuery}
-                  isPending={updatingSavedQuery}
-                  size="sm"
-                >
-                  {updatingSavedQuery ? <ButtonSpinner /> : null}
-                  {"Update current query"}
-                  {!updatingSavedQuery ? <LuCheck /> : null}
-                </Button>
-              </>
-            )}
-          </div>
-          <div className="h-8" />
-          <Row className="sqlbuilder-saved-tut">
-            <SavedQueries
-              selectedQuery={savedQuery}
-              onSelectQuery={(savedQuery) => {
-                setSavedQuery(savedQuery.id);
-                _onChangeQuery(savedQuery.query);
-              }}
-              type={connection.type}
-              style={styles.savedQueriesContainer}
-            />
-          </Row>
-          <div className="h-16" />
-        </div>
-        <div className="col-span-12 sm:col-span-6 md:col-span-7">
-          <Tabs
-            variant="secondary"
-            selectedKey={activeResultsTab}
-            aria-busy={blockResultsTabSwitch}
-            onSelectionChange={(key) => {
-              if (blockResultsTabSwitch) return;
-              setActiveResultsTab(key);
-            }}
-          >
-            <Tabs.ListContainer>
-              <Tabs.List>
-                <Tabs.Tab id="table">
-                  <Tabs.Indicator />
-                  Table
-                </Tabs.Tab>
-                <Tabs.Tab id="json">
-                  <Tabs.Indicator />
-                  JSON
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
-          <div className="h-4" />
-
-          {activeResultsTab === "table" && (
-            <div className="w-full">
-              <QueryResultsTable result={result} />
-            </div>
-          )}
-
-          {activeResultsTab === "json" && (
-            <div>
-              <div className="w-full">
-                <AceEditor
-                  mode="json"
-                  theme={isDark ? "one_dark" : "tomorrow"}
-                  style={{ borderRadius: 10 }}
-                  height="450px"
-                  width="none"
-                  value={requestError || result || ""}
-                  name="resultEditor"
-                  readOnly
-                  editorProps={{ $blockScrolling: false }}
-                  className="sqlbuilder-result-tut rounded-md border-1 border-solid border-content3"
-                />
-              </div>
-            </div>
-          )}
-          <div className="h-4" />
-          {result && (
-            <Row>
-              <Text size="sm">This is a sample response and might not show all the data.</Text>
-            </Row>
-          )}
-        </div>
-      </div>
-
-      {/* Save query modal */}
-      <Modal.Backdrop isOpen={saveQueryModal} onOpenChange={setSaveQueryModal}>
-        <Modal.Container size="sm">
-          <Modal.Dialog>
-          <Modal.Header className="flex flex-col">
-            <Modal.Heading>Save your query for later</Modal.Heading>
-            <div className="text-sm font-normal">{"You can then re-use this query for other datasets"}</div>
-          </Modal.Header>
-          <Modal.Body>
-            <Input
-              label="Write a short description for your query"
-              placeholder="Type a summary here"
-              fullWidth
-              onChange={(e) => setSavedQuerySummary(e.target.value)}
-              variant="secondary"
-            />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="secondary"
-              onPress={() => setSaveQueryModal(false)}
-            >
-              Close
-            </Button>
-            <Button
-              isDisabled={!savedQuerySummary}
-              onPress={_onSaveQuery}
-            >
-              Save the query
-              <LuCheck />
-            </Button>
-          </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+    <>
+      <QueryBuilder
+        request={sqlRequest}
+        type={connection.type}
+        onChangeQuery={_onChangeQuery}
+        onSave={_onSavePressed}
+        onDelete={onDelete}
+        onRun={() => _onTest()}
+        onTransform={() => setShowTransform(true)}
+        saving={saveLoading}
+        running={requestLoading}
+        invalidateCache={invalidateCache}
+        onCacheChange={setInvalidateCache}
+        resultsTab={activeResultsTab}
+        onResultsTabChange={setActiveResultsTab}
+        results={activeResultsTab === "table" ? (
+          <QueryResultsTable result={result} />
+        ) : (
+          <AceEditor
+            mode="json"
+            theme={isDark ? "one_dark" : "tomorrow"}
+            height="450px"
+            value={requestError || result || ""}
+            name="resultEditor"
+            readOnly
+            className="rounded-xl border border-divider"
+          />
+        )}
+      >
+        <SqlAceEditor
+          mode="sql"
+          theme={isDark ? "one_dark" : "tomorrow"}
+          height="360px"
+          value={sqlRequest.query || ""}
+          onChange={_onChangeQuery}
+          onVariableClick={_onVariableClick}
+          name="queryEditor"
+          className="sqlbuilder-query-tut"
+        />
+      </QueryBuilder>
 
       <DataTransform
         isOpen={showTransform}
@@ -700,19 +418,9 @@ function ClickHouseBuilder(props) {
           </Drawer.Dialog>
         </Drawer.Content>
       </Drawer>
-    </div>
+    </>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-  savedQueriesContainer: {
-    maxHeight: 170,
-    overflow: "auto",
-  },
-};
 
 ClickHouseBuilder.propTypes = {
   dataRequest: PropTypes.object.isRequired,

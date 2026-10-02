@@ -2,23 +2,15 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Badge,
   Button,
-  Checkbox,
-  Separator,
-  Input,
   Link,
-  Modal,
   Popover,
-  Tabs,
-  Tooltip,
 } from "@heroui/react";
 import AceEditor from "../../components/CodeEditor";
 import toast from "react-hot-toast";
-import { LuCheck, LuChevronRight, LuInfo, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { LuInfo } from "react-icons/lu";
 import { useParams } from "react-router";
 
-import { createSavedQuery, updateSavedQuery } from "../../slices/savedQuery";
 import {
   createVariableBinding,
   deleteVariableBinding,
@@ -26,18 +18,13 @@ import {
   selectDataRequests,
   updateVariableBinding,
 } from "../../slices/dataset";
-import SavedQueries from "../../components/SavedQueries";
-import Container from "../../components/Container";
 import VariableSettingsDrawer, { QUERY_REQUIRED_HINT } from "../../components/VariableSettingsDrawer";
-import { ButtonSpinner } from "../../components/ButtonSpinner";
-import Row from "../../components/Row";
-import Text from "../../components/Text";
 import { useTheme } from "../../modules/ThemeContext";
 import QueryResultsTable from "../../containers/AddChart/components/QueryResultsTable";
-import AiQuery from "../../containers/Dataset/AiQuery";
 import DataTransform from "../../containers/Dataset/DataTransform";
 import SqlAceEditor from "../../components/SqlAceEditor";
 import { selectTeam } from "../../slices/team";
+import QueryBuilder from "../shared/query-builder";
 
 /*
   MongoDB query builder with variable support
@@ -47,11 +34,6 @@ function MongoQueryBuilder(props) {
     onChangeRequest, onSave, dataRequest, connection, onDelete,
   } = props;
 
-  const [savedQuery, setSavedQuery] = useState(null);
-  const [saveQueryModal, setSaveQueryModal] = useState(false);
-  const [savedQuerySummary, setSavedQuerySummary] = useState("");
-  const [updatingSavedQuery, setUpdatingSavedQuery] = useState(false);
-  const [savingQuery, setSavingQuery] = useState(false);
   const [, setTestSuccess] = useState(false);
   const [testError, setTestError] = useState("");
   const [testingQuery, setTestingQuery] = useState(false);
@@ -92,53 +74,6 @@ function MongoQueryBuilder(props) {
       }
     }
   }, [stateDrs, mongoRequest]);
-
-  const _onSaveQueryConfirmation = () => {
-    setSaveQueryModal(true);
-  };
-
-  const _onSaveQuery = () => {
-    setSavingQuery(true);
-    dispatch(createSavedQuery({
-      team_id: team.id,
-      data: {
-        query: mongoRequest.query,
-        summary: savedQuerySummary,
-        type: "mongodb",
-      }
-    }))
-      .then((savedQuery) => {
-        setSavingQuery(false);
-        setSavedQuery(savedQuery.id);
-        toast.success("The query was saved 👍");
-        setSaveQueryModal(false);
-      })
-      .catch(() => {
-        setSavingQuery(false);
-        toast.error("We couldn't save the query. Please try again 😿");
-        setSaveQueryModal(false);
-      });
-  };
-
-  const _onUpdateSavedQuery = () => {
-    setUpdatingSavedQuery(true);
-
-    dispatch(updateSavedQuery({
-      team_id: team.id,
-      data: {
-        ...savedQuery,
-        query: mongoRequest.query
-      },
-    }))
-      .then(() => {
-        setUpdatingSavedQuery(false);
-        toast.success("The query was updated 👍");
-      })
-      .catch(() => {
-        setUpdatingSavedQuery(false);
-        toast.error("We couldn't update your query. Please try again 😿");
-      });
-  };
 
   const _onChangeQuery = (value) => {
     setTestSuccess(false);
@@ -283,364 +218,68 @@ function MongoQueryBuilder(props) {
     }
   };
 
-  const blockResultsTabSwitch = saveLoading || testingQuery;
-
   return (
-    <div style={styles.container} className="px-1 pt-4 md:px-4">
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12 sm:col-span-6">
-          <Row justify="space-between" align="center">
-            <Text b size={"lg"}>{connection.name}</Text>
-            <div className="flex flex-row items-center gap-2">
-              <Button auto
-                size="sm"
-                onPress={() => _onSavePressed()}
-                isPending={saveLoading || testingQuery}
-              >
-                {(saveLoading || testingQuery) ? <ButtonSpinner /> : null}
-                {"Save"}
-              </Button>
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <Badge.Anchor className="relative inline-flex">
-                    <Button
-                      variant="tertiary"
-                      size="sm"
-                      onPress={() => setShowTransform(true)}
-                    >
-                      Transform
-                    </Button>
-                    {mongoRequest.transform?.enabled && (
-                      <Badge
-                        size="sm"
-                        className="min-h-2 min-w-2 p-0"
-                        aria-label="Transformations active"
-                      />
-                    )}
-                  </Badge.Anchor>
-                </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-99999">
-                  Apply transformations to the data
-                </Tooltip.Content>
-              </Tooltip>
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <Button isIconOnly
-                    auto
-                    size="sm"
-                    variant="secondary"
-                    onPress={() => onDelete()}
-                  >
-                    <LuTrash />
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content placement="bottom" className="z-99999">
-                  Delete this data request
-                </Tooltip.Content>
-              </Tooltip>
-            </div>
-          </Row>
-          <div className="h-4" />
-          <Row>
-            <Separator />
-          </Row>
-          <div className="h-8" />
-          <Row align="center">
-            <Text b>
-              {"Enter your mongodb query here"}
-            </Text>
-            <div className="w-1" />
-            <Tooltip>
-              <Tooltip.Trigger>
-                <div><LuInfo /></div>
-              </Tooltip.Trigger>
-              <Tooltip.Content placement="bottom">
-                <>
-                  <Text>
-                    {"In order to select a collection you always have to start with "}
-                  </Text>
-                  <pre>{"collection('collection_name')"}</pre>
-                  <Text size="sm">
-                    {"You can use variables like {{variable_name}} in your queries"}
-                  </Text>
-                </>
-              </Tooltip.Content>
-            </Tooltip>
-          </Row>
-          <div className="h-2" />
-          <Row>
-            <SqlAceEditor
-              mode="javascript"
-              theme={isDark ? "one_dark" : "tomorrow"}
-              height="300px"
-              width="none"
-              value={mongoRequest.query || ""}
-              onChange={(value) => {
-                _onChangeQuery(value);
-              }}
-              onVariableClick={_onVariableClick}
-              name="queryEditor"
-              className="mongobuilder-query-tut"
-            />
-          </Row>
-          <div className="h-4" />
-          <div className="mongobuilder-buttons-tut flex flex-row items-center">
-            <Button
-              onPress={() => _onTest()}
-              isPending={testingQuery}
-              fullWidth
-            >
-              {testingQuery ? <ButtonSpinner /> : null}
-              Run query
-              {!testingQuery ? <LuPlay /> : null}
+    <>
+      <QueryBuilder
+        request={mongoRequest}
+        type={connection.type}
+        onChangeQuery={_onChangeQuery}
+        onSave={_onSavePressed}
+        onDelete={onDelete}
+        onRun={() => _onTest()}
+        onTransform={() => setShowTransform(true)}
+        saving={saveLoading}
+        running={testingQuery}
+        invalidateCache={invalidateCache}
+        onCacheChange={setInvalidateCache}
+        resultsTab={activeResultsTab}
+        onResultsTabChange={setActiveResultsTab}
+        results={activeResultsTab === "table" ? (
+          <QueryResultsTable result={result} />
+        ) : (
+          <AceEditor
+            mode="json"
+            theme={isDark ? "one_dark" : "tomorrow"}
+            height="450px"
+            value={testError || result || ""}
+            name="resultEditor"
+            readOnly
+            className="rounded-xl border border-divider"
+          />
+        )}
+        resultsHelp={(
+          <Popover>
+            <Button size="sm" variant="ghost" className="self-start">
+              <LuInfo aria-hidden size={16} />
+              Query help
             </Button>
-          </div>
-          <div className="h-4" />
-          <div className="flex flex-row items-center">
-            <Checkbox
-              id="mongo-query-use-cache"
-              isSelected={!invalidateCache}
-              onChange={(selected) => setInvalidateCache(!selected)}
-              variant="secondary"
-            >
-              <Checkbox.Content>
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                Use cached data
-              </Checkbox.Content>
-            </Checkbox>
-            <div className="w-2" />
-            <Tooltip>
-              <Tooltip.Trigger>
-                <div><LuInfo size={16} /></div>
-              </Tooltip.Trigger>
-              <Tooltip.Content className="max-w-[400px]">
-                Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change the query.
-              </Tooltip.Content>
-            </Tooltip>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <AiQuery
-              query={mongoRequest.query}
-              dataRequest={dataRequest}
-              onChangeQuery={_onChangeQuery}
-              connectionType="mongodb"
-            />
-          </div>
-
-          <div className="h-8" />
-          <Separator />
-          <div className="h-8" />
-          <Row>
-            <Text b>Saved queries</Text>
-          </Row>
-          <div className="h-4" />
-          <div className="flex flex-row gap-2">
-            <Button
-              isPending={savingQuery}
-              onPress={_onSaveQueryConfirmation}
-              variant="tertiary"
-              size="sm"
-            >
-              {savingQuery ? <ButtonSpinner /> : null}
-              {!savedQuery && "Save this query"}
-              {savedQuery && "Save as new"}
-              {!savingQuery ? <LuPlus /> : null}
-            </Button>
-
-            {savedQuery && (
-              <>
-                <Button
-                  variant="tertiary"
-                  onPress={_onUpdateSavedQuery}
-                  isPending={updatingSavedQuery}
-                  size="sm"
-                >
-                  {updatingSavedQuery ? <ButtonSpinner /> : null}
-                  {"Update current query"}
-                  {!updatingSavedQuery ? <LuCheck /> : null}
-                </Button>
-              </>
-            )}
-          </div>
-          <div className="h-4" />
-          <Row className="mongobuilder-saved-tut">
-            <SavedQueries
-              selectedQuery={savedQuery}
-              onSelectQuery={(savedQuery) => {
-                setSavedQuery(savedQuery.id);
-                _onChangeQuery(savedQuery.query);
-              }}
-              type="mongodb"
-              style={styles.savedQueriesContainer}
-            />
-          </Row>
-          <div className="h-16" />
-        </div>
-        <div className="col-span-12 sm:col-span-6">
-          <Tabs
-            variant="secondary"
-            selectedKey={activeResultsTab}
-            aria-busy={blockResultsTabSwitch}
-            onSelectionChange={(key) => {
-              if (blockResultsTabSwitch) return;
-              setActiveResultsTab(key);
-            }}
-          >
-            <Tabs.ListContainer>
-              <Tabs.List>
-                <Tabs.Tab id="table">
-                  <Tabs.Indicator />
-                  Table
-                </Tabs.Tab>
-                <Tabs.Tab id="json">
-                  <Tabs.Indicator />
-                  JSON
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
-          <div className="h-4" />
-
-          {activeResultsTab === "json" && (
-            <div className="w-full">
-              <AceEditor
-                mode="json"
-                theme={isDark ? "one_dark" : "tomorrow"}
-                height="450px"
-                width="none"
-                value={testError || result || ""}
-                name="resultEditor"
-                readOnly
-                editorProps={{ $blockScrolling: false }}
-                className="mongobuilder-result-tut rounded-md border border-solid border-content3"
-              />
-            </div>
-          )}
-
-          {activeResultsTab === "table" && (
-            <div className="w-full">
-              <QueryResultsTable result={result} />
-            </div>
-          )}
-
-          <div className="h-2" />
-          {result && (
-            <>
-              <Row>
-                <Text size="sm">This is a sample response and might not show all the data.</Text>
-              </Row>
-              <div className="h-2" />
-            </>
-          )}
-
-          <Row>
-            <Popover>
-              <Popover.Trigger>
-                <Link className="text-secondary flex items-center cursor-pointer">
-                  <div className="flex flex-row items-center gap-1">
-                    <div className="text-sm text-default-500">Are your queries slow? Read here</div>
-                    <LuInfo className="text-default-500" />
-                  </div>
+            <Popover.Content className="w-96 max-w-[calc(100vw-2rem)]">
+              <Popover.Dialog aria-label="MongoDB query help" className="flex flex-col gap-3 p-3 text-sm">
+                <p>
+                  Start with <code>collection('collection_name')</code> to select a collection.
+                </p>
+                <Link href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank" rel="noopener noreferrer">
+                  Filter documents to fetch only the data you need.
                 </Link>
-              </Popover.Trigger>
-              <Popover.Content className="max-w-[600px] p-10">
-                <Popover.Dialog>
-                  <Container className={"w-full"}>
-                    <Row>
-                      <Text>{"You can use the following methods to optimize your queries and make them significantly smaller in size."}</Text>
-                    </Row>
-                    <div className="h-4" />
-                    <Row>
-                      <Link
-                        href="https://docs.mongodb.com/manual/reference/operator/query-comparison/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-start"
-                      >
-                        <div><LuChevronRight /></div>
-                        <div className="w-1" />
-                        <Text >
-                          {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
-                        </Text>
-                      </Link>
-                    </Row>
-                    <div className="h-2" />
-                    <div className="flex flex-row items-center gap-1">
-                      <Link
-                        as="a"
-                        href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-start"
-                      >
-                        <div><LuChevronRight /></div>
-                        <Text >
-                          {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
-                        </Text>
-                      </Link>
-                    </div>
-                    <div className="h-2" />
-                    <Row>
-                      <Link
-                        as="a"
-                        href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-start"
-                      >
-                        <div><LuChevronRight /></div>
-                        <div className="w-2" />
-                        <Text >
-                          {"If you store files encoded in base64, make sure you exclude them using the method above"}
-                        </Text>
-                      </Link>
-                    </Row>
-                  </Container>
-                </Popover.Dialog>
-              </Popover.Content>
-            </Popover>
-          </Row>
-        </div>
-      </div>
-
-      {/* Save query modal */}
-      <Modal.Backdrop isOpen={saveQueryModal} onOpenChange={setSaveQueryModal}>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-md">
-            <Modal.Header>
-              <Modal.Heading>Save your query and use it later in this project</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-            <Input
-              label="Write a short description for your query"
-              placeholder="Type a summary here"
-              fullWidth
-              onChange={(e) => setSavedQuerySummary(e.target.value)}
-              size="lg"
-              variant="secondary"
-            />
-            </Modal.Body>
-            <Modal.Footer>
-            <Button
-              variant="outline"
-              onPress={() => setSaveQueryModal(false)}
-            >
-              Close
-            </Button>
-            <Button
-              isDisabled={!savedQuerySummary}
-              onPress={_onSaveQuery}
-            >
-              <LuCheck size={18} />
-              Save the query
-            </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+                <Link href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer">
+                  Exclude unused fields and encoded files to reduce the result size.
+                </Link>
+              </Popover.Dialog>
+            </Popover.Content>
+          </Popover>
+        )}
+      >
+        <SqlAceEditor
+          mode="javascript"
+          theme={isDark ? "one_dark" : "tomorrow"}
+          height="360px"
+          value={mongoRequest.query || ""}
+          onChange={_onChangeQuery}
+          onVariableClick={_onVariableClick}
+          name="queryEditor"
+          className="mongobuilder-query-tut"
+        />
+      </QueryBuilder>
 
       <DataTransform
         isOpen={showTransform}
@@ -659,19 +298,9 @@ function MongoQueryBuilder(props) {
         deletePending={variableLoading}
         requiredWithoutDefaultHint={QUERY_REQUIRED_HINT}
       />
-    </div>
+    </>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-  savedQueriesContainer: {
-    maxHeight: 170,
-    overflow: "auto",
-  },
-};
 
 MongoQueryBuilder.propTypes = {
   dataRequest: PropTypes.object.isRequired,

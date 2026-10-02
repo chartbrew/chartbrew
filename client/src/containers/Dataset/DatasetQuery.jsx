@@ -348,7 +348,7 @@ function DatasetQuery(props) {
             }}
             className="max-w-full"
           >
-            <Tabs.ListContainer className="w-fit max-w-full border border-divider bg-background">
+            <Tabs.ListContainer className="w-fit max-w-full rounded-full border border-divider bg-background">
               <Tabs.List className="w-fit min-w-0 gap-1">
                 <Tabs.Tab
                   className="group h-10 w-fit shrink-0 px-5 font-semibold data-[selected=true]:text-foreground"

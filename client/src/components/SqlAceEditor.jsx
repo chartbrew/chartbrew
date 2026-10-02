@@ -214,11 +214,12 @@ function SqlAceEditor({
         }}
         name={name}
         readOnly={readOnly}
-        className={`rounded-md border-1 border-solid border-content3 ${className}`}
+        className={className}
+        style={{ borderRadius: 0 }}
         {...otherProps}
       />
-      <div className="text-sm mt-2 text-gray-500">
-        {"You can use variables like {{variable_name}} as values"}
+      <div className="px-3 py-2 text-xs text-muted">
+        {"Use {{variable_name}} for a variable. Select it to set a value."}
       </div>
     </div>
   );

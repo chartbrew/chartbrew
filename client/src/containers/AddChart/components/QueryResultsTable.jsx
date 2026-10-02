@@ -58,7 +58,7 @@ function QueryResultsTable({ result }) {
   return (
     <div>
       <div className="w-full">
-        <Table className="sqlbuilder-result-tut border border-divider rounded-lg shadow-none">
+        <Table className="sqlbuilder-result-tut border border-divider shadow-none">
           <Table.ScrollContainer>
             <Table.Content
               aria-label="Results table"
