@@ -94,6 +94,17 @@ module.exports = (app) => {
     }
   });
 
+  app.post("/team/:team_id/data-health/:issue_id/dismiss", ...routeAccess, async (req, res) => {
+    try {
+      return res.send(await homeController.dismissDataHealth(
+        req.observationAccess,
+        req.params.issue_id
+      ));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
+
   app.get("/team/:team_id/alerts", ...routeAccess, async (req, res) => {
     try {
       return res.send(await homeController.getAlerts(req.observationAccess));

@@ -5,6 +5,7 @@ const ObservationController = require("./ObservationController");
 const { isDatasetVisible } = require("../modules/workspaceContext/workspaceContextService");
 const {
   PROJECT_EDITOR_ROLES,
+  createHttpError,
   getProjectScope,
 } = require("../modules/observations/access");
 
@@ -47,6 +48,17 @@ function getEntityProjectIds(entity) {
 }
 
 function canAccessHealthRun(run, access, projectId = null) {
+  const type = getHealthRunType(run);
+  const entity = {
+    chart: run.Chart,
+    connection: run.Connection,
+    dashboard: run.Project,
+    dataset: run.Dataset,
+  }[type];
+  if (FAILURE_STATUSES.has(run.status) && (!entity || (type === "chart" && !run.Project))) {
+    return false;
+  }
+
   const entityProjectIds = [
     ...getEntityProjectIds(run.Connection),
     ...getEntityProjectIds(run.Dataset),
@@ -129,7 +141,7 @@ function buildMonitorHealthIssue(monitor) {
     action,
     detectedAt: monitor.last_sampled_at || monitor.updatedAt,
     entity: { id: monitor.id, name: monitor.name },
-    id: `monitor:${monitor.id}`,
+    id: `monitor:${monitor.id}:${new Date(monitor.updatedAt).getTime()}`,
     message: reasonCopy[monitor.status_reason]
       || "Chartbrew cannot evaluate this metric with the latest available data.",
     project: monitor.Project ? { id: monitor.Project.id, name: monitor.Project.name } : null,
@@ -363,8 +375,19 @@ class HomeController {
     ]);
     const visibleRuns = runs.filter((run) => canAccessHealthRun(run, access, projectId));
     const runHealth = partitionRunHealth(visibleRuns);
-    const active = [...monitorIssues.map(buildMonitorHealthIssue), ...runHealth.active];
-    const resolved = runHealth.resolved;
+    const issues = [...monitorIssues.map(buildMonitorHealthIssue), ...runHealth.active];
+    const issueIds = [...issues, ...runHealth.resolved].map((item) => item.id);
+    const dismissals = issueIds.length > 0 ? await db.DataHealthDismissal.findAll({
+      attributes: ["issue_id"],
+      where: {
+        issue_id: { [Op.in]: issueIds },
+        team_id: access.teamId,
+        user_id: access.userId,
+      },
+    }) : [];
+    const dismissedIds = new Set(dismissals.map((dismissal) => dismissal.issue_id));
+    const active = issues.filter((item) => !dismissedIds.has(item.id));
+    const resolved = runHealth.resolved.filter((item) => !dismissedIds.has(item.id));
     active.sort((left, right) => new Date(right.detectedAt) - new Date(left.detectedAt));
     resolved.sort((left, right) => new Date(right.resolvedAt) - new Date(left.resolvedAt));
 
@@ -374,6 +397,21 @@ class HomeController {
       items: active.slice(0, 5),
       resolved,
     };
+  }
+
+  async dismissDataHealth(access, issueId) {
+    const health = await this.getDataHealth(access);
+    const issue = [...health.active, ...health.resolved].find((item) => item.id === issueId);
+    if (!issue) throw createHttpError("Data health issue not found", 404);
+
+    await db.DataHealthDismissal.findOrCreate({
+      where: {
+        issue_id: issue.id,
+        team_id: access.teamId,
+        user_id: access.userId,
+      },
+    });
+    return { removed: true };
   }
 
   async getActivityCounts(access) {

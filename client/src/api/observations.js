@@ -67,6 +67,12 @@ export function getDataHealth(teamId) {
   return observationRequest(`/team/${teamId}/data-health`);
 }
 
+export function dismissDataHealth(teamId, issueId) {
+  return observationRequest(`/team/${teamId}/data-health/${encodeURIComponent(issueId)}/dismiss`, {
+    method: "POST",
+  });
+}
+
 export function getAlerts(teamId) {
   return observationRequest(`/team/${teamId}/alerts`);
 }

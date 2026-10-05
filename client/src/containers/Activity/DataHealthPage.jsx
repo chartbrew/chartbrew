@@ -11,7 +11,7 @@ import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
-import { getDataHealth } from "../../api/observations";
+import { dismissDataHealth, getDataHealth } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import { ActivityList, ActivityListRow } from "./ActivityList";
 import { formatTimeAgo } from "../../modules/observationFormat";
@@ -38,6 +38,7 @@ function DataHealthPage() {
   const team = useSelector(selectTeam);
   const [health, setHealth] = useState({ count: 0, items: [] });
   const [loading, setLoading] = useState(true);
+  const [removingId, setRemovingId] = useState(null);
 
   useEffect(() => {
     if (!team?.id) return;
@@ -47,6 +48,29 @@ function DataHealthPage() {
       .catch((error) => toast.error(error.message))
       .finally(() => setLoading(false));
   }, [team?.id]);
+
+  const removeIssue = async (item) => {
+    setRemovingId(item.id);
+    try {
+      await dismissDataHealth(team.id, item.id);
+      setHealth((current) => {
+        const active = (current.active || current.items).filter((issue) => issue.id !== item.id);
+        return {
+          ...current,
+          active,
+          count: active.length,
+          items: active.slice(0, 5),
+          resolved: current.resolved?.filter((issue) => issue.id !== item.id),
+        };
+      });
+      window.dispatchEvent(new CustomEvent("cb:activity-updated"));
+      toast.success("Issue removed from your list");
+    } catch {
+      toast.error("Could not remove this issue. Try again.");
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -68,11 +92,25 @@ function DataHealthPage() {
           <ActivityList label="Data health">
             {activeItems.map((item) => (
               <ActivityListRow
-                actions={item.action ? (
-                  <Button onPress={() => navigate(item.action.path)} size="sm" variant="secondary">
-                    {item.action.label}
-                  </Button>
-                ) : null}
+                actions={(
+                  <>
+                    {item.action ? (
+                      <Button onPress={() => navigate(item.action.path)} size="sm" variant="secondary">
+                        {item.action.label}
+                      </Button>
+                    ) : null}
+                    <Button
+                      aria-label={`Remove issue: ${item.title}`}
+                      isDisabled={removingId !== null}
+                      isPending={removingId === item.id}
+                      onPress={() => removeIssue(item)}
+                      size="sm"
+                      variant="tertiary"
+                    >
+                      Remove
+                    </Button>
+                  </>
+                )}
                 icon={getHealthIcon(item.type)}
                 key={item.id}
                 meta={(
@@ -98,8 +136,8 @@ function DataHealthPage() {
           <ActivityList label="Data health">
             <ActivityListRow
               icon={<LuCircleCheck className="text-success" size={18} aria-hidden />}
-              meta="No current connection, dataset, chart, or watched metric failures were found."
-              title={<span className="font-medium text-foreground">Data is refreshing normally</span>}
+              meta="New issues will appear here when data cannot refresh."
+              title={<span className="font-medium text-foreground">No data health issues to review</span>}
             />
           </ActivityList>
         )}
@@ -113,6 +151,18 @@ function DataHealthPage() {
           <ActivityList label="Data health">
             {health.resolved.map((item) => (
               <ActivityListRow
+                actions={(
+                  <Button
+                    aria-label={`Remove issue: ${item.title}`}
+                    isDisabled={removingId !== null}
+                    isPending={removingId === item.id}
+                    onPress={() => removeIssue(item)}
+                    size="sm"
+                    variant="tertiary"
+                  >
+                    Remove
+                  </Button>
+                )}
                 icon={getHealthIcon(item.type, true)}
                 key={item.id}
                 meta={(
