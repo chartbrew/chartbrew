@@ -601,7 +601,10 @@ function EChartsRenderer({
 }) {
   const containerRef = useRef(null);
   const instanceRef = useRef(null);
+  const redrawCompleteRef = useRef(redrawComplete);
+  redrawCompleteRef.current = redrawComplete;
   const hasRenderedRef = useRef(false);
+  const scheduleInitialRenderRef = useRef(null);
   const renderedSizeRef = useRef({ width: 0, height: 0 });
   const compactTooltipRef = useRef(false);
   const categoryCompositionRef = useRef(null);
@@ -680,17 +683,20 @@ function EChartsRenderer({
       tooltip: getEChartsTooltipOption(nextOption, themeColors, { compact }),
     }, width, height, themeColors);
     const finalOption = compactAxes ? compactEChartsAxes(laidOut) : laidOut;
+    const scaledOption = scaleEChartsDetails(finalOption, detailScale);
     if (clear) instance.clear();
+    if (instance.getWidth() !== width || instance.getHeight() !== height) {
+      instance.resize();
+    }
     instance.setOption(
       {
-        ...scaleEChartsDetails(finalOption, detailScale),
-        ...getEChartsAnimation(finalOption, !hasRenderedRef.current, reducedMotion, renderer),
+        ...scaledOption,
+        ...getEChartsAnimation(scaledOption, !hasRenderedRef.current, reducedMotion, renderer),
       },
       { lazyUpdate: false, notMerge: true }
     );
     hasRenderedRef.current = true;
     renderedSizeRef.current = { width, height };
-    instance.resize();
     setMapMoved(false);
   };
 
@@ -703,6 +709,10 @@ function EChartsRenderer({
       hasRenderedRef.current = false;
       renderedSizeRef.current = { width: 0, height: 0 };
       resizeObserver = new ResizeObserver(() => {
+        if (scheduleInitialRenderRef.current) {
+          scheduleInitialRenderRef.current();
+          return;
+        }
         const current = optionRef.current;
         const container = containerRef.current;
         if (!container) return;
@@ -766,19 +776,42 @@ function EChartsRenderer({
     const instance = instanceRef.current;
     if (!instance) return;
     let cancelled = false;
+    let renderTimeout;
+    const draw = () => {
+      scheduleInitialRenderRef.current = null;
+      if (cancelled || instance.isDisposed()) return;
+      try {
+        applyOption(instance, effectiveOption, { clear: redraw });
+        redrawCompleteRef.current?.();
+      } catch (error) {
+        setRenderError(error);
+      }
+    };
     const render = async () => {
       try {
         await registerOptionMap(echarts, effectiveOption);
         if (cancelled || instance.isDisposed()) return;
-        applyOption(instance, effectiveOption, { clear: redraw });
-        redrawComplete?.();
+        if (!hasRenderedRef.current && renderer === "canvas") {
+          // Wait for the grid's width transition to stop before animating the chart.
+          scheduleInitialRenderRef.current = () => {
+            clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(draw, 100);
+          };
+          scheduleInitialRenderRef.current();
+        } else {
+          draw();
+        }
       } catch (error) {
         if (!cancelled) setRenderError(error);
       }
     };
     render();
-    return () => { cancelled = true; };
-  }, [compactAxes, detailScale, effectiveOption, redraw, redrawComplete, themeName]);
+    return () => {
+      cancelled = true;
+      clearTimeout(renderTimeout);
+      scheduleInitialRenderRef.current = null;
+    };
+  }, [compactAxes, detailScale, effectiveOption, redraw, renderer, themeName]);
 
   useEffect(() => {
     const instance = instanceRef.current;

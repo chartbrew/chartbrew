@@ -45,9 +45,27 @@ export function selectEChartsRender({ loading, previous, render, type }) {
 }
 
 export function getEChartsAnimation(option, firstRender, reducedMotion, renderer) {
+  const animation = option.animation !== false && firstRender && !reducedMotion && renderer === "canvas";
   return {
-    animation: option.animation !== false && firstRender && !reducedMotion && renderer === "canvas",
-    animationDuration: 380,
+    animation,
+    animationDuration: 700,
     animationEasing: "cubicOut",
+    series: getSeries(option).map((series) => ({
+      ...series,
+      animation: animation && series.animation !== false,
+      animationDuration: {
+        bar: 600,
+        gauge: 800,
+        line: 800,
+        pie: 800,
+        radar: 700,
+        scatter: 450,
+      }[series.type] || 700,
+      animationEasing: "cubicOut",
+      animationDelay: ["bar", "scatter"].includes(series.type)
+        ? (index) => Math.min(index * 30, 180)
+        : 0,
+      ...(series.type === "pie" ? { animationType: "expansion" } : {}),
+    })),
   };
 }

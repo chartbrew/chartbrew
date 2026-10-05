@@ -77,7 +77,7 @@ function DeferredChartContent({ children, deferred }) {
 
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) setVisible(true);
-    }, { rootMargin: "240px" });
+    });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [deferred, visible]);
