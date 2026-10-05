@@ -25,8 +25,6 @@ import {
   LuEllipsis,
   LuLayoutGrid,
   LuMapPin,
-  LuPanelLeftClose,
-  LuPanelLeftOpen,
   LuPencilLine,
   LuPin,
   LuPlus,
@@ -48,19 +46,7 @@ import { removeProject, selectProjects, updateProject } from "../../slices/proje
 import { getTeams, saveActiveTeam, selectTeam, selectTeamMembers } from "../../slices/team";
 import { getTemplates } from "../../slices/template";
 import { pinDashboard, selectUser, unpinDashboard } from "../../slices/user";
-import { getHome } from "../../api/observations";
-import WorkspaceAttentionPanel from "./components/WorkspaceAttentionPanel";
 import DashboardShortcutAppearance, { DashboardShortcutMark } from "../../components/DashboardShortcutAppearance";
-
-const ATTENTION_PANEL_STORAGE_KEY = "__cb_attention_panel_collapsed";
-
-const getInitialAttentionPanelState = () => {
-  try {
-    return window.localStorage.getItem(ATTENTION_PANEL_STORAGE_KEY) === "true";
-  } catch (error) {
-    return false;
-  }
-};
 
 const hasScheduleConfigured = (schedule) => {
   return !!schedule?.frequency;
@@ -233,8 +219,6 @@ function DashboardList() {
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [modifyingProject, setModifyingProject] = useState(false);
   const [pinSaving, setPinSaving] = useState(false);
-  const [attentionPanelCollapsed, setAttentionPanelCollapsed] = useState(getInitialAttentionPanelState);
-  const [workspaceHome, setWorkspaceHome] = useState(null);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
@@ -249,13 +233,6 @@ function DashboardList() {
     const storageViewMode = window.localStorage.getItem("__cb_view_mode");
     if (storageViewMode) setViewMode(storageViewMode);
   }, []);
-
-  useEffect(() => {
-    if (!team?.id) return;
-    getHome(team.id)
-      .then(setWorkspaceHome)
-      .catch(() => setWorkspaceHome(null));
-  }, [team?.id]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -278,18 +255,6 @@ function DashboardList() {
   const _changeViewMode = (mode) => {
     setViewMode(mode);
     window.localStorage.setItem("__cb_view_mode", mode);
-  };
-
-  const _toggleAttentionPanel = () => {
-    setAttentionPanelCollapsed((currentValue) => {
-      const nextValue = !currentValue;
-      try {
-        window.localStorage.setItem(ATTENTION_PANEL_STORAGE_KEY, String(nextValue));
-      } catch (error) {
-        // Keep the UI responsive even if storage is unavailable.
-      }
-      return nextValue;
-    });
   };
 
   const _getProjectMembers = (project) => {
@@ -406,10 +371,6 @@ function DashboardList() {
   const canManageDashboards = _canAccess("teamAdmin", team?.TeamRoles);
   const canEditAppearance = _canAccess("projectEditor", team?.TeamRoles);
   const filteredProjects = _getFilteredProjects();
-  const showAttentionRail = !!workspaceHome && !attentionPanelCollapsed;
-  const gridClassName = showAttentionRail
-    ? "grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
-    : "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3";
 
   return (
     <div className="flex flex-col">
@@ -418,8 +379,8 @@ function DashboardList() {
         open={addProject}
         onClose={() => setAddProject(false)}
       />
-      <div className={cn("flex flex-col gap-4", showAttentionRail && "xl:flex-row xl:items-start xl:gap-6")}>
-        <div className={cn("min-w-0", showAttentionRail && "xl:flex-1")}>
+      <div className="flex flex-col gap-4">
+        <div className="min-w-0">
           <div className="flex flex-row justify-between items-center gap-4">
             <div className="flex flex-row items-center">
               <div className="flex flex-col gap-1">
@@ -441,25 +402,6 @@ function DashboardList() {
                   <span className="md:hidden">Create</span>
                   <LuPlus />
                 </Button>
-              )}
-
-              {workspaceHome && (
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <Button
-                      isIconOnly
-                      variant="outline"
-                      className="hidden xl:inline-flex"
-                      onPress={_toggleAttentionPanel}
-                      aria-label={attentionPanelCollapsed ? "Show attention panel" : "Hide attention panel"}
-                    >
-                      {attentionPanelCollapsed ? <LuPanelLeftClose size={18} /> : <LuPanelLeftOpen size={18} />}
-                    </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    {attentionPanelCollapsed ? "Show attention panel" : "Hide attention panel"}
-                  </Tooltip.Content>
-                </Tooltip>
               )}
             </div>
           </div>
@@ -496,7 +438,7 @@ function DashboardList() {
           <div className="h-4" />
 
           {projects && viewMode === "grid" && (
-            <div className={gridClassName}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredProjects.map((project) => {
                 const projectMembers = project.members || _getProjectMembers(project);
                 const isPinned = !!pinnedDashboards.find((pinnedDashboard) => pinnedDashboard.project_id === project.id);
@@ -836,12 +778,6 @@ function DashboardList() {
             </Table>
           )}
         </div>
-
-        {workspaceHome && (
-          <div className={cn("hidden xl:block xl:w-[360px] xl:shrink-0 sticky top-18", attentionPanelCollapsed && "xl:hidden")}>
-            <WorkspaceAttentionPanel home={workspaceHome} onCollapse={_toggleAttentionPanel} />
-          </div>
-        )}
       </div>
 
       {projects && projects.length === 0 && !_canAccess("projectEditor", team?.TeamRoles) && (
