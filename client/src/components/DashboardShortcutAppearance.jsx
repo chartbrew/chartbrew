@@ -54,6 +54,7 @@ const icons = {
 };
 
 const colorLabels = {
+  neutral: "Neutral",
   blue: "Blue",
   orange: "Orange",
   green: "Green",
@@ -68,7 +69,10 @@ const colorLabels = {
   lime: "Lime",
 };
 
-const getShortcutColor = (id) => id === "slate" ? neutral : (chartColors[id]?.hex || chartColors.blue.hex);
+const getShortcutColor = (id) => {
+  if (id === "neutral") return "var(--foreground)";
+  return id === "slate" ? neutral : (chartColors[id]?.hex || chartColors.blue.hex);
+};
 
 export function DashboardShortcutMark({ project, size = "sm" }) {
   const [logoFailed, setLogoFailed] = useState(false);
@@ -154,7 +158,9 @@ function DashboardShortcutAppearance({ value, onChange, logo, disabled = false }
               onPress={() => select("sidebarColor", id)}
             >
               <span className="flex size-6 items-center justify-center rounded-full" style={{ backgroundColor: getShortcutColor(id) }}>
-                {(value.sidebarColor || "blue") === id && <LuCheck size={15} color="white" aria-hidden="true" />}
+                {(value.sidebarColor || "blue") === id && (
+                  <LuCheck size={15} color={id === "neutral" ? "var(--background)" : "white"} aria-hidden="true" />
+                )}
               </span>
             </Button>
           ))}

@@ -19,6 +19,10 @@ it("saves dashboard shortcuts and rejects unknown choices", async () => {
   const saved = await Project.findByPk(project.id);
   expect([saved.sidebarIcon, saved.sidebarColor, saved.sidebarDisplay]).toEqual(["zap", "slate", "logo"]);
 
+  await Project.update({ sidebarColor: "neutral" }, { where: { id: project.id } });
+  await saved.reload();
+  expect(saved.sidebarColor).toBe("neutral");
+
   for (const field of ["sidebarIcon", "sidebarColor", "sidebarDisplay"]) {
     await expect(Project.update({ [field]: "unknown" }, { where: { id: project.id } }))
       .rejects.toMatchObject({ name: "SequelizeValidationError" });
