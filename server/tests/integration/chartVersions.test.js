@@ -38,7 +38,7 @@ describe("Chart version history", () => {
     const f = await fixture();
     const original = await versions.captureConfiguration(f.chart.id);
     expect(original.bindings[0].conditions[0]).not.toHaveProperty("values");
-    const shared = f.dataset.toJSON();
+    const shared = (await f.dataset.reload()).toJSON();
     await f.controller.update(f.chart.id, { name: "Manual title" }, f.user, false, f.context);
     expect((await db.ChartVersion.findAll({ order: [["version", "ASC"]] })).map((item) => item.origin)).toEqual(["baseline", "manual"]);
     await f.controller.update(f.chart.id, { name: "Manual title" }, f.user, false, f.context);
@@ -65,6 +65,7 @@ describe("Chart version history", () => {
     vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
     const payload = {
       chart_id: empty.id, team_id: f.team.id, user_id: f.user.id,
+      expectedVersion: empty.configurationVersion, operationId: randomUUID(),
       dataset_id: f.dataset.id, name: "Revenue", legend: "Revenue",
       xAxis: "root[].month", yAxis: "root[].amount", yAxisOperation: "sum",
     };
@@ -75,7 +76,10 @@ describe("Chart version history", () => {
     const chart = await empty.reload();
     expect(chart.visualization.layers).toHaveLength(1);
     expect(String(chart.visualization.layers[0].bindingId)).toBe(String(bindings[0].id));
-    await updateChart({ ...payload, name: "Updated revenue" });
+    await updateChart({
+      ...payload, name: "Updated revenue",
+      expectedVersion: chart.configurationVersion, operationId: randomUUID(),
+    });
     expect(await db.ChartDatasetConfig.count({ where: { chart_id: empty.id } })).toBe(1);
   });
 

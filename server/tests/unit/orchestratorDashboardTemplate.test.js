@@ -231,6 +231,7 @@ describe("AI orchestrator dashboard template tool", () => {
 
     const result = await createDashboardChart({
       team_id: 7,
+      user_id: 3,
       project_id: 91,
       connection_id: 42,
       name: "Total users",
@@ -254,7 +255,7 @@ describe("AI orchestrator dashboard template tool", () => {
         dataset_id: 301,
         yAxis: "root[].total_users",
       })],
-    }), null, { waitForData: true });
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,
@@ -292,10 +293,10 @@ describe("AI orchestrator dashboard template tool", () => {
       .mockImplementation(async () => renderedAfterCommit.push(committed));
     vi.spyOn(require("../../controllers/ChartController").prototype, "takeSnapshot").mockResolvedValue(null);
     const spec = { connection_id: 42, name: "Users", type: "kpi", query: "SELECT 1 AS users", yAxis: "root[].users" };
-    const result = await createDashboardChart({ team_id: 7, project_id: 91, ...spec, additional_charts: [{ ...spec, name: "Customers" }] });
+    const result = await createDashboardChart({ team_id: 7, user_id: 3, project_id: 91, ...spec, additional_charts: [{ ...spec, name: "Customers" }] });
     expect(transact).toHaveBeenCalledTimes(1);
-    expect(create).toHaveBeenLastCalledWith(expect.objectContaining({ name: "Customers", layout: expect.objectContaining({ lg: [6, 0, 6, 1] }) }), null,
-      { transaction, skipBackgroundUpdate: true, preserveLayout: true });
+    expect(create).toHaveBeenLastCalledWith(expect.objectContaining({ name: "Customers", layout: expect.objectContaining({ lg: [6, 0, 6, 1] }) }), { id: 3 },
+      { transaction, skipBackgroundUpdate: true, preserveLayout: true, origin: "ai" });
     expect(charts[0].layout.lg).toEqual([0, 0, 6, 1]);
     expect(renderedAfterCommit).toEqual([true, true]);
     expect(result.charts.map((item) => item.name)).toEqual(["Users", "Customers"]);

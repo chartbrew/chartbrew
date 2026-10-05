@@ -241,6 +241,7 @@ describe("Generic API AI layer", () => {
 
     const result = await createTemporaryChart({
       team_id: 7,
+      user_id: 3,
       connection_id: 42,
       name: "Orders",
       original_question: "Show orders from the API",
@@ -265,7 +266,7 @@ describe("Generic API AI layer", () => {
         templateBindingId: "binding-1",
         xAxis: "root[]",
       })],
-    }), null, { waitForData: true });
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,
@@ -304,6 +305,7 @@ describe("Generic API AI layer", () => {
 
     const result = await createTemporaryChart({
       team_id: 7,
+      user_id: 3,
       connection_id: 42,
       name: "PostHog insights",
       original_question: "List all insights for environment 127973",
@@ -325,7 +327,7 @@ describe("Generic API AI layer", () => {
       chartDatasetConfigs: [expect.objectContaining({
         xAxis: "root[]",
       })],
-    }), null, { waitForData: true });
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,

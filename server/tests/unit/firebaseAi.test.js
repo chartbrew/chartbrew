@@ -217,6 +217,7 @@ describe("Firebase source AI layers", () => {
 
     const result = await createTemporaryChart({
       team_id: 7,
+      user_id: 3,
       connection_id: 42,
       name: "Users count",
       original_question: "Count users from Firestore",
@@ -238,7 +239,7 @@ describe("Firebase source AI layers", () => {
         yAxis: "root[]._id",
         yAxisOperation: "count",
       })],
-    }), null, { waitForData: true });
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,

@@ -291,6 +291,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
 
     const result = await createTemporaryChart({
       team_id: 7,
+      user_id: 3,
       connection_id: 42,
       name: "MRR",
       type: "kpi",
@@ -307,7 +308,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
     expect(chartSpy).toHaveBeenCalledWith(expect.objectContaining({
       type: "kpi",
       subType: undefined,
-    }), null, { waitForData: true });
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,
@@ -416,6 +417,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
 
     const result = await createChart({
       team_id: 7,
+      user_id: 3,
       project_id: 13,
       dataset_id: 99,
       name: "MRR",
@@ -430,7 +432,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
     expect(chartSpy).toHaveBeenCalledWith(expect.objectContaining({
       type: "kpi",
       subType: undefined,
-    }), null, { waitForData: true });
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,

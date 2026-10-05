@@ -985,6 +985,7 @@ describe("Stripe Official AI layer", () => {
 
     const result = await createChart({
       team_id: 7,
+      user_id: 3,
       project_id: 13,
       dataset_id: 99,
       name: "Stripe revenue chart",
@@ -1003,7 +1004,7 @@ describe("Stripe Official AI layer", () => {
         yAxis: "root[].value",
         formula: "{val / 100}",
       })],
-    }), null, { waitForData: true });
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       chart_id: 456,
       dataset_id: 99,
