@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Chip, Spinner, Table,
+  Button, Chip, EmptyState, Spinner, Table,
 } from "@heroui/react";
 import {
   LuArrowRight,
@@ -396,7 +396,7 @@ function Home() {
             id="attention-heading"
             title="Metric activity"
           />
-          <Table className="overflow-hidden border border-divider shadow-none">
+          <Table className="@container overflow-hidden border border-divider shadow-none">
             <Table.ScrollContainer>
               <Table.Content
                 aria-label="Metric activity"
@@ -415,7 +415,10 @@ function Home() {
               <Table.Column id="action" textValue="Row actions" />
                 </Table.Header>
                 <Table.Body renderEmptyState={() => (
-                  <span className="text-sm text-muted">No metric activity needs review.</span>
+                  <EmptyState className="sticky left-0 flex h-full w-full min-h-40 max-w-[100cqw] flex-col items-center justify-center gap-2 px-6 py-8 text-center">
+                    <LuChartNoAxesColumn className="size-6 text-muted" aria-hidden />
+                    <span className="text-sm text-muted">No metric activity needs review.</span>
+                  </EmptyState>
                 )}>
                   {activityRows.map((row) => {
                     const isHealth = row.category === "health";
