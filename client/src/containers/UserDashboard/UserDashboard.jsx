@@ -128,7 +128,7 @@ function UserDashboard(props) {
   }
 
   return (
-    <div className="dashboard bg-background">
+    <div className="dashboard bg-background" data-sidebar-collapsed={isChartEditor || collapsed}>
       {team?.id && (
         <div>
           {isSettings ? <SettingsSidebar /> : <Sidebar collapsed={isChartEditor || collapsed} />}

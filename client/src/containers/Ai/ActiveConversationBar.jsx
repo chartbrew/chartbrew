@@ -12,7 +12,7 @@ import {
   dismissAiConversation, selectActiveAiConversation, selectAiModalOpen,
   selectInlineAiConversationKey, setActiveAiConversation, showAiModal, updateActiveAiConversation,
 } from "../../slices/ui";
-import { isActiveConversationFor, readActiveConversation, writeActiveConversation } from "./activeConversation";
+import { isActiveConversationFor, isConversationBarHiddenOnRoute, readActiveConversation, writeActiveConversation } from "./activeConversation";
 
 export default function ActiveConversationBar() {
   const dispatch = useDispatch();
@@ -58,10 +58,8 @@ export default function ActiveConversationBar() {
     return () => { cancelled = true; };
   }, [active?.id, active?.key, active?.busy, inScope, team?.id]);
 
-  const publicPage = /^\/(login|signup|passwordReset|b|report|share|google-auth|invite)(\/|$)/.test(pathname)
-    || /\/(embedded|share)(\/|$)/.test(pathname);
   if (!inScope || active.studio_chart_id !== null || (!active.id && !active.busy)
-    || publicPage || modalOpen || active.key === inlineKey) return null;
+    || isConversationBarHiddenOnRoute(pathname) || modalOpen || active.key === inlineKey) return null;
 
   return (
     <div className="active-conversation-bar" role="region" aria-label="Active conversation">

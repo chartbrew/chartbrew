@@ -4,7 +4,16 @@ import reducer, {
   dismissAiConversation, hideAiModal, setActiveAiConversation, setInlineAiConversationKey,
   clearInlineAiConversationKey, showAiModal, toggleAiModal, updateActiveAiConversation,
 } from "../../slices/ui.js";
-import { getStudioConversationPath, isActiveConversationFor, readActiveConversation, writeActiveConversation } from "./activeConversation.js";
+import { getStudioConversationPath, isActiveConversationFor, isConversationBarHiddenOnRoute, readActiveConversation, writeActiveConversation } from "./activeConversation.js";
+
+test("the conversation bar stays hidden on settings and public pages", () => {
+  for (const pathname of ["/settings", "/settings/", "/settings/profile", "/settings/team/ai", "/login", "/report/example", "/chart/1/embedded"]) {
+    assert.equal(isConversationBarHiddenOnRoute(pathname), true, pathname);
+  }
+  for (const pathname of ["/", "/dashboards", "/dashboard/1", "/dashboard/1/settings", "/settings-example"]) {
+    assert.equal(isConversationBarHiddenOnRoute(pathname), false, pathname);
+  }
+});
 
 test("navigation and dismissal keep saved history but reject late updates from older requests", () => {
   let state = reducer(undefined, setActiveAiConversation({ key: "first", id: "saved", userId: 1, teamId: 2, studio_chart_id: null }));

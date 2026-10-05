@@ -2,16 +2,46 @@
   position: fixed;
   z-index: 40;
   bottom: calc(1.5rem + env(safe-area-inset-bottom));
-  left: 50%;
+  left: calc(50% + var(--conversation-sidebar-width, 0rem) / 2);
   transform: translateX(-50%);
-  width: min(25rem, calc(100vw - 8rem));
+  width: min(25rem, calc(100vw - var(--conversation-sidebar-width, 0rem) - 8rem));
+}
+
+body:has(.dashboard) .active-conversation-bar {
+  --conversation-sidebar-width: 16rem;
+}
+
+body:has(.dashboard[data-sidebar-collapsed="true"]) .active-conversation-bar {
+  --conversation-sidebar-width: 4rem;
 }
 
 .active-conversation-bar .button {
   height: 3rem;
   border-radius: 9999px;
   background: var(--surface);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 40%),
+    inset 0 -1px 0 rgb(255 255 255 / 8%),
+    0 8px 24px rgb(0 0 0 / 12%);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .active-conversation-bar .button {
+    background:
+      linear-gradient(160deg, rgb(255 255 255 / 22%), transparent 45%, rgb(255 255 255 / 6%)),
+      color-mix(in srgb, var(--surface) 70%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .active-conversation-bar .button {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 .active-conversation-bar__open {
