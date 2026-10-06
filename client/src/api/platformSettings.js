@@ -1,7 +1,7 @@
 import { API_HOST } from "../config/settings";
 import { getAuthToken } from "../modules/auth";
 
-async function platformSettingsRequest(path, options = {}) {
+async function settingsRequest(path, options = {}) {
   const response = await fetch(`${API_HOST}${path}`, {
     ...options,
     headers: new Headers({
@@ -20,22 +20,26 @@ async function platformSettingsRequest(path, options = {}) {
 }
 
 export function getPlatformSettings() {
-  return platformSettingsRequest("/platform/settings");
+  return settingsRequest("/platform/settings");
 }
 
 export function getPlatformAnalytics(days, signal) {
-  return platformSettingsRequest(`/platform/analytics?days=${encodeURIComponent(days)}`, { signal });
+  return settingsRequest(`/platform/analytics?days=${encodeURIComponent(days)}`, { signal });
+}
+
+export function getTeamAnalytics(teamId, days, signal) {
+  return settingsRequest(`/team/${encodeURIComponent(teamId)}/analytics?days=${encodeURIComponent(days)}`, { signal });
 }
 
 export function updatePlatformSettings(settings) {
-  return platformSettingsRequest("/platform/settings", {
+  return settingsRequest("/platform/settings", {
     body: JSON.stringify({ settings }),
     method: "PUT",
   });
 }
 
 export function resetPlatformSettings(keys) {
-  return platformSettingsRequest("/platform/settings/reset", {
+  return settingsRequest("/platform/settings/reset", {
     body: JSON.stringify({ keys }),
     method: "POST",
   });

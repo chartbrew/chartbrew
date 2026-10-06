@@ -36,6 +36,10 @@ const TEAM_ITEMS = [{
   label: "Team settings",
   path: "/settings/team",
 }, {
+  icon: LuChartNoAxesCombined,
+  label: "Team analytics",
+  path: "/settings/team/analytics",
+}, {
   icon: LuBriefcaseBusiness,
   label: "Business profile",
   path: "/settings/team/business-profile",

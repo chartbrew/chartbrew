@@ -12,7 +12,7 @@ import ManageUser from "./ManageUser";
 import TeamSettings from "./TeamSettings";
 import ApiKeys from "../ApiKeys/ApiKeys";
 import PlatformSettings from "./PlatformSettings";
-import PlatformAnalytics from "./PlatformAnalytics";
+import Analytics from "./Analytics";
 import BusinessProfileSettings from "./BusinessProfileSettings";
 import TeamMembers from "./TeamMembers";
 import TeamAiSettings from "./TeamAiSettings";
@@ -92,6 +92,14 @@ function ManageTeam() {
         element={canManageTeam ? <TeamSettingsRoute /> : <Navigate replace to="/settings/profile" />}
       />
       <Route
+        path="team/analytics"
+        element={canManageTeam ? (
+          <SettingsPage title="Team analytics" wide>
+            <Analytics key={`team:${team.id}:${user.id}`} teamId={team.id} />
+          </SettingsPage>
+        ) : <Navigate replace to="/settings/profile" />}
+      />
+      <Route
         path="team/business-profile"
         element={canManageTeam ? (
           <SettingsPage title="Business profile">
@@ -142,7 +150,7 @@ function ManageTeam() {
         path="platform/analytics"
         element={user.admin === true ? (
           <SettingsPage title="Platform analytics" wide>
-            <PlatformAnalytics />
+            <Analytics key="platform" />
           </SettingsPage>
         ) : <Navigate replace to={defaultPath} />}
       />

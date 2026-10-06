@@ -6,6 +6,7 @@ const TeamController = require("../controllers/TeamController");
 const UserController = require("../controllers/UserController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const { getTeamAnalytics } = require("../modules/platformAnalytics");
 const {
   discoverBusinessProfile,
   normalizeWebsiteUrl,
@@ -131,6 +132,27 @@ module.exports = (app) => {
       });
   });
   // --------------------------------------
+
+  app.get("/team/:id/analytics", verifyToken, apiLimiter(30), async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const teamId = Number(req.params.id);
+    if (!/^[1-9]\d*$/.test(req.params.id) || !Number.isSafeInteger(teamId)) {
+      return res.status(400).send({ error: "Choose a valid team." });
+    }
+
+    try {
+      const teamRole = await teamController.getTeamRole(teamId, req.user.id);
+      if (!["teamOwner", "teamAdmin"].includes(teamRole?.role)) {
+        return res.status(403).send({ error: "You do not have access to this team's analytics." });
+      }
+      return res.send(await getTeamAnalytics(teamId, req.query.days));
+    } catch (error) {
+      const statusCode = error.statusCode || 500;
+      return res.status(statusCode).send({
+        error: statusCode === 400 ? error.message : "Could not load team analytics. Try again.",
+      });
+    }
+  });
 
   // route to create a team
   app.post("/team", verifyToken, apiLimiter(10), async (req, res) => {

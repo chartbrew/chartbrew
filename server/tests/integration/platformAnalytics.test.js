@@ -11,7 +11,7 @@ import { createTestAppWithPlatformSettingsRoutes } from "../helpers/testApp.js";
 import { testDbManager } from "../helpers/testDbManager.js";
 
 const require = createRequire(import.meta.url);
-const { getPlatformAnalytics } = require("../../modules/platformAnalytics");
+const { getPlatformAnalytics, getTeamAnalytics } = require("../../modules/platformAnalytics");
 const migration = require("../../models/migrations/20261001100000-index-source-execution-finished");
 const now = new Date("2026-10-01T12:00:00Z");
 let db;
@@ -31,6 +31,8 @@ describe("Platform analytics", () => {
     if (!testDbManager.getSequelize()) await testDbManager.start();
     db = await getModels();
     app = await createTestAppWithPlatformSettingsRoutes();
+    require("../../api/TeamRoute")(app);
+    require("../../api/AiRoute")(app);
   });
 
   it("counts completed uncached requests across teams and weights mean time by request", async () => {
@@ -147,6 +149,92 @@ describe("Platform analytics", () => {
     expect(response.body.daily).toHaveLength(30);
     expect(response.body.ai.metrics).toHaveLength(4);
     expect(response.body.ai.daily).toHaveLength(30);
+  });
+
+  it("keeps team request and AI totals separate, including charts and incomplete counts", async () => {
+    const teams = await db.Team.bulkCreate([teamFactory.build(), teamFactory.build(), teamFactory.build()]);
+    await db.SourceExecution.bulkCreate([
+      execution("2026-10-01T01:00:00Z", 1000, { teamId: teams[0].id }),
+      execution("2026-10-01T01:00:00Z", 9000, { teamId: teams[1].id, status: "failed" }),
+    ]);
+    await db.AiUsage.bulkCreate(teams.slice(0, 2).flatMap((team, index) => ["reported", "unknown", "pending", "legacy"].map((status) => ({
+      team_id: team.id, model: `private-model-${index}`, provider: "openai", usage_status: status,
+      prompt_tokens: (index + 1) * 100, completion_tokens: 30, total_tokens: (index + 1) * 100 + 30,
+      createdAt: new Date("2026-10-01T01:00:00Z"),
+    }))));
+
+    const result = await getTeamAnalytics(teams[0].id, "7", now);
+    expect(result.summary).toEqual({ successful: 1, failed: 0, successRate: 100, meanSeconds: 1 });
+    expect(result.daily[6]).toMatchObject({ successful: 1, failed: 0, meanSeconds: 1 });
+    expect(result.charts.outcomes.configuration.dataset.source[6].slice(1)).toEqual([1, 0]);
+    expect(result.ai.summary).toMatchObject({ calls: 3, total_tokens: 260, unknown: 1, pending: 1 });
+    expect(result.ai.daily[6]).toMatchObject({ calls: 3, total_tokens: 260, unknown: 1, pending: 1 });
+    expect(result.ai.metrics.map((item) => item.value)).toEqual(["3", "260", "200", "60"]);
+    expect(result.ai.charts.tokens.configuration.dataset.source[6].slice(1)).toEqual([200, 60]);
+    expect(result.ai).not.toHaveProperty("models");
+    expect(JSON.stringify(result)).not.toContain("private-model");
+
+    const other = await getTeamAnalytics(teams[1].id, "7", now);
+    expect(other.summary).toEqual({ successful: 0, failed: 1, successRate: 0, meanSeconds: 9 });
+    expect(other.ai.summary.total_tokens).toBe(460);
+    const empty = await getTeamAnalytics(teams[2].id, "7", now);
+    expect(empty.summary.successful + empty.summary.failed).toBe(0);
+    expect(empty.ai.summary.calls).toBe(0);
+    for (const id of [undefined, null, 0, -1, "1", NaN, 1.5]) {
+      await expect(getTeamAnalytics(id, "7", now)).rejects.toMatchObject({ statusCode: 400 });
+    }
+  });
+
+  it("checks the route's team on every request and never grants platform access to team admins", async () => {
+    const user = await db.User.create(userFactory.build({ admin: false }));
+    const teams = await db.Team.bulkCreate([teamFactory.build(), teamFactory.build()]);
+    const role = await db.TeamRole.create({ user_id: user.id, team_id: teams[0].id, role: "teamOwner" });
+    const headers = getAuthHeaders(generateTestToken({ id: user.id, email: user.email }));
+    const ownUrl = `/team/${teams[0].id}/analytics`;
+    const otherUrl = `/team/${teams[1].id}/analytics`;
+    const finishedAt = new Date(Date.now() - 10000).toISOString();
+    await db.SourceExecution.bulkCreate([
+      execution(finishedAt, 1000, { teamId: teams[0].id }),
+      execution(finishedAt, 9000, { teamId: teams[1].id, status: "failed" }),
+    ]);
+    await db.AiUsage.bulkCreate(teams.map((team, index) => ({
+      team_id: team.id, model: "private-model", usage_status: "reported",
+      prompt_tokens: (index + 1) * 100, completion_tokens: 30, total_tokens: (index + 1) * 100 + 30,
+      createdAt: new Date(finishedAt),
+    })));
+
+    await request(app).get(ownUrl).expect(401);
+    for (const allowedRole of ["teamOwner", "teamAdmin"]) {
+      await role.update({ role: allowedRole });
+      const response = await request(app).get(`${ownUrl}?teamId=${teams[1].id}&team_id=${teams[1].id}`).set(headers).expect(200);
+      expect(response.headers["cache-control"]).toBe("no-store");
+      expect(response.body.summary).toMatchObject({ successful: 1, failed: 0, meanSeconds: 1 });
+      expect(response.body.ai.summary.total_tokens).toBe(130);
+      expect(response.body.ai).not.toHaveProperty("models");
+      await request(app).get(`${otherUrl}?teamId=${teams[0].id}`).set(headers).expect(403);
+      await request(app).get("/platform/analytics").set(headers).expect(403);
+      const usage = await request(app).get(`/ai/usage/${teams[0].id}`).set(headers).expect(200);
+      expect(usage.body.total.total_tokens).toBe(130);
+      await request(app).get(`/ai/usage/${teams[1].id}?teamId=${teams[0].id}`).set(headers).expect(403);
+    }
+    for (const query of ["days=0", "days=7&days=30", "days=7junk"]) {
+      await request(app).get(`${ownUrl}?${query}`).set(headers).expect(400);
+    }
+    for (const id of ["0", "-1", "1junk", "1.5", "9007199254740992"]) {
+      await request(app).get(`/team/${id}/analytics`).set(headers).expect(400);
+    }
+    for (const deniedRole of ["projectAdmin", "projectEditor", "projectViewer", "guest"]) {
+      await role.update({ role: deniedRole });
+      await request(app).get(ownUrl).set(headers).expect(403);
+      await request(app).get(`/ai/usage/${teams[0].id}`).set(headers).expect(403);
+    }
+    await role.destroy();
+    await request(app).get(ownUrl).set(headers).expect(403);
+    await user.update({ admin: true });
+    await request(app).get(otherUrl).set(headers).expect(403);
+    const platform = await request(app).get("/platform/analytics").set(headers).expect(200);
+    expect(platform.body.summary).toMatchObject({ successful: 1, failed: 1 });
+    expect(platform.body.ai.summary.total_tokens).toBe(360);
   });
 
   it("can roll back and apply the platform date index", async () => {

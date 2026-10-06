@@ -41,7 +41,7 @@ The **AI usage** tab uses the response's `ai` object, aggregated from `AiUsage`:
 - `reported` and `unknown` records count as calls. `pending` records are shown separately; `rejected` records are excluded.
 - Older `legacy` records count only when at least one token count is positive. Old zero-token records can represent work without a provider call.
 - Token totals include `reported` and included `legacy` records. Partial counts from `unknown` records are excluded.
-  Missing counts and records without a final result are shown in a warning and in the daily and model tables.
+  Missing counts and records without a final result are shown in the daily and model tables.
 - Cached input and reasoning tokens are already included in input and output. They are not added again.
 - Model totals group by provider and model. Prompts, answers, and team identifiers are not returned.
 - No prices or credits are calculated. These remain in Cloud. Existing AI usage migration and retention rules apply.
@@ -49,6 +49,20 @@ The **AI usage** tab uses the response's `ai` object, aggregated from `AiUsage`:
 Run `npm --prefix server run db:migrate` to add the `source_execution_finished` date index.
 No new environment variables are needed. Tests run against an isolated database:
 `npm --prefix server run test:database -- tests/integration/platformAnalytics.test.js`.
+
+## Team Analytics
+
+Team owners and admins can open **Settings → Team analytics**. The page shares the
+Platform analytics charts and periods, but only returns records for the selected team.
+`GET /team/:id/analytics?days=30` validates the route ID and checks the signed-in user's
+current `TeamRole` for that exact team. Query parameters cannot change the team scope.
+Project roles and non-members receive 403. Platform admin status does not bypass this
+team check; platform admins use the separate `/platform/analytics` route for all teams.
+
+Both source and AI queries filter by team before aggregation. The team response omits
+provider/model breakdowns. Switching teams remounts the page and cancels its old request.
+No new migration or environment variable is required. The analytics integration tests
+also check cross-team access on the existing `/ai/usage/:teamId` route.
 
 ## Product Controls
 

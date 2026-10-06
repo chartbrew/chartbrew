@@ -45,7 +45,7 @@ function renderAnalytics(mark, data, measures) {
   return { configuration: result.configuration };
 }
 
-async function getAiAnalytics(from, now, dates) {
+async function getAiAnalytics(from, now, dates, teamId) {
   const quote = (name) => db.sequelize.getQueryInterface().queryGenerator.quoteIdentifier(name);
   const created = quote("createdAt");
   const day = literal(db.sequelize.getDialect() === "postgres"
@@ -58,6 +58,7 @@ async function getAiAnalytics(from, now, dates) {
       ...tokens.map((field) => [fn("SUM", col(field)), field]),
     ],
     where: {
+      ...(teamId !== undefined ? { team_id: teamId } : {}),
       createdAt: { [Op.gte]: from, [Op.lt]: now },
       [Op.or]: [
         { usage_status: { [Op.in]: ["reported", "unknown", "pending"] } },
@@ -125,7 +126,7 @@ async function getAiAnalytics(from, now, dates) {
   };
 }
 
-async function getPlatformAnalytics(days = "30", now = new Date()) {
+async function getAnalytics(days = "30", now = new Date(), teamId) {
   if (typeof days !== "string" || !["7", "30", "90"].includes(days)) {
     throw Object.assign(new Error("Choose 7, 30, or 90 days."), { statusCode: 400 });
   }
@@ -151,6 +152,7 @@ async function getPlatformAnalytics(days = "30", now = new Date()) {
       [fn("COUNT", duration), "timedCount"],
     ],
     where: {
+      ...(teamId !== undefined ? { teamId } : {}),
       cacheHit: false,
       status: { [Op.in]: ["success", "failed"] },
       finishedAt: { [Op.gte]: from, [Op.lt]: now },
@@ -214,8 +216,22 @@ async function getPlatformAnalytics(days = "30", now = new Date()) {
       outcomes: renderAnalytics("bar", points, outcomes),
       duration: renderAnalytics("line", points, [durationMeasure]),
     },
-    ai: await getAiAnalytics(from, now, points.map((item) => item.date)),
+    ai: await getAiAnalytics(from, now, points.map((item) => item.date), teamId),
   };
 }
 
-module.exports = { getPlatformAnalytics };
+function getPlatformAnalytics(days, now) {
+  return getAnalytics(days, now);
+}
+
+async function getTeamAnalytics(teamId, days, now) {
+  if (!Number.isSafeInteger(teamId) || teamId <= 0) {
+    throw Object.assign(new Error("Choose a valid team."), { statusCode: 400 });
+  }
+
+  const analytics = await getAnalytics(days, now, teamId);
+  delete analytics.ai.models;
+  return analytics;
+}
+
+module.exports = { getPlatformAnalytics, getTeamAnalytics };

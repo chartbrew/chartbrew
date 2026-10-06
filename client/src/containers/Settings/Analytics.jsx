@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Button, ListBox, ProgressCircle, Select, Table, Tabs } from "@heroui/react";
+import PropTypes from "prop-types";
+import { Button, ListBox, ProgressCircle, Select, Table, Tabs } from "@heroui/react";
 import { LuRefreshCw } from "react-icons/lu";
 
-import { getPlatformAnalytics } from "../../api/platformSettings";
+import { getPlatformAnalytics, getTeamAnalytics } from "../../api/platformSettings";
 import EChartsRenderer from "../Chart/components/EChartsRenderer";
 import EChartsErrorBoundary from "../Chart/components/EChartsErrorBoundary";
 import KpiMode from "../Chart/components/KpiMode";
@@ -12,7 +13,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
 });
 const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 });
 
-function PlatformAnalytics() {
+function Analytics({ teamId }) {
   const [view, setView] = useState("requests");
   const [days, setDays] = useState("30");
   const [refresh, setRefresh] = useState(0);
@@ -25,22 +26,25 @@ function PlatformAnalytics() {
     setLoading(true);
     setError(null);
     setData(null);
-    getPlatformAnalytics(days, controller.signal)
+    const request = teamId === undefined
+      ? getPlatformAnalytics(days, controller.signal)
+      : getTeamAnalytics(teamId, days, controller.signal);
+    request
       .then((result) => {
         if (!controller.signal.aborted) setData(result);
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
           setError(err.status === 403
-            ? "You do not have access to platform analytics."
-            : "Could not load platform analytics. Try again.");
+            ? "You do not have access to these analytics. Contact your administrator."
+            : "Could not load analytics. Try again.");
         }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [days, refresh]);
+  }, [days, refresh, teamId]);
 
   const isAi = view === "ai";
   const analytics = isAi ? data?.ai : data;
@@ -128,17 +132,6 @@ function PlatformAnalytics() {
         )}
         {analytics && !loading && (
           <>
-            {isAi && analytics.summary.unknown + analytics.summary.pending > 0 && (
-              <Alert status="warning">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Title>Token totals are incomplete</Alert.Title>
-                  <Alert.Description>
-                    {`Calls with missing counts: ${numberFormat.format(analytics.summary.unknown)}. Calls without a final result: ${numberFormat.format(analytics.summary.pending)}. Refresh to check for updates.`}
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert>
-            )}
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {analytics.metrics.map((metric) => (
                 <section key={metric.id} className="rounded-3xl border border-divider bg-surface px-3 py-5 tabular-nums" aria-label={metric.label}>
@@ -174,7 +167,7 @@ function PlatformAnalytics() {
                     </div>
                   </section>
                 ))}
-                {isAi && (
+                {isAi && teamId === undefined && (
                   <section className="min-w-0 rounded-3xl border border-divider bg-surface p-4 sm:p-6" aria-label="Usage by model">
                     <h2 className="mb-4 text-lg font-semibold">Usage by model</h2>
                     <Table className="tabular-nums" variant="secondary">
@@ -229,4 +222,8 @@ function PlatformAnalytics() {
   );
 }
 
-export default PlatformAnalytics;
+Analytics.propTypes = {
+  teamId: PropTypes.number,
+};
+
+export default Analytics;
