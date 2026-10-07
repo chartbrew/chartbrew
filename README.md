@@ -85,14 +85,24 @@ npm run start-dev
 
 Head over to `http://localhost:4018` to see the app running and create your first user account.
 
-## Deploy Chartbrew on DigitalOcean
+## Quick Chartbrew deploys
 
-Chartbrew can be deployed on DigitalOcean using the 1-click droplet from the marketplace. This allows you to quickly set up and run Chartbrew with minimal configuration.
+Deploy Chartbrew with one click through our hosting partners.
 
-<!-- DigitalOcean Deploy Button -->
+These are affiliate links. We may earn a commission if you purchase a plan.
+
+**Deploy on DigitalOcean**
 <p>
-  <a href="https://marketplace.digitalocean.com/apps/chartbrew?refcode=ad35bbba717a&action=deploy" target="_blank" rel="noopener noreferrer">
-    <img src="https://chartbrew-static.b-cdn.net/logos/do-btn-blue.png" alt="Deploy to DigitalOcean" style="height: 40px;" />
+  <a href="https://marketplace.digitalocean.com/apps/chartbrew?refcode=ad35bbba717a&action=deploy" target="_blank" rel="noopener">
+    <img src="https://chartbrew-static.b-cdn.net/logos/do-btn-blue.png" alt="Deploy to DigitalOcean" height="40" />
+  </a>
+</p>
+
+
+**Deploy on Hostinger**
+<p>
+  <a href="https://www.hostg.xyz/aff_c?offer_id=815&aff_id=245704&url_id=6930" target="_blank" rel="noopener">
+    <img src="https://assets.hostinger.com/vps/deploy.svg" alt="Deploy on Hostinger" height="42" />
   </a>
 </p>
 
