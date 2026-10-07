@@ -8,6 +8,8 @@ const ObservationController = require("../controllers/ObservationController");
 const WorkspaceLearningController = require("../controllers/WorkspaceLearningController");
 const verifyToken = require("../modules/verifyToken");
 const { getObservationAccess } = require("../modules/observations/access");
+const homeSuggestions = require("../modules/ai/homeSuggestions/service");
+const { allowedActions } = require("../modules/ai/homeSuggestions/rules");
 
 const apiLimiter = rateLimit({
   limit: 100,
@@ -64,10 +66,52 @@ module.exports = (app) => {
 
   app.get("/team/:team_id/home", ...routeAccess, async (req, res) => {
     try {
-      return res.send(await homeController.getHome(req.observationAccess));
+      res.set("Cache-Control", "no-store");
+      const [home, suggestions] = await Promise.all([
+        homeController.getHome(req.observationAccess),
+        homeSuggestions.readSuggestions(req.observationAccess),
+      ]);
+      const config = await homeSuggestions.settings(req.observationAccess);
+      return res.send({
+        ...home, suggestions,
+        suggestionActions: allowedActions(req.observationAccess, config.envelope, config.policy),
+      });
     } catch (error) {
       return sendError(res, error);
     }
+  });
+
+  app.post("/team/:team_id/home/suggestions/refresh", ...routeAccess, async (req, res) => {
+    try {
+      await homeSuggestions.requestRefresh(req.observationAccess, app.get("homeSuggestionsQueue"));
+      return res.status(202).send({ success: true });
+    } catch (error) { return sendError(res, error); }
+  });
+
+  app.post("/team/:team_id/home/activity", ...routeAccess, async (req, res) => {
+    try {
+      const context = req.body.projectId ? [{ entityType: "project", entityId: req.body.projectId }] : [];
+      await homeSuggestions.recordActivity(req.observationAccess, context);
+      return res.send({ success: true });
+    } catch (error) { return sendError(res, error); }
+  });
+
+  app.get("/team/:team_id/home/suggestions/:id", ...routeAccess, async (req, res) => {
+    try {
+      res.set("Cache-Control", "no-store");
+      const suggestions = await homeSuggestions.readSuggestions(req.observationAccess);
+      const suggestion = suggestions.find((item) => item.id === req.params.id);
+      if (!suggestion) return res.status(404).send({ error: "This suggestion is no longer available. Choose another question." });
+      homeSuggestions.log("selected");
+      return res.send(suggestion);
+    } catch (error) { return sendError(res, error); }
+  });
+
+  app.delete("/team/:team_id/home/memories", ...routeAccess, async (req, res) => {
+    try {
+      await homeSuggestions.changeState(req.observationAccess, req.query.id ? { forgetId: req.query.id } : { forget: true });
+      return res.send({ success: true });
+    } catch (error) { return sendError(res, error); }
   });
 
   app.get("/team/:team_id/activity", ...routeAccess, async (req, res) => {

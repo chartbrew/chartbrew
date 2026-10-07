@@ -1,3 +1,4 @@
+const { startHomeSuggestions } = require("./crons/homeSuggestions");
 const { Queue, Worker, QueueEvents } = require("bullmq");
 const { createBullBoard } = require("@bull-board/api");
 const { BullMQAdapter } = require("@bull-board/api/bullMQAdapter");
@@ -43,6 +44,10 @@ const setUpQueues = (app) => {
   const queuesToClose = [];
   const workersToClose = [];
   const queueEventsToClose = [];
+  const homeSuggestions = startHomeSuggestions();
+  app.set("homeSuggestionsQueue", homeSuggestions.queue);
+  queuesToClose.push(homeSuggestions.queue);
+  workersToClose.push(homeSuggestions.worker);
 
   if (isQueueDebugEnabled) {
     console.log("[setUpQueues] queue debug logging is ENABLED"); // oxlint-disable-line no-console
@@ -199,6 +204,7 @@ const setUpQueues = (app) => {
       new BullMQAdapter(dashboardSnapshotQueue),
       new BullMQAdapter(updateSnapshotsQueue),
       new BullMQAdapter(datasetIntelligenceQueue),
+      new BullMQAdapter(homeSuggestions.queue),
     ],
     serverAdapter,
     options: {
@@ -229,6 +235,7 @@ const setUpQueues = (app) => {
     }
 
     isShuttingDown = true;
+    homeSuggestions.task.stop();
     console.log(`${signal} received. Closing BullMQ workers and queues...`); // eslint-disable-line
 
     const workerResults = await Promise.allSettled(workersToClose.map((worker) => worker.close()));

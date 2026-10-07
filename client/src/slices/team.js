@@ -102,6 +102,7 @@ export const updateTeam = createAsyncThunk(
     const response = await fetch(`${API_HOST}/team/${team_id}`, { method: "PUT", headers, body: JSON.stringify(data) });
     const jsonData = await response.json();
 
+    if (!response.ok) throw new Error(jsonData.message || "Team settings could not be updated");
     return jsonData;
   }
 );

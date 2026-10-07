@@ -1,3 +1,5 @@
+const homeSuggestions = require("../modules/ai/homeSuggestions/service");
+const { getObservationAccess } = require("../modules/observations/access");
 const rateLimit = require("express-rate-limit");
 
 const db = require("../models/models");
@@ -251,6 +253,9 @@ module.exports = (app) => {
       try {
         return res.json({
           memories: await memory.listMemories(req.query.teamId, req.user.id),
+          recentWork: await homeSuggestions.readRecentWork(
+            await getObservationAccess(req.query.teamId, req.user.id)
+          ),
           sharingEnabled: req.aiTeamEnabled && getWorkspaceOrchestratorPolicy().enabled
             && getWorkspaceOrchestratorPolicy().externalLearningContextEnabled,
         });

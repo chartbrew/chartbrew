@@ -73,7 +73,7 @@ async function withAiUsageContext(context, operation) {
   });
 }
 
-async function callAiProvider({ client, request, options, purpose, api = "responses" }) {
+async function callAiProvider({ client, request, options, purpose, contextManifest, api = "responses" }) {
   const context = storage.getStore();
   if (!context) throw new Error("AI use must have a team context.");
   const record = {
@@ -84,6 +84,7 @@ async function callAiProvider({ client, request, options, purpose, api = "respon
     provider: "openai",
     model: request.model,
     purpose,
+    ...(contextManifest ? { context_manifest: contextManifest } : {}),
     activity: context.activity,
     usage_status: "pending",
     cost_micros: null,

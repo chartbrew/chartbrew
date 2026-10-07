@@ -20,6 +20,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import {
   getHome,
+  recordHomeActivity,
   getMonitorRecommendations,
   getObservationDigests,
   resolveObservation,
@@ -188,6 +189,12 @@ function Home() {
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    if (team?.id && document.visibilityState === "visible") {
+      recordHomeActivity(team.id).catch(() => {});
+    }
+  }, [team?.id]);
+
+  useEffect(() => {
     if (!team?.id) return undefined;
     let active = true;
     setLoading(true);
@@ -213,7 +220,7 @@ function Home() {
       .catch(() => { if (active) setLoadError(true); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [team?.id, refreshKey]);
+  }, [team?.id, team?.aiEnabled, team?.aiSuggestionsEnabled, refreshKey]);
 
   useEffect(() => {
     window.addEventListener("focus", refreshHome);
@@ -256,7 +263,8 @@ function Home() {
   }
 
   const foundationInProgress = !data.content?.hasChart;
-  const suggestions = getHomeSuggestions(data);
+  const suggestions = team.aiSuggestionsEnabled !== false && data.suggestions?.length
+    ? data.suggestions : getHomeSuggestions(data);
   const needsAttention = data.needsAttention
     || data.observations.filter((observation) => observation.impact !== "positive");
   const notableChanges = data.notableChanges

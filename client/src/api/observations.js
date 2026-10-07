@@ -51,6 +51,21 @@ export function getHome(teamId) {
   return observationRequest(`/team/${teamId}/home`);
 }
 
+export function recordHomeActivity(teamId, projectId) {
+  return observationRequest(`/team/${teamId}/home/activity`, {
+    method: "POST", body: JSON.stringify({ projectId }),
+  });
+}
+
+export function getHomeSuggestion(teamId, id) {
+  return observationRequest(`/team/${teamId}/home/suggestions/${encodeURIComponent(id)}`);
+}
+
+export function forgetHomeMemory(teamId, id) {
+  const query = id ? `?id=${encodeURIComponent(id)}` : "";
+  return observationRequest(`/team/${teamId}/home/memories${query}`, { method: "DELETE" });
+}
+
 export function getActivity(teamId, filters = {}) {
   const query = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
@@ -232,4 +247,8 @@ export function sendTestObservationDigest(teamId, subscriptionId) {
       method: "POST",
     },
   );
+}
+
+export function refreshHomeSuggestions(teamId) {
+  return observationRequest(`/team/${teamId}/home/suggestions/refresh`, { method: "POST" });
 }

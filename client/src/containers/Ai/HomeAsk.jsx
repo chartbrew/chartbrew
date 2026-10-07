@@ -5,6 +5,9 @@ import { LuChevronUp, LuX } from "react-icons/lu";
 import { useSelector } from "react-redux";
 
 import { searchAiContext } from "../../api/ai";
+import { getHomeSuggestion } from "../../api/observations";
+import { mergeSuggestionContext } from "./homeSuggestionState";
+import toast from "react-hot-toast";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import AiAccessNotice from "./AiAccessNotice";
@@ -41,6 +44,23 @@ function HomeAsk({ focused, hasContent, onContentChange, onFocusChange, suggesti
     reload: reloadAvailability,
   } = useAiAvailability({ teamId });
   const isAccessNoticeVisible = showAccessNotice && availability?.enabled !== true;
+  const onSelectSuggestion = async (suggestion) => {
+    if (typeof suggestion === "string") return true;
+    try {
+      const current = await getHomeSuggestion(teamId, suggestion.id);
+      const merged = mergeSuggestionContext(selectedContext.multiSelect, current.context || []);
+      if (!merged) {
+        toast.error("Remove some selected context before using this suggestion.");
+        return false;
+      }
+      setSelectedContext((previous) => ({ ...previous, multiSelect: merged }));
+      return true;
+    } catch (error) {
+      toast.error(error.message);
+      onContentChange();
+      return false;
+    }
+  };
   const questionPlaceholder = teamRole === "projectViewer"
     ? "Ask about existing reports and metrics"
     : hasContent ? "Ask anything about your data" : "What are you trying to understand from your data?";
@@ -217,7 +237,10 @@ function HomeAsk({ focused, hasContent, onContentChange, onFocusChange, suggesti
             canManageTeam={isTeamAdmin}
           />
         )}
-        suggestions={conversationStarted ? [] : suggestions}
+        suggestions={conversationStarted || availability?.enabled !== true || team.aiEnabled === false
+          ? [] : suggestions}
+        onSelectSuggestion={onSelectSuggestion}
+        scrollSuggestions
         toolDisplayNames={chat.toolDisplayNames}
         teamId={teamId}
       />
@@ -229,7 +252,7 @@ HomeAsk.propTypes = {
   focused: PropTypes.bool.isRequired,
   hasContent: PropTypes.bool.isRequired,
   onContentChange: PropTypes.func.isRequired,
-  suggestions: PropTypes.arrayOf(PropTypes.string).isRequired,
+  suggestions: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
   onFocusChange: PropTypes.func.isRequired,
   teamId: PropTypes.number.isRequired,
 };

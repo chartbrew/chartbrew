@@ -1,9 +1,10 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Chip, InputGroup, Kbd, Label, TextField, Tooltip,
+  Button, Chip, InputGroup, Kbd, Label, ScrollShadow, TextField, Tooltip,
 } from "@heroui/react";
 import { LuArrowUp } from "react-icons/lu";
+import { keepSuggestionOrder } from "./homeSuggestionState";
 import PixelLoader from "../../components/PixelLoader";
 
 function AiComposer({
@@ -19,6 +20,8 @@ function AiComposer({
   leadingControl,
   status,
   suggestions = [],
+  onSelectSuggestion,
+  scrollSuggestions = false,
   showEnterHint = false,
   rows = 4,
   framed = false,
@@ -32,6 +35,14 @@ function AiComposer({
   const setDraftQuestion = onValueChange || setLocalQuestion;
   const fallbackRef = useRef(null);
   const composerRef = inputRef || fallbackRef;
+  const [visibleSuggestions, setVisibleSuggestions] = useState(suggestions);
+  const [selectingSuggestion, setSelectingSuggestion] = useState(false);
+  const suggestionRow = useRef(null);
+  const suggestionVersion = JSON.stringify(suggestions);
+  useEffect(() => {
+    setVisibleSuggestions((previous) => keepSuggestionOrder(previous, JSON.parse(suggestionVersion),
+      Boolean(draftQuestion) || Boolean(suggestionRow.current?.contains(document.activeElement))));
+  }, [suggestionVersion, draftQuestion]);
   const hasContent = draftQuestion.trim()
     || selectedContext.multiSelect.length > 0
     || selectedContext.singleSelect;
@@ -90,24 +101,32 @@ function AiComposer({
     </Tooltip>
   );
 
-  const fillSuggestion = (suggestion) => {
-    setDraftQuestion(suggestion);
-    composerRef.current?.focus();
+  const fillSuggestion = async (suggestion) => {
+    if (selectingSuggestion) return;
+    setSelectingSuggestion(true);
+    try {
+      if (onSelectSuggestion && await onSelectSuggestion(suggestion) === false) return;
+      setDraftQuestion(typeof suggestion === "string" ? suggestion : suggestion.prompt);
+      composerRef.current?.focus();
+    } finally {
+      setSelectingSuggestion(false);
+    }
   };
 
-  const suggestionChips = suggestions.length > 0 ? (
-    <div className={`flex flex-row flex-wrap items-center ${framed ? "gap-2" : "gap-1.5"}`}>
-      {suggestions.map((suggestion) => (
+  const suggestionButtons = visibleSuggestions.length > 0 ? (
+    <div ref={suggestionRow} className={`flex flex-row items-center ${scrollSuggestions ? "w-max flex-nowrap p-1" : "flex-wrap"} ${framed ? "gap-2" : "gap-1.5"}`}>
+      {visibleSuggestions.map((suggestion) => (
         framed ? (
           <Button
-            className="h-auto min-h-8 max-w-full whitespace-normal rounded-full border border-divider bg-surface px-3 py-1 text-left font-normal text-foreground shadow-none"
-            key={suggestion}
+            key={suggestion.id || suggestion}
+            className={`h-auto min-h-8 max-w-full rounded-full border border-divider bg-surface px-3 py-1 text-left font-normal text-foreground shadow-none ${scrollSuggestions ? "shrink-0 whitespace-nowrap" : "whitespace-normal"}`}
+            isDisabled={selectingSuggestion || isLoading}
             onPress={() => fillSuggestion(suggestion)}
             size="sm"
             type="button"
             variant="outline"
           >
-            {suggestion}
+            {suggestion.title || suggestion}
           </Button>
         ) : (
           <Chip
@@ -123,6 +142,11 @@ function AiComposer({
       ))}
     </div>
   ) : null;
+  const suggestionChips = scrollSuggestions && suggestionButtons ? (
+    <ScrollShadow className="min-w-0 w-full" orientation="horizontal" hideScrollBar>
+      {suggestionButtons}
+    </ScrollShadow>
+  ) : suggestionButtons;
 
   const form = (
     <form
@@ -207,7 +231,9 @@ AiComposer.propTypes = {
   leadingContent: PropTypes.node,
   leadingControl: PropTypes.node,
   status: PropTypes.node,
-  suggestions: PropTypes.arrayOf(PropTypes.string),
+  suggestions: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])),
+  onSelectSuggestion: PropTypes.func,
+  scrollSuggestions: PropTypes.bool,
   showEnterHint: PropTypes.bool,
   rows: PropTypes.number,
   framed: PropTypes.bool,

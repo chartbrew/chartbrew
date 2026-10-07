@@ -60,6 +60,10 @@ async function changeMemory({ teamId, userId, id, text, remove = false }) {
       authorityType: "direct_user_instruction", resourceType: "ai_memory", resourceId: id || result?.id,
       status: "applied", transaction,
     });
+    await db.AiHomeState.update({
+      payload: {}, signature: null, forgotten_before: new Date(),
+      revision: db.sequelize.literal("revision + 1"),
+    }, { where: { team_id: teamId, user_id: userId }, transaction });
     return result ? { id: result.id, text: result.text, updatedAt: result.updatedAt } : null;
   });
 }

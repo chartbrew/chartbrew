@@ -247,6 +247,9 @@ module.exports = (app) => {
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
         gTeamRole = teamRole;
+        if (req.body.aiSuggestionsEnabled !== undefined && !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+          throw new Error(401);
+        }
         const permission = accessControl.can(teamRole.role).updateOwn("team");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));

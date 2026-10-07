@@ -16,6 +16,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: true,
     },
+    aiSuggestionsEnabled: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     showBranding: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

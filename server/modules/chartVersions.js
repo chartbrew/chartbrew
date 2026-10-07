@@ -2,6 +2,7 @@ const { isDeepStrictEqual } = require("node:util");
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const homeSuggestions = require("./ai/homeSuggestions/service");
 const { createHttpError, getObservationAccess, canEditProject } = require("./observations/access");
 const { assertVisualizationSpec } = require("../visualization/spec");
 const { remapVisualizationBindings } = require("../visualization/remapBindings");
@@ -118,6 +119,16 @@ async function recordVersion(chart, configuration, context, transaction, summary
     summary,
   }, { transaction });
   await chart.update({ configurationVersion: version }, { transaction });
+  if (context.userId && ["manual", "ai", "restore"].includes(context.origin || "manual")) {
+    const recordActivity = async () => {
+      try {
+        const project = await db.Project.findByPk(chart.project_id, { attributes: ["team_id"] });
+        if (project) await homeSuggestions.recordUserActivity(project.team_id, context.userId, [{ entityType: "chart", entityId: chart.id }]);
+      } catch (error) { homeSuggestions.log("activity_unavailable"); }
+    };
+    if (transaction) transaction.afterCommit(recordActivity);
+    else await recordActivity();
+  }
   await db.ChartVersion.destroy({
     where: { chart_id: chart.id, version: { [Op.lte]: version - VERSION_LIMIT } }, transaction,
   });

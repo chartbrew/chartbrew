@@ -54,6 +54,7 @@ import {
   shouldSkipFiltering,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
+import { recordHomeActivity } from "../../api/observations";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
@@ -182,6 +183,11 @@ function ProjectDashboard() {
   const user = useSelector(selectUser);
   const charts = useSelector(selectCharts);
   const project = useSelector(selectProject);
+  useEffect(() => {
+    if (team?.id && Number(project?.id) === Number(params.projectId) && document.visibilityState === "visible") {
+      recordHomeActivity(team.id, project.id).catch(() => {});
+    }
+  }, [team?.id, project?.id, params.projectId]);
   const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
 

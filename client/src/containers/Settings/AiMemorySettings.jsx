@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 import { requestAiMemory } from "../../api/ai";
+import { forgetHomeMemory } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import { selectAiModalOpen } from "../../slices/ui";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
@@ -40,6 +41,7 @@ function AiMemorySettings() {
       const result = await requestAiMemory(team.id, { method: adding ? "POST" : "PATCH", id: adding ? undefined : editing, text });
       setData((current) => ({
         ...current,
+        recentWork: [],
         memories: adding ? [result.memory, ...current.memories] : current.memories.map((item) => item.id === editing ? result.memory : item),
       }));
       setEditing(null);
@@ -53,10 +55,20 @@ function AiMemorySettings() {
     setPending(true);
     try {
       await requestAiMemory(team.id, { method: "DELETE", id: deleting === "all" ? undefined : deleting });
-      setData((current) => ({ ...current, memories: current.memories.filter((item) => deleting !== "all" && item.id !== deleting) }));
+      setData((current) => ({ ...current, recentWork: [], memories: current.memories.filter((item) => deleting !== "all" && item.id !== deleting) }));
       setDeleting(null);
       setEditing(null);
       toast.success("Memory deleted");
+    } catch (err) { toast.error(err.message); }
+    finally { setPending(false); }
+  };
+
+  const forgetWork = async (id) => {
+    setPending(true);
+    try {
+      await forgetHomeMemory(team.id, id);
+      setData((current) => ({ ...current, recentWork: current.recentWork.filter((item) => item.id !== id) }));
+      toast.success("Recent work forgotten");
     } catch (err) { toast.error(err.message); }
     finally { setPending(false); }
   };
@@ -66,7 +78,7 @@ function AiMemorySettings() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="ai-memory-heading" className="text-lg font-semibold">Memory</h2>
         <div className="flex gap-2">
-          {data?.memories.length > 0 && (
+          {(data?.memories.length > 0 || data?.recentWork?.length > 0) && (
             <Button size="sm" variant="danger-soft" isDisabled={pending} onPress={() => setDeleting("all")}>Delete all</Button>
           )}
           <Button size="sm" variant="primary" isDisabled={!data || Boolean(error) || pending || Boolean(editing)} onPress={() => { setEditing("new"); setText(""); }}>
@@ -114,6 +126,21 @@ function AiMemorySettings() {
               ))}
             </ul>
           )}
+          {data.recentWork?.length > 0 ? (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold">Recent work</h3>
+              <ul className="divide-y divide-divider">
+                {data.recentWork.map((item) => (
+                  <li className="flex items-start justify-between gap-3 py-3" key={item.id}>
+                    <p className="min-w-0 flex-1 break-words text-sm">{item.text}</p>
+                    <Button size="sm" variant="secondary" isDisabled={pending} onPress={() => forgetWork(item.id)}>
+                      Forget
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </>
       )}
       <AlertDialog.Backdrop isOpen={Boolean(deleting)} onOpenChange={(open) => { if (!open && !pending) setDeleting(null); }}>

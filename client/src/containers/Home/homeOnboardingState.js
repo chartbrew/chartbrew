@@ -8,9 +8,12 @@ const DISPLAY_KEYS = [
   "sharedDashboard",
 ];
 
-export function getHomeSuggestions({ content, dataHealth, hasWatchedMetric, observations, setupState }) {
+export function getHomeSuggestions({ content, dataHealth, hasWatchedMetric, observations, setupState, suggestionActions }) {
+  if (Array.isArray(suggestionActions) && !suggestionActions.includes("report")) return ["What can I ask?"];
   if (dataHealth?.count > 0) {
-    return ["Check data freshness", "Which data needs attention?", "How can I fix these data issues?"];
+    return content?.canConfigureTeam
+      ? ["Check data freshness", "Which data needs attention?", "How can I fix these data issues?"]
+      : ["Check data freshness", "Which data needs attention?"];
   }
   if (!content?.canConfigureTeam) {
     return content?.hasChart
@@ -18,7 +21,7 @@ export function getHomeSuggestions({ content, dataHealth, hasWatchedMetric, obse
       : ["How do I get started?", "What reports can I access?"];
   }
   if (!content.hasConnection && !content.hasDataset && !content.hasChart) {
-    return [];
+    return ["What can I ask?"];
   }
   if (!content.hasDataset) {
     return ["Explore my connected data", "What can I learn from my data?"];
@@ -27,6 +30,9 @@ export function getHomeSuggestions({ content, dataHealth, hasWatchedMetric, obse
     return ["Create a chart from my dataset", "Find useful trends in my data"];
   }
   if (!hasWatchedMetric) {
+    if (Array.isArray(suggestionActions) && !suggestionActions.includes("prepare_watch")) {
+      return ["Summarize my dashboard", "Show my latest results", "Check data freshness"];
+    }
     return ["Summarize my dashboard", "Which metric should I watch?", "Check data freshness"];
   }
   if (["collecting_baseline", "waiting_for_data", "metrics_need_review"].includes(setupState)) {

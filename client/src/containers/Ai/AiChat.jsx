@@ -47,6 +47,8 @@ function AiChat({
   selectedContext = EMPTY_CONTEXT,
   showSave = false,
   suggestions = [],
+  onSelectSuggestion,
+  scrollSuggestions = false,
   status,
   toolDisplayNames = {},
   teamId,
@@ -282,6 +284,8 @@ function AiChat({
           showEnterHint={hasMessages}
           status={status}
           suggestions={suggestions}
+          onSelectSuggestion={onSelectSuggestion}
+          scrollSuggestions={scrollSuggestions}
         />
       </div>
     </div>
@@ -313,7 +317,9 @@ AiChat.propTypes = {
     singleSelect: PropTypes.object,
   }),
   showSave: PropTypes.bool,
-  suggestions: PropTypes.arrayOf(PropTypes.string),
+  suggestions: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])),
+  onSelectSuggestion: PropTypes.func,
+  scrollSuggestions: PropTypes.bool,
   status: PropTypes.node,
   toolDisplayNames: PropTypes.object,
   teamId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),

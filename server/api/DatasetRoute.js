@@ -1,4 +1,5 @@
 const { withSourceExecutionContext } = require("../modules/sourceExecution");
+const homeSuggestions = require("../modules/ai/homeSuggestions/service");
 const DatasetController = require("../controllers/DatasetController");
 const DatasetIntelligenceController = require("../controllers/DatasetIntelligenceController");
 const TeamController = require("../controllers/TeamController");
@@ -193,6 +194,7 @@ module.exports = (app) => {
 
     return datasetController.create(req.body)
       .then((dataset) => {
+        homeSuggestions.recordUserActivity(Number(req.params.team_id), req.user.id, [{ entityType: "dataset", entityId: dataset.id }]);
         return res.status(200).send(dataset);
       })
       .catch((err) => {
@@ -221,6 +223,7 @@ module.exports = (app) => {
 
     return datasetController.createWithDataRequests(req.body)
       .then((dataset) => {
+        homeSuggestions.recordUserActivity(Number(req.params.team_id), req.user.id, [{ entityType: "dataset", entityId: dataset.id }]);
         return res.status(200).send(dataset);
       })
       .catch((err) => {
@@ -277,6 +280,7 @@ module.exports = (app) => {
 
     return datasetController.updateByTeam(req.params.dataset_id, req.params.team_id, req.body)
       .then((dataset) => {
+        homeSuggestions.recordUserActivity(Number(req.params.team_id), req.user.id, [{ entityType: "dataset", entityId: req.params.dataset_id }]);
         return res.status(200).send(dataset);
       })
       .catch((err) => {

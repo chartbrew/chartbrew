@@ -40,7 +40,7 @@ test("suggestions follow available content, recovery and permissions", () => {
     dataHealth: { count: 0 },
     observations: [],
   };
-  assert.deepEqual(getHomeSuggestions(home), []);
+  assert.deepEqual(getHomeSuggestions(home), ["What can I ask?"]);
   home.content.hasConnection = true;
   assert.equal(getHomeSuggestions(home)[0], "Explore my connected data");
   home.content.hasDataset = true;

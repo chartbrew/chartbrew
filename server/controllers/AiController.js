@@ -1,3 +1,4 @@
+const homeSuggestions = require("../modules/ai/homeSuggestions/service");
 const { withAiUsageContext } = require("../modules/ai/usage");
 const crypto = require("crypto");
 const { fn, col, Op, literal } = require("sequelize");
@@ -394,6 +395,7 @@ async function getOrchestration(
   }
 
   // Keep the question even if the response fails or the user leaves the page.
+  await homeSuggestions.recordUserActivity(teamId, userId);
   await db.AiMessage.create({
     conversation_id: conversation.id, role: "user", content: question, sequence: messages.length,
   });
@@ -851,7 +853,17 @@ async function confirmTypedEphemeralAction({ sessionId, teamId, userId }) {
 }
 
 function respond(input) {
-  return withAiUsageContext({ teamId: input.teamId }, () => executeResponse(input));
+  return withAiUsageContext({ teamId: input.teamId }, async () => {
+    const fromSuggestion = await homeSuggestions.recordSubmission(input.teamId, input.userId, input.message);
+    try {
+      const result = await executeResponse(input);
+      if (fromSuggestion) homeSuggestions.log("response_received");
+      return result;
+    } catch (error) {
+      if (fromSuggestion) homeSuggestions.log("response_failed");
+      throw error;
+    }
+  });
 }
 
 async function executeResponse({
@@ -930,6 +942,7 @@ async function executeResponse({
   const access = await getObservationAccess(teamId, userId);
   const envelope = await getWorkspaceAccessEnvelope(access);
   const resolvedSessionId = validateSessionId(sessionId);
+  await homeSuggestions.recordUserActivity(teamId, userId);
   let existingSession = await runtimeCache.getAiSession({
     sessionId: resolvedSessionId,
     teamId,

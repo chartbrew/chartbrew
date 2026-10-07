@@ -1,3 +1,4 @@
+const homeSuggestions = require("../modules/ai/homeSuggestions/service");
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
@@ -245,6 +246,10 @@ class WorkspaceLearningController {
     return {
       exportVersion: 1,
       exportedAt: new Date().toISOString(),
+      personalHomeContext: {
+        memories: await homeSuggestions.readRecentWork(access),
+        suggestions: await homeSuggestions.readSuggestions(access),
+      },
       observationFeedback: feedback.map((row) => ({
         observationId: row.observation_id,
         reasonCode: row.reason_code,

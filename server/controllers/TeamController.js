@@ -35,6 +35,7 @@ const TEAM_ROLE_UPDATE_FIELDS = new Set(["role", "projects", "canExport"]);
 const TEAM_UPDATE_FIELDS = new Set([
   "name",
   "aiEnabled",
+  "aiSuggestionsEnabled",
   "showBranding",
   "useCases",
   "allowReportRefresh",
@@ -338,8 +339,9 @@ class TeamController {
   deleteTeamMember(id) {
     let teamId;
     return db.TeamRole.findByPk(id)
-      .then((role) => {
+      .then(async (role) => {
         teamId = role.team_id;
+        await db.AiHomeState.destroy({ where: { team_id: role.team_id, user_id: role.user_id } });
         return db.TeamRole.destroy({ where: { id } });
       })
       .then(() => {
@@ -395,6 +397,9 @@ class TeamController {
   }
 
   update(id, data) {
+    if (data?.aiSuggestionsEnabled !== undefined && typeof data.aiSuggestionsEnabled !== "boolean") {
+      return Promise.reject(new Error("Choose a valid suggestions setting."));
+    }
     const updateData = Object.fromEntries(
       Object.entries(data || {}).filter(([field]) => TEAM_UPDATE_FIELDS.has(field))
     );
