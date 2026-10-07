@@ -1,3 +1,7 @@
+export function getApiKeyProjects(projects, teamId) {
+  return projects.filter((project) => project.team_id === teamId && !project.ghost);
+}
+
 export function isLegacyApiKey(apiKey) {
   return apiKey.dataApiAccess === "unavailable";
 }

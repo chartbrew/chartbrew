@@ -2,10 +2,26 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getApiKeyProjects,
   getPermissionLabels,
   getProjectAccessLabel,
   isLegacyApiKey,
 } from "./apiKeyPresentation.js";
+
+test("uses loaded projects from the current team and excludes hidden projects", () => {
+  const project = { id: 2, team_id: 1, name: "Sales", ghost: false };
+  const projects = getApiKeyProjects([
+    project,
+    { id: 3, team_id: 1, name: "Hidden", ghost: true },
+    { id: 4, team_id: 2, name: "Other team", ghost: false },
+  ], 1);
+
+  assert.deepEqual(projects, [project]);
+  assert.deepEqual(getApiKeyProjects([], 1), []);
+  assert.equal(getProjectAccessLabel({
+    projectAccess: { allProjects: false, projectIds: [2] },
+  }, projects), "Sales");
+});
 
 test("marks old API keys as unavailable for the Data API", () => {
   const key = { dataApiAccess: "unavailable" };

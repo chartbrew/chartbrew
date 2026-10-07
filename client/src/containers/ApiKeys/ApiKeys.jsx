@@ -10,9 +10,11 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 
 import { getApiKeys, createApiKey, deleteApiKey, selectTeam } from "../../slices/team";
+import { getProjects, selectProjects } from "../../slices/project";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 import {
+  getApiKeyProjects,
   getPermissionLabels,
   getProjectAccessLabel,
   isLegacyApiKey,
@@ -39,6 +41,9 @@ function ApiKeys() {
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
+  const teamProjects = useSelector(selectProjects);
+  const projectsLoading = useSelector((state) => state.project.loading);
+  const projectsError = useSelector((state) => state.project.error);
 
   useEffect(() => {
     if (team?.id && initRef.current !== team.id) {
@@ -61,7 +66,7 @@ function ApiKeys() {
       .catch(() => setLoading(false));
   };
 
-  const projects = (team?.Projects || []).filter((project) => !project.ghost);
+  const projects = getApiKeyProjects(teamProjects, team.id);
 
   const _onCreateRequested = () => {
     setNewKey("");
@@ -364,18 +369,36 @@ function ApiKeys() {
                   </Radio>
                 </RadioGroup>
                 {!allProjects && (
-                  <div className="flex flex-row flex-wrap items-center gap-2">
+                  <div role="group" aria-label="Selected projects" className="flex max-h-60 shrink-0 flex-col gap-2 overflow-y-auto">
                     {projects.map((project) => (
-                      <Chip
-                        className="cursor-pointer rounded-sm"
+                      <Checkbox
                         key={project.id}
-                        onClick={() => _onProjectChange(project.id, !selectedProjects.includes(project.id))}
-                        variant={selectedProjects.includes(project.id) ? "primary" : "soft"}
-                        color={selectedProjects.includes(project.id) ? "accent" : "default"}
+                        isSelected={selectedProjects.includes(project.id)}
+                        onChange={(selected) => _onProjectChange(project.id, selected)}
+                        variant="secondary"
                       >
-                        {project.name}
-                      </Chip>
+                        <Checkbox.Content>
+                          <Checkbox.Control className="size-4 shrink-0">
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          {project.name}
+                        </Checkbox.Content>
+                      </Checkbox>
                     ))}
+                    {projects.length === 0 && projectsLoading && (
+                      <ProgressCircle aria-label="Loading projects" />
+                    )}
+                    {projects.length === 0 && !projectsLoading && projectsError && (
+                      <div className="flex flex-col items-start gap-2">
+                        <p className="text-sm text-muted">Projects could not be loaded.</p>
+                        <Button size="sm" variant="secondary" onPress={() => dispatch(getProjects({ team_id: team.id }))}>
+                          Retry
+                        </Button>
+                      </div>
+                    )}
+                    {projects.length === 0 && !projectsLoading && !projectsError && (
+                      <p className="text-sm text-muted">No projects available. Select all projects or create a project first.</p>
+                    )}
                   </div>
                 )}
                 <div className="flex flex-col gap-3">
