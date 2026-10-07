@@ -1,4 +1,5 @@
 const moment = require("moment-timezone");
+const kpiFont = require("../../../shared/visualization/kpiFont.json");
 const { buildMapOption } = require("./map");
 
 const { toJsonValue } = require("../preparedData");
@@ -21,7 +22,7 @@ const {
 
 const CARTESIAN_PRESETS = new Set(["bar", "horizontalBar", "line"]);
 const PIE_PRESETS = new Set(["doughnut", "pie"]);
-const KPI_VALUE_FONT = "Titillium Web, sans-serif";
+const KPI_VALUE_FONT = `${kpiFont.family}, sans-serif`;
 const DASHED_LAST_SERIES_SUFFIX = "--dashed-last";
 const LATEST_POINT_SERIES_SUFFIX = "--latest-point";
 const BAR_APPEARANCE = Object.freeze({

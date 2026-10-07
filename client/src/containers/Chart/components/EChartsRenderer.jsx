@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
+import kpiFont from "../../../../../shared/visualization/kpiFont.json" with { type: "json" };
 import { Button, Tooltip } from "@heroui/react";
 import { LuFocus } from "react-icons/lu";
 import * as echarts from "echarts/core";
@@ -39,6 +40,8 @@ import {
   isCategoryPieChart,
   isDoughnutChart,
 } from "./echartsTooltip";
+
+const KPI_VALUE_FONT = `${kpiFont.family}, sans-serif`;
 
 echarts.use([
   AriaComponent,
@@ -312,7 +315,7 @@ function applyCategoryLayout(option, width, height, themeColors) {
           value: {
             ...option.title.textStyle?.rich?.value,
             color: themeColors?.text,
-            fontFamily: "Titillium Web, sans-serif",
+            fontFamily: KPI_VALUE_FONT,
             fontWeight: 600,
             ...(centered ? {} : composition === "stacked-breakdown"
               ? { fontSize: 16, lineHeight: 20 }
@@ -425,6 +428,7 @@ function applyGaugeLayout(option, width, height, themeColors) {
           value: {
             ...option.title.textStyle?.rich?.value,
             color: themeColors?.text,
+            fontFamily: KPI_VALUE_FONT,
             fontSize: valueFontSize,
             lineHeight: valueFontSize + 6,
           },
@@ -641,7 +645,7 @@ function EChartsRenderer({
         detail: {
           ...series.detail,
           color: textColor,
-          fontFamily: "Titillium Web, sans-serif",
+          fontFamily: KPI_VALUE_FONT,
           fontWeight: 600,
         },
         itemStyle: { ...series.itemStyle, color: textColor },

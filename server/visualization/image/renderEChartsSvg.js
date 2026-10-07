@@ -1,4 +1,5 @@
 const echarts = require("echarts");
+const kpiFont = require("../../../shared/visualization/kpiFont.json");
 const { getMap } = require("../geo");
 
 const { buildEChartsOption } = require("../compilers/echarts");
@@ -72,7 +73,7 @@ function applyStaticFont(value) {
   if (!value || typeof value !== "object") return value;
   return Object.fromEntries(Object.entries(value).map(([key, item]) => {
     if (key === "fontFamily") {
-      return [key, typeof item === "string" && item.startsWith("Titillium Web")
+      return [key, typeof item === "string" && [kpiFont.family, ...kpiFont.legacyFamilies].includes(item.split(",")[0].trim())
         ? KPI_FONT_FAMILY : FONT_FAMILY];
     }
     return [key, applyStaticFont(item)];

@@ -1,14 +1,13 @@
 const fs = require("fs");
+const kpiFont = require("../../../shared/visualization/kpiFont.json");
 
 const FONT_FAMILY = "Chartbrew Inter Tight";
-const KPI_FONT_FAMILY = "Chartbrew Titillium Web";
+const KPI_FONT_FAMILY = "Chartbrew KPI";
 const FONT_FILE = require.resolve(
   "@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2"
 );
 const FONT_DATA = fs.readFileSync(FONT_FILE).toString("base64");
-const KPI_FONT_FILE = require.resolve(
-  "@fontsource/titillium-web/files/titillium-web-latin-600-normal.woff2"
-);
+const KPI_FONT_FILE = require.resolve(kpiFont.file);
 const KPI_FONT_DATA = fs.readFileSync(KPI_FONT_FILE).toString("base64");
 
 function getEmbeddedFontCss() {

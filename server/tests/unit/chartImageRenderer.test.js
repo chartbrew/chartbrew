@@ -4,7 +4,7 @@ const sharp = require("sharp");
 const { resolveImageLayout, resolveImageSize } = require("../../../shared/visualization/imageLayout");
 const { renderImagePng, renderImageSvg } = require("../../modules/chartImage/imageRenderer");
 const { RenderWorkerQueue } = require("../../modules/chartImage/renderWorkerQueue");
-const { scaleEChartsDetails } = require("../../visualization/image/renderEChartsSvg");
+const { applyStaticFont, scaleEChartsDetails } = require("../../visualization/image/renderEChartsSvg");
 const { renderPng } = require("../../visualization/image/renderPng");
 const { IMAGE_RENDER_LIMITS } = require("../../modules/chartImage/imageLimits");
 
@@ -296,7 +296,7 @@ describe("chart image rendering", () => {
       /<svg x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g
     )];
     expect(svg).toContain('data-kpi-overlay="true"');
-    expect(svg).toContain('font-family="Chartbrew Titillium Web"');
+    expect(svg).toContain('font-family="Chartbrew KPI"');
     expect(svg).toContain('data-kpi-growth="positive"');
     expect(svg).toContain('data-kpi-growth="negative"');
     expect(svg).toContain('fill="#048BDE"');
@@ -329,8 +329,8 @@ describe("chart image rendering", () => {
     const svg = renderImageSvg(document);
     expect(svg).toContain("5,755");
     expect(svg).toContain("Revenue");
-    expect(svg).toContain("font-family:'Chartbrew Titillium Web'");
-    expect(svg).toContain('font-family="Chartbrew Titillium Web"');
+    expect(svg).toContain("font-family:'Chartbrew KPI'");
+    expect(svg).toContain('font-family="Chartbrew KPI"');
     expect(normalizeGolden(svg)).toMatchSnapshot();
     const png = await renderImagePng(document);
     expect((await sharp(png).metadata()).format).toBe("png");
@@ -513,4 +513,24 @@ describe("render worker queue", () => {
       await Promise.all(settledJobs);
     }
   });
+});
+
+it("uses the shared KPI font for current and older saved chart options", () => {
+  const kpiFont = require("../../../shared/visualization/kpiFont.json");
+  const option = {
+    title: { textStyle: { fontFamily: `${kpiFont.family}, sans-serif` } },
+    series: [
+      { detail: { fontFamily: "Titillium Web, sans-serif" } },
+      { detail: { fontFamily: "IBM Plex Mono, sans-serif" } },
+    ],
+    textStyle: { fontFamily: "Inter, sans-serif" },
+  };
+  const original = JSON.stringify(option);
+  const result = applyStaticFont(option);
+  expect(result.title.textStyle.fontFamily).toBe("Chartbrew KPI");
+  expect(result.series.map((series) => series.detail.fontFamily)).toEqual([
+    "Chartbrew KPI", "Chartbrew KPI",
+  ]);
+  expect(result.textStyle.fontFamily).toBe("Chartbrew Inter Tight");
+  expect(JSON.stringify(option)).toBe(original);
 });

@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite"
 import react from "@vitejs/plugin-react-swc"
 import tailwindcss from "@tailwindcss/vite"
+import kpiFont from "../shared/visualization/kpiFont.json" with { type: "json" };
 
 export default ({ mode }) => {
   // Load app-level env vars to node-level env vars.
@@ -19,6 +20,15 @@ export default ({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
+      {
+        name: "kpi-font",
+        transformIndexHtml() {
+          return [
+            { tag: "link", attrs: { rel: "stylesheet", href: kpiFont.stylesheet }, injectTo: "head" },
+            { tag: "style", children: `:root { --kpi-font-family: "${kpiFont.family}", sans-serif; }`, injectTo: "head" },
+          ];
+        },
+      },
     ],
     server: {
       port,

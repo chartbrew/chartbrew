@@ -47,7 +47,7 @@
     "@bull-board/express": "^6.7.9",
     "@clickhouse/client": "^1.10.1",
     "@fontsource-variable/inter-tight": "^5.3.0",
-    "@fontsource/titillium-web": "^5.3.0",
+    "@fontsource/geist-mono": "^5.3.0",
     "@google-analytics/admin": "^9.0.0",
     "@google-analytics/data": "^5.1.0",
     "@modelcontextprotocol/client": "^2.0.0",

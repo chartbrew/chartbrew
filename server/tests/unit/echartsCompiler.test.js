@@ -294,7 +294,7 @@ describe("ECharts compiler", () => {
         lineHeight: 16,
       },
       value: {
-        fontFamily: "Titillium Web, sans-serif",
+        fontFamily: "Geist Mono, sans-serif",
         fontSize: 26,
         fontWeight: 600,
         lineHeight: 31,
@@ -872,7 +872,7 @@ describe("ECharts compiler", () => {
     expect(pointer.splitLine.show).toBe(false);
     expect(pointer.data[0].value).toBe(72);
     expect(pointer.detail).toMatchObject({
-      fontFamily: "Titillium Web, sans-serif",
+      fontFamily: "Geist Mono, sans-serif",
       fontWeight: 600,
       offsetCenter: [0, "0%"],
       show: false,
@@ -895,7 +895,7 @@ describe("ECharts compiler", () => {
       label: { color: "#71717a", fontWeight: 400 },
       marker: { color: "#22c55e", padding: [0, 0, 0, 8] },
       value: {
-        fontFamily: "Titillium Web, sans-serif",
+        fontFamily: "Geist Mono, sans-serif",
         fontSize: 42,
         fontWeight: 600,
       },

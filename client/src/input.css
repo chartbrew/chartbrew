@@ -140,7 +140,7 @@
 @theme inline {
   --font-sans: Inter, -apple-system, system-ui, sans-serif;
   --font-tight: "Inter Tight", Inter, -apple-system, system-ui, sans-serif;
-  --font-tw: "Titillium Web", -apple-system, system-ui, sans-serif;
+  --font-tw: var(--kpi-font-family, var(--font-sans));
 
   --breakpoint-sm: 40rem;
   --breakpoint-md: 48rem;
