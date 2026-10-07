@@ -12,6 +12,17 @@ describe("verifySessionToken", () => {
     expect(verifySessionToken(token).id).toBe(42);
   });
 
+  it.each(["new@example.test", "", null, false])("rejects email-change tokens with newEmail=%s", (newEmail) => {
+    const token = jwt.sign({
+      id: 42,
+      email: "admin@example.test",
+      newEmail,
+    }, process.env.CB_ENCRYPTION_KEY_DEV, { algorithm: "HS256", expiresIn: "3h" });
+
+    expect(() => verifySessionToken(token)).toThrow("Email-change tokens cannot authenticate a session");
+    expect(jwt.verify(token, process.env.CB_ENCRYPTION_KEY_DEV).newEmail).toBe(newEmail);
+  });
+
   it("rejects tokens signed with the legacy secret", () => {
     const token = jwt.sign({ id: 42 }, process.env.CB_SECRET_DEV, { algorithm: "HS256" });
 

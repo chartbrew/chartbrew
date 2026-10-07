@@ -24,6 +24,7 @@ This document covers all authentication and user management flows in Chartbrew.
 
 - **Module**: [`server/modules/verifyToken.js`](../modules/verifyToken.js)
 - Verifies HS256 session tokens only with `settings.encryptionKey`
+- Rejects tokens with a `newEmail` claim, including previously issued email-change tokens, for API and socket authentication. These tokens remain valid for email confirmation.
 - Loads the user from DB and places a sanitized user on `req.user`
 
 ## 2FA Endpoints
