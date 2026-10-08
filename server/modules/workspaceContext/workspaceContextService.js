@@ -3,7 +3,7 @@ const { Op } = require("sequelize");
 const DigestController = require("../../controllers/DigestController");
 const MonitorController = require("../../controllers/MonitorController");
 const db = require("../../models/models");
-const { assertCanViewProject } = require("../observations/access");
+const { assertCanViewProject, isDatasetVisible } = require("../observations/access");
 const {
   getContextLimits,
   truncateContextSections,
@@ -34,14 +34,6 @@ function normalizeSections(sections) {
     throw error;
   }
   return normalized;
-}
-
-function isDatasetVisible(dataset, access, projectId) {
-  const projectIds = Array.isArray(dataset.project_ids)
-    ? dataset.project_ids.map(Number)
-    : [];
-  if (projectId) return projectIds.includes(Number(projectId));
-  return access.allProjects || projectIds.some((id) => access.projectIds.includes(id));
 }
 
 function getDatasetProfileSummary(dataset) {
@@ -280,7 +272,6 @@ async function readWorkspaceContext(access, envelope, input = {}) {
 module.exports = {
   ALLOWED_SECTIONS,
   getDatasetProfileSummary,
-  isDatasetVisible,
   normalizeSections,
   readBusinessProfile,
   readWorkspaceContext,

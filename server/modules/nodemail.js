@@ -204,7 +204,6 @@ async function renderObservationDigest(data) {
     recipientName: data.recipientName,
     scopeName: data.scopeName,
     teamName: data.teamName,
-    waitingMetrics: data.waitingMetrics || [],
   });
 }
 
@@ -221,9 +220,6 @@ module.exports.sendObservationDigest = async (data) => {
   const attentionLines = (data.attentionItems || []).map((item) => (
     `• Still needs attention: ${item.title}`
   ));
-  const waitingLines = (data.waitingMetrics || []).map((item) => (
-    `• ${item.name}: ${item.reason}`
-  ));
   const healthLines = (data.healthItems || []).map((item) => `• ${item.message}`);
   const emailName = contentMode === "kpi_review" ? "KPI review" : "Changes only";
   const textLines = [
@@ -232,7 +228,6 @@ module.exports.sendObservationDigest = async (data) => {
     ...kpiLines,
     ...observationLines,
     ...attentionLines,
-    ...waitingLines,
     ...healthLines,
     "",
     `Open Chartbrew: ${settings.client}`,

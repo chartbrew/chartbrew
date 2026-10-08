@@ -10,6 +10,7 @@ const {
   claimKpiReviewDelivery,
   completeKpiReviewDelivery,
 } = require("../../modules/observations/kpiReview");
+const HomeController = require("../../controllers/HomeController");
 const DigestController = require("../../controllers/DigestController");
 const {
   getRecommendedCadence,
@@ -68,6 +69,32 @@ afterEach(() => {
 });
 
 describe("KPI reviews", () => {
+  it("renders an email preview when Home loads before the digest controller", async () => {
+    vi.spyOn(HomeController.prototype, "getDataHealth").mockResolvedValue({ count: 0, items: [] });
+    vi.spyOn(db.MetricEvaluation, "findAll").mockResolvedValue([createEvaluation()]);
+    vi.spyOn(db.MetricMonitor, "findAll").mockResolvedValue([createMonitor()]);
+    vi.spyOn(db.Observation, "findAll").mockResolvedValue([]);
+    vi.spyOn(db.User, "findByPk").mockResolvedValue({ email: "maya@example.com", name: "Maya" });
+    vi.spyOn(db.Team, "findByPk").mockResolvedValue({ name: "Acme Inc." });
+    const sendSpy = vi.spyOn(mail, "sendObservationDigest");
+
+    const preview = await new DigestController().preview({
+      allProjects: true,
+      projectIds: [],
+      teamId: 8,
+      userId: 4,
+    }, {
+      cadence: "weekly",
+      contentMode: "kpi_review",
+      timezone: "Asia/Bangkok",
+    });
+
+    expect(preview.evaluationCount).toBe(1);
+    expect(preview.html).toContain("Revenue");
+    expect(preview.html).toContain("July 2026 compared with June 2026");
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
   it("serializes delivery days stored as JSON text", () => {
     const subscription = {
       cadence: "daily",

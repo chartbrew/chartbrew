@@ -42,11 +42,6 @@ export type ObservationSummaryEmailProps = {
   scopeName: string;
   supportEmail?: string;
   teamName: string;
-  waitingMetrics: Array<{
-    name: string;
-    project?: { name?: string | null } | null;
-    reason: string;
-  }>;
 };
 
 const DEFAULT_PROPS = {
@@ -71,7 +66,6 @@ export default function ObservationSummaryEmail(props: ObservationSummaryEmailPr
   const updateCount = props.kpis.length
     + props.observations.length
     + props.attentionItems.length
-    + props.waitingMetrics.length
     + props.healthItems.length;
   const greetingName = props.recipientName?.split(" ")[0];
 
@@ -174,19 +168,6 @@ export default function ObservationSummaryEmail(props: ObservationSummaryEmailPr
           </Section>
         ) : null}
 
-        {props.waitingMetrics.length > 0 ? (
-          <Section style={styles.sectionWrap}>
-            <Text style={styles.sectionTitle}>Waiting for complete data</Text>
-            {props.waitingMetrics.map((metric) => (
-              <Section key={metric.name} style={styles.item}>
-                <Text style={styles.label}>{metric.project?.name || "Workspace"}</Text>
-                <Text style={styles.itemTitle}>{metric.name}</Text>
-                <Text style={styles.itemCopy}>{metric.reason}.</Text>
-              </Section>
-            ))}
-          </Section>
-        ) : null}
-
         {updateCount === 0 ? (
           <Section style={styles.emptyItem}>
             <Text style={styles.itemTitle}>No new results</Text>
@@ -257,11 +238,6 @@ type PreviewableEmail = typeof ObservationSummaryEmail & {
   recipientName: "Maya Chen",
   scopeName: "All accessible dashboards",
   teamName: "Acme Inc.",
-  waitingMetrics: [{
-    name: "Trial conversion",
-    project: { name: "Acquisition" },
-    reason: "The completed period has missing data",
-  }],
 };
 
 const styles = {

@@ -3,7 +3,7 @@ import { Chip, Tabs } from "@heroui/react";
 import { useSearchParams } from "react-router";
 import { useSelector } from "react-redux";
 
-import { getActivityCounts } from "../../api/observations";
+import { getActivityCounts, getObservationDigests } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import AlertsPage from "./AlertsPage";
 import ChangesPage from "./ChangesPage";
@@ -15,6 +15,7 @@ function Activity() {
   const [searchParams, setSearchParams] = useSearchParams();
   const team = useSelector(selectTeam);
   const [counts, setCounts] = useState({ changes: 0, dataHealth: 0 });
+  const [kpiReviewCount, setKpiReviewCount] = useState(0);
   const selectedTab = searchParams.get("tab") || "changes";
 
   useEffect(() => {
@@ -27,6 +28,13 @@ function Activity() {
         })
         .catch(() => {
           if (active) setCounts({ changes: 0, dataHealth: 0 });
+        });
+      getObservationDigests(team.id)
+        .then((digests) => {
+          if (active) setKpiReviewCount(digests.length);
+        })
+        .catch(() => {
+          if (active) setKpiReviewCount(0);
         });
     };
     loadCounts();
@@ -80,8 +88,13 @@ function Activity() {
               Watched metrics
               <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Tab id="summaries">
+            <Tabs.Tab id="summaries" className="gap-1">
               KPI reviews
+              {kpiReviewCount > 0 ? (
+                <Chip color="accent" size="sm" variant="soft">
+                  <Chip.Label>{kpiReviewCount}</Chip.Label>
+                </Chip>
+              ) : null}
               <Tabs.Indicator />
             </Tabs.Tab>
           </Tabs.List>

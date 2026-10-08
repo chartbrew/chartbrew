@@ -2,11 +2,11 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const ObservationController = require("./ObservationController");
-const { isDatasetVisible } = require("../modules/workspaceContext/workspaceContextService");
 const {
   PROJECT_EDITOR_ROLES,
   createHttpError,
   getProjectScope,
+  isDatasetVisible,
 } = require("../modules/observations/access");
 
 const FAILURE_STATUSES = new Set(["failed", "partial_failure"]);

@@ -8,6 +8,7 @@ import {
   LuBriefcaseBusiness,
   LuChartNoAxesCombined,
   LuCode,
+  LuInfo,
   LuSettings,
   LuShieldCheck,
   LuUser,
@@ -58,6 +59,10 @@ const TEAM_ITEMS = [{
 }];
 
 const PLATFORM_ITEMS = [{
+  icon: LuInfo,
+  label: "About",
+  path: "/settings/platform/about",
+}, {
   icon: LuShieldCheck,
   label: "Platform settings",
   path: "/settings/platform",

@@ -222,6 +222,17 @@ describe("ECharts compiler", () => {
     expect(option[valueAxis].max).toBeUndefined();
   });
 
+  it.each(["line", "bar"])("removes unused legend space from %s charts", (mark) => {
+    const fixture = buildFixture(mark);
+    expect(buildEChartsOption(fixture).grid.top).toBe(42);
+
+    fixture.visualization.settings.legend.visible = false;
+    const option = buildEChartsOption(fixture);
+    expect(option.legend.show).toBe(false);
+    expect(option.grid.top).toBe(12);
+    expect(option.media[0].option.grid.top).toBe(12);
+  });
+
   const graphicalPresets = [
     "line", "bar", "horizontalBar", "pie", "doughnut", "radar", "polar", "matrix", "gauge",
   ];

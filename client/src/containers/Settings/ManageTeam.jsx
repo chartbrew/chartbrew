@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import PropTypes from "prop-types";
 import { useSelector } from "react-redux";
 import { Navigate, Route, Routes, useLocation } from "react-router";
@@ -18,6 +18,8 @@ import TeamMembers from "./TeamMembers";
 import TeamAiSettings from "./TeamAiSettings";
 import AiMemorySettings from "./AiMemorySettings";
 import McpSettings from "./McpSettings";
+
+const About = lazy(() => import("./About"));
 
 function SettingsPage({ children, title, wide = false }) {
   return (
@@ -151,6 +153,16 @@ function ManageTeam() {
         element={user.admin === true ? (
           <SettingsPage title="Platform analytics" wide>
             <Analytics key="platform" />
+          </SettingsPage>
+        ) : <Navigate replace to={defaultPath} />}
+      />
+      <Route
+        path="platform/about"
+        element={user.admin === true ? (
+          <SettingsPage title="About" wide>
+            <Suspense fallback={<ProgressCircle aria-label="Loading About" />}>
+              <About />
+            </Suspense>
           </SettingsPage>
         ) : <Navigate replace to={defaultPath} />}
       />

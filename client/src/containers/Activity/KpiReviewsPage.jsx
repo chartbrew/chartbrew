@@ -85,6 +85,7 @@ function KpiReviewsPage() {
     try {
       await deleteObservationDigest(team.id, subscriptionId);
       setDigests((current) => current.filter((item) => item.id !== subscriptionId));
+      window.dispatchEvent(new CustomEvent("cb:activity-updated"));
       setDigestToRemove(null);
       toast.success("KPI review schedule removed");
     } catch (error) {
@@ -127,6 +128,7 @@ function KpiReviewsPage() {
         ? current.map((item) => item.id === subscription.id ? subscription : item)
         : [subscription, ...current];
     });
+    window.dispatchEvent(new CustomEvent("cb:activity-updated"));
   };
 
   if (loading) {

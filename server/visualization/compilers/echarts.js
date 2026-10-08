@@ -660,7 +660,13 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
   const option = {
     ...getBaseOption(visualization, renderContext),
     dataset: { dimensions, source, sourceHeader: false },
-    grid: { containLabel: true, left: 16, right: 18, top: 42, bottom: 16 },
+    grid: {
+      containLabel: true,
+      left: 16,
+      right: 18,
+      top: visualization.settings?.legend?.visible === false ? 12 : 42,
+      bottom: 16,
+    },
     series: projection.series.flatMap((series, seriesIndex) => {
       const layer = getLayer(visualization, series.layerId);
       const style = getLayerSeriesStyle(styles, series, layer);

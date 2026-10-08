@@ -50,6 +50,14 @@ function getProjectScope(access, field = "project_id") {
   };
 }
 
+function isDatasetVisible(dataset, access, projectId) {
+  const projectIds = Array.isArray(dataset.project_ids)
+    ? dataset.project_ids.map(Number)
+    : [];
+  if (projectId) return projectIds.includes(Number(projectId));
+  return access.allProjects || projectIds.some((id) => access.projectIds.includes(id));
+}
+
 function canEditProject(access, projectId) {
   if (access.allProjects) return true;
   return PROJECT_EDITOR_ROLES.has(access.role)
@@ -77,5 +85,6 @@ module.exports = {
   createHttpError,
   getObservationAccess,
   getProjectScope,
+  isDatasetVisible,
   normalizeProjectIds,
 };

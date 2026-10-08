@@ -163,7 +163,7 @@ describe("nodemail React Email templates", () => {
     expect(html).toContain("Open Activity");
   });
 
-  it("renders exact KPI periods, stable results, corrections, and waiting metrics", async () => {
+  it("renders exact KPI periods, stable results, and corrections without waiting metrics", async () => {
     const mailModule = await import("../../modules/mail.js");
     const mail = mailModule.default || mailModule;
     const result = await mail.sendObservationDigest({
@@ -212,7 +212,10 @@ describe("nodemail React Email templates", () => {
     expect(html).toContain("Hi Maya, here’s your latest KPI review");
     expect(html).toContain("Corrected · Improved");
     expect(html).toContain("No meaningful change");
-    expect(html).toContain("Waiting for complete data");
-    expect(html).toContain("The completed period has missing data");
+    expect(html).toContain("2 updates from Acme Inc.");
+    expect(html).not.toContain("Waiting for complete data");
+    expect(html).not.toContain("Trial conversion");
+    expect(message.text).not.toContain("Trial conversion");
+    expect(message.text).not.toContain("The completed period has missing data");
   });
 });

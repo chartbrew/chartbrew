@@ -14,12 +14,7 @@ import {
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import {
-  LuExternalLink,
-  LuGithub,
-  LuGlobe,
-  LuHeartHandshake,
   LuInfo,
-  LuNewspaper,
   LuRotateCcw,
 } from "react-icons/lu";
 
@@ -28,17 +23,7 @@ import {
   resetPlatformSettings,
   updatePlatformSettings,
 } from "../../api/platformSettings";
-import cbLogoDark from "../../assets/cb_logo_dark.svg";
-import cbLogoLight from "../../assets/cb_logo_light.svg";
-import { useTheme } from "../../modules/ThemeContext";
 import EnableAiPromptModal from "./EnableAiPromptModal";
-
-const LINK_ICONS = {
-  website: LuGlobe,
-  github: LuGithub,
-  blog: LuNewspaper,
-  sponsors: LuHeartHandshake,
-};
 
 function buildDraft(groups = []) {
   return groups.reduce((draft, group) => {
@@ -56,7 +41,6 @@ function normalizeValue(setting, value) {
 }
 
 function PlatformSettings() {
-  const { isDark } = useTheme();
   const [data, setData] = useState(null);
   const [draft, setDraft] = useState({});
   const [loading, setLoading] = useState(true);
@@ -358,62 +342,6 @@ function PlatformSettings() {
         onConfirm={confirmEnableAi}
         scope="platform"
       />
-      <section className="overflow-hidden rounded-3xl border border-divider bg-surface">
-        <div className="grid md:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]">
-          <div className="flex min-h-64 flex-col justify-between gap-10 p-6 sm:p-8">
-            <div className="flex flex-wrap items-center gap-3">
-              <img
-                alt="Chartbrew"
-                className="h-auto w-44 sm:w-52"
-                src={isDark ? cbLogoDark : cbLogoLight}
-              />
-              <Chip size="sm" variant="secondary">{data.version}</Chip>
-            </div>
-
-            <p className="max-w-xl text-base leading-7 text-default-600 sm:text-lg">
-              Chartbrew is created and maintained by{" "}
-              <a
-                className="font-medium text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
-                href="https://x.com/razvanilin"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Razvan Ilin
-              </a>
-              .
-            </p>
-          </div>
-
-          <nav
-            aria-label="Chartbrew links"
-            className="flex flex-col gap-2 border-t border-divider bg-default-50/60 p-4 md:border-l md:border-t-0"
-          >
-            {data.links.map((link) => {
-              const LinkIcon = LINK_ICONS[link.id] || LuExternalLink;
-              return (
-                <a
-                  className="group flex min-h-12 items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-colors hover:border-divider hover:bg-surface"
-                  href={link.url}
-                  key={link.id}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-default-200 text-default-600 transition-colors group-hover:bg-accent-soft group-hover:text-accent">
-                    <LinkIcon aria-hidden="true" size={17} />
-                  </span>
-                  <span className="flex-1 text-foreground">{link.label}</span>
-                  <LuExternalLink
-                    aria-hidden="true"
-                    className="text-default-400 transition-colors group-hover:text-default-600"
-                    size={15}
-                  />
-                </a>
-              );
-            })}
-          </nav>
-        </div>
-      </section>
-
       {data.groups.map((group) => {
         return (
           <section className="rounded-3xl border border-divider bg-surface p-4" key={group.id}>
