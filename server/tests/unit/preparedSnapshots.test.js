@@ -85,6 +85,48 @@ afterEach(() => {
 });
 
 describe("prepared snapshots", () => {
+  it.each([
+    [undefined, "Asia/Bangkok"],
+    ["Europe/London", "Europe/London"],
+    [null, null],
+  ])("renders a saved legacy snapshot with the resolved timezone (%s)", async (override, expected) => {
+    const chart = {
+      id: 42,
+      project_id: 7,
+      type: "markdown",
+      content: "Cached notes",
+      chartDataUpdated: "2026-08-20T00:00:00.000Z",
+      visualization: {
+        version: 2,
+        status: "ready",
+        settings: {},
+        layers: [{ id: "notes", mark: "markdown", status: "ready", encoding: {} }],
+      },
+    };
+    let saved;
+    vi.spyOn(db.Chart, "unscoped").mockReturnValue({
+      findByPk: vi.fn().mockResolvedValue(chart),
+      update: vi.fn(async (values) => { saved = values; return [1]; }),
+      findOne: vi.fn(async () => saved),
+    });
+    const project = vi.spyOn(db.Project, "findByPk").mockResolvedValue({ timezone: "Asia/Bangkok" });
+    vi.spyOn(db.UpdateRun, "findOne").mockResolvedValue(null);
+    const fingerprints = vi.spyOn(runtimeCache, "buildChartFingerprints")
+      .mockImplementation(async (_id, timezone) => ({ visualization: String(timezone), source: null }));
+    const controller = new ChartController();
+    const refresh = vi.spyOn(controller, "updateChartData");
+    await controller.prepareLegacyChartData(42, { timezone: override });
+
+    expect(saved.preparedData.timezone).toBe(expected || "UTC");
+    expect(fingerprints).toHaveBeenCalledWith(42, expected);
+    expect(project.mock.calls).toEqual(override === undefined
+      ? [[7, { attributes: ["timezone"] }]]
+      : []);
+    const hydrated = await controller.hydratePreparedChart(chart, { refresh: false, timezone: expected });
+    expect(hydrated.render.configuration.content).toBe("Cached notes");
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   it("keeps internal preparation data in canonical snapshot serialization", () => {
     const serialized = serializePreparedDataSnapshot(buildPreparedData());
     expect(JSON.parse(serialized).results[0]).toMatchObject({

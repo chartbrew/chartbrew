@@ -220,14 +220,20 @@ class ChartController {
       : chart;
     if (!chart) throw new Error("Chart not found");
 
+    let timezone = options.timezone;
+    if (timezone === undefined && chart.project_id) {
+      const project = await db.Project.findByPk(chart.project_id, { attributes: ["timezone"] });
+      timezone = project?.timezone;
+    }
+
     const preparedData = legacyChartDataToPreparedData(chart, {
       chartData: legacyChart?.chartData,
       generatedAt: legacyChart?.chartDataUpdated,
-      timezone: options.timezone,
+      timezone,
     });
     const currentFingerprints = await runtimeCache.buildChartFingerprints(
       chartId,
-      options.timezone
+      timezone
     );
     const fingerprints = {
       combined: getPreparedDataFingerprint(preparedData),
@@ -237,7 +243,7 @@ class ChartController {
     const renderedChart = compilePreparedRender(chart, preparedData, {
       snapshotUpdatedAt: preparedData.generatedAt,
       stale: true,
-      timezone: options.timezone,
+      timezone,
       updatedAt: preparedData.generatedAt,
     });
     const snapshot = options.skipSave
