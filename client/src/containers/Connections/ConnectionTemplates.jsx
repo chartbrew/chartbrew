@@ -202,7 +202,7 @@ function ConnectionTemplates() {
           <div className="flex flex-row items-center gap-3">
             <img
               alt={connection.subType || connection.type}
-              className="h-14 w-14 rounded-lg object-contain"
+              className="h-14 w-14 object-contain"
               src={getConnectionLogo(connection, isDark)}
             />
             <div>

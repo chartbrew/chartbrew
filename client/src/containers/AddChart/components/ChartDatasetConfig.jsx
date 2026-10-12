@@ -1329,6 +1329,7 @@ function ChartDatasetConfig(props) {
                 <Tooltip.Trigger>
                   <Avatar size="sm" className="ring-2 ring-primary shrink-0">
                     <Avatar.Image
+                      className="object-contain p-[15%]"
                       src={getConnectionLogo(dr?.Connection, isDark)}
                       alt=""
                     />

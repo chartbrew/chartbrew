@@ -1,11 +1,12 @@
-import customerioLogo from "./assets/customerio-light.webp";
-import customerioDarkLogo from "./assets/customerio-dark.webp";
+import customerioLogo from "./assets/logo-light.svg";
+import customerioDarkLogo from "./assets/logo-dark.svg";
 
 const customerioSource = {
   id: "customerio",
   type: "customerio",
   subType: "customerio",
   name: "Customer.io",
+  description: "Explore customer data and audience segments.",
   category: "marketing",
   capabilities: {
     ai: {

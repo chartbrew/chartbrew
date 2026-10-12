@@ -1,11 +1,12 @@
-import clickhouseLogo from "./assets/clickhouse-light.svg";
-import clickhouseDarkLogo from "./assets/clickhouse-dark.svg";
+import clickhouseLogo from "./assets/logo-light.svg";
+import clickhouseDarkLogo from "./assets/logo-dark.svg";
 
 const clickhouseSource = {
   id: "clickhouse",
   type: "clickhouse",
   subType: "clickhouse",
   name: "ClickHouse",
+  description: "Analyze large datasets with fast SQL queries.",
   category: "database",
   capabilities: {
     ai: {

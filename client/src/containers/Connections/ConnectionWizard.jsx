@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LuArrowLeft, LuCircleHelp, LuClipboard, LuClipboardCheck, LuCompass, LuPanelRightClose, LuSearch } from "react-icons/lu";
-import { Button, Card, Chip, Input, InputGroup, Surface, TextField, Tooltip } from "@heroui/react";
+import { Button, Card, Chip, Input, InputGroup, Surface, TextField, ToggleButton, ToggleButtonGroup, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
@@ -14,6 +14,7 @@ import {
 import { canCreateSourceConnections } from "../../sources/sourceAvailability";
 import { useTheme } from "../../modules/ThemeContext";
 import { addConnection, addFilesToConnection, getConnection, getTeamConnections, saveConnection } from "../../slices/connection";
+import { filterConnectionCatalogue, getConnectionCatalogue } from "./connectionCatalogue";
 import HelpBanner from "../../components/HelpBanner";
 import { generateInviteUrl, selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
@@ -31,6 +32,7 @@ const getInitialHelpPanelState = () => {
 
 function ConnectionWizard() {
   const [connectionSearch, setConnectionSearch] = useState("");
+  const [connectionCategory, setConnectionCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("");
   const [newConnection, setNewConnection] = useState(null);
   const [inviteUrl, setInviteUrl] = useState("");
@@ -112,22 +114,18 @@ function ConnectionWizard() {
     }
   }, [connectionToEdit]);
 
-  const availableSources = getSourcePickerItems();
+  const availableSources = getConnectionCatalogue(getSourcePickerItems());
+  const selectedEntry = availableSources.find((source) => source.id === selectedType);
   let selectedSource = null;
   try {
-    selectedSource = selectedType ? getSourcePlugin(selectedType) : null;
+    selectedSource = selectedType ? getSourcePlugin(selectedEntry?.sourceId || selectedType) : null;
   } catch {
     selectedSource = null;
   }
   const canRenderSelectedForm = Boolean(newConnection || canCreateSourceConnections(selectedSource));
   const SelectedConnectionForm = canRenderSelectedForm ? selectedSource?.frontend?.ConnectionForm : null;
 
-  const _filteredConnections = availableSources.filter((conn) => {
-    if (connectionSearch) {
-      return conn.name.toLowerCase().includes(connectionSearch.toLowerCase());
-    }
-    return true;
-  });
+  const _filteredConnections = filterConnectionCatalogue(availableSources, connectionCategory, connectionSearch);
 
   const _onAddNewConnection = (data, files) => {
     if (params.connectionId !== "new") {
@@ -230,7 +228,7 @@ function ConnectionWizard() {
             <>
               <div className="flex flex-row items-center gap-2">
                 <span className="text-xl text-secondary font-semibold">Step 1:</span>
-                <span className="text-xl font-semibold">Select your datasource type</span>
+                <span className="text-xl font-semibold">Choose a connection</span>
               </div>
               <div className="h-4" />
               <Surface className="rounded-3xl bg-surface border border-divider p-4">
@@ -247,48 +245,58 @@ function ConnectionWizard() {
                     </InputGroup>
                   </TextField>
                 </div>
-                <div className="h-4" />
-                <div className="grid grid-cols-12 gap-4">
+                <ToggleButtonGroup
+                  aria-label="Connection category"
+                  className="my-4 flex-wrap"
+                  disallowEmptySelection
+                  isDetached
+                  selectedKeys={[connectionCategory]}
+                  selectionMode="single"
+                  size="sm"
+                  onSelectionChange={(keys) => setConnectionCategory([...keys][0])}
+                >
+                  <ToggleButton id="all">All</ToggleButton>
+                  <ToggleButton id="database">Databases</ToggleButton>
+                  <ToggleButton id="services">Services</ToggleButton>
+                  <ToggleButton id="mcp">MCP</ToggleButton>
+                </ToggleButtonGroup>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {_filteredConnections.map((conn) => (
-                    <div key={conn.name} className="col-span-12 sm:col-span-6 lg:col-span-6 xl:col-span-3">
-                      <Card
-                        role="button"
-                        tabIndex={0}
-                        className={`w-full h-full cursor-pointer shadow-none transition-colors hover:bg-surface-secondary/40 ${selectedType === conn.id ? "border border-primary" : "border border-content3"}`}
-                        onClick={() => setSelectedType(conn.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setSelectedType(conn.id);
-                          }
-                        }}
-                      >
-                        <Card.Content className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
-                          <img
-                            alt={conn.name}
-                            className="h-25 rounded-lg object-contain"
-                            src={getSourceLogo(conn, isDark)}
-                          />
-                        </Card.Content>
-                        <Card.Content className="flex flex-row items-center justify-center flex-wrap gap-1">
-                          {conn.showNewBadge && (
-                            <Chip variant="soft" color="accent">
-                              <Chip.Label>{"New!"}</Chip.Label>
-                            </Chip>
-                          )}
-                        </Card.Content>
-                        <Card.Footer className="justify-center flex flex-col gap-1">
-                          <span className="text-sm font-semibold">{conn.name}</span>
-                        </Card.Footer>
-                      </Card>
-                    </div>
+                    <Button
+                      key={conn.id}
+                      aria-pressed={selectedType === conn.id}
+                      className={`h-auto min-h-28 w-full items-start justify-start whitespace-normal rounded-xl p-4 text-left ${selectedType === conn.id ? "border-accent bg-accent-soft" : "border-divider"}`}
+                      variant="outline"
+                      onPress={() => setSelectedType(conn.id)}
+                    >
+                      <img
+                        alt=""
+                        className="h-10 w-10 shrink-0 object-contain"
+                        src={getSourceLogo(conn, isDark)}
+                      />
+                      <span className="flex min-w-0 flex-1 flex-col gap-2">
+                        <span className="font-semibold">{conn.name}</span>
+                        <Chip className="w-fit" size="sm" variant="soft" color={conn.method === "MCP" ? "accent" : "default"}>
+                          <Chip.Label>{conn.method}</Chip.Label>
+                        </Chip>
+                        {conn.description && (
+                          <span className="text-sm font-normal text-muted">{conn.description}</span>
+                        )}
+                      </span>
+                    </Button>
                   ))}
-                  {_filteredConnections.length === 0 && (
-                    <div className="col-span-12">
-                      <p className="text-center text-gray-500">No connections found</p>
-                    </div>
-                  )}
                 </div>
+                {_filteredConnections.length === 0 && (
+                  <div className="flex flex-col items-center gap-3 py-8">
+                    <p className="text-muted">No connections match your search.</p>
+                    <Button variant="secondary" onPress={() => {
+                      setConnectionSearch("");
+                      setConnectionCategory("all");
+                    }}>
+                      Clear filters
+                    </Button>
+                  </div>
+                )}
               </Surface>
 
               <div className="h-4" />
@@ -313,6 +321,8 @@ function ConnectionWizard() {
 
           {SelectedConnectionForm && (
             <SelectedConnectionForm
+              key={newConnection?.id || selectedType}
+              catalogueEntry={selectedEntry}
               onComplete={_onAddNewConnection}
               editConnection={newConnection}
               subType={selectedSource.subType || selectedSource.type}
@@ -413,7 +423,7 @@ function ConnectionWizard() {
 
                 {selectedType && (
                   <HelpBanner
-                    type={selectedType}
+                    type={selectedSource?.id}
                     imageUrl={getSourceLogo(selectedSource, isDark)}
                   />
                 )}

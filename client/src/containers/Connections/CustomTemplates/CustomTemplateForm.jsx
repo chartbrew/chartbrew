@@ -199,7 +199,7 @@ function CustomTemplateForm(props) {
                                 textValue={c.name}
                               >
                                 <Avatar className="size-6 rounded-sm">
-                                  <Avatar.Image src={getConnectionLogo(c, isDark)} alt="" />
+                                  <Avatar.Image className="object-contain p-[15%]" src={getConnectionLogo(c, isDark)} alt="" />
                                   <Avatar.Fallback />
                                 </Avatar>
                                 {c.name}

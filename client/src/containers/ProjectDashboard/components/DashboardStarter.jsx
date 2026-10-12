@@ -558,6 +558,7 @@ function DashboardStarter({
                               <Avatar size="sm" className="shrink-0 bg-surface-tertiary">
                                 {primaryConnection ? (
                                   <Avatar.Image
+                                    className="object-contain p-[15%]"
                                     src={getConnectionLogo(primaryConnection, isDark)}
                                     alt={`${primaryConnection.subType || primaryConnection.type} logo`}
                                   />

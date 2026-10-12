@@ -187,12 +187,15 @@ function ConnectionList() {
                 <div className="flex flex-row items-center justify-between">
                   <div className="flex flex-row items-center gap-2">
                     <Avatar size="sm" className="rounded-sm">
-                      <Avatar.Image src={getConnectionLogo(connection, isDark)} alt={`${connection.subType} logo`} />
+                      <Avatar.Image className="object-contain p-[15%]" src={getConnectionLogo(connection, isDark)} alt={`${connection.subType} logo`} />
                       <Avatar.Fallback>
                         <LuPlug />
                       </Avatar.Fallback>
                     </Avatar>
                     <Link to={`/connections/${connection.id}`} className="text-lg font-semibold text-foreground! font-tight cursor-pointer">{connection.name}</Link>
+                    {connection.type === "mcp" && (
+                      <Chip size="sm" variant="soft" color="accent">MCP</Chip>
+                    )}
                   </div>
                   <div>
                     {_getRelatedDatasets(connection.id).length > 0 && (

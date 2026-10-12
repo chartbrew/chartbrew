@@ -322,6 +322,7 @@ function DatarequestModal(props) {
                         >
                           {dr.Connection ? (
                             <Avatar.Image
+                              className="object-contain p-[15%]"
                               src={_getConnectionLogo(dr.Connection)}
                               alt=""
                             />
@@ -411,6 +412,7 @@ function DatarequestModal(props) {
                               <div className="w-1" />
                               <Avatar className="rounded-sm">
                                 <Avatar.Image
+                                  className="object-contain p-[15%]"
                                   src={_getConnectionLogo(c)}
                                   alt={`${c.type} logo`}
                                 />

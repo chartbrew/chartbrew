@@ -418,7 +418,7 @@ function DatasetQuery(props) {
                                 <img
                                   src={getConnectionLogo(dr?.Connection, theme === "dark")}
                                   alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
-                                  className="h-full w-full rounded-sm border border-divider object-contain"
+                                  className="h-full w-full rounded-sm border border-divider object-contain p-0.5"
                                 />
                               </div>
                               <span className="max-w-md truncate">{dr?.Connection?.name}</span>
@@ -590,7 +590,7 @@ function DatasetQuery(props) {
                             )}
                           </div>
                           <Avatar className="rounded-sm">
-                            <Avatar.Image src={getConnectionLogo(c, theme === "dark")} alt={`${c.type} logo`} />
+                            <Avatar.Image className="object-contain p-[15%]" src={getConnectionLogo(c, theme === "dark")} alt={`${c.type} logo`} />
                             <Avatar.Fallback />
                           </Avatar>
                         </div>

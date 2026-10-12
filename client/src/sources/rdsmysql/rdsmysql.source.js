@@ -1,5 +1,5 @@
-import lightLogo from "./assets/rds.png";
-import darkLogo from "./assets/rds-dark.png";
+import lightLogo from "../rdspostgres/assets/logo-light.png";
+import darkLogo from "../rdspostgres/assets/logo-light.png";
 
 export default {
   id: "rdsMysql",
@@ -7,6 +7,7 @@ export default {
   type: "mysql",
   subType: "rdsMysql",
   name: "RDS MySQL",
+  description: "Query MySQL data hosted on Amazon RDS.",
   category: "database",
   capabilities: {
     ai: {

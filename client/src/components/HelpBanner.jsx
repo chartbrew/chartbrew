@@ -129,9 +129,10 @@ function HelpBanner(props) {
         <div className="mb-1">
           <img
             src={imageUrl}
+            alt=""
             width={60}
             height={60}
-            className="rounded-2xl border border-divider"
+            className="size-[60px] rounded-2xl border border-divider object-contain p-2"
           />
         </div>
         <Card.Title>

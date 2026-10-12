@@ -1,11 +1,12 @@
-import mongoLogo from "./assets/mongodb-logo.png";
-import mongoDarkLogo from "./assets/mongodb-dark.png";
+import mongoLogo from "./assets/logo-light.svg";
+import mongoDarkLogo from "./assets/logo-dark.svg";
 
 const mongodbSource = {
   id: "mongodb",
   type: "mongodb",
   subType: "mongodb",
   name: "MongoDB",
+  description: "Build charts from documents and collections.",
   category: "database",
   capabilities: {
     ai: {

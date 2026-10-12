@@ -36,6 +36,8 @@ import toast from "react-hot-toast";
 
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import HeroPaginationNav from "../../components/HeroPaginationNav";
+import { useTheme } from "../../modules/ThemeContext";
+import { getSourceDefinitionLogo } from "../definitions";
 import {
   runSourceAction,
   testRequest,
@@ -152,14 +154,15 @@ function parseConnectionTestBody(raw) {
   }
 }
 
-function getInitialConnection(editConnection) {
-  const authentication = editConnection?.authentication || {};
+function getInitialConnection(editConnection, defaults) {
+  const initialConnection = editConnection || defaults;
+  const authentication = initialConnection?.authentication || {};
   return {
     ...(editConnection || {}),
     type: "mcp",
     subType: "mcp",
-    name: editConnection?.name || "MCP server",
-    host: editConnection?.host || "",
+    name: initialConnection?.name || "MCP server",
+    host: initialConnection?.host || "",
     authentication: {
       type: authentication.type || "none",
       token: "",
@@ -317,8 +320,8 @@ function McpToolRow({ tool, approval, isSaving, onChangeApproval }) {
   );
 }
 
-function McpConnectionForm({ editConnection, onComplete, addError }) {
-  const [connection, setConnection] = useState(() => getInitialConnection(editConnection));
+function McpConnectionForm({ editConnection, catalogueEntry, onComplete, addError }) {
+  const [connection, setConnection] = useState(() => getInitialConnection(editConnection, catalogueEntry?.connectionDefaults));
   const [errors, setErrors] = useState({});
   const [testResult, setTestResult] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
@@ -335,6 +338,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const team = useSelector(selectTeam);
   connectionRef.current = connection;
   const tools = connection.schema?.mcp?.tools || [];
@@ -346,6 +350,7 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
     return approval?.datasets === true || approval?.ask === true;
   }).length;
   const server = connection.schema?.mcp?.server;
+  const serviceLogo = getSourceDefinitionLogo(catalogueEntry, isDark) || server?.icon;
   const serverInitials = String(server?.name || "MCP")
     .split(/\s+/)
     .slice(0, 2)
@@ -359,8 +364,8 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
   }, [connection.authentication?.headers]);
 
   useEffect(() => {
-    setConnection(getInitialConnection(editConnection));
-  }, [editConnection]);
+    setConnection(getInitialConnection(editConnection, catalogueEntry?.connectionDefaults));
+  }, [editConnection, catalogueEntry?.id]);
 
   useEffect(() => {
     setToolPage(1);
@@ -655,16 +660,28 @@ function McpConnectionForm({ editConnection, onComplete, addError }) {
       <Card className="gap-6 rounded-3xl border border-divider p-6 shadow-none">
         <Card.Header className="flex flex-row items-center gap-3">
           <Avatar className="size-10 shrink-0">
-            {server?.icon && <Avatar.Image alt="" src={server.icon} />}
+            {serviceLogo && (
+              <Avatar.Image className="object-contain p-[15%]" alt="" src={serviceLogo} />
+            )}
             <Avatar.Fallback>{serverInitials}</Avatar.Fallback>
           </Avatar>
           <div className="min-w-0">
             <Card.Title className="text-base font-semibold">
-              {editConnection ? `Edit ${connection.name || "MCP connection"}` : "Connect an MCP server"}
+              {editConnection ? `Edit ${connection.name || "MCP connection"}` : `Connect ${catalogueEntry?.connectionDefaults ? catalogueEntry.name : "an MCP server"}`}
             </Card.Title>
           </div>
         </Card.Header>
         <Card.Content className="gap-5">
+          {!editConnection && (
+            <div className="flex flex-col gap-2 text-sm text-muted">
+              <p>Chart support depends on the tools and data this service provides. Review the available tools after you connect.</p>
+              {catalogueEntry?.documentationUrl && (
+                <a className="w-fit text-accent underline" href={catalogueEntry.documentationUrl} target="_blank" rel="noreferrer">
+                  {catalogueEntry.name} setup guide
+                </a>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <TextField isInvalid={Boolean(errors.name)} name="mcp-name">
               <Label>Connection name</Label>
@@ -992,6 +1009,7 @@ McpToolRow.propTypes = {
 
 McpConnectionForm.propTypes = {
   editConnection: PropTypes.object,
+  catalogueEntry: PropTypes.object,
   onComplete: PropTypes.func.isRequired,
   addError: PropTypes.bool,
 };

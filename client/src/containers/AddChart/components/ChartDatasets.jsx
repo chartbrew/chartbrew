@@ -273,6 +273,7 @@ function ChartDatasets(props) {
                                   className="ring-2 ring-primary shrink-0"
                                 >
                                   <Avatar.Image
+                                    className="object-contain p-[15%]"
                                     src={getConnectionLogo(dr?.Connection, isDark)}
                                     alt=""
                                   />

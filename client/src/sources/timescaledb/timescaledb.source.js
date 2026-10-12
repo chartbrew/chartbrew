@@ -1,5 +1,5 @@
-import lightLogo from "./assets/timescale-light.webp";
-import darkLogo from "./assets/timescale-dark.webp";
+import lightLogo from "./assets/logo-light.png";
+import darkLogo from "./assets/logo-dark.svg";
 
 export default {
   id: "timescaledb",
@@ -7,6 +7,7 @@ export default {
   type: "postgres",
   subType: "timescaledb",
   name: "Timescale",
+  description: "Query time series data with PostgreSQL.",
   category: "database",
   capabilities: {
     ai: {

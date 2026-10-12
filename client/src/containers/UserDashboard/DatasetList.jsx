@@ -644,7 +644,7 @@ function DatasetList() {
                               style={{ zIndex: idx }}
                             >
                               {dr.Connection ? (
-                                <Avatar.Image src={getConnectionLogo(dr.Connection, isDark)} alt="" />
+                                <Avatar.Image className="object-contain p-[15%]" src={getConnectionLogo(dr.Connection, isDark)} alt="" />
                               ) : null}
                               <Avatar.Fallback>
                                 {!dr.Connection ? <LuMonitorX /> : <LuPlug />}

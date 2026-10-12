@@ -30,7 +30,7 @@ function ChartSelect({ label, value, items, onChange, isDisabled, compact = fals
             <ListBox.Item id={item.value} textValue={item.label}>
               {item.logo && (
                 <Avatar className="size-6 shrink-0 rounded-sm">
-                  <Avatar.Image src={item.logo} alt="" className="object-contain" />
+                  <Avatar.Image src={item.logo} alt="" className="object-contain p-[15%]" />
                   <Avatar.Fallback>
                     <LuDatabase size={16} />
                   </Avatar.Fallback>
@@ -497,7 +497,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
                       <div className="flex flex-wrap items-center justify-end gap-1">
                         {item.connections?.map((connection) => (
                           <Avatar key={connection.id} size="sm" className="shrink-0" title={connection.name}>
-                            <Avatar.Image src={connection.icon || getConnectionLogo(connection, isDark)} alt={connection.name} className="object-contain" />
+                            <Avatar.Image src={connection.icon || getConnectionLogo(connection, isDark)} alt={connection.name} className="object-contain p-[15%]" />
                             <Avatar.Fallback>
                               <LuDatabase size={16} />
                             </Avatar.Fallback>

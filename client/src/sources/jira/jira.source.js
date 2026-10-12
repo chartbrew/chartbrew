@@ -1,5 +1,5 @@
-import jiraLogo from "./assets/jira.svg";
-import jiraLogoDark from "./assets/jira-dark.svg";
+import jiraLogo from "./assets/logo-light.svg";
+import jiraLogoDark from "./assets/logo-light.svg";
 
 const DEFAULT_CONFIGURATION = {
   source: "jira",
@@ -28,6 +28,7 @@ const jiraSource = {
   type: "jira",
   subType: "jira",
   name: "Jira",
+  description: "Query Jira issues with filters or JQL.",
   category: "productivity",
   showNewBadge: true,
   capabilities: {

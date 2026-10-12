@@ -1,11 +1,12 @@
-import lightLogo from "./assets/mysql.png";
-import darkLogo from "./assets/mysql-dark.png";
+import lightLogo from "./assets/logo-light.svg";
+import darkLogo from "./assets/logo-dark.svg";
 
 export default {
   id: "mysql",
   type: "mysql",
   subType: "mysql",
   name: "MySQL",
+  description: "Build charts from MySQL tables with SQL.",
   category: "database",
   capabilities: {
     ai: {

@@ -1,11 +1,12 @@
-import gAnalyticsLogo from "./assets/GoogleAnalytics.webp";
-import googleanalyticsDarkLogo from "./assets/googleanalytics-dark.png";
+import gAnalyticsLogo from "./assets/logo-light.png";
+import googleanalyticsDarkLogo from "./assets/logo-light.png";
 
 const googleAnalyticsSource = {
   id: "googleAnalytics",
   type: "googleAnalytics",
   subType: "googleAnalytics",
   name: "Google Analytics",
+  description: "Track website traffic, events, and visitor activity.",
   category: "analytics",
   setupDescription: "Connect Google Analytics to Chartbrew to build charts from website traffic and events. Open setup, save the connection, then sign in with Google to grant access.",
   capabilities: {

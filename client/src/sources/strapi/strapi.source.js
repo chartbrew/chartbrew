@@ -1,11 +1,12 @@
-import strapiLogo from "./assets/strapi-connection.webp";
-import strapiDarkLogo from "./assets/Strapi-dark.png";
+import strapiLogo from "./assets/logo-light.svg";
+import strapiDarkLogo from "./assets/logo-dark.svg";
 
 const strapiSource = {
   id: "strapi",
   type: "api",
   subType: "strapi",
   name: "Strapi",
+  description: "Build charts from your content collections.",
   category: "api",
   capabilities: {
     ai: {
