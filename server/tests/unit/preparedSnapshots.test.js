@@ -4,6 +4,7 @@ import {
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
+const { DataTypes, Op, Sequelize } = require("sequelize");
 const db = require("../../models/models");
 const ChartController = require("../../controllers/ChartController");
 const runtimeCache = require("../../modules/runtimeCache");
@@ -331,8 +332,65 @@ describe("prepared snapshots", () => {
     });
     expect(controller.prepareLegacyChartData).not.toHaveBeenCalled();
     expect(findAll).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      where: expect.objectContaining({ chartData: expect.any(Object) }),
+      where: expect.objectContaining({ chartDataUpdated: { [Op.gte]: expect.any(Date) } }),
     }));
+  });
+
+  it.each([
+    [{ refreshUnresolved: true }, [2, 3, 4, 8]],
+    [{ refreshUnresolved: true, force: true }, [2, 3, 4, 8]],
+    [{ refreshUnresolved: true, limit: 2 }, [2, 3]],
+    [{}, [1, 2, 3, 4, 5, 7, 8]],
+    [{ force: true }, [1, 2, 3, 4, 5, 6, 7, 8]],
+  ])("selects backfill candidates with %j", async (options, expectedIds) => {
+    const now = new Date("2026-10-13T12:00:00.000Z");
+    const cutoff = new Date("2026-09-13T12:00:00.000Z");
+    const old = new Date(cutoff.getTime() - 1);
+    vi.spyOn(Date, "now").mockReturnValue(now.getTime());
+    const database = new Sequelize({ dialect: "sqlite", logging: false, storage: ":memory:" });
+    const Chart = database.define("Chart", {
+      id: { primaryKey: true, type: DataTypes.INTEGER },
+      chartData: DataTypes.TEXT,
+      chartDataUpdated: DataTypes.DATE,
+      preparedData: DataTypes.TEXT,
+      updatedAt: DataTypes.DATE,
+    }, { timestamps: false });
+
+    try {
+      await database.sync();
+      await Chart.bulkCreate([
+        { id: 1, chartData: "{}", chartDataUpdated: old },
+        { id: 2, chartData: "invalid", chartDataUpdated: cutoff },
+        { id: 3, chartData: null, chartDataUpdated: now },
+        { id: 4, chartData: "{}", chartDataUpdated: now },
+        { id: 5, chartData: null, chartDataUpdated: null, updatedAt: now },
+        { id: 6, chartDataUpdated: now, preparedData: "{}" },
+        { id: 7, chartData: null, chartDataUpdated: old, updatedAt: now },
+        { id: 8, chartData: "invalid", chartDataUpdated: now },
+      ]);
+      vi.spyOn(db.Chart, "unscoped").mockReturnValue(Chart);
+      const controller = {
+        prepareLegacyChartData: vi.fn().mockResolvedValue({ snapshot: { saved: true } }),
+        updateChartData: vi.fn().mockResolvedValue({ snapshot: { saved: true } }),
+      };
+
+      const report = await backfillPreparedSnapshots({ ...options, batchSize: 2, controller });
+      const selected = options.refreshUnresolved
+        ? controller.updateChartData : controller.prepareLegacyChartData;
+      const unused = options.refreshUnresolved
+        ? controller.prepareLegacyChartData : controller.updateChartData;
+
+      expect(selected.mock.calls.map(([id]) => id)).toEqual(expectedIds);
+      expect(unused).not.toHaveBeenCalled();
+      expect(report).toMatchObject({
+        failed: 0,
+        processed: expectedIds.length,
+        refreshCutoff: options.refreshUnresolved ? cutoff.toISOString() : null,
+        saved: expectedIds.length,
+      });
+    } finally {
+      await database.close();
+    }
   });
 
   it("uses the live source path only in unresolved refresh mode", async () => {

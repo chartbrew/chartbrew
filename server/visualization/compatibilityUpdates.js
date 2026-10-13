@@ -254,7 +254,7 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     };
   }
   next.settings = settings;
-  if (data.type && (data.type === "scatter" || visualization.layers.some((layer) => layer.mark === "scatter"))) {
+  if (data.type) {
     const validation = validateVisualizationSpec({ ...next, status: "ready" });
     next.status = validation.valid ? "ready" : "draft";
   }

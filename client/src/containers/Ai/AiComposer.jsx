@@ -13,6 +13,7 @@ function AiComposer({
   inputRef,
   placeholder,
   isLoading,
+  isDisabled = false,
   selectedContext,
   onSubmitQuestion,
   onAtTyped,
@@ -48,7 +49,7 @@ function AiComposer({
     || selectedContext.singleSelect;
 
   const submit = () => {
-    if (!hasContent || isLoading) return;
+    if (!hasContent || isLoading || isDisabled) return;
     const submittedQuestion = draftQuestion;
     const accepted = onSubmitQuestion(submittedQuestion);
     if (accepted !== false) setDraftQuestion("");
@@ -79,7 +80,7 @@ function AiComposer({
           aria-label={submitLabel}
           aria-busy={isLoading}
           className="rounded-full"
-          isDisabled={!hasContent || isLoading}
+          isDisabled={!hasContent || isLoading || isDisabled}
           isIconOnly
           size="sm"
           type="submit"
@@ -102,7 +103,7 @@ function AiComposer({
   );
 
   const fillSuggestion = async (suggestion) => {
-    if (selectingSuggestion) return;
+    if (selectingSuggestion || isDisabled) return;
     setSelectingSuggestion(true);
     try {
       if (onSelectSuggestion && await onSelectSuggestion(suggestion) === false) return;
@@ -120,7 +121,7 @@ function AiComposer({
           <Button
             key={suggestion.id || suggestion}
             className={`h-auto min-h-8 max-w-full rounded-full border border-divider bg-surface px-3 py-1 text-left font-normal text-foreground shadow-none ${scrollSuggestions ? "shrink-0 whitespace-nowrap" : "whitespace-normal"}`}
-            isDisabled={selectingSuggestion || isLoading}
+            isDisabled={selectingSuggestion || isLoading || isDisabled}
             onPress={() => fillSuggestion(suggestion)}
             size="sm"
             type="button"
@@ -162,7 +163,7 @@ function AiComposer({
       <TextField
         className={fill ? "flex h-full min-h-0 w-full flex-col" : "flex w-full flex-col border border-divider rounded-3xl"}
         fullWidth
-        isDisabled={isLoading}
+        isDisabled={isLoading || isDisabled}
         name={name}
       >
         <Label className="sr-only">{placeholder}</Label>
@@ -222,6 +223,7 @@ AiComposer.propTypes = {
   inputRef: PropTypes.object,
   placeholder: PropTypes.string.isRequired,
   isLoading: PropTypes.bool.isRequired,
+  isDisabled: PropTypes.bool,
   selectedContext: PropTypes.shape({
     multiSelect: PropTypes.array.isRequired,
     singleSelect: PropTypes.object,

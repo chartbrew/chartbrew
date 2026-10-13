@@ -13,7 +13,9 @@ async function run() {
     const dryRun = process.argv.includes("--dry-run");
     const quiet = process.argv.includes("--quiet");
     const refreshUnresolved = process.argv.includes("--refresh-unresolved");
-    const mode = refreshUnresolved ? "unresolved live refresh" : "local inference";
+    const mode = refreshUnresolved
+      ? "unresolved live refresh; last successful legacy refresh within 30 days"
+      : "local inference";
     let dryRunDetail = "";
     if (dryRun) {
       dryRunDetail = refreshUnresolved

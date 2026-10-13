@@ -4,8 +4,10 @@ import { Avatar, Button, Drawer, Input, Label, ListBox, Modal, Select, Spinner, 
 import { LuArrowUpRight, LuDatabase, LuX } from "react-icons/lu";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
+import { useDispatch } from "react-redux";
 import { v4 as uuid } from "uuid";
 import { chartCreationRequest } from "../../../api/chartCreation";
+import { createChart } from "../../../slices/chart";
 import PixelLoader from "../../../components/PixelLoader";
 import getConnectionLogo from "../../../modules/getConnectionLogo";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -50,6 +52,7 @@ ChartSelect.propTypes = { label: PropTypes.string, value: PropTypes.string, item
 
 function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClose, onSaved, onChartContainer, onPublish, runtime, layout }) {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { isDark } = useTheme();
   const storageKey = `chart-creation:${userId}:${projectId}:${sessionId}`;
   const [options, setOptions] = useState(null);
@@ -227,6 +230,23 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
     onClose();
   };
 
+  const openChartStudio = async () => {
+    if (busy) return;
+    setFinishing(true);
+    setError("");
+    try {
+      const chart = await dispatch(createChart({
+        project_id: projectId,
+        data: { name: "Untitled chart", type: "line", subType: "lcTimeseries", draft: true, ...(layout ? { layout } : {}) },
+      })).unwrap();
+      navigate(`/dashboard/${projectId}/chart/${chart.id}/edit`);
+    } catch (_) {
+      setError("The chart could not be created. Try again.");
+    } finally {
+      setFinishing(false);
+    }
+  };
+
   const chooseDataset = (item) => {
     setDataset(item);
     setPicker(false);
@@ -344,7 +364,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
           </div>
         )}
 
-        {options?.aiEnabled && (
+        {options && (
           <AiComposer
             id={`chart-prompt-${sessionId}`}
             name="chartPrompt"
@@ -352,6 +372,7 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
             value={prompt}
             onValueChange={setPrompt}
             isLoading={busy}
+            isDisabled={!options.aiEnabled}
             selectedContext={{ multiSelect: [] }}
             placeholder={settings ? "Describe a change to your chart…" : "Describe the chart you want to create…"}
             submitLabel={settings ? "Update chart" : "Generate chart"}
@@ -359,7 +380,10 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
             rows={3}
             framed
             fill={!settings}
-            leadingControl={!settings && (
+            status={!options.aiEnabled && (
+              <span className="text-xs text-muted">AI is disabled</span>
+            )}
+            leadingControl={!settings && options.aiEnabled && (
               <ChartSelect compact label={dataset ? "Dataset" : "Connection"} value={source} isDisabled={busy || Boolean(dataset)}
                 items={[{ value: "auto", label: dataset?.name || "Auto connection" }, ...options.connections.map((item) => ({
                   value: String(item.id), label: item.name, logo: item.icon || getConnectionLogo(item, isDark),
@@ -412,14 +436,14 @@ function InlineChartSession({ projectId, userId, sessionId, targetChartId, onClo
           </div>
         )}
         </div>
-        <footer className={settings ? "flex shrink-0 items-center justify-between gap-3 bg-surface px-6 py-4" : `flex shrink-0 flex-wrap items-center gap-2${options?.aiEnabled ? " mt-4" : ""}`}>
+        <footer className={settings ? "flex shrink-0 items-center justify-between gap-3 bg-surface px-6 py-4" : "mt-4 flex shrink-0 flex-wrap items-center gap-2"}>
           {!settings ? (
             <>
               <Button variant={options?.aiEnabled ? "secondary" : "primary"} isDisabled={busy || !options} onPress={() => setPicker(true)}>
                 <LuDatabase size={16} />
                 Use a dataset
               </Button>
-              <Button variant="ghost" isDisabled={busy} onPress={() => navigate(`/dashboard/${projectId}/chart`)}>
+              <Button variant="ghost" isDisabled={busy} onPress={openChartStudio}>
                 Open in Chart Studio
                 <LuArrowUpRight size={16} />
               </Button>

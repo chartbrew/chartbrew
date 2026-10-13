@@ -7,6 +7,7 @@ import {
   Checkbox,
   Chip,
   ColorSlider,
+  ColorSwatch,
   Separator,
   Input,
   InputGroup,
@@ -22,7 +23,6 @@ import {
   Label,
   TextField,
 } from "@heroui/react";
-import { commonColors } from "../../../lib/themeTokens";
 import { TbMathFunctionY } from "react-icons/tb";
 import { useNavigate, useParams } from "react-router";
 import {
@@ -46,7 +46,7 @@ import {
   updateChart,
 } from "../../../slices/chart";
 import DatasetAlerts from "./DatasetAlerts";
-import { chartColors, getChartColorForKey, primary } from "../../../config/colors";
+import { chartColors, getChartColorForKey } from "../../../config/colors";
 import { flatMap } from "lodash";
 import TableConfiguration from "../../../components/TableConfiguration";
 import FormulaTips from "../../../components/FormulaTips";
@@ -520,12 +520,6 @@ function ChartDatasetConfig(props) {
     _onUpdateVisualization({ refresh: true, visualization });
   };
 
-  const _getDatasetColor = (datasetColor) => ({
-    cursor: "pointer",
-    backgroundColor: datasetColor === "rgba(0,0,0,0)" ? primary : datasetColor,
-    border: `1px solid ${commonColors.zinc[500]}`,
-  });
-
   const _onChangeDatasetColor = (color) => {
     if (runtimeSeries.length === 1 && _getSeriesOverrideColor(runtimeSeries[0])) {
       _onChangeSeriesColor(runtimeSeries[0], color);
@@ -952,31 +946,20 @@ function ChartDatasetConfig(props) {
                         </ScrollShadow>
                       </>
                     ) : (
-                      <>
-                        <div className="flex flex-row justify-between items-center">
-                          <div className="text-sm">Primary color</div>
-                          <div>
-                            <ColorPickerControl
-                              ariaLabel="Primary series color"
-                              fallbackColor={chartColors.blue.hex}
-                              onChange={_onChangeDatasetColor}
-                              presetColors={Object.values(chartColors).map((color) => color.hex)}
-                              renderTrigger={() => (
-                                <div
-                                  style={_getDatasetColor(presentation.color)}
-                                  className="w-full h-8 rounded-3xl pl-[100px]"
-                                />
-                              )}
-                              value={presentation.color}
-                              valueFormat="hex"
-                            />
-                          </div>
-                        </div>
-                        <div className="h-2" />
+                      <div className="flex flex-col items-start gap-3">
+                        <ColorPickerControl
+                          ariaLabel="Primary color"
+                          fallbackColor={chartColors.blue.hex}
+                          onChange={_onChangeDatasetColor}
+                          presetColors={Object.values(chartColors).map((color) => color.hex)}
+                          swatchClassName="bg-surface-secondary shadow-none"
+                          value={presentation.color}
+                          valueFormat="hex"
+                        />
 
-                        {!["line", "bar", "matrix", "radar", "scatter"].includes(chart.type) && (
-                          <Row align={"center"} justify={"space-between"}>
-                            <Row align={"center"}>
+                        {!["line", "bar", "matrix", "radar", "scatter", "kpi", "avg"].includes(chart.type) && (
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                            <div className="flex items-center gap-3">
                               <Checkbox
                                 id={`cdc-fill-${cdc.id}`}
                                 isSelected={bindingLayers[0]?.style?.fill ?? cdc.fill}
@@ -988,33 +971,21 @@ function ChartDatasetConfig(props) {
                                   <Checkbox.Control className="size-4 shrink-0">
                                     <Checkbox.Indicator />
                                   </Checkbox.Control>
-                                  Fill Color
+                                  Fill color
                                 </Checkbox.Content>
                               </Checkbox>
-                            </Row>
-                            {cdc.fill && !cdc.multiFill && (
-                              <div>
+                              {cdc.fill && !cdc.multiFill && (
                                 <ColorPickerControl
                                   ariaLabel="Fill color"
+                                  className="rounded-lg bg-surface-secondary p-1"
                                   fallbackColor={chartColors.blue.hex}
                                   onChange={(color) => _onChangeFillColor(color)}
                                   presetColors={Object.values(chartColors).map((color) => color.hex)}
-                                  renderTrigger={() => (
-                                    <div
-                                      style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
-                                      className="w-full h-8 rounded-3xl pl-[100px]"
-                                    />
-                                  )}
+                                  renderTrigger={() => <ColorSwatch size="sm" />}
                                   value={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
                                 />
-                              </div>
-                            )}
-                          </Row>
-                        )}
-                        <div className="h-2" />
-
-                        {!["line", "bar", "matrix", "radar", "scatter"].includes(chart.type) && (
-                          <Row>
+                              )}
+                            </div>
                             <Checkbox
                               id={`cdc-multifill-${cdc.id}`}
                               isSelected={cdc.multiFill}
@@ -1030,38 +1001,30 @@ function ChartDatasetConfig(props) {
                                 Multiple colors
                               </Checkbox.Content>
                             </Checkbox>
-                          </Row>
+                          </div>
                         )}
 
-                        {!["line", "bar", "matrix", "radar", "scatter"].includes(chart.type) && cdc.multiFill && (
-                          <>
-                            <div className="h-4" />
-                            <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
+                        {!["line", "bar", "matrix", "radar", "scatter", "kpi", "avg"].includes(chart.type) && cdc.multiFill && (
+                          <ScrollShadow className="max-h-[300px] w-full">
+                            <div className="flex flex-col gap-2">
                               {dataItems?.labels?.map((label, index) => (
-                                <Row key={label} justify={"space-between"}>
-                                  <Text size="sm">{label}</Text>
-                                  <div>
-                                    <ColorPickerControl
-                                      ariaLabel={`${label} fill color`}
-                                      fallbackColor={chartColors.blue.hex}
-                                      onChange={(color) => _onChangeFillColor(color, index)}
-                                      presetColors={Object.values(chartColors).map((color) => color.hex)}
-                                      renderTrigger={() => (
-                                        <div
-                                          style={_getDatasetColor(cdc.fillColor[index] || "white")}
-                                          className="w-full h-8 rounded-3xl"
-                                        />
-                                      )}
-                                      value={cdc.fillColor[index]}
-                                    />
-                                  </div>
-                                </Row>
+                                <div key={label} className="flex items-center justify-between gap-3">
+                                  <span className="min-w-0 break-words text-sm">{label}</span>
+                                  <ColorPickerControl
+                                    ariaLabel={`${label} fill color`}
+                                    className="shrink-0 rounded-lg bg-surface-secondary p-1"
+                                    fallbackColor={chartColors.blue.hex}
+                                    onChange={(color) => _onChangeFillColor(color, index)}
+                                    presetColors={Object.values(chartColors).map((color) => color.hex)}
+                                    renderTrigger={() => <ColorSwatch size="sm" />}
+                                    value={cdc.fillColor[index]}
+                                  />
+                                </div>
                               ))}
-                            </ScrollShadow>
-                            <div className="h-4" />
-                          </>
+                            </div>
+                          </ScrollShadow>
                         )}
-                      </>
+                      </div>
                     )}
 
                   </div>

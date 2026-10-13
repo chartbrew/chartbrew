@@ -223,7 +223,11 @@ charts that already have a prepared snapshot unless `--force` is set. Use `--dry
 the local conversion, compilation, and size checks without database, queue, or source writes. Print
 progress for each chart. Charts without usable `chartData` are unresolved. Do not contact their
 connections unless the operator adds `--refresh-unresolved`. This mode only selects charts that
-have no prepared snapshot and no stored `chartData`, so it does not repeat the inference tier. Its
+have no prepared snapshot and a `chartDataUpdated` (last successful legacy refresh) within the
+last 30 days, including charts with unusable stored `chartData`. The cutoff is fixed at run start
+and included as `refreshCutoff` in the report. Older and missing refresh dates are excluded.
+The cached backfill has no age cutoff. In live mode, `--force` does not include resolved charts
+or bypass the cutoff, and `--dry-run` still makes source requests without saving snapshots. Its
 `--limit` applies only to live-refresh candidates. The opt-in source path stops an attempt after two
 minutes by default. The `--timeout-ms` option changes this limit. The backfill is an audit and
 pre-warming tool. It is not required for users to open an old dashboard.

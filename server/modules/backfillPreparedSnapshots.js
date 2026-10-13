@@ -17,6 +17,9 @@ async function backfillPreparedSnapshots(options = {}) {
   const batchSize = parsePositiveInt(options.batchSize, 25);
   const limit = options.limit ? parsePositiveInt(options.limit, null) : null;
   const timeoutMs = parsePositiveInt(options.timeoutMs, 120000);
+  const refreshCutoff = options.refreshUnresolved
+    ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    : null;
   const controller = options.controller || new ChartController();
   const onProgress = typeof options.onProgress === "function" ? options.onProgress : () => {};
   const report = {
@@ -27,6 +30,7 @@ async function backfillPreparedSnapshots(options = {}) {
     issues: [],
     lastChartId: Number(options.afterId) || 0,
     processed: 0,
+    refreshCutoff: refreshCutoff?.toISOString() || null,
     refreshUnresolved: Boolean(options.refreshUnresolved),
     refreshed: 0,
     saved: 0,
@@ -44,9 +48,9 @@ async function backfillPreparedSnapshots(options = {}) {
       limit: Math.min(batchSize, remaining),
       order: [["id", "ASC"]],
       where: {
-        ...(options.refreshUnresolved ? { chartData: { [Op.is]: null } } : {}),
+        ...(refreshCutoff ? { chartDataUpdated: { [Op.gte]: refreshCutoff } } : {}),
         id: { [Op.gt]: report.lastChartId },
-        ...(options.force ? {} : { preparedData: { [Op.is]: null } }),
+        ...(options.force && !options.refreshUnresolved ? {} : { preparedData: { [Op.is]: null } }),
       },
     });
     if (charts.length === 0) break;

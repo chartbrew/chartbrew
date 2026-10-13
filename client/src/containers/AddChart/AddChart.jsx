@@ -492,6 +492,29 @@ function AddChart() {
     );
   }
 
+  const datasetSettings = (
+    <section key="datasets" className="chart-studio-settings-group add-dataset-tut">
+      <h2 className={settingsSection === "data" ? "hidden" : "mb-3 text-sm font-semibold"}>
+        Selected dataset
+      </h2>
+      <ChartDatasets chartId={newChart.id} section={settingsSection} />
+    </section>
+  );
+  const chartSettings = params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 ? (
+    <section key="chart" className={`chart-studio-settings-group ${settingsSection === "automation" ? "hidden" : ""}`}>
+      <ChartSettings
+        chart={newChart}
+        onChange={_onChangeGlobalSettings}
+        onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
+        onVisualizationChange={(visualization) => _onChangeChart({ visualization }, false)}
+        section={settingsSection}
+      />
+      <div className={settingsSection === "appearance" ? "" : "hidden"}>
+        <ChartPreviewAppearance chart={newChart} onChange={_onChangeChart} />
+      </div>
+    </section>
+  ) : null;
+
   return (
     <div className="flex flex-col">
       {showMissingDatasetAlert && (
@@ -640,26 +663,9 @@ function AddChart() {
         )}
         settings={(
           <div className="flex flex-col gap-4" key={settingsRevision}>
-            <section className="chart-studio-settings-group add-dataset-tut">
-              <h2 className={settingsSection === "data" ? "hidden" : "mb-3 text-sm font-semibold"}>
-                Selected dataset
-              </h2>
-              <ChartDatasets chartId={newChart.id} section={settingsSection} />
-            </section>
-            {params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 ? (
-              <section className={`chart-studio-settings-group ${settingsSection === "automation" ? "hidden" : ""}`}>
-                <ChartSettings
-                  chart={newChart}
-                  onChange={_onChangeGlobalSettings}
-                  onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
-                  onVisualizationChange={(visualization) => _onChangeChart({ visualization }, false)}
-                  section={settingsSection}
-                />
-                <div className={settingsSection === "appearance" ? "" : "hidden"}>
-                  <ChartPreviewAppearance chart={newChart} onChange={_onChangeChart} />
-                </div>
-              </section>
-            ) : null}
+            {settingsSection === "appearance"
+              ? [chartSettings, datasetSettings]
+              : [datasetSettings, chartSettings]}
           </div>
         )}
         settingsSection={settingsSection}

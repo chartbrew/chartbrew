@@ -7,6 +7,7 @@ const {
   applyCdcCompatibilityUpdate,
   applyChartCompatibilityUpdate,
 } = require("../../visualization/compatibilityUpdates.js");
+const { validateVisualizationSpec } = require("../../visualization/spec.js");
 
 const nativeVisualization = {
   version: 2,
@@ -276,6 +277,50 @@ describe("native visualization compatibility updates", () => {
     expect(next.layers[0].mark).toBe("table");
     expect(next.layers[0].encoding).toEqual({});
     expect(next.layers[0].rowPath).toBe("root[]");
+  });
+
+  it("allows a table to change to a line while required fields are missing", () => {
+    const table = applyChartCompatibilityUpdate({
+      ...nativeVisualization,
+      status: "ready",
+      layers: [{
+        ...nativeVisualization.layers[0],
+        mark: "kpi",
+        encoding: { value: nativeVisualization.layers[0].encoding.value },
+      }],
+    }, { type: "table" });
+    const line = applyChartCompatibilityUpdate(table, { type: "line" });
+
+    expect(line.status).toBe("draft");
+    expect(line.layers[0].mark).toBe("line");
+    expect(line.layers[0].encoding.value).toEqual(nativeVisualization.layers[0].encoding.value);
+    expect(validateVisualizationSpec(line).valid).toBe(true);
+    expect(validateVisualizationSpec({ ...line, status: "ready" }).valid).toBe(false);
+    expect(table.layers[0].mark).toBe("table");
+  });
+
+  it("keeps a table without saved chart fields editable after a type change", () => {
+    const table = {
+      ...nativeVisualization,
+      status: "ready",
+      layers: [{ ...nativeVisualization.layers[0], mark: "table", encoding: {}, rowPath: "root[]" }],
+    };
+    const line = applyChartCompatibilityUpdate(table, { type: "line" });
+
+    expect(line.status).toBe("draft");
+    expect(line.layers[0].encoding).toEqual({});
+    expect(validateVisualizationSpec(line).valid).toBe(true);
+    expect(applyChartCompatibilityUpdate(line, { type: "table" }).status).toBe("ready");
+  });
+
+  it("restores ready fields when changing from a table back to a line", () => {
+    const original = applyChartCompatibilityUpdate(nativeVisualization, { type: "line" });
+    const table = applyChartCompatibilityUpdate(original, { type: "table" });
+    const line = applyChartCompatibilityUpdate(table, { type: "line" });
+
+    expect(line.status).toBe("ready");
+    expect(line.layers[0].encoding).toEqual(original.layers[0].encoding);
+    expect(validateVisualizationSpec(line).valid).toBe(true);
   });
 
   it("adds one editable layer for a newly attached dataset", () => {
