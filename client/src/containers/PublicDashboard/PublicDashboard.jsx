@@ -1,9 +1,10 @@
+import CupLoader from "../../components/CupLoader";
 import { getLayouts, getReportOrder, rowHeight } from "../../../../shared/dashboard/layout.mjs";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link as LinkDom, useParams, useSearchParams } from "react-router";
 import {
   Button, Input, Tooltip, Popover, Separator, Modal,
-  Link, ProgressCircle, Chip,
+  Link, Chip,
   Spinner,
 } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
@@ -477,7 +478,7 @@ function PublicDashboard() {
         <div style={styles.container} className="items-center">
           <div className="h-8" />
           <Row align="center" justify="center">
-            <ProgressCircle size="lg" aria-label="Loading" />
+            <CupLoader label="Loading" />
           </Row>
         </div>
       </>
@@ -852,7 +853,7 @@ function PublicDashboard() {
               <Container style={styles.container}>
                 <div className="h-8" />
                 <Row align="center" justify="center">
-                  <ProgressCircle size="lg" aria-label="Loading" />
+                  <CupLoader label="Loading" />
                 </Row>
               </Container>
             )}

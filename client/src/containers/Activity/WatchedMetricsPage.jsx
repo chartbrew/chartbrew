@@ -42,6 +42,7 @@ import {
   restoreMonitorRecommendation,
   updateMonitor,
 } from "../../api/observations";
+import CupLoader from "../../components/CupLoader";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import WatchMetricModal from "../Chart/components/WatchMetricModal";
@@ -442,7 +443,7 @@ function WatchedMetricsPage() {
   if (loading) {
     return (
       <div className="flex min-h-80 items-center justify-center">
-        <Spinner aria-label="Loading watched metrics" />
+        <CupLoader label="Loading watched metrics" />
       </div>
     );
   }

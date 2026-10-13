@@ -19,6 +19,7 @@ import {
   sendTestObservationDigest,
   updateObservationDigest,
 } from "../../api/observations";
+import CupLoader from "../../components/CupLoader";
 import { selectTeam } from "../../slices/team";
 import SummaryScheduleModal from "./SummaryScheduleModal";
 import {
@@ -134,7 +135,7 @@ function KpiReviewsPage() {
   if (loading) {
     return (
       <div className="flex min-h-80 items-center justify-center">
-        <Spinner aria-label="Loading KPI reviews" />
+        <CupLoader label="Loading KPI reviews" />
       </div>
     );
   }

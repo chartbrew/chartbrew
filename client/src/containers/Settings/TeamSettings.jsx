@@ -7,7 +7,6 @@ import {
   InputGroup,
   Label,
   Modal,
-  ProgressCircle,
   Separator,
   Switch,
   TextField,
@@ -16,6 +15,7 @@ import {
 import toast from "react-hot-toast";
 import { LuCircleCheck, LuInfo, LuTrash } from "react-icons/lu";
 
+import CupLoader from "../../components/CupLoader";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import { deleteTeam, selectTeam, selectTeams, updateTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
@@ -103,7 +103,7 @@ function TeamSettings() {
   if (!team) {
     return (
       <div className="pt-60 flex justify-center items-center">
-        <ProgressCircle aria-label="Loading" size="lg" />
+        <CupLoader label="Loading" />
       </div>
     );
   }

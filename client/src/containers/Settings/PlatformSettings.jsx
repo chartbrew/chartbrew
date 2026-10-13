@@ -6,7 +6,6 @@ import {
   Input,
   Label,
   ListBox,
-  ProgressCircle,
   Select,
   Switch,
   TextField,
@@ -23,6 +22,7 @@ import {
   resetPlatformSettings,
   updatePlatformSettings,
 } from "../../api/platformSettings";
+import CupLoader from "../../components/CupLoader";
 import EnableAiPromptModal from "./EnableAiPromptModal";
 
 function buildDraft(groups = []) {
@@ -155,7 +155,7 @@ function PlatformSettings() {
   if (loading) {
     return (
       <div className="flex justify-center py-24">
-        <ProgressCircle aria-label="Loading platform settings" size="lg" />
+        <CupLoader label="Loading platform settings" />
       </div>
     );
   }

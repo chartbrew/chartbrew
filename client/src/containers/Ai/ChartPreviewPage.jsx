@@ -6,7 +6,7 @@ import { Helmet } from "react-helmet-async";
 import { selectUser } from "../../slices/user";
 import { getAuthToken } from "../../modules/auth";
 import { API_HOST } from "../../config/settings";
-import PixelLoader from "../../components/PixelLoader";
+import CupLoader from "../../components/CupLoader";
 import AiChartPreview from "./AiChartPreview";
 
 export default function ChartPreviewPage() {
@@ -103,8 +103,8 @@ export default function ChartPreviewPage() {
           }}
         />
       ) : (
-        <div className="mx-auto my-16 w-fit" role="status" aria-label="Loading preview">
-          <PixelLoader variant="bars" size={32} />
+        <div className="mx-auto my-16 w-fit">
+          <CupLoader label="Loading preview" />
         </div>
       )}
     </main>

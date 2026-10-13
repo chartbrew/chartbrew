@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Chip, Button, Checkbox, Separator, Dropdown, Modal, Table, Tooltip, ProgressCircle,
-  TextField, InputGroup,
+  Chip, Button, Checkbox, Separator, Dropdown, Modal, Table, Tooltip, TextField, InputGroup,
   Label,
   EmptyState,
 } from "@heroui/react";
@@ -16,6 +15,7 @@ import {
   transferOwnership,
   selectTeams,
 } from "../../slices/team";
+import CupLoader from "../../components/CupLoader";
 import InviteMembersForm from "../../components/InviteMembersForm";
 import canAccess from "../../config/canAccess";
 import { selectProjects } from "../../slices/project";
@@ -187,7 +187,7 @@ function TeamMembers(props) {
   if (!team) {
     return (
       <div>
-        <ProgressCircle size="lg" aria-label="Loading team" />
+        <CupLoader label="Loading team" />
       </div>
     );
   }

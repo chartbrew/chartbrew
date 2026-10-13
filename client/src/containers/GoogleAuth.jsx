@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { connect } from "react-redux";
 import { Link, useNavigate } from "react-router";
 import {
-  Button, ProgressCircle,
-} from "@heroui/react";
+  Button, } from "@heroui/react";
 import cookie from "react-cookies";
 import { LuArrowRight } from "react-icons/lu";
 
+import CupLoader from "../components/CupLoader";
 import { API_HOST } from "../config/settings";
 import Container from "../components/Container";
 import Row from "../components/Row";
@@ -80,7 +80,7 @@ function GoogleAuth() {
     >
       {loading && (
         <Row>
-          <ProgressCircle aria-label="Authenticating with Google">Authenticating with Google...</ProgressCircle>
+          <CupLoader label="Authenticating with Google" />
         </Row>
       )}
 

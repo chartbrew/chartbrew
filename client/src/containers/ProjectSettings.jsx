@@ -3,7 +3,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
   Autocomplete,
-  Button, ProgressCircle, Separator, EmptyState, Input, Label, ListBox, Modal, SearchField, useFilter,
+  Button, Separator, EmptyState, Input, Label, ListBox, Modal, SearchField, useFilter,
   TextField,
   Surface,
 } from "@heroui/react";
@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
 import { useNavigate } from "react-router";
 
+import CupLoader from "../components/CupLoader";
 import canAccess from "../config/canAccess";
 import { updateProject, changeActiveProject, removeProject, selectProject } from "../slices/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -155,7 +156,7 @@ function ProjectSettings(props) {
       {!project.id && (
         <>
           <Row>
-            <ProgressCircle aria-label="Loading" />
+            <CupLoader label="Loading" />
           </Row>
           <div className="h-2" />
         </>

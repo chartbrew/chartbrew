@@ -7,8 +7,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import PropTypes from "prop-types";
 import {
   Button, Input, Separator, Tabs, TextArea,
-  Link, ProgressCircle,
-  Spinner,
+  Link, Spinner,
   Form,
   Label,
   TextField,
@@ -32,6 +31,7 @@ import GridLayout, { WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
+import CupLoader from "../../components/CupLoader";
 import AceEditor from "../../components/CodeEditor";
 
 import {
@@ -673,7 +673,7 @@ function Report({ editMode = false }) {
         <div style={styles.container} className="items-center">
           <div className="h-4" />
           <Row align="center" justify="center">
-            <ProgressCircle size="lg" aria-label="Loading" />
+            <CupLoader label="Loading" />
           </Row>
         </div>
       </>
@@ -1178,7 +1178,7 @@ function Report({ editMode = false }) {
                   <Container style={styles.container}>
                     <div className="h-4" />
                     <Row align="center" justify="center">
-                      <ProgressCircle size="lg" aria-label="Loading" />
+                      <CupLoader label="Loading" />
                     </Row>
                   </Container>
                 )}

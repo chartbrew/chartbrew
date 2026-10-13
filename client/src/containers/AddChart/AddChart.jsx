@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Link as LinkNext, Tooltip, Input, Button, ProgressCircle, Switch, Alert,
+  Link as LinkNext, Tooltip, Input, Button, Switch, Alert,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import _ from "lodash";
 import { LuCheck, LuPencilLine } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router";
 
+import CupLoader from "../../components/CupLoader";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import ChartPreview, { ChartPreviewAppearance } from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -486,7 +487,7 @@ function AddChart() {
   if (params.chartId && newChart?.id !== parseInt(params.chartId, 10)) {
     return (
       <div className="flex min-h-[240px] items-center justify-center">
-        <ProgressCircle aria-label="Loading chart" />
+        <CupLoader label="Loading chart" />
       </div>
     );
   }

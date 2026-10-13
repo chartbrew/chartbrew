@@ -2,8 +2,8 @@ import React, { lazy, Suspense } from "react";
 import PropTypes from "prop-types";
 import { useSelector } from "react-redux";
 import { Navigate, Route, Routes, useLocation } from "react-router";
-import { ProgressCircle } from "@heroui/react";
 
+import CupLoader from "../../components/CupLoader";
 import { selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
@@ -67,7 +67,7 @@ function ManageTeam() {
   if (!team.id) {
     return (
       <div className="flex min-h-64 items-center justify-center">
-        <ProgressCircle aria-label="Loading your team" size="lg" />
+        <CupLoader label="Loading your team" />
       </div>
     );
   }
@@ -160,7 +160,7 @@ function ManageTeam() {
         path="platform/about"
         element={user.admin === true ? (
           <SettingsPage title="About" wide>
-            <Suspense fallback={<ProgressCircle aria-label="Loading About" />}>
+            <Suspense fallback={<CupLoader label="Loading About" />}>
               <About />
             </Suspense>
           </SettingsPage>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Button, Separator, Input, ProgressCircle, Modal, Chip, Table,
+  Button, Separator, Input, Modal, Chip, Table,
   Alert,
   TextField,
   Label,
@@ -11,6 +11,7 @@ import { LuClipboardCheck, LuClipboardCopy, LuShieldCheck, LuTrash } from "react
 import {
   updateUser, deleteUser, requestEmailUpdate, updateEmail, selectUser, get2faAppCode, verify2faApp, get2faMethods, remove2faMethod
 } from "../../slices/user";
+import CupLoader from "../../components/CupLoader";
 import { useTheme } from "../../modules/ThemeContext";
 import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -208,7 +209,7 @@ function ManageUser() {
   if (!user.name) {
     return (
       <div>
-        <ProgressCircle aria-label="Loading" size="lg" />
+        <CupLoader label="Loading" />
       </div>
     );
   }

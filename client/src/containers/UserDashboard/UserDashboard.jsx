@@ -2,18 +2,12 @@ import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { useWindowSize } from "react-use";
-import {
-  ProgressCircle, Spinner,
-} from "@heroui/react";
 
+import LoadingScreen from "../../components/LoadingScreen";
 import { relog } from "../../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getProjects } from "../../slices/project";
 import { getTeamConnections } from "../../slices/connection";
-import Container from "../../components/Container";
-import Row from "../../components/Row";
-import Text from "../../components/Text";
 import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers,
 } from "../../slices/team";
@@ -41,7 +35,6 @@ function UserDashboard(props) {
 
   const teamsRef = useRef(null);
   const initRef = useRef(null);
-  const { height } = useWindowSize();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -115,16 +108,8 @@ function UserDashboard(props) {
     }
   };
 
-  if (!user.data.id) {
-    return (
-      <div style={styles.container(height)}>
-        <Container sm>
-          <Row justify="center" align="center">
-            <ProgressCircle aria-label="Loading" size="xl" />
-          </Row>
-        </Container>
-      </div>
-    );
+  if (!user.data.id || !team?.id) {
+    return <LoadingScreen label="Loading your workspace" />;
   }
 
   return (
@@ -157,30 +142,10 @@ function UserDashboard(props) {
 
       {!isChartEditor && <div className="h-4" />}
 
-      {(teams && teams.length === 0) && (
-        <div className="bg-background pt-10 mt-[-20px]">
-          <div className="flex justify-center items-center">
-            <Spinner variant="simple" aria-label="Loading" />
-          </div>
-          <div className="h-1" />
-          <div className="flex justify-center items-center">
-            <Text size="lg" className={"text-gray-400"}>Loading your space...</Text>
-          </div>
-        </div>
-      )}
-
       <ChartbrewV5WelcomeModal />
     </div>
   );
 }
-
-const styles = {
-  container: (height) => ({
-    flex: 1,
-    // backgroundColor: "#103751",
-    minHeight: height,
-  }),
-};
 
 UserDashboard.propTypes = {
   cleanErrors: PropTypes.func.isRequired,

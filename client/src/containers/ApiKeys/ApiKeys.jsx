@@ -9,6 +9,7 @@ import {
 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
+import CupLoader from "../../components/CupLoader";
 import { getApiKeys, createApiKey, deleteApiKey, selectTeam } from "../../slices/team";
 import { getProjects, selectProjects } from "../../slices/project";
 import canAccess from "../../config/canAccess";
@@ -161,7 +162,7 @@ function ApiKeys() {
     <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
       {loading && (
         <div className="flex justify-center">
-          <ProgressCircle aria-label="Loading keys">Loading keys...</ProgressCircle>
+          <CupLoader label="Loading keys" />
         </div>
       )}
       <div>

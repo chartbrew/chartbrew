@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Popover, Link, ProgressCircle,
-  Spinner,
   Alert,
   Dropdown,
 } from "@heroui/react";
@@ -15,6 +14,7 @@ import { useDispatch } from "react-redux";
 import {
   getSharedChart, runQueryWithFilters,
 } from "../slices/chart";
+import CupLoader from "../components/CupLoader";
 import ChartRenderer from "./Chart/components/ChartRenderer";
 import ChartFilters from "./Chart/components/ChartFilters";
 import useInterval from "../modules/useInterval";
@@ -249,7 +249,7 @@ function SharedChart() {
         </Helmet>
         <div className="container mx-auto pt-10">
           <Row justify="center" align="center">
-            <Spinner variant="simple" aria-label="Loading chart" />
+            <CupLoader label="Loading chart" />
           </Row>
         </div>
       </>

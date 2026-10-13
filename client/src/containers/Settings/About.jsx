@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Link, ProgressCircle } from "@heroui/react";
+import { Button, Link } from "@heroui/react";
 import {
   LuArrowUpRight,
   LuGithub,
@@ -8,6 +8,7 @@ import {
   LuNewspaper,
 } from "react-icons/lu";
 
+import CupLoader from "../../components/CupLoader";
 import { getPlatformSettings } from "../../api/platformSettings";
 import AboutCup from "./AboutCup";
 
@@ -38,7 +39,7 @@ function About() {
   }, []);
 
   if (loading) {
-    return <ProgressCircle aria-label="Loading About" />;
+    return <CupLoader label="Loading About" />;
   }
 
   if (!data) {

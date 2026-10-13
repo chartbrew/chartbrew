@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react"
-import { Alert, Spinner } from "@heroui/react"
+import { Alert } from "@heroui/react"
 import toast from "react-hot-toast";
 
+import CupLoader from "../../../components/CupLoader";
 import { API_HOST } from "../../../config/settings";
 import { getAuthToken } from "../../../modules/auth";
 import { LuCircleCheck } from "react-icons/lu";
@@ -59,7 +60,7 @@ function SlackCallback() {
       <div className="bg-surface p-4 rounded-lg border border-divider">
         {loading && (
           <div className="flex flex-col items-center justify-center gap-2">
-            <Spinner variant="simple" aria-label="Loading..." />
+            <CupLoader label="Loading..." />
             <div className="text-center">
               Please wait while we are adding Chartbrew to your Slack workspace...
             </div>

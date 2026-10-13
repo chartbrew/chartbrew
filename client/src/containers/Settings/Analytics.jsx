@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Button, ListBox, ProgressCircle, Select, Table, Tabs } from "@heroui/react";
+import { Button, ListBox, Select, Table, Tabs } from "@heroui/react";
 import { LuRefreshCw } from "react-icons/lu";
 
+import CupLoader from "../../components/CupLoader";
 import { getPlatformAnalytics, getTeamAnalytics } from "../../api/platformSettings";
 import EChartsRenderer from "../Chart/components/EChartsRenderer";
 import EChartsErrorBoundary from "../Chart/components/EChartsErrorBoundary";
@@ -121,7 +122,7 @@ function Analytics({ teamId }) {
       <Tabs.Panel id={view} key={view} className="flex min-w-0 flex-col gap-6">
         {loading && (
           <div className="flex min-h-64 items-center justify-center" role="status">
-            <ProgressCircle aria-label="Loading analytics" isIndeterminate />
+            <CupLoader label="Loading analytics" />
           </div>
         )}
         {error && (

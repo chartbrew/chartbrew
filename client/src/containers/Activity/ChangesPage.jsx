@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Button, Chip, InputGroup, Spinner, Table } from "@heroui/react";
+import { Button, Chip, InputGroup, Table } from "@heroui/react";
 import { LuSearch, LuTrendingDown, LuTrendingUp } from "react-icons/lu";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
+import CupLoader from "../../components/CupLoader";
 import { getActivity, resolveObservation } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
@@ -127,7 +128,7 @@ function ChangesPage() {
               </Table.Header>
               <Table.Body renderEmptyState={() => (
                 <div className="flex items-center justify-center px-6 py-12 text-center">
-                  {loading ? <Spinner aria-label="Loading changes" /> : (
+                  {loading ? <CupLoader label="Loading changes" /> : (
                     <span className="text-sm text-muted">
                       No changes found. Try another search or status.
                     </span>

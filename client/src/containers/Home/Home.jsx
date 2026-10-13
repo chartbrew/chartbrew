@@ -25,6 +25,7 @@ import {
   getObservationDigests,
   resolveObservation,
 } from "../../api/observations";
+import CupLoader from "../../components/CupLoader";
 import { selectTeam } from "../../slices/team";
 import { completeTutorial, selectUser } from "../../slices/user";
 import { DashboardShortcutMark } from "../../components/DashboardShortcutAppearance";
@@ -257,7 +258,7 @@ function Home() {
   if (!data || data.teamId !== team?.id) {
     return (
       <div className="flex min-h-80 items-center justify-center">
-        <Spinner aria-label="Loading Home" />
+        <CupLoader label="Loading Home" />
       </div>
     );
   }

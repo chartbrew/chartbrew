@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Button, Chip, Spinner } from "@heroui/react";
+import { Button, Chip } from "@heroui/react";
 import { LuBell } from "react-icons/lu";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
+import CupLoader from "../../components/CupLoader";
 import { getAlerts } from "../../api/observations";
 import { selectTeam } from "../../slices/team";
 import {
@@ -65,7 +66,7 @@ function AlertsPage() {
   if (loading) {
     return (
       <div className="flex min-h-80 items-center justify-center">
-        <Spinner aria-label="Loading alerts" />
+        <CupLoader label="Loading alerts" />
       </div>
     );
   }

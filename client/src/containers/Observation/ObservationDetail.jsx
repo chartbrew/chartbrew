@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  Button, Chip, Dropdown, Spinner,
-} from "@heroui/react";
+  Button, Chip, Dropdown, } from "@heroui/react";
 import {
   LuArrowRight,
   LuBookmark,
@@ -37,6 +36,7 @@ import {
   formatRelativeChange,
   formatTimeAgo,
 } from "../../modules/observationFormat";
+import CupLoader from "../../components/CupLoader";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import ObservationInvestigation from "../Ai/ObservationInvestigation";
@@ -180,7 +180,7 @@ function ObservationDetail() {
   if (loading) {
     return (
       <div className="flex min-h-80 items-center justify-center">
-        <Spinner aria-label="Loading change" />
+        <CupLoader label="Loading change" />
       </div>
     );
   }

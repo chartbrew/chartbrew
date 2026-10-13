@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Spinner } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router";
 
+import CupLoader from "../../components/CupLoader";
 import SimpleNavbar from "../../components/SimpleNavbar";
 import {
   createTeam,
@@ -123,7 +123,7 @@ function Onboarding() {
   if (loading || (!isNewTeam && !owningTeam)) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Spinner variant="simple" aria-label="Loading team setup" size="lg" />
+        <CupLoader label="Loading team setup" />
       </div>
     );
   }

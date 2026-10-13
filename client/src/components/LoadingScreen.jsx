@@ -1,13 +1,17 @@
-import React from "react"
+import React from "react";
+import PropTypes from "prop-types";
+import CupLoader from "./CupLoader";
 
-function LoadingScreen() {
+function LoadingScreen({ label = "Loading" }) {
   return (
-    <div className="container mx-auto pt-unit-lg bg-background">
-      <div className="flex justify-center">
-        <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
-      </div>
+    <div className="flex h-[70vh] items-center justify-center bg-background">
+      <CupLoader label={label} />
     </div>
-  )
+  );
 }
 
-export default LoadingScreen
+LoadingScreen.propTypes = {
+  label: PropTypes.string,
+};
+
+export default LoadingScreen;
