@@ -427,3 +427,38 @@ test("binding settings use the chart label and color before legacy dataset value
     label: "Visitors", color: "blue",
   });
 });
+
+test("scatter requires paired fields and edits each dataset series independently", () => {
+  let next = { version: 2, layers: [
+    { id: "first", bindingId: 1, mark: "scatter", encoding: {} },
+    { id: "second", bindingId: 2, mark: "scatter", encoding: {} },
+  ] };
+  for (const [id, x, y] of [["first", "cost", "profit"], ["second", "price", "sales"]]) {
+    next = updateLayerField(next, id, "x", { value: `root[].${x}`, type: "number" });
+    assert.equal(isVisualizationReady(next), false);
+    next = updateLayerField(next, id, "y", { value: `root[].${y}`, type: "number" });
+  }
+  assert.equal(isVisualizationReady(next), true);
+  assert.equal(next.layers[0].encoding.x.field, "root[].cost");
+  assert.equal(next.layers[1].encoding.x.field, "root[].price");
+  const incomplete = updateLayerField(next, "second", "y", null);
+  assert.equal(incomplete.status, "draft");
+  assert.equal(next.layers[1].encoding.y.field, "root[].sales");
+});
+
+test("switching through scatter preserves the previous fields and record limits", () => {
+  const original = structuredClone(visualization);
+  original.layers[0].transforms = [{ type: "limit", count: 2 }];
+  let next = updateLayerMark(original, "income", "scatter");
+  assert.equal(next.status, "draft");
+  assert.deepEqual(next.layers[0].transforms, []);
+  assert.equal(next.layers[0].encoding.y.field, "root[].revenue");
+  next = updateLayerField(next, "income", "x", { value: "root[].cost", type: "string" });
+  assert.equal(next.status, "ready");
+  const restored = updateLayerMark(next, "income", "bar");
+  assert.deepEqual(restored.layers[0].encoding, original.layers[0].encoding);
+  assert.deepEqual(restored.layers[0].transforms, original.layers[0].transforms);
+  const scatter = updateLayerMark(restored, "income", "scatter");
+  assert.equal(scatter.layers[0].encoding.x.field, "root[].cost");
+  assert.deepEqual(scatter.layers[0].transforms, []);
+});

@@ -21,6 +21,15 @@ function compileShownExport({
   timezone,
   visualization,
 }) {
+  if (preparedData.results[0]?.mark === "scatter") {
+    const styles = buildSeriesStyleMap(preparedData, visualization);
+    const usedLabels = new Set();
+    return Object.fromEntries(preparedData.results.map((result) => {
+      const series = result.series[0];
+      const label = getUniqueLabel(styles.get(series.id)?.label || series.label, usedLabels);
+      return [label, result.rows.map((row) => ({ X: row.x, Y: row.y }))];
+    }));
+  }
   if (preparedData.results[0]?.mark === "map") {
     return {
       [chart.name || "Map"]: getMapRows(preparedData, visualization).map((row) => ({

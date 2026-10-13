@@ -316,7 +316,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange, section }) {
         </div>
       </div>
       <div className="h-4" />
-      <div className="chart-settings-fields">
+      <div className={chart.type === "scatter" ? "hidden" : "chart-settings-fields"}>
         <div className="min-w-0">
           <Select
             selectionMode="single"

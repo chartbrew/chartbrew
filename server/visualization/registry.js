@@ -104,11 +104,8 @@ const MARK_DEFINITIONS = Object.freeze({
   scatter: {
     label: "Scatter",
     slots: {
-      x: { kind: "measure", required: true, types: ["quantitative", "temporal"] },
+      x: { kind: "measure", required: true, types: ["quantitative"] },
       y: { kind: "measure", required: true, types: ["quantitative"] },
-      breakdown: { kind: "dimension", types: ["nominal", "ordinal"] },
-      size: { kind: "measure", types: ["quantitative"] },
-      detail: { kind: "dimension", types: ["nominal", "ordinal"] },
     },
   },
   map: {

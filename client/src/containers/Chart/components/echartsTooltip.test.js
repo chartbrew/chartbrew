@@ -263,3 +263,17 @@ test("map tooltips show place names and formatted measures without exposing coor
   assert.match(missing, /United States/);
   assert.match(missing, /No data/);
 });
+
+test("scatter tooltips show both coordinates and escape series and field labels", () => {
+  for (const compact of [false, true]) {
+    const formatter = createEChartsTooltipFormatter(colors, { compact });
+    const html = formatter({ seriesType: "scatter", seriesName: "<sales>", data: {
+      value: [0, -25], xLabel: "<cost>", yLabel: "Revenue",
+    } });
+    assert.ok(html.includes("&lt;sales&gt;"));
+    assert.ok(html.includes("&lt;cost&gt;"));
+    assert.ok(html.includes(">0</span>"));
+    assert.ok(html.includes(">-25</span>"));
+    assert.ok(html.includes("Revenue"));
+  }
+});

@@ -376,7 +376,7 @@ describe("Chartbrew MCP private server", () => {
         datasetId: dataset.id,
         name: preset.label || preset.id,
         type: preset.id,
-        ...(!metric ? { xAxis: preset.id === "matrix" ? "root[].date" : "root[].country" } : {}),
+        ...(!metric ? { xAxis: ({ matrix: "root[].date", scatter: "root[].visitors" })[preset.id] || "root[].country" } : {}),
         yAxis: "root[].visitors",
         displayLegend: false,
         dataLabels: true,
@@ -401,7 +401,7 @@ describe("Chartbrew MCP private server", () => {
       });
     }
     for (const overrides of [
-      { type: "scatter" },
+      { type: "histogram" },
       { type: "markdown" },
       { minValue: 10, maxValue: 0 },
       { ranges: [{ min: 10, max: 0 }] },

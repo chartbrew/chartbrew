@@ -30,6 +30,7 @@ export function getEChartsPreset(option) {
   if (series.some((item) => item.type === "line")) {
     return "line";
   }
+  if (series.some((item) => item.type === "scatter")) return "scatter";
   return null;
 }
 

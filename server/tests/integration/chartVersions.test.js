@@ -34,6 +34,35 @@ describe("Chart version history", () => {
     return { team, user, project, role, dataset, chart, binding, controller, context };
   }
 
+  it("saves scatter fields per dataset row without changing the dashboard layout", async () => {
+    const f = await fixture();
+    const layout = { lg: [2, 4, 6, 2], xs: [0, 8, 6, 2] };
+    await f.chart.update({ layout });
+    const original = (await f.chart.reload()).visualization;
+    const native = { ...original, metadata: { createdBy: "visualization-editor" } };
+    await f.chart.update({ visualization: native });
+    const changed = await f.controller.update(f.chart.id, { type: "scatter" }, f.user, false, f.context);
+    expect(changed.type).toBe("scatter");
+    expect(changed.visualization.status).toBe("draft");
+    expect(changed.layout).toEqual(layout);
+    const visualization = structuredClone(changed.visualization);
+    visualization.status = "ready";
+    visualization.layers[0].encoding = {
+      x: { field: "root[].amount", type: "quantitative" },
+      y: { field: "root[].profit", type: "quantitative" },
+    };
+    const saved = await f.controller.update(f.chart.id, { visualization }, f.user, false, {
+      ...f.context, expectedVersion: changed.configurationVersion, operationId: randomUUID(),
+    });
+    expect(saved.visualization.layers[0].encoding).toEqual(visualization.layers[0].encoding);
+    expect(saved.layout).toEqual(layout);
+    const restored = await f.controller.update(f.chart.id, { type: "bar" }, f.user, false, {
+      ...f.context, expectedVersion: saved.configurationVersion, operationId: randomUUID(),
+    });
+    expect(restored.visualization.layers[0].encoding).toEqual(original.layers[0].encoding);
+    expect(restored.layout).toEqual(layout);
+  });
+
   it("saves manual and AI changes, rejects stale writes, and restores without changing shared data", async () => {
     const f = await fixture();
     const original = await versions.captureConfiguration(f.chart.id);

@@ -974,7 +974,7 @@ function ChartDatasetConfig(props) {
                         </div>
                         <div className="h-2" />
 
-                        {!["line", "bar", "matrix", "radar"].includes(chart.type) && (
+                        {!["line", "bar", "matrix", "radar", "scatter"].includes(chart.type) && (
                           <Row align={"center"} justify={"space-between"}>
                             <Row align={"center"}>
                               <Checkbox
@@ -1013,7 +1013,7 @@ function ChartDatasetConfig(props) {
                         )}
                         <div className="h-2" />
 
-                        {!["line", "bar", "matrix", "radar"].includes(chart.type) && (
+                        {!["line", "bar", "matrix", "radar", "scatter"].includes(chart.type) && (
                           <Row>
                             <Checkbox
                               id={`cdc-multifill-${cdc.id}`}
@@ -1033,7 +1033,7 @@ function ChartDatasetConfig(props) {
                           </Row>
                         )}
 
-                        {!["line", "bar", "matrix", "radar"].includes(chart.type) && cdc.multiFill && (
+                        {!["line", "bar", "matrix", "radar", "scatter"].includes(chart.type) && cdc.multiFill && (
                           <>
                             <div className="h-4" />
                             <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
@@ -1086,7 +1086,7 @@ function ChartDatasetConfig(props) {
             </>
           )}
 
-          {chart.type !== "table" && chart.type !== "matrix" && (
+          {chart.type !== "table" && chart.type !== "matrix" && chart.type !== "scatter" && (
             <>
               <Row>
                 <h3 className="text-sm font-semibold">Series settings</h3>

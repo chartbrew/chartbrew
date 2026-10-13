@@ -62,6 +62,13 @@ function buildLegacyEncoding(mark, options) {
     })
   );
 
+  if (mark === "scatter") {
+    return compactObject({
+      x: createFieldEncoding(xAxis, "quantitative"),
+      y: createFieldEncoding(options.yAxis, "quantitative"),
+    });
+  }
+
   if (mark === "avg" && value) value.aggregate = "avg";
 
   if (mark === "table" || mark === "markdown") return {};
@@ -100,6 +107,7 @@ function buildLegacyEncoding(mark, options) {
 
 function buildLegacyTransforms(options, mark, chart) {
   const transforms = [];
+  if (mark === "scatter") return transforms;
 
   if (chart.subType?.includes("AddTimeseries")
     && !["table", "matrix", "markdown", "map"].includes(mark)

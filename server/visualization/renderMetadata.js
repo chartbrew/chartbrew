@@ -39,7 +39,7 @@ function buildCategoryMetadata(preparedData, visualization) {
 function buildRenderMetadata({ chart, preparedData, runtimeContext, timezone, visualization }) {
   const hasTime = preparedData.results.some((result) => hasField(result, "time"));
   const marks = new Set(preparedData.results.map((result) => result.mark));
-  const canProject = marks.size === 1 && !marks.has("table") && !marks.has("markdown") && !marks.has("map");
+  const canProject = marks.size === 1 && !marks.has("table") && !marks.has("markdown") && !marks.has("map") && !marks.has("scatter");
   const projection = canProject ? projectPreparedSeries({
     chart,
     preparedData,

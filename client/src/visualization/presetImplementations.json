@@ -12,5 +12,6 @@
   "avg": "native-metric",
   "table": "native-table",
   "markdown": "native-markdown",
-  "map": "echarts"
+  "map": "echarts",
+  "scatter": "echarts"
 }

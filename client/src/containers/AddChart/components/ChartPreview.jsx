@@ -6,7 +6,7 @@ import {
 } from "@heroui/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbGridDots, TbHash,
-  TbMathAvg,
+  TbMathAvg, TbChartScatter,
 } from "react-icons/tb";
 import { TiChartPie } from "react-icons/ti";
 import { BsTable } from "react-icons/bs";
@@ -27,7 +27,7 @@ import { getPresetDefinition, hasPresetCapability } from "../../../visualization
 const chartTypeGroups = [
   {
     label: "Trends and comparisons",
-    types: [["line", TbChartLine], ["bar", TbChartBar], ["horizontalBar", LuChartBarBig], ["radar", TbChartRadar]],
+    types: [["line", TbChartLine], ["bar", TbChartBar], ["horizontalBar", LuChartBarBig], ["radar", TbChartRadar], ["scatter", TbChartScatter]],
   },
   {
     label: "Parts of a whole",
@@ -264,6 +264,12 @@ function ChartPreview(props) {
     showAppearanceControls, studio, viewControl,
   } = props;
 
+  const layers = chart.visualization?.layers || [];
+  const hasExtraValues = new Set(layers.map((layer) => `${layer.bindingId}`)).size < layers.length;
+  const disabledTypes = [
+    ...(layers.length > 1 ? ["map"] : []),
+    ...(hasExtraValues ? ["scatter"] : []),
+  ];
   const [redraw, setRedraw] = useState(false);
   const [conditions, setConditions] = useState([]);
   const [previewHeight, setPreviewHeight] = useState(300);
@@ -324,7 +330,7 @@ function ChartPreview(props) {
 
   const _onChangeChartType = (data) => {
     const newType = data;
-    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar" || data.type === "table" || data.type === "matrix" || data.type === "map") {
+    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar" || data.type === "table" || data.type === "matrix" || data.type === "map" || data.type === "scatter") {
       newType.subType = "timeseries";
       newType.mode = "chart";
     }
@@ -361,7 +367,7 @@ function ChartPreview(props) {
               <Select
                 aria-label="Chart type"
                 className="w-48 shrink-0"
-                disabledKeys={chart.visualization?.layers?.length > 1 ? ["map"] : []}
+                disabledKeys={disabledTypes}
                 onChange={(type) => {
                   if (!type || type === chart.type) return;
                   _onChangeChartType(["bar", "horizontalBar"].includes(type)
@@ -391,6 +397,9 @@ function ChartPreview(props) {
                               <Label>{getPresetDefinition(type).label}</Label>
                               {type === "map" && chart.visualization?.layers?.length > 1 ? (
                                 <Description>Use one dataset and one value for a map</Description>
+                              ) : null}
+                              {type === "scatter" && hasExtraValues ? (
+                                <Description>Use one value per dataset row for a scatter chart</Description>
                               ) : null}
                             </div>
                             <ListBox.ItemIndicator />

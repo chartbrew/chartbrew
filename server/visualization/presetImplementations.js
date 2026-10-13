@@ -51,6 +51,7 @@ const SERVER_PRESET_IMPLEMENTATIONS = Object.freeze({
   matrix: echartsImplementation("matrix"),
   gauge: echartsImplementation("gauge"),
   map: echartsImplementation("map"),
+  scatter: echartsImplementation("scatter"),
   kpi: nativeImplementation("kpi"),
   avg: nativeImplementation("avg"),
   table: nativeImplementation("table"),

@@ -568,6 +568,17 @@ function ChartDatasetDataSetup({
                     />
                   </>
                 )}
+                {requirements.coordinates && ["x", "y"].map((role) => (
+                  <FieldPicker
+                    key={role}
+                    label={`${role.toUpperCase()} field`}
+                    placeholder="Select a numeric field"
+                    fieldOptions={fieldOptions.filter((field) => ["number", "string"].includes(field.type))}
+                    value={selectedLayer.encoding?.[role]?.field}
+                    onChange={(value) => _updateField(role, value)}
+                  />
+                ))}
+
                 {requirements.collection && (
                   <FieldPicker
                     label="Rows"
@@ -819,7 +830,8 @@ function ChartDatasetDataSetup({
               <Alert.Indicator />
               <Alert.Content>
                 <Alert.Title>
-                  {selectedLayer.mark === "map" ? "Check map locations" : "Large number of generated series"}
+                  {selectedLayer.mark === "scatter" ? "Check point values"
+                    : selectedLayer.mark === "map" ? "Check map locations" : "Large number of generated series"}
                 </Alert.Title>
                 <Alert.Description>{warning.message}</Alert.Description>
               </Alert.Content>

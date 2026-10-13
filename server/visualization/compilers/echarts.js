@@ -631,6 +631,53 @@ function buildCategoryBreakdownGraphic(datasets, colors, renderContext, composit
   }];
 }
 
+function buildScatterOption({ preparedData, visualization, renderContext }) {
+  const styles = buildSeriesStyleMap(preparedData, visualization);
+  const axis = {
+    type: "value",
+    scale: true,
+    axisLabel: { fontSize: 10, hideOverlap: true, margin: 8 },
+    axisTick: { show: false },
+  };
+  return {
+    ...getBaseOption(visualization, renderContext, "item"),
+    grid: {
+      containLabel: true,
+      left: 16,
+      right: 18,
+      top: visualization.settings?.legend?.visible === false ? 12 : 42,
+      bottom: 16,
+    },
+    xAxis: { ...axis },
+    yAxis: { ...axis },
+    series: preparedData.results.map((result) => {
+      const layer = getLayer(visualization, result.id);
+      const series = result.series[0];
+      const style = getLayerSeriesStyle(styles, series, layer);
+      return {
+        id: series.id,
+        name: style.name,
+        type: "scatter",
+        symbolSize: 8,
+        itemStyle: { color: style.color, opacity: 0.8 },
+        dimensions: ["x", "y"],
+        encode: { x: 0, y: 1, tooltip: [0, 1] },
+        data: result.rows.map((row) => ({
+          value: [row.x, row.y],
+          xLabel: layer.encoding.x?.title || layer.encoding.x?.field?.replace(/^root(?:\[\])?\./, "") || "X",
+          yLabel: layer.encoding.y?.title || layer.encoding.y?.field?.replace(/^root(?:\[\])?\./, "") || "Y",
+        })),
+      };
+    }),
+    media: [{
+      query: { maxWidth: RESPONSIVE_LAYOUT.geometry.width.narrowMax },
+      option: { grid: { left: 4, right: 8, bottom: 8 } },
+    }, {
+      option: { grid: { left: 16, right: 18, bottom: 16 } },
+    }],
+  };
+}
+
 function buildCartesianOption({ preparedData, visualization, renderContext }) {
   const projection = projectPreparedSeries({
     chart: {},
@@ -1554,6 +1601,8 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
   let option;
   if (presetId === "map") {
     option = buildMapOption({ chart, preparedData, visualization, renderContext: context });
+  } else if (presetId === "scatter") {
+    option = buildScatterOption({ preparedData, visualization, renderContext: context });
   } else if (CARTESIAN_PRESETS.has(presetId)) {
     option = buildCartesianOption({ preparedData, visualization, renderContext: context });
   } else if (PIE_PRESETS.has(presetId)) {

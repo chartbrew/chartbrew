@@ -168,6 +168,18 @@
       "capabilities": ["responsive", "theme", "visualMap", "legend"],
       "surfaces": ["dashboard", "editor", "embed", "export", "social"],
       "ssr": true
+    },
+    {
+      "id": "scatter",
+      "label": "Scatter",
+      "mark": "scatter",
+      "releaseState": "ready",
+      "renderer": "echarts",
+      "requiredFieldRoles": ["x", "y"],
+      "requiredOneOf": [],
+      "capabilities": ["legend", "responsive", "theme"],
+      "surfaces": ["dashboard", "editor", "embed", "export", "social"],
+      "ssr": true
     }
   ]
 }

@@ -228,6 +228,11 @@ export function createEChartsTooltipFormatter(colors, { category = false, compac
       return heading(first.data?.locationLabel || first.name, colors.text)
         + row(first.seriesName || "Value", first.data?.formattedValue || "No data", first.color, colors.text, colors.muted);
     }
+    if (first.seriesType === "scatter" && first.data?.xLabel !== undefined) {
+      return heading(first.seriesName, colors.text)
+        + categoryMetricRow(first.data.xLabel, first.data.value[0], colors)
+        + categoryMetricRow(first.data.yLabel, first.data.value[1], colors);
+    }
     if (first.seriesType === "pie" && `${first.seriesId || ""}`.endsWith("-ranges")) {
       return heading(first.name, colors.text);
     }

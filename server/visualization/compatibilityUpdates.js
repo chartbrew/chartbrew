@@ -30,6 +30,15 @@ function getEncodingForMark(layer, mark, markState = layer.options?.markState ||
 
   const candidates = getEncodingCandidates(layer, markState);
   if (mark === "table" || mark === "markdown") return {};
+  if (mark === "scatter") {
+    const source = candidates.find((encoding) => encoding.x || encoding.value) || {};
+    const x = source.x || source.category;
+    const y = source.y || source.value;
+    return {
+      ...(x?.type === "quantitative" ? { x: { field: x.field, type: "quantitative" } } : {}),
+      ...(y ? { y: { field: y.field, type: "quantitative" } } : {}),
+    };
+  }
   if (mark === "map") {
     const source = candidates.find((encoding) => encoding.location || encoding.category) || candidates[0];
     return {
@@ -129,6 +138,7 @@ function updateLayerMark(layer, mark) {
     [layer.mark]: {
       ...(options.markState?.[layer.mark] || {}),
       encoding: cloneEncoding(layer.encoding),
+      ...(mark === "scatter" || layer.mark === "scatter" ? { transforms: layer.transforms || [] } : {}),
       ...(layer.style?.fill !== undefined ? { fill: layer.style.fill } : {}),
       ...(layer.style?.fillOpacity !== undefined
         ? { fillOpacity: layer.style.fillOpacity }
@@ -138,11 +148,18 @@ function updateLayerMark(layer, mark) {
   };
   options.markState = markState;
   const saved = markState[mark];
+  let transforms = layer.transforms;
+  if (mark === "scatter") {
+    transforms = (layer.transforms || []).filter((transform) => transform.type === "filter");
+  } else if (layer.mark === "scatter") {
+    transforms = saved?.transforms || [];
+  }
 
   return {
     ...layer,
     encoding: getEncodingForMark(layer, mark, markState),
     mark,
+    transforms,
     options,
     rowPath: saved?.rowPath || (mark === "table" ? layer.rowPath || "root[]" : layer.rowPath),
     style: getStyleForMark(layer, mark, saved),
@@ -193,7 +210,7 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
       ? setCumulativeTransform(
         markedLayer.transforms,
         `${data.subType}`.includes("AddTimeseries")
-          && !["table", "matrix", "markdown", "map"].includes(mark)
+          && !["table", "matrix", "markdown", "map", "scatter"].includes(mark)
       )
       : markedLayer.transforms;
     return {
@@ -237,6 +254,10 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     };
   }
   next.settings = settings;
+  if (data.type && (data.type === "scatter" || visualization.layers.some((layer) => layer.mark === "scatter"))) {
+    const validation = validateVisualizationSpec({ ...next, status: "ready" });
+    next.status = validation.valid ? "ready" : "draft";
+  }
   return next;
 }
 

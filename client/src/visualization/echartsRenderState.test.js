@@ -143,3 +143,9 @@ test("identifies region and point maps before matrix charts", () => {
   assert.equal(getEChartsPreset({ series: [{ type: "map" }] }), "map");
   assert.equal(getEChartsPreset({ visualMap: {}, series: [{ type: "scatter", coordinateSystem: "geo" }] }), "map");
 });
+
+test("identifies scatter without changing line helper points or matrix points", () => {
+  assert.equal(getEChartsPreset({ series: [{ type: "scatter" }], xAxis: { type: "value" } }), "scatter");
+  assert.equal(getEChartsPreset({ series: [{ type: "line" }, { type: "scatter" }] }), "line");
+  assert.equal(getEChartsPreset({ visualMap: {}, series: [{ type: "scatter" }] }), "matrix");
+});

@@ -81,6 +81,7 @@ export function getBindingPresentation(chart, cdc) {
 }
 
 export function getLayerFieldRequirements(mark) {
+  if (mark === "scatter") return { coordinates: true };
   if (mark === "map") return { map: true, value: true };
   if (mark === "table") return { collection: true };
   if (mark === "matrix") return { dimension: true, value: true };
@@ -103,6 +104,7 @@ export function isVisualizationReady(visualization) {
       return Boolean(layer.encoding?.location?.field);
     }
     const requirements = getLayerFieldRequirements(layer.mark);
+    if (requirements.coordinates && (!layer.encoding?.x?.field || !layer.encoding?.y?.field)) return false;
     if (requirements.collection) return Boolean(layer.rowPath);
     if (requirements.dimension && !layer.encoding?.time && !layer.encoding?.category) return false;
     if (requirements.value && !layer.encoding?.value?.field) return false;
@@ -179,6 +181,15 @@ function getEncodingForMark(layer, mark, markState) {
 
   const candidates = getEncodingCandidates(layer, markState);
   if (mark === "table" || mark === "markdown") return {};
+  if (mark === "scatter") {
+    const source = candidates.find((encoding) => encoding.x || encoding.value) || {};
+    const x = source.x || source.category;
+    const y = source.y || source.value;
+    return {
+      ...(x?.type === "quantitative" ? { x: { field: x.field, type: "quantitative" } } : {}),
+      ...(y ? { y: { field: y.field, type: "quantitative" } } : {}),
+    };
+  }
   if (mark === "map") {
     const source = candidates.find((encoding) => encoding.location || encoding.category) || candidates[0];
     return {
@@ -279,6 +290,7 @@ export function updateLayerMark(visualization, layerId, mark) {
       [layer.mark]: {
         ...(options.markState?.[layer.mark] || {}),
         encoding: cloneEncoding(layer.encoding),
+        ...(mark === "scatter" || layer.mark === "scatter" ? { transforms: layer.transforms || [] } : {}),
         ...(layer.style?.fill !== undefined ? { fill: layer.style.fill } : {}),
         ...(layer.style?.fillOpacity !== undefined
           ? { fillOpacity: layer.style.fillOpacity }
@@ -288,11 +300,18 @@ export function updateLayerMark(visualization, layerId, mark) {
     };
     options.markState = markState;
     const saved = markState[mark];
+    let transforms = layer.transforms;
+    if (mark === "scatter") {
+      transforms = (layer.transforms || []).filter((transform) => transform.type === "filter");
+    } else if (layer.mark === "scatter") {
+      transforms = saved?.transforms || [];
+    }
 
     return {
       ...layer,
       encoding: getEncodingForMark(layer, mark, markState),
       mark,
+      transforms,
       orientation: mark === "horizontalBar" ? "horizontal" : mark === "bar" ? "vertical" : layer.orientation,
       options,
       rowPath: saved?.rowPath || (mark === "table" ? layer.rowPath || "root[]" : layer.rowPath),
@@ -357,7 +376,7 @@ export function updateLayerField(visualization, layerId, role, fieldOption) {
       encoding[role] = {
         ...(encoding[role] || {}),
         field: fieldOption.value,
-        type: role === "value" ? "quantitative" : getFieldSemanticType(fieldOption.type),
+        type: ["value", "x", "y"].includes(role) ? "quantitative" : getFieldSemanticType(fieldOption.type),
       };
     } else {
       delete encoding[role];
