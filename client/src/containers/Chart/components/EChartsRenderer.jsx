@@ -15,7 +15,7 @@ import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
 import { registerOptionMap } from "../../../visualization/mapAssets";
 import { addMapWheelZoom } from "../../../visualization/mapWheelZoom";
-import { getEChartsAnimation } from "../../../visualization/echartsRenderState";
+import { animateEChartsMapEntrance, getEChartsAnimation } from "../../../visualization/echartsRenderState";
 
 import { semanticColors } from "../../../lib/themeTokens";
 import { useTheme } from "../../../modules/ThemeContext";
@@ -605,6 +605,7 @@ function EChartsRenderer({
 }) {
   const containerRef = useRef(null);
   const instanceRef = useRef(null);
+  const mapEntranceRef = useRef(null);
   const redrawCompleteRef = useRef(redrawComplete);
   redrawCompleteRef.current = redrawComplete;
   const hasRenderedRef = useRef(false);
@@ -692,13 +693,14 @@ function EChartsRenderer({
     if (instance.getWidth() !== width || instance.getHeight() !== height) {
       instance.resize();
     }
-    instance.setOption(
-      {
-        ...scaledOption,
-        ...getEChartsAnimation(scaledOption, !hasRenderedRef.current, reducedMotion, renderer),
-      },
-      { lazyUpdate: false, notMerge: true }
-    );
+    const animatedOption = {
+      ...scaledOption,
+      ...getEChartsAnimation(scaledOption, !hasRenderedRef.current, reducedMotion, renderer),
+    };
+    instance.setOption(animatedOption, { lazyUpdate: false, notMerge: true });
+    if (!hasRenderedRef.current) {
+      mapEntranceRef.current = animateEChartsMapEntrance(container, scaledOption, reducedMotion, renderer);
+    }
     hasRenderedRef.current = true;
     renderedSizeRef.current = { width, height };
     setMapMoved(false);
@@ -753,6 +755,8 @@ function EChartsRenderer({
         categoryFadeRef.current = null;
       }
       resizeObserver?.disconnect();
+      mapEntranceRef.current?.cancel();
+      mapEntranceRef.current = null;
       instanceRef.current?.dispose();
       instanceRef.current = null;
     };

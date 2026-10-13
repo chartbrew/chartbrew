@@ -69,3 +69,13 @@ export function getEChartsAnimation(option, firstRender, reducedMotion, renderer
     })),
   };
 }
+
+export function animateEChartsMapEntrance(container, option, reducedMotion, renderer) {
+  if (reducedMotion || renderer !== "canvas" || (!option.geo && getEChartsPreset(option) !== "map")) return null;
+
+  // Maps disable ECharts animation; fade the complete canvas independently.
+  return container.animate(
+    [{ opacity: 0 }, { opacity: 1 }],
+    { duration: 700, easing: "cubic-bezier(0.25, 1, 0.5, 1)" }
+  );
+}

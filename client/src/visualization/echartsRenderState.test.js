@@ -2,11 +2,38 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  animateEChartsMapEntrance,
   getEChartsAnimation,
   getEChartsPreset,
   isCompatibleEChartsRender,
   selectEChartsRender,
 } from "./echartsRenderState.js";
+
+test("fades static region and point maps while respecting motion and export settings", () => {
+  const calls = [];
+  const animation = { cancel() {} };
+  const container = { animate: (...args) => { calls.push(args); return animation; } };
+  const maps = [
+    { animation: false, series: [{ type: "map" }] },
+    { animation: false, geo: { map: "world" }, series: [{ type: "scatter", coordinateSystem: "geo" }] },
+  ];
+
+  for (const option of maps) {
+    assert.equal(animateEChartsMapEntrance(container, option, false, "canvas"), animation);
+    for (const args of [[true, "canvas"], [false, "svg"]]) {
+      assert.equal(animateEChartsMapEntrance(container, option, ...args), null);
+    }
+  }
+
+  assert.equal(animateEChartsMapEntrance(container, {
+    animation: true, series: [{ type: "bar" }],
+  }, false, "canvas"), null);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0], [
+    [{ opacity: 0 }, { opacity: 1 }],
+    { duration: 700, easing: "cubic-bezier(0.25, 1, 0.5, 1)" },
+  ]);
+});
 
 test("animates only the first canvas render when motion is allowed", () => {
   assert.deepEqual(getEChartsAnimation({ animation: true }, true, false, "canvas"), {
