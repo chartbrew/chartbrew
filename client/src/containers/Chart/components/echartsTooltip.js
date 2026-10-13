@@ -35,10 +35,11 @@ function marker(color) {
     + `background:${escapeHtml(color || "#a1a1aa")};flex:none"></span>`;
 }
 
-function heading(text, color) {
+function heading(text, color, seriesColor) {
   if (text === null || text === undefined || text === "") return "";
   return `<div style="color:${color};font-size:11px;font-weight:400;line-height:16px;`
-    + `margin-bottom:3px;white-space:nowrap">${escapeHtml(text)}</div>`;
+    + `margin-bottom:3px;white-space:nowrap;${seriesColor ? "display:flex;align-items:center;gap:5px" : ""}">`
+    + `${seriesColor ? marker(seriesColor) : ""}${escapeHtml(text)}</div>`;
 }
 
 function row(label, value, color, textColor, mutedColor) {
@@ -229,7 +230,7 @@ export function createEChartsTooltipFormatter(colors, { category = false, compac
         + row(first.seriesName || "Value", first.data?.formattedValue || "No data", first.color, colors.text, colors.muted);
     }
     if (first.seriesType === "scatter" && first.data?.xLabel !== undefined) {
-      return heading(first.seriesName, colors.text)
+      return heading(first.seriesName, colors.text, first.color)
         + categoryMetricRow(first.data.xLabel, first.data.value[0], colors)
         + categoryMetricRow(first.data.yLabel, first.data.value[1], colors);
     }

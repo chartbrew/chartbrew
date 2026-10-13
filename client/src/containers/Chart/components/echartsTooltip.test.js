@@ -267,10 +267,11 @@ test("map tooltips show place names and formatted measures without exposing coor
 test("scatter tooltips show both coordinates and escape series and field labels", () => {
   for (const compact of [false, true]) {
     const formatter = createEChartsTooltipFormatter(colors, { compact });
-    const html = formatter({ seriesType: "scatter", seriesName: "<sales>", data: {
+    const html = formatter({ seriesType: "scatter", seriesName: "<sales>", color: "#ff9800", data: {
       value: [0, -25], xLabel: "<cost>", yLabel: "Revenue",
     } });
     assert.ok(html.includes("&lt;sales&gt;"));
+    assert.match(html, /background:#ff9800;flex:none"><\/span>&lt;sales&gt;/);
     assert.ok(html.includes("&lt;cost&gt;"));
     assert.ok(html.includes(">0</span>"));
     assert.ok(html.includes(">-25</span>"));
