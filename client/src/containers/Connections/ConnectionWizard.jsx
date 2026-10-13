@@ -34,6 +34,7 @@ function ConnectionWizard() {
   const [connectionSearch, setConnectionSearch] = useState("");
   const [connectionCategory, setConnectionCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("");
+  const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [newConnection, setNewConnection] = useState(null);
   const [inviteUrl, setInviteUrl] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -42,8 +43,8 @@ function ConnectionWizard() {
 
   const { isDark } = useTheme();
   const initRef = useRef(null);
-  const bottomRef = useRef(null);
-  const asideRef = useRef(null);
+  const selectionRef = useRef(null);
+  const searchRef = useRef(null);
   const paramsInitRef = useRef(null);
   const fetchConnectionRef = useRef(null);
   const dispatch = useDispatch();
@@ -71,22 +72,13 @@ function ConnectionWizard() {
   }, [team]);
 
   useEffect(() => {
-    if (selectedType && params.connectionId === "new") {
-      bottomRef?.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-        inline: "nearest",
-      });
-
-      setTimeout(() => {
-        asideRef?.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "end",
-          inline: "nearest",
-        });
-      }, 500);
+    if (params.connectionId !== "new") return;
+    if (catalogueOpen) {
+      searchRef.current?.focus();
+    } else if (selectedType) {
+      selectionRef.current?.focus();
     }
-  }, [selectedType, params.connectionId]);
+  }, [selectedType, catalogueOpen, params.connectionId]);
 
   useEffect(() => {
     if (params.connectionId && params.connectionId !== "new" && team?.id && !paramsInitRef.current) {
@@ -124,6 +116,8 @@ function ConnectionWizard() {
   }
   const canRenderSelectedForm = Boolean(newConnection || canCreateSourceConnections(selectedSource));
   const SelectedConnectionForm = canRenderSelectedForm ? selectedSource?.frontend?.ConnectionForm : null;
+
+  const showCatalogue = !SelectedConnectionForm || catalogueOpen;
 
   const _filteredConnections = filterConnectionCatalogue(availableSources, connectionCategory, connectionSearch);
 
@@ -221,90 +215,114 @@ function ConnectionWizard() {
   return (
     <div>
       <div className="flex flex-col">
-        <div className={helpPanelCollapsed ? "" : "lg:mr-96"}>          
-          <div className="h-2" />
+        <div className={`flex min-w-0 flex-col gap-6 pt-2 ${!newConnection && !showCatalogue ? "max-w-5xl" : ""} ${helpPanelCollapsed ? "" : "lg:mr-96"}`}>
 
           {!newConnection && (
             <>
-              <div className="flex flex-row items-center gap-2">
-                <span className="text-xl text-secondary font-semibold">Step 1:</span>
-                <span className="text-xl font-semibold">Choose a connection</span>
-              </div>
-              <div className="h-4" />
-              <Surface className="rounded-3xl bg-surface border border-divider p-4">
-                <div className="flex flex-row justify-between items-center flex-wrap gap-2">
-                  <TextField aria-label="Search connections" className="sm:min-w-md" name="connection-search">
-                    <InputGroup fullWidth variant="secondary">
-                      <InputGroup.Input
-                        placeholder="Search connections..."
-                        onChange={(e) => setConnectionSearch(e.target.value)}
-                      />
-                      <InputGroup.Suffix className="pr-2">
-                        <LuSearch className="size-4 text-muted" aria-hidden />
-                      </InputGroup.Suffix>
-                    </InputGroup>
-                  </TextField>
-                </div>
-                <ToggleButtonGroup
-                  aria-label="Connection category"
-                  className="my-4 flex-wrap"
-                  disallowEmptySelection
-                  isDetached
-                  selectedKeys={[connectionCategory]}
-                  selectionMode="single"
-                  size="sm"
-                  onSelectionChange={(keys) => setConnectionCategory([...keys][0])}
-                >
-                  <ToggleButton id="all">All</ToggleButton>
-                  <ToggleButton id="database">Databases</ToggleButton>
-                  <ToggleButton id="services">Services</ToggleButton>
-                  <ToggleButton id="mcp">MCP</ToggleButton>
-                </ToggleButtonGroup>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {_filteredConnections.map((conn) => (
-                    <Button
-                      key={conn.id}
-                      aria-pressed={selectedType === conn.id}
-                      className={`h-auto min-h-28 w-full items-start justify-start whitespace-normal rounded-xl p-4 text-left ${selectedType === conn.id ? "border-accent bg-accent-soft" : "border-divider"}`}
-                      variant="outline"
-                      onPress={() => setSelectedType(conn.id)}
-                    >
-                      <img
-                        alt=""
-                        className="h-10 w-10 shrink-0 object-contain"
-                        src={getSourceLogo(conn, isDark)}
-                      />
-                      <span className="flex min-w-0 flex-1 flex-col gap-2">
-                        <span className="font-semibold">{conn.name}</span>
-                        <Chip className="w-fit" size="sm" variant="soft" color={conn.method === "MCP" ? "accent" : "default"}>
-                          <Chip.Label>{conn.method}</Chip.Label>
-                        </Chip>
-                        {conn.description && (
-                          <span className="text-sm font-normal text-muted">{conn.description}</span>
-                        )}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-                {_filteredConnections.length === 0 && (
-                  <div className="flex flex-col items-center gap-3 py-8">
-                    <p className="text-muted">No connections match your search.</p>
-                    <Button variant="secondary" onPress={() => {
-                      setConnectionSearch("");
-                      setConnectionCategory("all");
-                    }}>
-                      Clear filters
-                    </Button>
-                  </div>
+              <div className="flex items-center justify-between gap-4">
+                <h1 className="text-2xl font-semibold">{showCatalogue ? "Choose a connection" : "New connection"}</h1>
+                {catalogueOpen && SelectedConnectionForm && (
+                  <Button variant="tertiary" onPress={() => setCatalogueOpen(false)}>
+                    Cancel
+                  </Button>
                 )}
-              </Surface>
-
-              <div className="h-4" />
-              {selectedType && (
-                <div className="flex flex-row items-center gap-2">
-                  <span className="text-xl text-secondary font-semibold">Step 2:</span>
-                  <span className="text-xl font-semibold">Connect to your data source</span>
+              </div>
+              {showCatalogue ? (
+                <div>
+                  <div className="flex flex-row justify-between items-center flex-wrap gap-2">
+                    <TextField aria-label="Search connections" className="w-full sm:max-w-md" name="connection-search">
+                      <InputGroup fullWidth variant="secondary">
+                        <InputGroup.Input
+                          ref={searchRef}
+                          value={connectionSearch}
+                          placeholder="Search connections..."
+                          onChange={(e) => setConnectionSearch(e.target.value)}
+                        />
+                        <InputGroup.Suffix className="pr-2">
+                          <LuSearch className="size-4 text-muted" aria-hidden />
+                        </InputGroup.Suffix>
+                      </InputGroup>
+                    </TextField>
+                  </div>
+                  <ToggleButtonGroup
+                    aria-label="Connection category"
+                    className="my-4 flex-wrap justify-start"
+                    disallowEmptySelection
+                    isDetached
+                    selectedKeys={[connectionCategory]}
+                    selectionMode="single"
+                    size="sm"
+                    onSelectionChange={(keys) => setConnectionCategory([...keys][0])}
+                  >
+                    <ToggleButton id="all">All</ToggleButton>
+                    <ToggleButton id="database">Databases</ToggleButton>
+                    <ToggleButton id="services">Services</ToggleButton>
+                    <ToggleButton id="mcp">MCP</ToggleButton>
+                  </ToggleButtonGroup>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {_filteredConnections.map((conn) => (
+                      <Button
+                        key={conn.id}
+                        aria-pressed={selectedType === conn.id}
+                        className={`h-auto min-h-28 w-full items-start justify-start whitespace-normal rounded-xl p-4 text-left ${selectedType === conn.id ? "border-accent bg-accent-soft" : "border-divider bg-surface"}`}
+                        variant="outline"
+                        onPress={() => {
+                          setSelectedType(conn.id);
+                          setCatalogueOpen(false);
+                        }}
+                      >
+                        <img
+                          alt=""
+                          className="h-10 w-10 shrink-0 object-contain"
+                          src={getSourceLogo(conn, isDark)}
+                        />
+                        <span className="flex min-w-0 flex-1 flex-col gap-2">
+                          <span className="font-semibold">{conn.name}</span>
+                          <Chip className="w-fit" size="sm" variant="soft" color={conn.method === "MCP" ? "accent" : "default"}>
+                            <Chip.Label>{conn.method}</Chip.Label>
+                          </Chip>
+                          {conn.description && (
+                            <span className="text-sm font-normal text-muted">{conn.description}</span>
+                          )}
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
+                  {_filteredConnections.length === 0 && (
+                    <div className="flex flex-col items-center gap-3 py-8">
+                      <p className="text-muted">No connections match your search.</p>
+                      <Button variant="secondary" onPress={() => {
+                        setConnectionSearch("");
+                        setConnectionCategory("all");
+                      }}>
+                        Clear filters
+                      </Button>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <Surface className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-divider p-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <img
+                      alt=""
+                      className="size-10 shrink-0 object-contain"
+                      src={getSourceLogo(selectedEntry || selectedSource, isDark)}
+                    />
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <h2 ref={selectionRef} tabIndex={-1} className="font-semibold outline-none">
+                        {selectedEntry?.name || selectedSource.name}
+                      </h2>
+                      {selectedEntry?.method && (
+                        <Chip className="w-fit" size="sm" variant="soft" color={selectedEntry.method === "MCP" ? "accent" : "default"}>
+                          <Chip.Label>{selectedEntry.method}</Chip.Label>
+                        </Chip>
+                      )}
+                    </div>
+                  </div>
+                  <Button variant="secondary" onPress={() => setCatalogueOpen(true)}>
+                    Change connection
+                  </Button>
+                </Surface>
               )}
             </>
           )}
@@ -317,19 +335,19 @@ function ConnectionWizard() {
               <span className="text-foreground font-semibold">Back to connections</span>
             </Link>
           )}
-          <div className="h-4" />
 
           {SelectedConnectionForm && (
-            <SelectedConnectionForm
-              key={newConnection?.id || selectedType}
-              catalogueEntry={selectedEntry}
-              onComplete={_onAddNewConnection}
-              editConnection={newConnection}
-              subType={selectedSource.subType || selectedSource.type}
-            />
+            <div hidden={!newConnection && showCatalogue}>
+              <SelectedConnectionForm
+                key={newConnection?.id || selectedType}
+                catalogueEntry={selectedEntry}
+                onComplete={_onAddNewConnection}
+                editConnection={newConnection}
+                subType={selectedSource.subType || selectedSource.type}
+              />
+            </div>
           )}
 
-          <div ref={bottomRef} />
         </div>
         <aside
           className={`hidden overflow-visible lg:block fixed top-0 right-0 z-40 h-screen ${helpPanelCollapsed ? "w-0" : "w-96"}`}
@@ -429,7 +447,6 @@ function ConnectionWizard() {
                 )}
               </div>
 
-              <div ref={asideRef} />
             </div>
           )}
         </aside>
