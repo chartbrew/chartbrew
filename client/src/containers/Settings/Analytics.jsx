@@ -13,6 +13,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
   day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
 });
 const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 });
+const compactNumberFormat = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 });
 
 function Analytics({ teamId }) {
   const [view, setView] = useState("requests");
@@ -137,7 +138,18 @@ function Analytics({ teamId }) {
               {analytics.metrics.map((metric) => (
                 <section key={metric.id} className="rounded-3xl border border-divider bg-surface px-3 py-5 tabular-nums" aria-label={metric.label}>
                   <div className="h-20">
-                    <KpiMode chart={{ render: { configuration: { items: [metric] } } }} />
+                    <KpiMode chart={{
+                      render: {
+                        configuration: {
+                          items: [{
+                            ...metric,
+                            value: isAi && metric.valueNumber >= 1000000
+                              ? compactNumberFormat.format(metric.valueNumber)
+                              : metric.value,
+                          }],
+                        },
+                      },
+                    }} />
                   </div>
                 </section>
               ))}
