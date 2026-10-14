@@ -90,6 +90,34 @@ describe("Home suggestion access and persistence", () => {
     expect((await request(app).post(url).auth(token, { type: "bearer" })).status).toBe(403);
   });
 
+  it("queues public starters after onboarding with AI off and returns them only to admins", async () => {
+    const { team, role, app, token } = await seed();
+    await team.update({ aiEnabled: false, aiSuggestionsEnabled: false });
+    const queue = { add: vi.fn().mockResolvedValue({}) };
+    app.set("homeSuggestionsQueue", queue);
+    const response = await request(app).patch(`/team/${team.id}/onboarding`)
+      .auth(token, { type: "bearer" }).send({ complete: true, businessProfile: {
+        websiteUrl: "https://example.com/", businessName: "Public business", description: "Private saved notes",
+      } });
+    expect(response.status).toBe(200);
+    expect(queue.add).toHaveBeenCalledWith("onboardingSuggestions", {
+      teamId: team.id, requestId: expect.any(String),
+    }, expect.objectContaining({ attempts: 1 }));
+    const profile = await models.TeamBusinessProfile.findOne({ where: { team_id: team.id } });
+    const starter = { id: "starter-public", title: "Which sales metrics?", prompt: "Which sales metrics should I track?", starter: true };
+    await profile.update({ homeSuggestions: { ...profile.homeSuggestions, status: "complete", suggestions: [starter] } });
+    const home = await request(app).get(`/team/${team.id}/home`).auth(token, { type: "bearer" });
+    expect(home.status).toBe(200);
+    expect(home.body.starterSuggestions).toEqual([starter]);
+    await role.update({ role: "projectViewer" });
+    const viewerHome = await request(app).get(`/team/${team.id}/home`).auth(token, { type: "bearer" });
+    expect(viewerHome.body.starterSuggestions).toEqual([]);
+    const denied = await request(app).patch(`/team/${team.id}/onboarding`)
+      .auth(token, { type: "bearer" }).send({ complete: true });
+    expect(denied.status).toBe(403);
+    expect(queue.add).toHaveBeenCalledTimes(1);
+  });
+
   it("forgets work without replay and keeps another user's state private", async () => {
     const { team, user, app, token, access } = await seed();
     await service.recordActivity(access);

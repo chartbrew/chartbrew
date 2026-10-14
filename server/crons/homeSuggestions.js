@@ -6,6 +6,7 @@ const db = require("../models/models");
 const { getQueueOptions } = require("../redisConnection");
 const { generate, log, settings, snapshotFor } = require("../modules/ai/homeSuggestions/service");
 const { getObservationAccess } = require("../modules/observations/access");
+const { generateSuggestions } = require("../modules/ai/homeSuggestions/onboarding");
 const { DAY, isDue } = require("../modules/ai/homeSuggestions/rules");
 
 async function scheduleSuggestions(queue, now = new Date()) {
@@ -43,8 +44,10 @@ async function scheduleSuggestions(queue, now = new Date()) {
 function startHomeSuggestions() {
   const queue = new Queue("homeSuggestionsQueue", getQueueOptions());
   queue.on("error", () => log("queue_unavailable"));
-  const worker = new Worker(queue.name, async ({ data }) => {
-    const status = await generate(data.teamId, data.userId, { manual: data.manual === true });
+  const worker = new Worker(queue.name, async ({ name, data }) => {
+    const status = name === "onboardingSuggestions"
+      ? await generateSuggestions(data.teamId, data.requestId)
+      : await generate(data.teamId, data.userId, { manual: data.manual === true });
     log(status);
     return { status };
   }, { connection: queue.opts.connection, concurrency: 2 });

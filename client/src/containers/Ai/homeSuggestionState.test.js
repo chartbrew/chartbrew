@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { mergeSuggestionContext, keepSuggestionOrder } from "./homeSuggestionState.js";
-import { getHomeSuggestions } from "../Home/homeOnboardingState.js";
+import { STARTER_SUGGESTIONS, getHomeSuggestions } from "../Home/homeOnboardingState.js";
 
 test("empty workspaces and viewers retain permitted defaults", () => {
-  assert.deepEqual(getHomeSuggestions({ content: { canConfigureTeam: true } }), ["What can I ask?"]);
+  assert.deepEqual(getHomeSuggestions({ content: { canConfigureTeam: true } }), STARTER_SUGGESTIONS);
   const defaults = getHomeSuggestions({ content: { canConfigureTeam: false }, dataHealth: { count: 1 } });
   assert.equal(defaults.some((item) => item.includes("fix")), false);
 });

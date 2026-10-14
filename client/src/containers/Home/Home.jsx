@@ -224,6 +224,17 @@ function Home() {
   }, [team?.id, team?.aiEnabled, team?.aiSuggestionsEnabled, refreshKey]);
 
   useEffect(() => {
+    if (!data?.starterSuggestionsPending || data.teamId !== team?.id) return undefined;
+    let active = true;
+    const timeout = setTimeout(() => {
+      getHome(team.id).then((home) => {
+        if (active) setData({ ...home, teamId: team.id });
+      }).catch(() => {});
+    }, 3000);
+    return () => { active = false; clearTimeout(timeout); };
+  }, [data, team?.id]);
+
+  useEffect(() => {
     window.addEventListener("focus", refreshHome);
     window.addEventListener("cb:activity-updated", refreshHome);
     return () => {

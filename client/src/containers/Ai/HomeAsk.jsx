@@ -45,7 +45,7 @@ function HomeAsk({ focused, hasContent, onContentChange, onFocusChange, suggesti
   } = useAiAvailability({ teamId });
   const isAccessNoticeVisible = showAccessNotice && availability?.enabled !== true;
   const onSelectSuggestion = async (suggestion) => {
-    if (typeof suggestion === "string") return true;
+    if (typeof suggestion === "string" || suggestion.starter) return true;
     try {
       const current = await getHomeSuggestion(teamId, suggestion.id);
       const merged = mergeSuggestionContext(selectedContext.multiSelect, current.context || []);
@@ -237,8 +237,9 @@ function HomeAsk({ focused, hasContent, onContentChange, onFocusChange, suggesti
             canManageTeam={isTeamAdmin}
           />
         )}
-        suggestions={conversationStarted || availability?.enabled !== true || team.aiEnabled === false
-          ? [] : suggestions}
+        suggestions={conversationStarted ? []
+          : availability?.enabled === true && team.aiEnabled !== false
+            ? suggestions : suggestions.filter((suggestion) => suggestion.starter)}
         onSelectSuggestion={onSelectSuggestion}
         scrollSuggestions
         toolDisplayNames={chat.toolDisplayNames}

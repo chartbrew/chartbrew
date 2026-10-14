@@ -12,6 +12,9 @@ const {
   normalizeWebsiteUrl,
 } = require("../modules/teamOnboarding/businessProfileDiscovery");
 
+const starterSuggestions = require("../modules/ai/homeSuggestions/onboarding");
+const { log: logHomeSuggestions } = require("../modules/ai/homeSuggestions/service");
+
 const apiLimiter = (max = 10) => {
   return rateLimit({
     windowMs: 60 * 1000, // 1 minute
@@ -190,6 +193,8 @@ module.exports = (app) => {
   app.patch("/team/:id/onboarding", verifyToken, apiLimiter(20), async (req, res) => {
     try {
       const team = await teamController.saveOnboarding(req.params.id, req.user.id, req.body);
+      await starterSuggestions.queueSuggestions(team.id, app.get("homeSuggestionsQueue"))
+        .catch(() => logHomeSuggestions("starter_queue_failed"));
       return res.status(200).send(team);
     } catch (error) {
       if (error.message === "401") return res.status(403).send({ error: "Access denied" });
@@ -201,6 +206,8 @@ module.exports = (app) => {
   app.put("/team/:id/business-profile", verifyToken, apiLimiter(20), async (req, res) => {
     try {
       const profile = await teamController.updateBusinessProfile(req.params.id, req.user.id, req.body);
+      await starterSuggestions.queueSuggestions(profile.team_id, app.get("homeSuggestionsQueue"))
+        .catch(() => logHomeSuggestions("starter_queue_failed"));
       return res.status(200).send(profile);
     } catch (error) {
       if (error.message === "401") return res.status(403).send({ error: "Access denied" });

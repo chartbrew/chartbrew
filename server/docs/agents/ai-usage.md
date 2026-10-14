@@ -107,3 +107,20 @@ From `server/`:
 ```sh
 npm run test:pure -- tests/unit/aiUsage.test.js
 ```
+
+## Home suggestions
+
+New home suggestion calls use `purpose: "home_suggestions"` and `activity: "internal"`.
+This includes both public website starter questions and personal chart/dataset suggestions.
+
+Public website starter questions run through the existing home suggestion worker after a
+business profile is saved. They work even when team AI or personal suggestions are off.
+The worker reads the public website again and sends only its business name, description,
+industry, keywords, and language. It never sends saved profile edits or workspace data.
+The platform AI setting still applies. Normal chat submission still requires AI access.
+Without a website, a configured provider,
+or a successful generation, Home uses three default questions.
+
+Run `npm run db:migrate` from `server/`, then restart the server and workers.
+No new environment variables are required. The existing AI provider and Redis are used.
+Check with `npm run test:pure -- tests/unit/onboardingHomeSuggestions.test.js tests/unit/homeSuggestions.test.js`.

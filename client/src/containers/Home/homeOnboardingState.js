@@ -8,7 +8,16 @@ const DISPLAY_KEYS = [
   "sharedDashboard",
 ];
 
-export function getHomeSuggestions({ content, dataHealth, hasWatchedMetric, observations, setupState, suggestionActions }) {
+export const STARTER_SUGGESTIONS = [
+  { id: "starter-metrics", title: "What should I track?", prompt: "What should my business measure first?", starter: true },
+  { id: "starter-report", title: "What goes in my report?", prompt: "What would a useful weekly report show for my business?", starter: true },
+  { id: "starter-data", title: "Which data comes first?", prompt: "Which data should I connect first to answer my business questions?", starter: true },
+];
+
+export function getHomeSuggestions({ content, dataHealth, hasWatchedMetric, observations, setupState, suggestionActions, starterSuggestions }) {
+  if (content?.canConfigureTeam && !content.hasConnection && !content.hasDataset && !content.hasChart) {
+    return starterSuggestions?.length ? starterSuggestions : STARTER_SUGGESTIONS;
+  }
   if (Array.isArray(suggestionActions) && !suggestionActions.includes("report")) return ["What can I ask?"];
   if (dataHealth?.count > 0) {
     return content?.canConfigureTeam
@@ -19,9 +28,6 @@ export function getHomeSuggestions({ content, dataHealth, hasWatchedMetric, obse
     return content?.hasChart
       ? ["Summarize my dashboard", "Show my latest results", "Check data freshness"]
       : ["How do I get started?", "What reports can I access?"];
-  }
-  if (!content.hasConnection && !content.hasDataset && !content.hasChart) {
-    return ["What can I ask?"];
   }
   if (!content.hasDataset) {
     return ["Explore my connected data", "What can I learn from my data?"];

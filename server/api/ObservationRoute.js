@@ -8,6 +8,7 @@ const ObservationController = require("../controllers/ObservationController");
 const WorkspaceLearningController = require("../controllers/WorkspaceLearningController");
 const verifyToken = require("../modules/verifyToken");
 const { getObservationAccess } = require("../modules/observations/access");
+const starterSuggestions = require("../modules/ai/homeSuggestions/onboarding");
 const homeSuggestions = require("../modules/ai/homeSuggestions/service");
 const { allowedActions } = require("../modules/ai/homeSuggestions/rules");
 
@@ -74,6 +75,7 @@ module.exports = (app) => {
       const config = await homeSuggestions.settings(req.observationAccess);
       return res.send({
         ...home, suggestions,
+        ...await starterSuggestions.readSuggestions(req.observationAccess, home.content),
         suggestionActions: allowedActions(req.observationAccess, config.envelope, config.policy),
       });
     } catch (error) {

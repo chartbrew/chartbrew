@@ -16,6 +16,14 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     logoMimeType: DataTypes.STRING(100),
     logoData: DataTypes.BLOB("medium"),
+    homeSuggestions: {
+      type: DataTypes.TEXT,
+      get() {
+        try { return JSON.parse(this.getDataValue("homeSuggestions")); }
+        catch (error) { return null; }
+      },
+      set(value) { this.setDataValue("homeSuggestions", JSON.stringify(value)); },
+    },
     metadata: {
       type: DataTypes.TEXT,
       get() {

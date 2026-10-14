@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getHomeSuggestions, getOnboardingPlan } from "./homeOnboardingState.js";
+import { STARTER_SUGGESTIONS, getHomeSuggestions, getOnboardingPlan } from "./homeOnboardingState.js";
 
 test("keeps the foundation linear and unlocks parallel work after the first chart", () => {
   assert.deepEqual(getOnboardingPlan({
@@ -40,7 +40,7 @@ test("suggestions follow available content, recovery and permissions", () => {
     dataHealth: { count: 0 },
     observations: [],
   };
-  assert.deepEqual(getHomeSuggestions(home), ["What can I ask?"]);
+  assert.deepEqual(getHomeSuggestions(home), STARTER_SUGGESTIONS);
   home.content.hasConnection = true;
   assert.equal(getHomeSuggestions(home)[0], "Explore my connected data");
   home.content.hasDataset = true;
@@ -62,4 +62,20 @@ test("suggestions follow available content, recovery and permissions", () => {
   assert.deepEqual(getHomeSuggestions(home), ["Summarize my dashboard", "Show my latest results", "Check data freshness"]);
   home.content.hasChart = false;
   assert.deepEqual(getHomeSuggestions(home), ["How do I get started?", "What reports can I access?"]);
+});
+
+test("starter questions use short labels and give way to connected data", () => {
+  assert.equal(STARTER_SUGGESTIONS.length, 3);
+  STARTER_SUGGESTIONS.forEach((item) => {
+    assert.ok(item.title.length <= 28);
+    assert.ok(item.prompt.length > item.title.length);
+  });
+  const home = { content: { canConfigureTeam: true }, suggestionActions: [], starterSuggestions: [{
+    id: "starter-public", title: "How do trials convert?", prompt: "How can I measure trial conversion?", starter: true,
+  }] };
+  assert.deepEqual(getHomeSuggestions(home), home.starterSuggestions);
+  home.content.hasConnection = true;
+  assert.notDeepEqual(getHomeSuggestions(home), home.starterSuggestions);
+  home.content = { canConfigureTeam: false };
+  assert.notDeepEqual(getHomeSuggestions(home), home.starterSuggestions);
 });
