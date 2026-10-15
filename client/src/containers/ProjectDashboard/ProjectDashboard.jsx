@@ -685,7 +685,7 @@ function ProjectDashboard() {
     team.TeamRoles.forEach((teamRole) => {
       if (teamRole.team_id === team?.id
         && teamRole.user_id === user.id
-        && (teamRole.canExport || teamRole.role === "teamOwner")
+        && (teamRole.canExport || ["teamOwner", "teamAdmin", "teamEditor", "teamViewer"].includes(teamRole.role))
       ) {
         canExport = true;
       }

@@ -1,3 +1,5 @@
+const { normalizeRoleAccess } = require("../modules/teamRolePolicy");
+const { teamRoles } = require("../../shared/roles.json");
 const { v4: uuidv4 } = require("uuid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
@@ -27,6 +29,8 @@ const settings = process.env.NODE_ENV === "production" ? require("../settings") 
 const TEAM_ROLES = new Set([
   "teamOwner",
   "teamAdmin",
+  "teamEditor",
+  "teamViewer",
   "projectAdmin",
   "projectEditor",
   "projectViewer",
@@ -165,17 +169,14 @@ class TeamController {
       return Promise.reject(new Error("Invalid invitation role"));
     }
 
-    const teamRoleObj = { "team_id": teamId, "user_id": userId, "role": roleName };
-    if (projects) teamRoleObj.projects = projects;
-    if (canExport) teamRoleObj.canExport = canExport;
+    const teamRoleObj = normalizeRoleAccess(roleName, { team_id: teamId, user_id: userId, role: roleName, projects: projects || [], canExport: canExport === true });
 
     let gRole;
     return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId } })
       .then((teamRole) => {
         if (teamRole) {
           gRole = teamRole;
-          // don't update if the role is the owner or teamAdmin
-          if (teamRole.role === "teamOwner" || teamRole.role === "teamAdmin") return teamRole;
+          if (teamRoles.includes(teamRole.role)) return teamRole;
 
           return db.TeamRole.update(teamRoleObj, { where: { id: teamRole.id } });
         }
@@ -184,7 +185,7 @@ class TeamController {
       })
       .then((role) => {
         if (!gRole) gRole = role;
-        return db.TeamRole.findByPk(role.id);
+        return db.TeamRole.findByPk(gRole.id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -309,7 +310,7 @@ class TeamController {
     );
 
     return this.getTeamRole(teamId, userId)
-      .then((currentTeamRole) => {
+      .then(async (currentTeamRole) => {
         if (!currentTeamRole) {
           throw new Error(404);
         }
@@ -323,7 +324,24 @@ class TeamController {
           }
         }
 
-        return db.TeamRole.update(updateData, { where: { "team_id": teamId, "user_id": userId } });
+        const nextRole = updateData.role || currentTeamRole.role;
+        if (teamRoles.includes(currentTeamRole.role) && !teamRoles.includes(nextRole)) {
+          if (!Array.isArray(updateData.projects) || !updateData.projects.length) {
+            throw new Error("Select dashboards before changing to a client role.");
+          }
+          if (updateData.canExport === undefined) updateData.canExport = false;
+        }
+        if (!teamRoles.includes(nextRole) && updateData.projects !== undefined) {
+          const ids = updateData.projects;
+          if (!Array.isArray(ids) || ids.some((id) => !Number.isInteger(id) || id <= 0)
+            || new Set(ids).size !== ids.length
+            || await db.Project.count({ where: { id: ids, team_id: teamId, ghost: false } }) !== ids.length) {
+            throw new Error("Select valid dashboards from this team.");
+          }
+        }
+        return db.TeamRole.update(normalizeRoleAccess(nextRole, updateData), {
+          where: { team_id: teamId, user_id: userId },
+        });
       })
       .then(() => {
         return this.getTeamRole(teamId, userId);
@@ -445,7 +463,7 @@ class TeamController {
         const newTeams = teams.map((team) => {
           const newTeam = team;
           const teamRole = team.TeamRoles.find((role) => role.user_id === parseInt(userId, 10));
-          if (teamRole.role !== "teamOwner" && teamRole.role !== "teamAdmin") {
+          if (!teamRoles.includes(teamRole.role)) {
             const allowedProjects = [];
             let projectsRole = [];
             projectsRole = teamRole.projects || [];

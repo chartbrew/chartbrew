@@ -103,7 +103,7 @@ function AiModal({ isOpen, onClose }) {
     setShowAccessNotice(true);
     return false;
   };
-  const isReportingOnly = teamRole === "projectViewer";
+  const isReportingOnly = ["projectViewer", "teamViewer"].includes(teamRole);
   const questionPlaceholder = isReportingOnly
     ? "Ask about existing reports and metrics"
     : "Ask a question about your data";

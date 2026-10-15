@@ -48,7 +48,7 @@ describe("TeamController role security", () => {
     const result = await controller.updateTeamRole(7, 42, { role: "teamAdmin" });
 
     expect(updateSpy).toHaveBeenCalledWith(
-      { role: "teamAdmin" },
+      { role: "teamAdmin", projects: [], canExport: true },
       { where: { team_id: 7, user_id: 42 } }
     );
     expect(getTeamRoleSpy).toHaveBeenCalledTimes(2);
@@ -56,6 +56,7 @@ describe("TeamController role security", () => {
   });
 
   it("only writes supported team role fields", async () => {
+    vi.spyOn(db.Project, "count").mockResolvedValue(1);
     vi.spyOn(controller, "getTeamRole")
       .mockResolvedValueOnce({ team_id: 7, user_id: 42, role: "projectEditor" })
       .mockResolvedValueOnce({ team_id: 7, user_id: 42, role: "projectAdmin" });

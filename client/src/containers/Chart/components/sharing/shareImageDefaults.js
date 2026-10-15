@@ -53,19 +53,19 @@ export function getCurrentTeamRole(team, userId) {
 }
 
 function hasProjectAccess(teamRole, projectId) {
-  return ["teamOwner", "teamAdmin"].includes(teamRole?.role)
+  return ["teamOwner", "teamAdmin", "teamEditor", "teamViewer"].includes(teamRole?.role)
     || (Array.isArray(teamRole?.projects)
       && teamRole.projects.some((id) => `${id}` === `${projectId}`));
 }
 
 export function canManageChartLinks(teamRole, projectId) {
-  return ["teamOwner", "teamAdmin"].includes(teamRole?.role)
+  return ["teamOwner", "teamAdmin", "teamEditor"].includes(teamRole?.role)
     || (["projectAdmin", "projectEditor"].includes(teamRole?.role)
       && hasProjectAccess(teamRole, projectId));
 }
 
 export function canExportChartImage(teamRole, projectId) {
-  if (["teamOwner", "teamAdmin"].includes(teamRole?.role)) return true;
+  if (["teamOwner", "teamAdmin", "teamEditor", "teamViewer"].includes(teamRole?.role)) return true;
   return ["projectAdmin", "projectEditor", "projectViewer"].includes(teamRole?.role)
     && teamRole.canExport === true
     && hasProjectAccess(teamRole, projectId);

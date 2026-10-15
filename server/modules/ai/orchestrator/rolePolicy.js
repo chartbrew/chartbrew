@@ -1,3 +1,4 @@
+const { viewerRoles } = require("../../../../shared/roles.json");
 const { isCapabilityQuestion } = require("./capabilityHandler");
 const { routeWorkspaceRequest } = require("./runtime/deterministicRouter");
 
@@ -52,7 +53,7 @@ const PROJECT_EDITOR_CAPABILITY_MESSAGE = [
 ].join(" ");
 
 function isReportingOnlyRole(role) {
-  return role === "projectViewer";
+  return viewerRoles.includes(role);
 }
 
 function getAiRoleScope(access, envelope) {

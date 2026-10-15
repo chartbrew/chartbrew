@@ -53,7 +53,7 @@ import {
 } from "./ActivityList";
 import { formatTimeAgo } from "../../modules/observationFormat";
 
-const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamAdmin", "teamOwner"]);
+const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamEditor", "teamAdmin", "teamOwner"]);
 const MONITOR_STATUS_LABELS = {
   collecting: "Waiting",
   ineligible: "Needs review",

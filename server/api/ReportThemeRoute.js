@@ -8,7 +8,7 @@ module.exports = (app) => {
     try {
       const role = await db.TeamRole.findOne({ where: { team_id: req.params.team_id, user_id: req.user.id } });
       const admin = ["teamOwner", "teamAdmin"].includes(role?.role);
-      const editor = ["projectAdmin", "projectEditor"].includes(role?.role)
+      const editor = role?.role === "teamEditor" || ["projectAdmin", "projectEditor"].includes(role?.role)
         && role.projects?.length > 0
         && await db.Project.count({ where: { team_id: req.params.team_id, id: role.projects } });
       if (!admin && !editor) return res.status(403).json({ message: "Access denied" });

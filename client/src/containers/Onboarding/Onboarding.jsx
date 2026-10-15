@@ -335,7 +335,7 @@ function Onboarding() {
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Step 5 of 5</div>
             <h1 className="mt-2 text-balance text-3xl font-bold">Invite your teammates</h1>
             <div className="mt-8">
-              <InviteMembersForm showHeading={false} />
+              <InviteMembersForm showHeading={false} teamOnly />
             </div>
             {error ? <p className="mt-4 text-sm text-danger" role="alert">{error}</p> : null}
             <div className="mt-8 flex items-center justify-between gap-2">

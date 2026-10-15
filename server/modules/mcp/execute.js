@@ -1,10 +1,11 @@
+const { adminRoles } = require("../../../shared/roles.json");
 const { withSourceExecutionContext } = require("../sourceExecution");
 const { Op } = require("sequelize");
 const db = require("../../models/models");
 const DataApiController = require("../../controllers/DataApiController");
 const DatasetController = require("../../controllers/DatasetController");
 const ChartImageController = require("../../controllers/ChartImageController");
-const { canReadDataset, findAccessibleDataset, TEAM_WIDE_ROLES } = require("../dataApiAccess");
+const { canReadDataset, findAccessibleDataset } = require("../dataApiAccess");
 const { DataApiError, serializeDataApiResponse } = require("../dataApiResponse");
 const { withExecutionDeadline } = require("../dataApiLimits");
 const { readWorkspaceActivity } = require("../workspaceContext/workspaceActivityProjection");
@@ -29,8 +30,8 @@ function clientLink(path) {
 }
 
 function requireSourceAccess(access) {
-  // ponytail: team-wide only; project-scoped writes need source and preview ownership checks first.
-  if (!TEAM_WIDE_ROLES.has(access.role) || !access.allProjects)
+  // Source changes require team administration permission.
+  if (!adminRoles.includes(access.role) || !access.allProjects)
     throw new DataApiError("API_KEY_SCOPE_REQUIRED");
 }
 

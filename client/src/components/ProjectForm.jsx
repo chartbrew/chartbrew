@@ -13,6 +13,8 @@ import {
 import { LuArrowRight } from "react-icons/lu";
 
 import { createProject } from "../slices/project";
+import canAccess from "../config/canAccess";
+import { selectUser } from "../slices/user";
 import { selectTeam } from "../slices/team";
 import CustomTemplates from "../containers/Connections/CustomTemplates/CustomTemplates";
 import Row from "./Row";
@@ -48,6 +50,8 @@ function ProjectForm(props) {
   const [communityTemplate, setCommunityTemplate] = useState("");
 
   const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
+  const canUseTemplates = canAccess("teamAdmin", user.id, team.TeamRoles);
   const connections = useSelector(selectConnections);
 
   const dispatch = useDispatch();
@@ -94,7 +98,7 @@ function ProjectForm(props) {
               }}>
                 <div>
                   <div className="h-2" />
-                  {!hideType && (
+                  {!hideType && canUseTemplates && (
                     <div className="w-full">
                       <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth isDisabled={!newProject.name}>
                         <Tabs.ListContainer>

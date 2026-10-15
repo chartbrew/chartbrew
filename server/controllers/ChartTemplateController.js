@@ -1,3 +1,4 @@
+const { teamRoles } = require("../../shared/roles.json");
 const db = require("../models/models");
 const ChartController = require("./ChartController");
 const DatasetController = require("./DatasetController");
@@ -19,7 +20,7 @@ function getSelectedIds(requestedIds, availableItems) {
 }
 
 function isProjectAccessible(teamRole, projectId) {
-  if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+  if (teamRoles.includes(teamRole.role)) {
     return true;
   }
 

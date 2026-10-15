@@ -138,7 +138,7 @@ function verifyDataApiKey(requiredScope = "data:read") {
       }
 
       const access = await buildDataApiAccess(db, apiKey, teamRole);
-      if (!access.role || !["teamOwner", "teamAdmin", "projectAdmin", "projectEditor", "projectViewer"].includes(access.role)) {
+      if (!access.role || !["teamOwner", "teamAdmin", "teamEditor", "teamViewer", "projectAdmin", "projectEditor", "projectViewer"].includes(access.role)) {
         return dataApiError(req, res, "API_KEY_INVALID");
       }
 

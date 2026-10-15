@@ -249,7 +249,9 @@ function DashboardList() {
   const _onNewProject = (activeTeam) => {
     setAddProject(true);
     dispatch(saveActiveTeam(activeTeam));
-    dispatch(getTemplates(activeTeam.id));
+    if (_canAccess("teamAdmin", activeTeam.TeamRoles)) {
+      dispatch(getTemplates(activeTeam.id));
+    }
   };
 
   const _changeViewMode = (mode) => {
@@ -264,7 +266,9 @@ function DashboardList() {
         return teamRole?.projects?.length > 0
           && teamRole.projects.includes(project.id)
           && teamRole.role !== "teamOwner"
-          && teamRole.role !== "teamAdmin";
+          && teamRole.role !== "teamAdmin"
+          && teamRole.role !== "teamEditor"
+          && teamRole.role !== "teamViewer";
       });
     });
   };
@@ -368,6 +372,7 @@ function DashboardList() {
     }
   };
 
+  const canCreateDashboards = _canAccess("teamEditor", team?.TeamRoles);
   const canManageDashboards = _canAccess("teamAdmin", team?.TeamRoles);
   const canEditAppearance = _canAccess("projectEditor", team?.TeamRoles);
   const filteredProjects = _getFilteredProjects();
@@ -394,7 +399,7 @@ function DashboardList() {
             </div>
 
             <div className="flex flex-row items-center gap-2">
-              {canManageDashboards && (
+              {canCreateDashboards && (
                 <Button onPress={() => _onNewProject(team)}
                   className="create-dashboard-tutorial"
                 >

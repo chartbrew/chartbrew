@@ -5,6 +5,7 @@ const db = require("../../models/models");
 const {
   DATA_API_SCOPES,
   TEAM_WIDE_ROLES,
+  getRoleScopes,
   PROJECT_ROLES,
   buildDataApiAccess,
   normalizeProjectIds,
@@ -213,7 +214,7 @@ async function pending(id, userId, transaction) {
 }
 
 function allowedScopes(role) {
-  return TEAM_WIDE_ROLES.has(role) ? [...DATA_API_SCOPES] : ["data:read", "data:refresh"];
+  return getRoleScopes(role);
 }
 
 async function consentInfo(id, userId) {

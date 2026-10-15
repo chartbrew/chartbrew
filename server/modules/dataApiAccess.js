@@ -1,8 +1,15 @@
+const { teamRoles } = require("../../shared/roles.json");
 const { Op } = require("sequelize");
 
-const TEAM_WIDE_ROLES = new Set(["teamOwner", "teamAdmin"]);
+const TEAM_WIDE_ROLES = new Set(teamRoles);
 const PROJECT_ROLES = new Set(["projectAdmin", "projectEditor", "projectViewer"]);
 const DATA_API_SCOPES = new Set(["data:read", "data:refresh", "charts:preview", "datasets:write"]);
+
+function getRoleScopes(role) {
+  if (role === "teamViewer") return ["data:read"];
+  if (["teamOwner", "teamAdmin"].includes(role)) return [...DATA_API_SCOPES];
+  return ["data:read", "data:refresh"];
+}
 
 function normalizeProjectIds(value) {
   if (!Array.isArray(value)) return [];
@@ -60,7 +67,7 @@ async function buildDataApiAccess(db, apiKey, teamRole) {
       keyProjectIds: apiKey.project_ids,
       allProjects: apiKey.all_projects,
     }),
-    scopes: normalizeScopes(apiKey.scopes),
+    scopes: normalizeScopes(apiKey.scopes).filter((scope) => getRoleScopes(teamRole.role).includes(scope)),
   };
 }
 
@@ -130,6 +137,7 @@ async function validateKeyProjectIds(db, teamId, projectIds) {
 }
 
 module.exports = {
+  getRoleScopes,
   DATA_API_SCOPES,
   PROJECT_ROLES,
   TEAM_WIDE_ROLES,

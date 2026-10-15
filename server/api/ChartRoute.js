@@ -1,3 +1,4 @@
+const { teamRoles, viewerRoles } = require("../../shared/roles.json");
 const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
 
@@ -110,7 +111,7 @@ module.exports = (app) => {
 
     user.teamRole = teamRole;
 
-    if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+    if (teamRoles.includes(teamRole.role)) {
       return true;
     }
 
@@ -226,7 +227,7 @@ module.exports = (app) => {
         if (!chart) {
           return res.status(404).json({ message: "Chart not found" });
         }
-        if (chart.draft && teamRole.role === "projectViewer") {
+        if (chart.draft && viewerRoles.includes(teamRole.role)) {
           return res.status(404).json({ message: "Chart not found" });
         }
         if (chart.project_id.toString() !== projectId.toString()) {
@@ -250,7 +251,7 @@ module.exports = (app) => {
         }
       }
 
-      if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+      if (teamRoles.includes(teamRole.role)) {
         const permission = accessControl.can(teamRole.role)[actionType](entity);
         if (!permission.granted) {
           return res.status(403).json({ message: "Access denied" });
@@ -336,7 +337,7 @@ module.exports = (app) => {
 
           const permission = accessControl.can(teamRole.role).readOwn("chart");
           if (permission.granted) {
-            if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+            if (teamRoles.includes(teamRole.role)) {
               return next();
             }
 
@@ -466,7 +467,7 @@ module.exports = (app) => {
     return chartController.findByProject(req.params.project_id)
       .then((charts) => {
         let filteredCharts = charts;
-        if (req.user?.teamRole?.role === "projectViewer") {
+        if (viewerRoles.includes(req.user?.teamRole?.role)) {
           filteredCharts = charts.filter((c) => !c.draft);
         }
         return res.status(200).send(filteredCharts);
@@ -970,7 +971,7 @@ module.exports = (app) => {
   ** Route used to export data in spreadsheet format
   */
   app.post("/project/:project_id/chart/export", verifyToken, checkPermissions("readAny"), (req, res) => {
-    if (!req.user?.teamRole?.canExport && req.user?.teamRole?.role !== "teamOwner" && req.user.role !== "teamAdmin") {
+    if (!req.user?.teamRole?.canExport && !teamRoles.includes(req.user?.teamRole?.role)) {
       return new Promise((resolve, reject) => reject(new Error(401)));
     }
 

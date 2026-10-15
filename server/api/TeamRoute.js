@@ -1,3 +1,4 @@
+const { teamRoles } = require("../../shared/roles.json");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
@@ -43,6 +44,7 @@ const onboardingDiscoveryDomainLimiter = rateLimit({
 });
 
 function filterProjects(projects, teamRole) {
+  if (teamRoles.includes(teamRole?.role)) return projects;
   return projects.filter((p) => _.indexOf(teamRole.projects, p.id) > -1);
 }
 
@@ -85,6 +87,7 @@ module.exports = (app) => {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      req.user.teamRole = teamRole;
       const { role } = teamRole;
 
       // Handle permissions for teamOwner and teamAdmin
@@ -93,7 +96,7 @@ module.exports = (app) => {
         return next();
       }
 
-      if (role === "projectAdmin" || role === "projectViewer" || role === "projectEditor") {
+      if (["teamEditor", "teamViewer", "projectAdmin", "projectViewer", "projectEditor"].includes(role)) {
         // const connections = await connectionController.findByProjects(projects);
         // if (!connections || connections.length === 0) {
         //   return res.status(404).json({ message: "No connections found" });
@@ -125,7 +128,7 @@ module.exports = (app) => {
     return teamController.findById(req.params.id)
       .then((team) => {
         const modTeam = team;
-        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, req.user));
+        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, req.user.teamRole));
         return res.status(200).send(modTeam);
       })
       .catch((error) => {

@@ -1,3 +1,4 @@
+const { teamRoles, viewerRoles } = require("../../shared/roles.json");
 const path = require("path");
 const fs = require("fs");
 const rateLimit = require("express-rate-limit");
@@ -67,7 +68,7 @@ module.exports = (app) => {
       }
       req.user.teamRole = teamRole;
 
-      if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+      if (teamRoles.includes(teamRole.role)) {
         const permission = accessControl.can(teamRole.role)[actionType]("project");
         if (!permission.granted) {
           return res.status(403).json({ message: "Access denied" });
@@ -156,7 +157,7 @@ module.exports = (app) => {
   app.get("/project/:id", verifyToken, checkPermissions("readOwn"), (req, res) => {
     return projectController.findById(req.params.id, {
       refreshPreparedData: true,
-      includeDrafts: req.user.teamRole.role !== "projectViewer",
+      includeDrafts: !viewerRoles.includes(req.user.teamRole.role),
     })
       .then((project) => {
         return res.status(200).send(project);
@@ -369,8 +370,7 @@ module.exports = (app) => {
         if (
           teamRole
           && (
-            teamRole.role === "teamOwner"
-            || teamRole.role === "teamAdmin"
+            teamRoles.includes(teamRole.role)
             || hasProjectAccess
           )
         ) {

@@ -61,7 +61,7 @@ function HomeAsk({ focused, hasContent, onContentChange, onFocusChange, suggesti
       return false;
     }
   };
-  const questionPlaceholder = teamRole === "projectViewer"
+  const questionPlaceholder = ["projectViewer", "teamViewer"].includes(teamRole)
     ? "Ask about existing reports and metrics"
     : hasContent ? "Ask anything about your data" : "What are you trying to understand from your data?";
 

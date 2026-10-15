@@ -1,3 +1,4 @@
+import roles from "../../../../shared/roles.json";
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,6 +33,7 @@ function TeamMembers(props) {
   const [deleteMember, setDeleteMember] = useState("");
   const [projectModal, setProjectModal] = useState(false);
   const [projectAccess, setProjectAccess] = useState({});
+  const [pendingRole, setPendingRole] = useState(null);
   const [changedRole, setChangedRole] = useState({});
   const [transferOwnershipMember, setTransferOwnershipMember] = useState(null);
   const [transfering, setTransfering] = useState(false);
@@ -68,19 +70,32 @@ function TeamMembers(props) {
       });
   };
 
-  const _onChangeRole = (newRole, member) => {
-    setLoading(true);
+  const _onChangeRole = async (newRole, member, access) => {
+    const currentRole = member.TeamRoles?.find((item) => item.team_id === team.id)?.role;
     setChangedMember(member);
-    dispatch(updateTeamRole({ data: { role: newRole }, memberId: member.id, team_id: team.id }))
-      .then(() => {
-        setLoading(false);
-      }).catch(() => {
-        setLoading(false);
-        toast.error("Something went wrong. Please try again");
-      });
+    if (!access && roles.teamRoles.includes(currentRole) && !roles.teamRoles.includes(newRole)) {
+      setPendingRole(newRole);
+      setChangedRole({ canExport: false });
+      setProjectAccess((previous) => ({ ...previous, [member.id]: { role: newRole, projects: [] } }));
+      setProjectModal(true);
+      return;
+    }
+    setLoading(true);
+    const action = await dispatch(updateTeamRole({
+      data: { role: newRole, ...access }, memberId: member.id, team_id: team.id,
+    }));
+    setLoading(false);
+    if (action.error) {
+      toast.error(action.error.message || "Could not change the role. Try again.");
+      return;
+    }
+    setPendingRole(null);
+    setProjectModal(false);
+    _getTeam();
   };
 
   const _openProjectAccess = (member) => {
+    setPendingRole(null);
     if (member.TeamRoles) {
       let selectedTeamRole;
       member.TeamRoles.map((teamRole) => {
@@ -106,6 +121,13 @@ function TeamMembers(props) {
       newAccess.splice(isFound, 1);
     }
 
+    if (pendingRole) {
+      setProjectAccess((previous) => ({
+        ...previous, [changedMember.id]: { role: pendingRole, projects: newAccess },
+      }));
+      return;
+    }
+
     dispatch(updateTeamRole({
       data: { projects: newAccess },
       memberId: changedMember.id,
@@ -123,6 +145,10 @@ function TeamMembers(props) {
   };
 
   const _onChangeExport = (canExport) => {
+    if (pendingRole) {
+      setChangedRole((previous) => ({ ...previous, canExport }));
+      return;
+    }
     dispatch(updateTeamRole({
       data: { canExport },
       memberId: changedMember.id,
@@ -247,11 +273,17 @@ function TeamMembers(props) {
                       {memberRole.role === "teamAdmin" && <Chip color="success" variant="soft" size="sm"><LuStar size={14} />Team Admin</Chip>}
                       {memberRole.role === "projectAdmin" && <Chip variant="secondary" size="sm"><LuUser size={14} />Client admin</Chip>}
                       {memberRole.role === "projectEditor" && <Chip color="warning" variant="soft" size="sm"><LuUser size={14} />Client editor</Chip>}
+                      {memberRole.role === "teamEditor" && (
+                        <Chip color="warning" variant="soft" size="sm">Team Editor</Chip>
+                      )}
+                      {memberRole.role === "teamViewer" && (
+                        <Chip color="default" variant="soft" size="sm">Team Viewer</Chip>
+                      )}
                       {memberRole.role === "projectViewer" && <Chip color="default" variant="soft" size="sm"><LuUser size={14} />Client viewer</Chip>}
                     </Table.Cell>
                     <Table.Cell>
-                      {memberRole?.role !== "teamOwner" && memberRole?.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
-                      {memberRole?.role === "teamOwner" || memberRole?.role === "teamAdmin" ? "All" : ""}
+                      {!roles.teamRoles.includes(memberRole?.role) ? memberRole?.projects?.length : ""}
+                      {roles.teamRoles.includes(memberRole?.role) ? "All" : ""}
                     </Table.Cell>
                     <Table.Cell>
                       {(memberRole?.canExport || (memberRole?.role?.indexOf("team") > -1)) && <Chip color="success" variant="soft" size="sm">Yes</Chip>}
@@ -259,7 +291,7 @@ function TeamMembers(props) {
                     </Table.Cell>
                     <Table.Cell>
                       <div className="flex flex-row items-center gap-1">
-                        {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" && (
+                        {_canAccess("teamAdmin") && !roles.teamRoles.includes(memberRole.role) && (
                           <>
                             <Tooltip>
                               <Tooltip.Trigger>
@@ -374,6 +406,12 @@ function TeamMembers(props) {
                                               </div>
                                             </Dropdown.Item>
                                           )}
+                                        <Dropdown.Item id="teamEditor" textValue="Team Editor">
+                                          <span className="font-medium">Team Editor</span>
+                                        </Dropdown.Item>
+                                        <Dropdown.Item id="teamViewer" textValue="Team Viewer">
+                                          <span className="font-medium">Team Viewer</span>
+                                        </Dropdown.Item>
                                       </Dropdown.Menu>
                                     </Dropdown.Popover>
                                   </Dropdown>
@@ -457,7 +495,10 @@ function TeamMembers(props) {
 
       {/* Project access modal */}
       <Modal>
-        <Modal.Backdrop isOpen={projectModal} onOpenChange={setProjectModal}>
+        <Modal.Backdrop isOpen={projectModal} onOpenChange={(open) => {
+          setProjectModal(open);
+          if (!open) setPendingRole(null);
+        }}>
           <Modal.Container>
             <Modal.Dialog className="sm:max-w-4xl">
               <Modal.Header>
@@ -468,13 +509,7 @@ function TeamMembers(props) {
               <Modal.Body>
                 {changedMember && projectAccess[changedMember.id] && (
                   <>
-                    <div>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</div>
-                    <div className="flex flex-wrap items-center gap-1">
-                      <div>{"You are currently giving"}</div>
-                      <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{`${projectAccess[changedMember.id].role}`}</code>
-                      <div>{`access to ${changedMember.name}`}</div>
-                      <div>{"for the following projects:"}</div>
-                    </div>
+                    <div>{`Select dashboards for ${changedMember.name}.`}</div>
                     <div className="h-2" />
 
                     <div className="grid grid-cols-12 gap-1">
@@ -534,12 +569,21 @@ function TeamMembers(props) {
                 )}
               </Modal.Body>
               <Modal.Footer>
-                <Button
-                  slot="close"
-                  variant="secondary"
-                >
-                  Done
-                </Button>
+                {pendingRole ? (
+                  <Button
+                    isPending={loading}
+                    isDisabled={!projectAccess[changedMember?.id]?.projects?.length}
+                    onPress={() => _onChangeRole(pendingRole, changedMember, {
+                      projects: projectAccess[changedMember.id].projects,
+                      canExport: changedRole.canExport,
+                    })}
+                    variant="primary"
+                  >
+                    Save role and access
+                  </Button>
+                ) : (
+                  <Button slot="close" variant="secondary">Done</Button>
+                )}
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>

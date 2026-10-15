@@ -971,4 +971,12 @@ const grantList = [
   },
 ];
 
+for (const [role, sourceRole] of [["teamEditor", "projectEditor"], ["teamViewer", "projectViewer"]]) {
+  grantList.push(...grantList.filter((grant) => grant.role === sourceRole
+    && ["team", "teamRole", "project", "chart", "dataset", "connection"].includes(grant.resource)
+    && (role !== "teamViewer" || grant.action.startsWith("read:")))
+    .map((grant) => ({ ...grant, role })));
+}
+grantList.push({ role: "teamEditor", resource: "project", action: "create:any", attributes: "*" });
+
 module.exports = new AccessControl(grantList);

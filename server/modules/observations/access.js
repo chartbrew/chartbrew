@@ -1,3 +1,4 @@
+const { teamRoles, editorRoles } = require("../../../shared/roles.json");
 const { Op } = require("sequelize");
 
 const db = require("../../models/models");
@@ -31,7 +32,7 @@ async function getObservationAccess(teamId, userId) {
   if (!teamRole) throw createHttpError("Access denied", 403);
 
   return {
-    allProjects: TEAM_ADMIN_ROLES.has(teamRole.role),
+    allProjects: teamRoles.includes(teamRole.role),
     canConfigureTeam: TEAM_ADMIN_ROLES.has(teamRole.role),
     teamAiEnabled: teamRole.Team?.aiEnabled !== false,
     projectIds: normalizeProjectIds(teamRole.projects),
@@ -59,7 +60,7 @@ function isDatasetVisible(dataset, access, projectId) {
 }
 
 function canEditProject(access, projectId) {
-  if (access.allProjects) return true;
+  if (access.allProjects) return editorRoles.includes(access.role);
   return PROJECT_EDITOR_ROLES.has(access.role)
     && access.projectIds.includes(Number(projectId));
 }

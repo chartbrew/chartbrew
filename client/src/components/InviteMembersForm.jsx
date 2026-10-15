@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { motion, useReducedMotion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Accordion, Button, Checkbox, Chip, Description, InputGroup, Label, Radio, RadioGroup, TextField, Tooltip,
@@ -20,11 +21,15 @@ function InviteMembersForm(props) {
   const [loading, setLoading] = useState(false);
   const [projectAccess, setProjectAccess] = useState([]);
   const [exportAllowed, setExportAllowed] = useState(false);
-  const [role, setRole] = useState("teamAdmin");
+  const [role, setRole] = useState("teamEditor");
   const [inviteUrl, setInviteUrl] = useState("");
   const [urlCopied, setUrlCopied] = useState(false);
+  const [linkRevision, setLinkRevision] = useState(0);
+  const reduceMotion = useReducedMotion();
 
-  const { selectedProjects = null, showHeading = true } = props;
+  const { selectedProjects = null, showHeading = true, teamOnly = false } = props;
+
+  const isTeamRole = ["teamOwner", "teamAdmin", "teamEditor", "teamViewer"].includes(role);
 
   const team = useSelector(selectTeam);
   const projects = useSelector(selectProjects);
@@ -47,8 +52,8 @@ function InviteMembersForm(props) {
     setError("");
     const action = await dispatch(generateInviteUrl({
       team_id: team.id,
-      projects: projectAccess,
-      canExport: exportAllowed,
+      projects: isTeamRole ? [] : projectAccess,
+      canExport: isTeamRole || exportAllowed,
       role,
     }));
     setLoading(false);
@@ -56,7 +61,9 @@ function InviteMembersForm(props) {
       setError("We could not create your invite link. Try again.");
       return;
     }
+    setUrlCopied(false);
     setInviteUrl(action.payload);
+    setLinkRevision((revision) => revision + 1);
   };
 
   const _onChangeProjectAccess = (projectId) => {
@@ -97,6 +104,16 @@ function InviteMembersForm(props) {
       description: "Access to all projects, connections, datasets, but can't delete the team or interact with the team's billing",
     },
     {
+      value: "teamEditor",
+      label: "Team Editor",
+      description: "Can create dashboards and manage charts across the team. Cannot change connections, dataset queries, or team settings.",
+    },
+    {
+      value: "teamViewer",
+      label: "Team Viewer",
+      description: "Can view and export all team dashboards and charts. Cannot make changes.",
+    },
+    {
       value: "projectAdmin",
       label: "Client Admin",
       description: "Can manage all charts and reports in the selected dashboards. Can also edit tagged datasets and queries.",
@@ -126,29 +143,40 @@ function InviteMembersForm(props) {
           <div className="h-4" />
           <div>
             <RadioGroup
-              defaultValue="teamAdmin"
               name="invite-role"
+              aria-label="Invite role"
               variant="secondary"
               value={role}
               onChange={setRole}
             >
-              <Label className="font-bold">Select a role</Label>
-              {roleOptions.map((option) => (
-                <Radio key={option.value} value={option.value}>
-                  <Radio.Content>
-                    <Radio.Control>
-                      <Radio.Indicator />
-                    </Radio.Control>
-                    {option.label}
-                  </Radio.Content>
-                  <Description className="text-sm text-default-500">{option.description}</Description>
-                </Radio>
+              {roleOptions.filter((option) => !teamOnly || option.value.startsWith("team")).map((option) => (
+                <React.Fragment key={option.value}>
+                  {!teamOnly && option.value === "teamAdmin" && (
+                    <Chip color="accent" variant="soft" size="sm" className="self-start">
+                      Team roles
+                    </Chip>
+                  )}
+                  {option.value === "projectAdmin" && (
+                    <Chip size="sm" className="mt-6 self-start border-0 bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-300">
+                      Client roles
+                    </Chip>
+                  )}
+                  <Radio value={option.value}>
+                    <Radio.Content>
+                      <Radio.Control>
+                        <Radio.Indicator />
+                      </Radio.Control>
+                      {option.label}
+                    </Radio.Content>
+                    <Description className="text-sm text-default-500">{option.description}</Description>
+                  </Radio>
+                </React.Fragment>
               ))}
             </RadioGroup>
           </div>
           <div className="h-4" />
 
-          {role !== "teamAdmin" && (
+          {!isTeamRole && (
             <div>
               <Accordion variant="surface" className="bg-surface-secondary">
                 <Accordion.Item
@@ -219,7 +247,7 @@ function InviteMembersForm(props) {
         </>
       )}
 
-      {role !== "teamAdmin" && (
+      {!isTeamRole && (
         <>
           <div className="h-4" />
           <div className="flex flex-row items-center gap-1">
@@ -274,22 +302,29 @@ function InviteMembersForm(props) {
         <>
           <div className="h-4" />
           <div>
-            <TextField className="max-w-md" name="invite-url">
-              <Label htmlFor="url-text">Share this link with your team</Label>
-              <InputGroup variant="secondary" fullWidth>
-                <InputGroup.Input id="url-text" value={inviteUrl} readOnly />
-                <InputGroup.Suffix className="pr-0">
-                  <Button
-                    onPress={_onCopyUrl}
-                    size="sm"
-                    isIconOnly
-                    variant={urlCopied ? "primary" : "tertiary"}
-                    aria-label="Copy invite link"
-                  >
-                    {urlCopied ? <LuCheck /> : <LuCopy />}
-                  </Button>
-                </InputGroup.Suffix>
-              </InputGroup>
+            <TextField fullWidth name="invite-url">
+              <Label htmlFor="url-text">Share with one person. Generate a new link for each person.</Label>
+              <motion.div
+                key={linkRevision}
+                initial={reduceMotion ? false : { opacity: 0.45, y: 3 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.25, ease: [0.25, 1, 0.5, 1] }}
+              >
+                <InputGroup variant="secondary" fullWidth>
+                  <InputGroup.Input id="url-text" value={inviteUrl} readOnly />
+                  <InputGroup.Suffix className="pr-0">
+                    <Button
+                      onPress={_onCopyUrl}
+                      size="sm"
+                      isIconOnly
+                      variant={urlCopied ? "primary" : "tertiary"}
+                      aria-label="Copy invite link"
+                    >
+                      {urlCopied ? <LuCheck /> : <LuCopy />}
+                    </Button>
+                  </InputGroup.Suffix>
+                </InputGroup>
+              </motion.div>
             </TextField>
           </div>
           <div className="h-2" />
@@ -297,7 +332,7 @@ function InviteMembersForm(props) {
             <Chip color="warning" variant="soft" size="sm">
               {roleOptions.find((option) => option.value === role)?.label}
             </Chip>
-            {role !== "teamAdmin" && (
+            {!isTeamRole && (
               <>
                 <div className="w-1" />
                 <Chip variant="primary" size="sm">
@@ -318,6 +353,7 @@ function InviteMembersForm(props) {
 
 InviteMembersForm.propTypes = {
   showHeading: PropTypes.bool,
+  teamOnly: PropTypes.bool,
   selectedProjects: PropTypes.array,
 };
 

@@ -327,6 +327,17 @@ describe("ChartTemplateRoute", () => {
     }));
   });
 
+  it.each(["teamEditor", "teamViewer"])("blocks %s from templates that create datasets", async (role) => {
+    const seeded = await seedStripeTemplateSetup(models);
+    await models.TeamRole.update({ role }, { where: { team_id: seeded.team.id, user_id: seeded.user.id } });
+    const response = await request(app)
+      .post(`/team/${seeded.team.id}/chart-templates/stripe/core-revenue/create`)
+      .set("Authorization", `Bearer ${seeded.token}`)
+      .send({ connection_id: seeded.connection.id })
+      .expect(403);
+    expect(response.body.error).toBe("Not authorized");
+  });
+
   it("rejects cross-team connections", async () => {
     const seeded = await seedStripeTemplateSetup(models);
     const otherTeam = await models.Team.create(teamFactory.build());

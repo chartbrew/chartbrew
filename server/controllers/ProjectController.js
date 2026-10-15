@@ -1,3 +1,4 @@
+const { teamRoles } = require("../../shared/roles.json");
 const { getReportOrder } = require("../../shared/dashboard/layout.mjs");
 const { cloneDeep } = require("lodash");
 const { validate: validateUuid, version: uuidVersion } = require("uuid");
@@ -666,8 +667,7 @@ class ProjectController {
       if (
         teamRole
       && (
-        teamRole.role === "teamOwner"
-        || teamRole.role === "teamAdmin"
+        teamRoles.includes(teamRole.role)
         || hasProjectAccess
       )
       ) {

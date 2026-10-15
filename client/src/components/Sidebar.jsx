@@ -110,6 +110,8 @@ function Sidebar({ collapsed }) {
   const _getTeamRole = (teamRoles) => {
     const role = teamRoles?.find((item) => item.user_id === user.data.id)?.role;
     if (role === "teamOwner") return "Team owner";
+    if (role === "teamEditor") return "Team editor";
+    if (role === "teamViewer") return "Team viewer";
     if (role === "teamAdmin") return "Team admin";
     if (role === "projectAdmin") return "Project admin";
     if (role === "projectEditor") return "Project editor";

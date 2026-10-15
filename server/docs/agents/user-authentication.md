@@ -87,3 +87,16 @@ This document covers all authentication and user management flows in Chartbrew.
 - Every platform-settings route reloads the user from the database and checks `req.user.admin === true`.
 - Hiding the Platform tab is not an authorization control.
 - See [`server/docs/agents/platform-settings.md`](./platform-settings.md) for the settings registry and API boundary.
+
+
+## Team-wide roles
+
+`shared/roles.json` defines team, admin, editor, and viewer role groups.
+
+- `teamEditor` has Client Editor permissions across all current and future team dashboards. It can also create dashboards. It cannot delete dashboards, manage members, change connection settings, or edit dataset queries.
+- `teamViewer` can read all current and future team dashboards. It cannot write through the UI, API, AI, or MCP.
+- All four team roles can export charts and data without a project selection or export flag.
+- Client roles keep their selected-dashboard scope. A change from a team role to a client role requires an explicit dashboard selection; exports default to disabled for that change.
+- Onboarding offers team roles only and defaults to `teamEditor`.
+
+Role values use the existing string column. No database migration or new configuration is needed. API key scopes are checked against the current role, so a role change also removes stale write access.

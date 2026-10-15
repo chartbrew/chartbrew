@@ -72,7 +72,7 @@ function SidebarDashboards({ collapsed }) {
     || left.name.localeCompare(right.name)
   )).filter((dashboard) => dashboard.name.toLowerCase().includes(search.trim().toLowerCase()));
   const quickActions = [
-    { label: "New dashboard", icon: LuGrid2X2Plus, path: "/dashboards?create=dashboard", role: "teamAdmin" },
+    { label: "New dashboard", icon: LuGrid2X2Plus, path: "/dashboards?create=dashboard", role: "teamEditor" },
     { label: "New dataset", icon: LuLayers2, path: "/datasets/new", role: "projectAdmin" },
     { label: "New connection", icon: LuUnplug, path: "/connections/new", role: "teamAdmin" },
   ].filter((action) => canAccess(action.role, user.id, team.TeamRoles));

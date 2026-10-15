@@ -1,7 +1,7 @@
+const { editorRoles, viewerRoles } = require("../../../shared/roles.json");
 const crypto = require("crypto");
 
 const db = require("../../models/models");
-const { PROJECT_EDITOR_ROLES } = require("../observations/access");
 const { getWorkspaceOrchestratorPolicy } = require("./policy");
 
 function getOpenAiKey() {
@@ -31,13 +31,13 @@ async function getWorkspaceAccessEnvelope(access) {
     ? teamProjectIds
     : teamProjectIds.filter((projectId) => access.projectIds.includes(projectId));
   let editableProjectIds = [];
-  if (access.allProjects || PROJECT_EDITOR_ROLES.has(access.role)) {
+  if (editorRoles.includes(access.role)) {
     editableProjectIds = visibleProjectIds;
   }
   const user = await db.User.findByPk(access.userId, {
     attributes: ["email"],
   });
-  const reportingOnly = access.role === "projectViewer";
+  const reportingOnly = viewerRoles.includes(access.role);
   const orchestratorPolicy = getWorkspaceOrchestratorPolicy();
   const workspaceOrchestratorEnabled = orchestratorPolicy.enabled
     && access.teamAiEnabled !== false;

@@ -134,6 +134,13 @@ module.exports = (app) => {
         return next();
       }
 
+      if (role === "teamEditor") {
+        const teamProjects = await db.Project.findAll({ attributes: ["id"], where: { team_id, ghost: false } });
+        req.user.projects = teamProjects.map((project) => project.id);
+        req.user.permittedFields = permission.attributes;
+        return next();
+      }
+
       if (role === "projectAdmin" || role === "projectViewer" || role === "projectEditor") {
         // save the projects in the user object
         req.user.projects = projects;
@@ -338,10 +345,11 @@ module.exports = (app) => {
   app.get("/project/:project_id/connection", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("connection");
+        const permission = accessControl.can(teamRole.role)[teamRole.role === "teamEditor" ? "readOwn" : "readAny"]("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
+        if (!permission.attributes.includes("*")) req.user.permittedFields = permission.attributes;
         return connectionController.findByProject(req.params.project_id);
       })
       .then((connections) => {

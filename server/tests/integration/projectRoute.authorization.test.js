@@ -62,6 +62,28 @@ describe("ProjectRoute tenant authorization", () => {
     models = await getModels();
   });
 
+  it.each(["teamEditor", "teamViewer"])("enforces %s permissions across existing and future dashboards", async (role) => {
+    const owner = await createOwnerProject(models, role);
+    const other = await createOwnerProject(models, `${role}Other`);
+    const teamOwner = await models.User.create(userFactory.build({ email: `${role}-owner@example.com` }));
+    await models.TeamRole.create({ team_id: owner.team.id, user_id: teamOwner.id, role: "teamOwner" });
+    await models.TeamRole.update({ role, projects: [], canExport: false }, {
+      where: { team_id: owner.team.id, user_id: owner.user.id },
+    });
+    await request(app).get(`/project/${owner.project.id}`).auth(owner.token, { type: "bearer" }).expect(200);
+    await request(app).get(`/project/${other.project.id}`).auth(owner.token, { type: "bearer" }).expect(403);
+    await request(app).put(`/project/${owner.project.id}`).auth(owner.token, { type: "bearer" })
+      .send({ name: "Updated dashboard" }).expect(role === "teamEditor" ? 200 : 403);
+    await request(app).delete(`/project/${owner.project.id}`).auth(owner.token, { type: "bearer" }).expect(403);
+    await request(app).post("/project").auth(owner.token, { type: "bearer" })
+      .send({ team_id: owner.team.id, name: "New dashboard" }).expect(role === "teamEditor" ? 200 : 403);
+    await request(app).post("/project").auth(owner.token, { type: "bearer" })
+      .send({ team_id: other.team.id, name: "Denied" }).expect(403);
+    const future = await models.Project.create(projectFactory.build({ team_id: owner.team.id, ghost: false }));
+    const response = await request(app).get(`/project/${future.id}`).auth(owner.token, { type: "bearer" }).expect(200);
+    expect(response.body.id).toBe(future.id);
+  });
+
   it("rejects cross-team project updates that supply the attacker's team in the body", async () => {
     const attacker = await createOwnerProject(models, "AttackerUpdate");
     const victim = await createOwnerProject(models, "VictimUpdate");

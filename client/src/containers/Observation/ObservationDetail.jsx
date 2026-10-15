@@ -41,7 +41,7 @@ import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
 import ObservationInvestigation from "../Ai/ObservationInvestigation";
 
-const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamAdmin", "teamOwner"]);
+const EDIT_ROLES = new Set(["projectAdmin", "projectEditor", "teamEditor", "teamAdmin", "teamOwner"]);
 const NOT_USEFUL_REASONS = [
   { code: "expected_change", label: "Expected change" },
   { code: "too_small", label: "Too small" },

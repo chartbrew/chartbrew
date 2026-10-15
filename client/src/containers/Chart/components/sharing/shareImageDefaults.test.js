@@ -108,3 +108,11 @@ test("photo backgrounds send a named image id", () => {
   });
   assert.deepEqual(request.background, { id: "monochrome_poly", mode: "image" });
 });
+
+for (const role of ["teamOwner", "teamAdmin", "teamEditor", "teamViewer"]) {
+  test(`${role} can export without selected dashboards or an export flag`, () => {
+    const member = { role, projects: [], canExport: false };
+    assert.equal(canExportChartImage(member, 601), true);
+    assert.equal(canManageChartLinks(member, 601), role !== "teamViewer");
+  });
+}

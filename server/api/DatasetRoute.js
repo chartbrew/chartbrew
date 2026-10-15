@@ -1,3 +1,4 @@
+const { teamRoles } = require("../../shared/roles.json");
 const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const homeSuggestions = require("../modules/ai/homeSuggestions/service");
 const DatasetController = require("../controllers/DatasetController");
@@ -28,7 +29,7 @@ module.exports = (app) => {
       }
 
       let permission;
-      if ((teamRole.role === "projectAdmin" || teamRole.role === "projectEditor") && actionType.indexOf("Any") > -1) {
+      if (["teamEditor", "projectAdmin", "projectEditor"].includes(teamRole.role) && actionType.indexOf("Any") > -1) {
         permission = accessControl.can(teamRole.role)[actionType.replace("Any", "Own")]("dataset");
       } else {
         permission = accessControl.can(teamRole.role)[actionType]("dataset");
@@ -41,7 +42,7 @@ module.exports = (app) => {
       const { role, projects } = teamRole;
 
       // Handle permissions for teamOwner and teamAdmin
-      if (["teamOwner", "teamAdmin"].includes(role)) {
+      if (teamRoles.includes(role)) {
         return next();
       }
 

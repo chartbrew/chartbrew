@@ -1,8 +1,9 @@
+const { teamRoles } = require("../../../shared/roles.json");
 const db = require("../../models/models");
 
 const { ChartImageError } = require("./imageResponse");
 
-const TEAM_ROLES = new Set(["teamAdmin", "teamOwner"]);
+const TEAM_ROLES = new Set(teamRoles);
 const PROJECT_ROLES = new Set(["projectAdmin", "projectEditor", "projectViewer"]);
 
 function parseResourceId(value) {
