@@ -1,0 +1,167 @@
+{
+  "general": {
+    "titles": [
+      "Total activity",
+      "Growth",
+      "Activity over time",
+      "Activity by source",
+      "Weekly overview"
+    ],
+    "values": [
+      "12,480",
+      "18.6%"
+    ],
+    "charts": [
+      "line",
+      "bar"
+    ],
+    "rows": [
+      "Website",
+      "Direct",
+      "Referrals",
+      "Other"
+    ],
+    "extraKpis": [
+      {
+        "title": "Completed tasks",
+        "format": "count"
+      },
+      {
+        "title": "Success rate",
+        "format": "percent"
+      }
+    ]
+  },
+  "software": {
+    "titles": [
+      "Active accounts",
+      "Trial conversion",
+      "Account growth",
+      "Accounts by plan",
+      "Plan overview"
+    ],
+    "values": [
+      "2,480",
+      "24.8%"
+    ],
+    "charts": [
+      "line",
+      "bar"
+    ],
+    "rows": [
+      "Starter",
+      "Professional",
+      "Business",
+      "Enterprise"
+    ],
+    "extraKpis": [
+      {
+        "title": "New accounts",
+        "format": "count"
+      },
+      {
+        "title": "Retention rate",
+        "format": "percent"
+      }
+    ]
+  },
+  "commerce": {
+    "titles": [
+      "Orders",
+      "Repeat customers",
+      "Orders over time",
+      "Sales by channel",
+      "Channel overview"
+    ],
+    "values": [
+      "1,284",
+      "32.4%"
+    ],
+    "charts": [
+      "bar",
+      "donut"
+    ],
+    "rows": [
+      "Online store",
+      "Marketplace",
+      "Retail",
+      "Wholesale"
+    ],
+    "extraKpis": [
+      {
+        "title": "Items sold",
+        "format": "count"
+      },
+      {
+        "title": "Conversion rate",
+        "format": "percent"
+      }
+    ]
+  },
+  "services": {
+    "titles": [
+      "Active projects",
+      "Completion rate",
+      "Projects delivered",
+      "Work by service",
+      "Project overview"
+    ],
+    "values": [
+      "48",
+      "86.2%"
+    ],
+    "charts": [
+      "bar",
+      "donut"
+    ],
+    "rows": [
+      "Consulting",
+      "Design",
+      "Implementation",
+      "Support"
+    ],
+    "extraKpis": [
+      {
+        "title": "Projects delivered",
+        "format": "count"
+      },
+      {
+        "title": "Returning clients",
+        "format": "percent"
+      }
+    ]
+  },
+  "content": {
+    "titles": [
+      "Readers",
+      "Return visitors",
+      "Audience growth",
+      "Visits by source",
+      "Source overview"
+    ],
+    "values": [
+      "24,680",
+      "42.6%"
+    ],
+    "charts": [
+      "line",
+      "donut"
+    ],
+    "rows": [
+      "Search",
+      "Newsletter",
+      "Social",
+      "Direct"
+    ],
+    "extraKpis": [
+      {
+        "title": "Articles published",
+        "format": "count"
+      },
+      {
+        "title": "Engagement rate",
+        "format": "percent"
+      }
+    ]
+  }
+}

@@ -16,6 +16,7 @@ import { selectProjects } from "../slices/project";
   Contains the team members invitation functionality
 */
 function InviteMembersForm(props) {
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [projectAccess, setProjectAccess] = useState([]);
   const [exportAllowed, setExportAllowed] = useState(false);
@@ -23,7 +24,7 @@ function InviteMembersForm(props) {
   const [inviteUrl, setInviteUrl] = useState("");
   const [urlCopied, setUrlCopied] = useState(false);
 
-  const { selectedProjects = null } = props;
+  const { selectedProjects = null, showHeading = true } = props;
 
   const team = useSelector(selectTeam);
   const projects = useSelector(selectProjects);
@@ -41,21 +42,21 @@ function InviteMembersForm(props) {
     }
   }, [projectAccess, exportAllowed, role]);
 
-  const _onGenerateUrl = () => {
+  const _onGenerateUrl = async () => {
     setLoading(true);
-
-    dispatch(generateInviteUrl({
+    setError("");
+    const action = await dispatch(generateInviteUrl({
       team_id: team.id,
       projects: projectAccess,
       canExport: exportAllowed,
       role,
-    }))
-      .then((data) => {
-        setInviteUrl(data.payload);
-        setLoading(false);
-      }).catch(() => {
-        setLoading(false);
-      });
+    }));
+    setLoading(false);
+    if (action.error) {
+      setError("We could not create your invite link. Try again.");
+      return;
+    }
+    setInviteUrl(action.payload);
   };
 
   const _onChangeProjectAccess = (projectId) => {
@@ -72,7 +73,7 @@ function InviteMembersForm(props) {
   };
 
   const _onSelectAllProjects = () => {
-    const newProjects = projects.map((project) => project.id);
+    const newProjects = projects.filter((project) => !project.ghost).map((project) => project.id);
 
     setProjectAccess(newProjects);
   };
@@ -114,8 +115,12 @@ function InviteMembersForm(props) {
 
   return (
     <div>
-      <div className="text-lg font-semibold font-tight">Invite team members</div>
-      <div className="text-sm text-gray-500">Generate a link that can be used to invite team members to your team.</div>
+      {showHeading ? (
+        <>
+          <div className="text-lg font-semibold font-tight">Invite team members</div>
+          <div className="text-sm text-gray-500">Generate a link that can be used to invite team members to your team.</div>
+        </>
+      ) : null}
       {!selectedProjects && (
         <>
           <div className="h-4" />
@@ -123,6 +128,7 @@ function InviteMembersForm(props) {
             <RadioGroup
               defaultValue="teamAdmin"
               name="invite-role"
+              variant="secondary"
               value={role}
               onChange={setRole}
             >
@@ -254,13 +260,15 @@ function InviteMembersForm(props) {
         <Button
           isPending={loading}
           onPress={_onGenerateUrl}
-          color="primary"
+          variant="primary"
           size="sm"
         >
           {loading ? <ButtonSpinner /> : null}
           {loading ? "Generating..." : "Generate invite link"}
         </Button>
       </div>
+
+      {error ? <p className="mt-3 text-sm text-danger" role="alert">{error}</p> : null}
 
       {inviteUrl && (
         <>
@@ -287,7 +295,7 @@ function InviteMembersForm(props) {
           <div className="h-2" />
           <div className="flex flex-wrap items-center gap-1">
             <Chip color="warning" variant="soft" size="sm">
-              {`${role} role`}
+              {roleOptions.find((option) => option.value === role)?.label}
             </Chip>
             {role !== "teamAdmin" && (
               <>
@@ -309,7 +317,7 @@ function InviteMembersForm(props) {
 }
 
 InviteMembersForm.propTypes = {
-  match: PropTypes.object.isRequired,
+  showHeading: PropTypes.bool,
   selectedProjects: PropTypes.array,
 };
 

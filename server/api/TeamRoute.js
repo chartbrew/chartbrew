@@ -193,7 +193,7 @@ module.exports = (app) => {
   app.patch("/team/:id/onboarding", verifyToken, apiLimiter(20), async (req, res) => {
     try {
       const team = await teamController.saveOnboarding(req.params.id, req.user.id, req.body);
-      await starterSuggestions.queueSuggestions(team.id, app.get("homeSuggestionsQueue"))
+      await starterSuggestions.queueSuggestions(team.id, app.get("onboardingSuggestionsQueue"))
         .catch(() => logHomeSuggestions("starter_queue_failed"));
       return res.status(200).send(team);
     } catch (error) {
@@ -206,7 +206,7 @@ module.exports = (app) => {
   app.put("/team/:id/business-profile", verifyToken, apiLimiter(20), async (req, res) => {
     try {
       const profile = await teamController.updateBusinessProfile(req.params.id, req.user.id, req.body);
-      await starterSuggestions.queueSuggestions(profile.team_id, app.get("homeSuggestionsQueue"))
+      await starterSuggestions.queueSuggestions(profile.team_id, app.get("onboardingSuggestionsQueue"))
         .catch(() => logHomeSuggestions("starter_queue_failed"));
       return res.status(200).send(profile);
     } catch (error) {

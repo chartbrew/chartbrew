@@ -37,7 +37,7 @@ describe("public onboarding suggestions", () => {
       logo: { data: "not-for-the-model" },
     });
     create = vi.fn().mockResolvedValue({
-      output_text: JSON.stringify({ suggestions }),
+      output_text: JSON.stringify({ suggestions, reportPreview: { preset: "software", titles: ["Accounts", "Trial conversion", "Account growth", "Accounts by plan", "Plan overview"], kpiFormats: ["count", "percent"], rows: ["Starter", "Pro", "Business", "Enterprise"] } }),
       usage: { input_tokens: 100, output_tokens: 60, total_tokens: 160 },
     });
     provider = { model: "test-model", client: { responses: { create } } };
@@ -51,6 +51,21 @@ describe("public onboarding suggestions", () => {
     await profile.reload();
     return profile;
   }
+
+  it("validates additional KPIs while accepting existing reports", () => {
+    const preview = {
+      preset: "content", titles: ["Readers", "Open rate", "Audience", "Sources", "Overview"],
+      extraKpis: [{ title: " Emails sent ", format: "count", ignored: true }, { title: "Click rate", format: "percent" }],
+    };
+    expect(service.validateReportPreview(preview).extraKpis).toEqual([
+      { title: "Emails sent", format: "count" }, { title: "Click rate", format: "percent" },
+    ]);
+    for (const extraKpis of [[], [null, null], [{ title: "", format: "count" }, preview.extraKpis[1]],
+      [{ title: "Revenue", format: "currency" }, preview.extraKpis[1]]]) {
+      expect(service.validateReportPreview({ ...preview, extraKpis })).toBeNull();
+    }
+    expect(service.validateReportPreview({ ...preview, extraKpis: undefined })).not.toBeNull();
+  });
 
   it("generates with team AI off, uses only public fields, and records home_suggestions usage", async () => {
     const profile = await seed();
@@ -68,6 +83,7 @@ describe("public onboarding suggestions", () => {
       team_id: 7, purpose: "home_suggestions", activity: "internal",
     }));
     expect(await service.readSuggestions({ teamId: 7, canConfigureTeam: true }, {})).toMatchObject({
+      reportPreview: { preset: "software", websiteUrl: "https://example.com/" },
       starterSuggestions: suggestions.map((item) => ({ ...item, starter: true })), starterSuggestionsPending: false,
     });
     await service.queueSuggestions(7, queue);
@@ -162,6 +178,48 @@ describe("public onboarding suggestions", () => {
       { suggestions: [{ ...suggestions[0], prompt: "x".repeat(301) }, ...suggestions.slice(1)] }]) {
       expect(() => service.validateSuggestions(value)).toThrow();
     }
+  });
+
+  it("keeps valid suggestions when the report preview is missing or invalid", async () => {
+    const profile = await seed();
+    create.mockResolvedValue({ output_text: JSON.stringify({
+      suggestions, reportPreview: { preset: "custom", titles: ["Wrong"] },
+    }) });
+    expect(await service.generateSuggestions(7, profile.homeSuggestions.requestId, { provider, discover })).toBe("generated");
+    const result = await service.readSuggestions({ teamId: 7, canConfigureTeam: true }, {});
+    expect(result.starterSuggestions).toHaveLength(3);
+    expect(result.reportPreview).toBeUndefined();
+  });
+
+  it("accepts only preset keys and five short titles, and drops extra model fields", () => {
+    const preview = { preset: "commerce", titles: ["Orders", "Repeat customers", "Order trend", "Channels", "Overview"] };
+    expect(service.validateReportPreview({ ...preview, query: "SELECT private" })).toEqual(preview);
+    for (const invalid of [null, {}, { ...preview, preset: "__proto__" },
+      { ...preview, preset: "unknown" }, { ...preview, titles: [] },
+      { ...preview, titles: ["x".repeat(41), ...preview.titles.slice(1)] },
+      { ...preview, titles: [null, ...preview.titles.slice(1)] }]) {
+      expect(service.validateReportPreview(invalid)).toBeNull();
+    }
+  });
+
+  it("supports business-specific newsletter metrics and validates formats and categories", () => {
+    const preview = {
+      preset: "content", titles: ["Newsletters created", "Emails sent", "Subscriber growth", "Email engagement", "Newsletters"],
+      kpiFormats: ["count", "count"], rows: ["Weekly digest", "Product updates", "Welcome emails", "Announcements"],
+    };
+    expect(service.validateReportPreview(preview)).toEqual(preview);
+    expect(service.validateReportPreview({ ...preview, kpiFormats: ["currency", "count"] })).toBeNull();
+    expect(service.validateReportPreview({ ...preview, rows: ["x".repeat(31), ...preview.rows.slice(1)] })).toBeNull();
+  });
+
+  it("refreshes old completed results that have no personalized report", async () => {
+    const profile = await seed();
+    await profile.update({ homeSuggestions: {
+      ...profile.homeSuggestions, status: "complete", suggestions,
+      requestedAt: new Date(Date.now() - 6 * 60000).toISOString(),
+    } });
+    await service.queueSuggestions(7, queue);
+    expect(queue.add).toHaveBeenCalledTimes(2);
   });
 
   it("adds and removes the profile column", async () => {

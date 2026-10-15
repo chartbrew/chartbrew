@@ -56,6 +56,7 @@ function OnboardingTeam({
   isPending = false,
   onBack = () => {},
   onContinue = () => {},
+  onPreviewChange,
   team = null,
 }) {
   const initialUseCase = initialTeamDraft?.useCases || "";
@@ -100,6 +101,10 @@ function OnboardingTeam({
     return () => { active = false; };
   }, [businessProfile?.logoMimeType, logo, team?.id]);
 
+  useEffect(() => {
+    onPreviewChange?.({ businessName: teamName, description, websiteUrl, logo, logoUrl: logo !== null ? savedLogoUrl : null });
+  }, [teamName, description, websiteUrl, logo, savedLogoUrl, onPreviewChange]);
+
   const getDraft = () => {
     const hasBusinessProfile = Boolean(
       businessProfile || websiteUrl.trim() || description.trim() || logo !== undefined
@@ -127,7 +132,7 @@ function OnboardingTeam({
 
   return (
     <div className="w-full max-w-2xl rounded-3xl bg-surface p-6 md:p-8">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Step 2 of 2</div>
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Step 2 of 5</div>
       <h1 className="mt-2 text-balance text-3xl font-bold">
         Set up your team
       </h1>
@@ -251,7 +256,7 @@ function OnboardingTeam({
           isPending={isPending}
           isDisabled={!teamName.trim()}
         >
-          Start using Chartbrew
+          Continue
         </Button>
       </div>
     </div>
@@ -265,6 +270,7 @@ OnboardingTeam.propTypes = {
   isPending: PropTypes.bool,
   onBack: PropTypes.func,
   onContinue: PropTypes.func,
+  onPreviewChange: PropTypes.func,
   team: PropTypes.object,
 };
 

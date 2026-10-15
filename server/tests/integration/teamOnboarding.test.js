@@ -130,8 +130,9 @@ describe("Team onboarding API", () => {
     await request(app)
       .patch(`/team/${team.id}/onboarding`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ complete: true })
+      .send({ complete: true, aiEnabled: false, aiSuggestionsEnabled: false })
       .expect(403);
+    expect((await models.Team.findByPk(team.id)).aiEnabled).toBe(true);
     await request(app)
       .put(`/team/${team.id}/business-profile`)
       .set("Authorization", `Bearer ${adminToken}`)
@@ -143,6 +144,78 @@ describe("Team onboarding API", () => {
     expect(profile.businessName).toBe("Updated by admin");
     expect(profile.logoMimeType).toBe("image/png");
     expect(Buffer.compare(profile.logoData, PNG)).toBe(0);
+  });
+
+  it("saves AI choices with onboarding and preserves them when omitted", async () => {
+    const team = await createIncompleteTeam();
+    const url = `/team/${team.id}/onboarding`;
+    for (const settings of [
+      { aiEnabled: false, aiSuggestionsEnabled: false },
+      { aiEnabled: true, aiSuggestionsEnabled: false },
+      { aiEnabled: false, aiSuggestionsEnabled: true },
+    ]) {
+      const response = await request(app).patch(url)
+        .set("Authorization", `Bearer ${ownerToken}`)
+        .send({ ...settings, complete: true }).expect(200);
+      expect(response.body).toMatchObject(settings);
+      expect(response.body.onboardingCompletedAt).toBeTruthy();
+    }
+    const response = await request(app).patch(url)
+      .set("Authorization", `Bearer ${ownerToken}`).send({ name: "Updated name" }).expect(200);
+    expect(response.body).toMatchObject({ aiEnabled: false, aiSuggestionsEnabled: true });
+  });
+
+  it("rejects invalid AI choices without completing onboarding or saving partial changes", async () => {
+    const team = await createIncompleteTeam();
+    for (const settings of [{ aiEnabled: "false" }, { aiSuggestionsEnabled: null }, { aiEnabled: false, aiSuggestionsEnabled: 0 }]) {
+      await request(app).patch(`/team/${team.id}/onboarding`)
+        .set("Authorization", `Bearer ${ownerToken}`)
+        .send({ ...settings, name: "Must not save", complete: true }).expect(400);
+      const saved = await models.Team.findByPk(team.id);
+      expect(saved.name).toBe("New Team");
+      expect(saved.onboardingCompletedAt).toBeNull();
+      expect(saved.aiEnabled).toBe(true);
+      expect(saved.aiSuggestionsEnabled).toBe(true);
+    }
+  });
+
+  it("saves preferences before completion and updates only the first dashboard", async () => {
+    const team = await createIncompleteTeam();
+    const projects = await models.Project.findAll({
+      where: { team_id: team.id }, order: [["id", "ASC"]],
+    });
+    const extra = await models.Project.create({ team_id: team.id, name: "Keep timezone", timezone: "UTC" });
+    const response = await request(app).patch(`/team/${team.id}/onboarding`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ timezone: "Asia/Bangkok", showBranding: false, complete: false }).expect(200);
+    expect(response.body.showBranding).toBe(false);
+    expect(response.body.onboardingCompletedAt).toBeNull();
+    const first = projects.find((project) => !project.ghost);
+    expect((await first.reload()).timezone).toBe("Asia/Bangkok");
+    expect((await extra.reload()).timezone).toBe("UTC");
+    const ghost = projects.find((project) => project.ghost);
+    const ghostTimezone = ghost.timezone;
+    expect((await ghost.reload()).timezone).toBe(ghostTimezone);
+    const completed = await request(app).patch(`/team/${team.id}/onboarding`)
+      .set("Authorization", `Bearer ${ownerToken}`).send({ complete: true }).expect(200);
+    expect(completed.body.onboardingCompletedAt).toBeTruthy();
+    expect(completed.body.showBranding).toBe(false);
+  });
+
+  it("rejects invalid preferences without saving partial changes", async () => {
+    const team = await createIncompleteTeam();
+    for (const settings of [
+      { timezone: "Invalid/Timezone" }, { timezone: null }, { timezone: "" },
+      { showBranding: "false", timezone: "UTC" },
+    ]) {
+      await request(app).patch(`/team/${team.id}/onboarding`)
+        .set("Authorization", `Bearer ${ownerToken}`)
+        .send({ name: "Must not save", complete: true, ...settings }).expect(400);
+      const saved = await models.Team.findByPk(team.id);
+      expect(saved.name).toBe("New Team");
+      expect(saved.showBranding).toBe(true);
+      expect(saved.onboardingCompletedAt).toBeNull();
+    }
   });
 
   it("uses field allowlists for general team updates", async () => {

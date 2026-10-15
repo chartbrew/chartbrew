@@ -479,6 +479,26 @@ class TeamController {
       const teamUpdate = {};
       if (data.name !== undefined) teamUpdate.name = sanitizeTeamName(data.name);
       if (data.useCases !== undefined) teamUpdate.useCases = sanitizeUseCases(data.useCases);
+      for (const field of ["aiEnabled", "aiSuggestionsEnabled", "showBranding"]) {
+        if (data[field] !== undefined) {
+          if (typeof data[field] !== "boolean") throw new Error("Choose a valid setting.");
+          teamUpdate[field] = data[field];
+        }
+      }
+      if (data.timezone !== undefined) {
+        try {
+          if (typeof data.timezone !== "string" || !data.timezone.trim()) throw new Error();
+          new Intl.DateTimeFormat("en", { timeZone: data.timezone });
+        } catch (error) {
+          throw new Error("Choose a valid timezone.");
+        }
+        const project = await db.Project.findOne({
+          where: { team_id: teamId, ghost: false },
+          order: [["id", "ASC"]],
+          transaction,
+        });
+        if (project) await project.update({ timezone: data.timezone }, { transaction });
+      }
       if (data.complete === true) teamUpdate.onboardingCompletedAt = new Date();
       if (Object.keys(teamUpdate).length) {
         await db.Team.update(teamUpdate, { where: { id: teamId }, transaction });

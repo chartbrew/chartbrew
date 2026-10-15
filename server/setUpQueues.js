@@ -46,8 +46,9 @@ const setUpQueues = (app) => {
   const queueEventsToClose = [];
   const homeSuggestions = startHomeSuggestions();
   app.set("homeSuggestionsQueue", homeSuggestions.queue);
-  queuesToClose.push(homeSuggestions.queue);
-  workersToClose.push(homeSuggestions.worker);
+  app.set("onboardingSuggestionsQueue", homeSuggestions.onboardingQueue);
+  queuesToClose.push(homeSuggestions.queue, homeSuggestions.onboardingQueue);
+  workersToClose.push(homeSuggestions.worker, homeSuggestions.onboardingWorker);
 
   if (isQueueDebugEnabled) {
     console.log("[setUpQueues] queue debug logging is ENABLED"); // oxlint-disable-line no-console
@@ -205,6 +206,7 @@ const setUpQueues = (app) => {
       new BullMQAdapter(updateSnapshotsQueue),
       new BullMQAdapter(datasetIntelligenceQueue),
       new BullMQAdapter(homeSuggestions.queue),
+      new BullMQAdapter(homeSuggestions.onboardingQueue),
     ],
     serverAdapter,
     options: {

@@ -124,3 +124,9 @@ or a successful generation, Home uses three default questions.
 Run `npm run db:migrate` from `server/`, then restart the server and workers.
 No new environment variables are required. The existing AI provider and Redis are used.
 Check with `npm run test:pure -- tests/unit/onboardingHomeSuggestions.test.js tests/unit/homeSuggestions.test.js`.
+
+### Onboarding report preview
+
+Saving the website profile during onboarding starts a public Home suggestion job on the dedicated `onboardingSuggestionsQueue` before setup is complete. A new team is created as an incomplete draft after website discovery so usage has a team ID. The job also chooses chart shapes from a report preset, five business-specific titles, two KPI formats (count or percentage), and four table category labels using `shared/onboarding/reportPresets.json`; values remain fixed sample data. Usage keeps the `home_suggestions` purpose and ignores team AI switches, while the platform AI control still applies. No new environment variables or migrations are required beyond the existing Home suggestions migration.
+
+After website discovery, the client stays on Step 1 and polls Home for up to two minutes. It opens Step 2 when the matching report arrives. Invalid output, missing providers, job failures, and timeouts offer retry or continuation without the report. Skipping the website continues immediately with generic charts. Changing the website discards the old preview. The preview does not create charts or publish a report.

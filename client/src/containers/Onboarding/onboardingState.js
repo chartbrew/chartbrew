@@ -79,9 +79,17 @@ export function getBusinessProfileReview(discoveredProfile, fallbackWebsiteUrl =
   };
 }
 
-export function buildOnboardingCompletion(businessProfile) {
+export function getOnboardingAiSettings(team) {
+  return {
+    aiEnabled: team?.aiEnabled !== false,
+    aiSuggestionsEnabled: team?.aiSuggestionsEnabled !== false,
+  };
+}
+
+export function buildOnboardingCompletion(businessProfile, aiSettings) {
   const completion = { complete: true };
   if (businessProfile) completion.businessProfile = businessProfile;
+  if (aiSettings) Object.assign(completion, getOnboardingAiSettings(aiSettings));
   return completion;
 }
 
@@ -103,4 +111,30 @@ export function getBusinessLogoFileError(file) {
     return "Choose an image smaller than 512 KB.";
   }
   return "";
+}
+
+export function shouldLoadOnboardingTeam({ isNewTeam, requestedTeamId, owningTeam }) {
+  if (isNewTeam) return false;
+  return !owningTeam?.id || (requestedTeamId !== null && requestedTeamId !== undefined
+    && String(owningTeam.id) !== String(requestedTeamId));
+}
+
+export function getReportPreparationState(home, websiteUrl) {
+  if (home.reportPreview?.websiteUrl === websiteUrl) return "ready";
+  return home.starterSuggestionsPending ? "pending" : "failed";
+}
+
+export function getOnboardingPreferences(team) {
+  const project = team?.Projects?.filter((item) => !item.ghost)
+    .sort((a, b) => a.id - b.id)[0];
+  return {
+    timezone: project?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  };
+}
+
+export function getOnboardingLoadingLabel(isPreparingReport, seconds) {
+  const messages = isPreparingReport
+    ? ["Finding metrics for your business", "Choosing charts for your report", "Bringing your report together", "Still preparing your report. Thanks for waiting."]
+    : ["Reading your website", "Finding your business details", "Still reading your website. Thanks for waiting."];
+  return messages[Math.min(Math.floor(seconds / 8), messages.length - 1)];
 }

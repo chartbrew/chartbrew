@@ -44,6 +44,15 @@ async function scheduleSuggestions(queue, now = new Date()) {
 function startHomeSuggestions() {
   const queue = new Queue("homeSuggestionsQueue", getQueueOptions());
   queue.on("error", () => log("queue_unavailable"));
+  const onboardingQueue = new Queue("onboardingSuggestionsQueue", getQueueOptions());
+  onboardingQueue.on("error", () => log("starter_queue_unavailable"));
+  const onboardingWorker = new Worker(onboardingQueue.name, async ({ data }) => {
+    const status = await generateSuggestions(data.teamId, data.requestId);
+    log(status);
+    return { status };
+  }, { connection: onboardingQueue.opts.connection, concurrency: 2 });
+  onboardingWorker.on("error", () => log("starter_worker_unavailable"));
+  onboardingWorker.on("failed", () => log("starter_generation_failed"));
   const worker = new Worker(queue.name, async ({ name, data }) => {
     const status = name === "onboardingSuggestions"
       ? await generateSuggestions(data.teamId, data.requestId)
@@ -56,7 +65,7 @@ function startHomeSuggestions() {
   const task = cron.schedule("0 0,12 * * *", () => {
     scheduleSuggestions(queue).catch(() => log("schedule_failed"));
   }, { timezone: "UTC" });
-  return { queue, worker, task };
+  return { queue, worker, onboardingQueue, onboardingWorker, task };
 }
 
 module.exports = { scheduleSuggestions, startHomeSuggestions };

@@ -90,16 +90,17 @@ describe("Home suggestion access and persistence", () => {
     expect((await request(app).post(url).auth(token, { type: "bearer" })).status).toBe(403);
   });
 
-  it("queues public starters after onboarding with AI off and returns them only to admins", async () => {
+  it("queues public starters during onboarding with AI off and returns them only to admins", async () => {
     const { team, role, app, token } = await seed();
     await team.update({ aiEnabled: false, aiSuggestionsEnabled: false });
     const queue = { add: vi.fn().mockResolvedValue({}) };
-    app.set("homeSuggestionsQueue", queue);
+    app.set("onboardingSuggestionsQueue", queue);
     const response = await request(app).patch(`/team/${team.id}/onboarding`)
-      .auth(token, { type: "bearer" }).send({ complete: true, businessProfile: {
+      .auth(token, { type: "bearer" }).send({ businessProfile: {
         websiteUrl: "https://example.com/", businessName: "Public business", description: "Private saved notes",
       } });
     expect(response.status).toBe(200);
+    expect((await team.reload()).onboardingCompletedAt).toBeNull();
     expect(queue.add).toHaveBeenCalledWith("onboardingSuggestions", {
       teamId: team.id, requestId: expect.any(String),
     }, expect.objectContaining({ attempts: 1 }));

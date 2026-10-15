@@ -8,11 +8,16 @@ import {
   getBusinessProfileReview,
   getBusinessLogoFileError,
   getOnboardingEntry,
+  getOnboardingLoadingLabel,
+  getOnboardingPreferences,
+  getOnboardingAiSettings,
   getSuggestedTeamName,
   hasBusinessProfileDetails,
   isTeamOwner,
   normalizeBusinessWebsite,
   shouldResumeOnboarding,
+  shouldLoadOnboardingTeam,
+  getReportPreparationState,
 } from "./onboardingState.js";
 
 const incompleteOwnedTeam = {
@@ -103,4 +108,67 @@ test("team logo uploads use safe image types and a small size limit", () => {
     getBusinessLogoFileError({ size: 600 * 1024, type: "image/png" }),
     "Choose an image smaller than 512 KB."
   );
+});
+
+test("AI choices keep current team values and preserve an explicit opt-out", () => {
+  assert.deepEqual(getOnboardingAiSettings(null), { aiEnabled: true, aiSuggestionsEnabled: true });
+  assert.deepEqual(getOnboardingAiSettings({ aiEnabled: false, aiSuggestionsEnabled: false }), {
+    aiEnabled: false, aiSuggestionsEnabled: false,
+  });
+  assert.deepEqual(buildOnboardingCompletion(null, { aiEnabled: false, aiSuggestionsEnabled: true }), {
+    complete: true, aiEnabled: false, aiSuggestionsEnabled: true,
+  });
+  assert.deepEqual(buildOnboardingCompletion(null, { aiEnabled: true, aiSuggestionsEnabled: false, ignored: true }), {
+    complete: true, aiEnabled: true, aiSuggestionsEnabled: false,
+  });
+});
+
+test("onboarding reloads a missing or changed team after leaving the new-team URL", () => {
+  assert.equal(shouldLoadOnboardingTeam({ isNewTeam: true, requestedTeamId: null, owningTeam: null }), false);
+  assert.equal(shouldLoadOnboardingTeam({ isNewTeam: false, requestedTeamId: "104", owningTeam: null }), true);
+  assert.equal(shouldLoadOnboardingTeam({ isNewTeam: false, requestedTeamId: "104", owningTeam: { id: 104 } }), false);
+  assert.equal(shouldLoadOnboardingTeam({ isNewTeam: false, requestedTeamId: "105", owningTeam: { id: 104 } }), true);
+  assert.equal(shouldLoadOnboardingTeam({ isNewTeam: false, requestedTeamId: null, owningTeam: null }), true);
+  assert.equal(shouldLoadOnboardingTeam({ isNewTeam: false, requestedTeamId: null, owningTeam: { id: 104 } }), false);
+});
+
+test("report preparation waits for a matching result and detects unavailable reports", () => {
+  const website = "https://notocat.com/";
+  assert.equal(getReportPreparationState({ starterSuggestionsPending: true }, website), "pending");
+  assert.equal(getReportPreparationState({ reportPreview: { websiteUrl: website } }, website), "ready");
+  assert.equal(getReportPreparationState({ reportPreview: { websiteUrl: "https://other.example/" }, starterSuggestionsPending: true }, website), "pending");
+  assert.equal(getReportPreparationState({ starterSuggestionsPending: false }, website), "failed");
+});
+
+test("preferences use the first dashboard without changing branding", () => {
+  const team = {
+    showBranding: false,
+    Projects: [
+      { id: 3, timezone: "Europe/Paris" },
+      { id: 1, ghost: true, timezone: "UTC" },
+      { id: 2, timezone: "Asia/Bangkok" },
+    ],
+  };
+  assert.deepEqual(getOnboardingPreferences(team), {
+    timezone: "Asia/Bangkok",
+  });
+  assert.deepEqual(team.Projects.map((project) => project.id), [3, 1, 2]);
+  assert.deepEqual(getOnboardingPreferences(null), {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  });
+});
+
+test("loading text follows each phase and stays on a waiting message", () => {
+  assert.equal(getOnboardingLoadingLabel(false, 0), "Reading your website");
+  assert.equal(getOnboardingLoadingLabel(false, 8), "Finding your business details");
+  assert.equal(getOnboardingLoadingLabel(true, 0), "Finding metrics for your business");
+  assert.equal(getOnboardingLoadingLabel(true, 8), "Choosing charts for your report");
+  assert.equal(getOnboardingLoadingLabel(true, 16), "Bringing your report together");
+  assert.equal(getOnboardingLoadingLabel(true, 120), "Still preparing your report. Thanks for waiting.");
+});
+
+test("manual website fallback keeps the address and leaves business details editable", () => {
+  assert.deepEqual(getBusinessProfileReview({}, "example.com"), {
+    businessName: "", description: "", logo: null, metadata: {}, websiteUrl: "example.com",
+  });
 });
