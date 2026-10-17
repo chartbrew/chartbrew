@@ -188,11 +188,6 @@ function HomeAsk({ focused, hasContent, onContentChange, onFocusChange, suggesti
         isRequested={showAccessNotice}
         onRetry={reloadAvailability}
       />
-      {!conversationStarted && !hasContent && isTeamAdmin ? (
-        <p className="text-sm text-muted">
-          Tell me what you want to track, where your data lives, or what your business does.
-        </p>
-      ) : null}
       <AiChat
         fill={focused || !conversationStarted}
         framed

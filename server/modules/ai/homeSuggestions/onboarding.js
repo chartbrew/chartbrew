@@ -141,7 +141,7 @@ async function generateSuggestions(teamId, requestId, dependencies = {}) {
 }
 
 async function readSuggestions(access, content) {
-  const empty = { starterSuggestions: [], starterSuggestionsPending: false };
+  const empty = { starterSuggestions: [], starterSuggestionsPending: false, reportPreviewPending: false };
   if (!access.canConfigureTeam || content?.hasConnection || content?.hasDataset || content?.hasChart) return empty;
   const profile = await db.TeamBusinessProfile.findOne({
     where: { team_id: access.teamId }, attributes: ["websiteUrl", "homeSuggestions"],
@@ -154,6 +154,7 @@ async function readSuggestions(access, content) {
       reportPreview: { ...reportPreview, websiteUrl: state.websiteUrl },
     } : {}),
     starterSuggestions: state.status === "complete" ? state.suggestions : [],
+    reportPreviewPending: ["pending", "running"].includes(state.status),
     starterSuggestionsPending: ["pending", "running"].includes(state.status)
       && Date.now() - new Date(state.requestedAt).getTime() < 120000,
   };

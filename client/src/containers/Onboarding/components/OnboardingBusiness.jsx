@@ -97,7 +97,7 @@ function OnboardingBusiness({
             onPress={websiteUnavailable ? discover : () => onContinue(reportFailed ? initialProfile : null, reportFailed)}
             variant="tertiary"
           >
-            {websiteUnavailable ? "Try again" : reportFailed ? "Continue without report" : "Skip for now"}
+            {websiteUnavailable ? "Try again" : reportFailed ? "Continue with these details" : "Skip for now"}
           </Button>
           <Button
             variant="primary"

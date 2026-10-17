@@ -18,6 +18,7 @@ import {
   shouldResumeOnboarding,
   shouldLoadOnboardingTeam,
   getReportPreparationState,
+  watchOnboardingReport,
 } from "./onboardingState.js";
 
 const incompleteOwnedTeam = {
@@ -138,6 +139,7 @@ test("report preparation waits for a matching result and detects unavailable rep
   assert.equal(getReportPreparationState({ reportPreview: { websiteUrl: website } }, website), "ready");
   assert.equal(getReportPreparationState({ reportPreview: { websiteUrl: "https://other.example/" }, starterSuggestionsPending: true }, website), "pending");
   assert.equal(getReportPreparationState({ starterSuggestionsPending: false }, website), "failed");
+  assert.equal(getReportPreparationState({ starterSuggestionsPending: false, reportPreviewPending: true }, website), "pending");
 });
 
 test("preferences use the first dashboard without changing branding", () => {
@@ -161,14 +163,80 @@ test("preferences use the first dashboard without changing branding", () => {
 test("loading text follows each phase and stays on a waiting message", () => {
   assert.equal(getOnboardingLoadingLabel(false, 0), "Reading your website");
   assert.equal(getOnboardingLoadingLabel(false, 8), "Finding your business details");
-  assert.equal(getOnboardingLoadingLabel(true, 0), "Finding metrics for your business");
-  assert.equal(getOnboardingLoadingLabel(true, 8), "Choosing charts for your report");
-  assert.equal(getOnboardingLoadingLabel(true, 16), "Bringing your report together");
-  assert.equal(getOnboardingLoadingLabel(true, 120), "Still preparing your report. Thanks for waiting.");
+  assert.equal(getOnboardingLoadingLabel(true, 0), "Gathering business context");
+  assert.equal(getOnboardingLoadingLabel(true, 8), "Learning about your business");
+  assert.equal(getOnboardingLoadingLabel(true, 16), "Getting things ready");
+  assert.equal(getOnboardingLoadingLabel(true, 120), "Still gathering context. Thanks for waiting.");
 });
 
 test("manual website fallback keeps the address and leaves business details editable", () => {
   assert.deepEqual(getBusinessProfileReview({}, "example.com"), {
     businessName: "", description: "", logo: null, metadata: {}, websiteUrl: "example.com",
   });
+});
+
+
+test("report loading continues after the 30-second wait and delivers a late preview", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const websiteUrl = "https://example.com/";
+  let resolveHome;
+  const previews = [];
+  let continues = 0;
+  const stop = watchOnboardingReport({
+    loadHome: () => new Promise((resolve) => { resolveHome = resolve; }),
+    websiteUrl,
+    onPreview: (preview) => previews.push(preview),
+    onContinue: () => { continues += 1; },
+  });
+  t.after(stop);
+  t.mock.timers.tick(29999);
+  assert.equal(continues, 0);
+  t.mock.timers.tick(1);
+  assert.equal(continues, 1);
+  resolveHome({ starterSuggestionsPending: true });
+  await Promise.resolve();
+  t.mock.timers.tick(2000);
+  resolveHome({ reportPreview: { websiteUrl } });
+  await Promise.resolve();
+  assert.deepEqual(previews, [{ websiteUrl }]);
+  assert.equal(continues, 1);
+});
+
+for (const state of ["ready", "failed"]) {
+  test(`report ${state} releases setup before the timeout`, async (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const websiteUrl = "https://example.com/";
+    const previews = [];
+    let continues = 0;
+    const stop = watchOnboardingReport({
+      loadHome: async () => state === "ready"
+        ? { reportPreview: { websiteUrl } } : { starterSuggestionsPending: false },
+      websiteUrl,
+      onPreview: (preview) => previews.push(preview),
+      onContinue: () => { continues += 1; },
+    });
+    t.after(stop);
+    await Promise.resolve();
+    assert.equal(continues, 1);
+    assert.equal(previews.length, state === "ready" ? 1 : 0);
+    t.mock.timers.tick(30000);
+    assert.equal(continues, 1);
+  });
+}
+
+test("stopping report loading ignores an in-flight result and cancels navigation", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let resolveHome;
+  let callbacks = 0;
+  const stop = watchOnboardingReport({
+    loadHome: () => new Promise((resolve) => { resolveHome = resolve; }),
+    websiteUrl: "https://example.com/",
+    onPreview: () => { callbacks += 1; },
+    onContinue: () => { callbacks += 1; },
+  });
+  stop();
+  resolveHome({ reportPreview: { websiteUrl: "https://example.com/" } });
+  await Promise.resolve();
+  t.mock.timers.tick(30000);
+  assert.equal(callbacks, 0);
 });

@@ -140,7 +140,7 @@ function InviteMembersForm(props) {
       ) : null}
       {!selectedProjects && (
         <>
-          <div className="h-4" />
+          {showHeading && <div className="h-4" />}
           <div>
             <RadioGroup
               name="invite-role"

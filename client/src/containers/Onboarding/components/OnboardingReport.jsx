@@ -151,9 +151,9 @@ function OnboardingReport({ branding, ready, preview }) {
                     delay: ready && !reducedMotion ? position * 0.06 : 0,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className={`rounded-2xl border border-divider bg-surface p-6 shadow-none ${index === 4 ? "col-span-4" : index < 2 || value ? "min-h-0" : "col-span-2 min-h-0"}`}
+                  className={`gap-0 rounded-2xl border border-divider bg-surface p-6 shadow-none ${index === 4 ? "col-span-4" : index < 2 || value ? "min-h-0" : "col-span-2 min-h-0"}`}
                 >
-                  {ready ? <p className="truncate text-sm font-medium">{title}</p> : <Skeleton animationType="none" className="h-4 w-36 max-w-full rounded" />}
+                  {ready ? <p className="shrink-0 truncate text-sm font-medium">{title}</p> : <Skeleton animationType="none" className="h-4 w-36 max-w-full shrink-0 rounded" />}
                   <SampleContent index={index} preset={preset} ready={ready} value={value} />
                 </MotionCard>
               ))}

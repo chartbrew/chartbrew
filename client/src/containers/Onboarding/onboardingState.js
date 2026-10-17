@@ -121,7 +121,7 @@ export function shouldLoadOnboardingTeam({ isNewTeam, requestedTeamId, owningTea
 
 export function getReportPreparationState(home, websiteUrl) {
   if (home.reportPreview?.websiteUrl === websiteUrl) return "ready";
-  return home.starterSuggestionsPending ? "pending" : "failed";
+  return (home.reportPreviewPending ?? home.starterSuggestionsPending) ? "pending" : "failed";
 }
 
 export function getOnboardingPreferences(team) {
@@ -134,7 +134,42 @@ export function getOnboardingPreferences(team) {
 
 export function getOnboardingLoadingLabel(isPreparingReport, seconds) {
   const messages = isPreparingReport
-    ? ["Finding metrics for your business", "Choosing charts for your report", "Bringing your report together", "Still preparing your report. Thanks for waiting."]
+    ? ["Gathering business context", "Learning about your business", "Getting things ready", "Still gathering context. Thanks for waiting."]
     : ["Reading your website", "Finding your business details", "Still reading your website. Thanks for waiting."];
   return messages[Math.min(Math.floor(seconds / 8), messages.length - 1)];
+}
+
+export function watchOnboardingReport({ loadHome, websiteUrl, onPreview, onContinue }) {
+  let active = true;
+  let timer;
+  let continued = false;
+  const continueSetup = () => {
+    if (!active || continued) return;
+    continued = true;
+    onContinue();
+  };
+  const deadline = setTimeout(continueSetup, 30000);
+  const poll = async () => {
+    try {
+      const home = await loadHome();
+      if (!active) return;
+      const state = getReportPreparationState(home, websiteUrl);
+      if (state !== "pending") {
+        clearTimeout(deadline);
+        if (state === "ready") onPreview(home.reportPreview);
+        continueSetup();
+        active = false;
+        return;
+      }
+    } catch (error) {
+      // Keep checking after temporary connection failures.
+    }
+    if (active) timer = setTimeout(poll, 2000);
+  };
+  poll();
+  return () => {
+    active = false;
+    clearTimeout(timer);
+    clearTimeout(deadline);
+  };
 }

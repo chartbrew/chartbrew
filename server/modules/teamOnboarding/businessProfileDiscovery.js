@@ -131,6 +131,8 @@ function extractPageProfile(html, pageUrl) {
   const siteTitle = titleNode ? cleanText(DomUtils.textContent(titleNode), 200) : null;
   const standardDescription = getMeta(document, "description", "name");
   const openGraphTitle = getMeta(document, "og:site_name") || getMeta(document, "og:title");
+  const businessName = cleanText(jsonLdEntity.name, 200) || openGraphTitle || siteTitle;
+  const shortBusinessName = businessName?.split(/\s+-\s+|[–—|]|:\s+/)[0].trim();
   const openGraphDescription = getMeta(document, "og:description");
   const openGraphImage = getMeta(document, "og:image");
   const logoCandidates = [];
@@ -167,7 +169,7 @@ function extractPageProfile(html, pageUrl) {
   });
   const keywords = splitKeywords(jsonLdEntity.keywords || getMeta(document, "keywords", "name"));
   return {
-    businessName: cleanText(jsonLdEntity.name, 200) || openGraphTitle || siteTitle,
+    businessName: shortBusinessName || businessName,
     description: cleanText(jsonLdEntity.description, 1200)
       || openGraphDescription || standardDescription,
     logoCandidates,

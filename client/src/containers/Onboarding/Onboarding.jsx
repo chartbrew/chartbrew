@@ -29,7 +29,7 @@ import {
   getOnboardingAiSettings,
   isTeamOwner,
   shouldLoadOnboardingTeam,
-  getReportPreparationState,
+  watchOnboardingReport,
 } from "./onboardingState";
 
 function Onboarding() {
@@ -110,44 +110,17 @@ function Onboarding() {
 
   useEffect(() => {
     if (!previewWebsite || !owningTeam?.id) return undefined;
-    let active = true;
-    let timer;
-    const finish = (preview) => {
-      if (!active) return;
-      active = false;
-      clearTimeout(timer);
-      if (preview) setReportPreview(preview);
-      if (preparingReport) {
+    return watchOnboardingReport({
+      loadHome: () => getHome(owningTeam.id),
+      websiteUrl: previewWebsite,
+      onPreview: setReportPreview,
+      onContinue: () => {
+        if (!preparingReport) return;
         setDiscovering(false);
         setPreparingReport(false);
-        if (preview) setCurrentStep(2);
-        else {
-          setReportFailed(true);
-          setError("We could not prepare your report. Try again or continue without it.");
-        }
-      }
-    };
-    const deadline = setTimeout(() => finish(null), 120000);
-    const poll = async () => {
-      try {
-        const home = await getHome(owningTeam.id);
-        if (!active) return;
-        const state = getReportPreparationState(home, previewWebsite);
-        if (state === "ready") {
-          finish(home.reportPreview);
-          return;
-        }
-        if (state === "failed") {
-          finish(null);
-          return;
-        }
-      } catch (pollError) {
-        // Retry temporary connection failures until the deadline.
-      }
-      if (active) timer = setTimeout(poll, 2000);
-    };
-    poll();
-    return () => { active = false; clearTimeout(timer); clearTimeout(deadline); };
+        setCurrentStep(2);
+      },
+    });
   }, [owningTeam?.id, previewWebsite, preparingReport]);
 
   const handleBusinessStep = async (profile, skipReport = false) => {
@@ -190,7 +163,7 @@ function Onboarding() {
         setDiscovering(false);
         setPreparingReport(false);
         setReportFailed(true);
-        setError("We could not prepare your report. Try again or continue without it.");
+        setError("We could not finish gathering context. Try again or continue with your business details.");
         return;
       }
       setPreviewWebsite(profile.websiteUrl);
@@ -334,7 +307,7 @@ function Onboarding() {
           <div className="w-full max-w-2xl rounded-3xl bg-surface p-6 md:p-8">
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Step 5 of 5</div>
             <h1 className="mt-2 text-balance text-3xl font-bold">Invite your teammates</h1>
-            <div className="mt-8">
+            <div className="mt-4">
               <InviteMembersForm showHeading={false} teamOnly />
             </div>
             {error ? <p className="mt-4 text-sm text-danger" role="alert">{error}</p> : null}

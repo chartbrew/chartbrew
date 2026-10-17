@@ -148,7 +148,7 @@ describe("public onboarding suggestions", () => {
     await expect(service.generateSuggestions(7, profile.homeSuggestions.requestId, { provider, discover })).rejects.toThrow();
     expect(create).not.toHaveBeenCalled();
     expect(await service.readSuggestions({ teamId: 7, canConfigureTeam: true }, {})).toEqual({
-      starterSuggestions: [], starterSuggestionsPending: false,
+      starterSuggestions: [], starterSuggestionsPending: false, reportPreviewPending: false,
     });
   });
 
@@ -165,7 +165,9 @@ describe("public onboarding suggestions", () => {
     const access = { teamId: 7, canConfigureTeam: true };
     expect((await service.readSuggestions(access, {})).starterSuggestionsPending).toBe(true);
     await profile.update({ homeSuggestions: { ...profile.homeSuggestions, requestedAt: new Date(Date.now() - 121000).toISOString() } });
-    expect((await service.readSuggestions(access, {})).starterSuggestionsPending).toBe(false);
+    expect(await service.readSuggestions(access, {})).toMatchObject({
+      starterSuggestionsPending: false, reportPreviewPending: true,
+    });
     for (const content of [{ hasConnection: true }, { hasDataset: true }, { hasChart: true }]) {
       expect((await service.readSuggestions(access, content)).starterSuggestions).toEqual([]);
     }

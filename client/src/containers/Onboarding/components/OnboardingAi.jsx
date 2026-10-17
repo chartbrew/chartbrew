@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Button, Description, Switch } from "@heroui/react";
+import { Accordion, Button, Description, Switch } from "@heroui/react";
 
 import { AI_DATA_DISCLOSURE } from "../../Ai/aiEnablementCopy";
 import useAiAvailability from "../../Ai/hooks/useAiAvailability";
@@ -21,7 +21,7 @@ function OnboardingAi({
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Step 3 of 5</div>
       <h1 className="mt-2 text-balance text-3xl font-bold">Choose your AI settings</h1>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <Switch
           id="onboarding-ai-enabled"
           isDisabled={isPending}
@@ -34,7 +34,7 @@ function OnboardingAi({
             </Switch.Control>
             <span className="font-semibold">Enable Chartbrew AI</span>
           </Switch.Content>
-          <Description className="mt-2 text-sm leading-6 text-muted">
+          <Description className="mt-1 text-sm leading-6 text-muted">
             Ask questions about your data, create charts, and explore changes.
           </Description>
         </Switch>
@@ -45,14 +45,25 @@ function OnboardingAi({
         ) : null}
       </div>
 
-      <section className="mt-6 space-y-2 text-sm leading-6" aria-labelledby="onboarding-ai-data-heading">
-        <h2 className="font-semibold" id="onboarding-ai-data-heading">{AI_DATA_DISCLOSURE.title}</h2>
-        <p className="text-muted">{AI_DATA_DISCLOSURE.details}</p>
-        <p className="text-muted">{AI_DATA_DISCLOSURE.permissions}</p>
-        <p>{AI_DATA_DISCLOSURE.guidance}</p>
-      </section>
+      <Accordion className="mt-3">
+        <Accordion.Item id="onboarding-ai-data">
+          <Accordion.Heading>
+            <Accordion.Trigger className="py-3 text-sm font-semibold">
+              {AI_DATA_DISCLOSURE.title}
+              <Accordion.Indicator />
+            </Accordion.Trigger>
+          </Accordion.Heading>
+          <Accordion.Panel>
+            <Accordion.Body className="space-y-2 text-sm leading-6">
+              <p className="text-muted">{AI_DATA_DISCLOSURE.details}</p>
+              <p className="text-muted">{AI_DATA_DISCLOSURE.permissions}</p>
+              <p>{AI_DATA_DISCLOSURE.guidance}</p>
+            </Accordion.Body>
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
 
-      <div className="mt-6 border-t border-divider pt-6">
+      <div className="mt-3 border-t border-divider pt-4">
         <Switch
           id="onboarding-ai-suggestions"
           isDisabled={isPending || !settings.aiEnabled}
@@ -65,7 +76,7 @@ function OnboardingAi({
             </Switch.Control>
             <span className="font-semibold">Personalized suggestions</span>
           </Switch.Content>
-          <Description className="mt-2 text-sm leading-6 text-muted">
+          <Description className="mt-1 text-sm leading-6 text-muted">
             Suggest questions on Home from each member&apos;s recent work and saved AI memories they can access.
           </Description>
         </Switch>
@@ -74,9 +85,9 @@ function OnboardingAi({
         ) : null}
       </div>
 
-      <p className="mt-6 text-sm text-muted">You can change these choices later in AI settings.</p>
+      <p className="mt-4 text-sm text-muted">You can change these choices later in AI settings.</p>
       {error ? <p className="mt-4 text-sm text-danger" role="alert">{error}</p> : null}
-      <div className="mt-8 flex items-center justify-between gap-2">
+      <div className="mt-6 flex items-center justify-between gap-2">
         <Button isDisabled={isPending} onPress={onBack} variant="outline">Back</Button>
         <Button isPending={isPending} onPress={onContinue} size="lg" variant="primary">
           Continue

@@ -27,6 +27,42 @@ function response(url, body, contentType = "text/html; charset=utf-8") {
 }
 
 describe("business profile discovery", () => {
+  it.each([
+    ["TrueVibe — AI Matchmaking for Singapore, Malaysia & Thailand", "TrueVibe"],
+    ["Moolot - The Finance App for Digital Nomads", "Moolot"],
+    ["Notocat–Newsletters from Notion", "Notocat"],
+    ["Chartbrew|Build dashboards", "Chartbrew"],
+    ["Chartbrew: Build dashboards", "Chartbrew"],
+    ["Coca-Cola - Refresh your day", "Coca-Cola"],
+    ["Coca-Cola", "Coca-Cola"],
+    ["ACME:Labs", "ACME:Labs"],
+    ["— Example", "— Example"],
+    ["", null],
+  ])("removes description suffixes from the discovered name %s", (title, expected) => {
+    const profile = extractPageProfile(`<html><head><title>${title}</title>
+      <meta name="description" content="Business description">
+      </head></html>`, "https://example.com/");
+
+    expect(profile.businessName).toBe(expected);
+    expect(profile.description).toBe("Business description");
+    expect(profile.metadata.siteTitle).toBe(title || undefined);
+  });
+
+  it.each([
+    '<meta property="og:title" content="TrueVibe — AI Matchmaking">',
+    '<meta property="og:site_name" content="TrueVibe — AI Matchmaking">',
+    '<script type="application/ld+json">{"@type":"Organization","name":"TrueVibe — AI Matchmaking"}</script>',
+  ])("cleans names from website metadata: %s", (metadata) => {
+    const profile = extractPageProfile(`<html><head>${metadata}</head></html>`, "https://example.com/");
+
+    expect(profile.businessName).toBe("TrueVibe");
+  });
+
+  it("keeps descriptions in manually supplied business names", () => {
+    expect(sanitizeBusinessProfile({ businessName: "TrueVibe — AI Matchmaking" }).businessName)
+      .toBe("TrueVibe — AI Matchmaking");
+  });
+
   it("uses structured business data before Open Graph and reads bounded profile pages", async () => {
     const homeHtml = `
       <html lang="en"><head><title>Fallback title</title>

@@ -166,10 +166,7 @@ function OnboardingTeam({
           if (value !== "other") setOtherUse("");
         }}
         aria-invalid={showUseCaseError}
-        className={cn(
-          "mt-7 flex w-full flex-col gap-2 rounded-2xl **:data-[slot=radio]:mt-0",
-          showUseCaseError && "ring-2 ring-danger/45"
-        )}
+        className="mt-7 flex w-full flex-col gap-2 rounded-2xl **:data-[slot=radio]:mt-0"
         variant="secondary"
       >
         <Label className={cn("font-semibold", showUseCaseError && "text-danger")}>
