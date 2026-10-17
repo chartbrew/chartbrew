@@ -1022,3 +1022,8 @@
 .input-group__suffix {
   border-left: none;
 }
+
+.tooltip {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
