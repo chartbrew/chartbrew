@@ -18,7 +18,7 @@ import { cn } from "../../modules/utils";
 import TopNav from "../../components/TopNav";
 import { selectSidebarCollapsed } from "../../slices/ui";
 import { getDatasets } from "../../slices/dataset";
-import ChartbrewV5WelcomeModal from "./components/ChartbrewV5WelcomeModal";
+import ChartbrewV6WelcomeModal from "./components/ChartbrewV6WelcomeModal";
 import SettingsSidebar from "../Settings/SettingsSidebar";
 
 /*
@@ -142,7 +142,7 @@ function UserDashboard(props) {
 
       {!isChartEditor && <div className="h-4" />}
 
-      <ChartbrewV5WelcomeModal />
+      <ChartbrewV6WelcomeModal key={user.data.id} />
     </div>
   );
 }
