@@ -32,6 +32,16 @@ test("setup uses the published MCP hostname and preserves the OAuth resource", (
     assert.ok(setup.codex.includes(`--oauth-resource '${url}'`));
     assert.ok(setup.codex.endsWith("--oauth-client-registration dcr"));
     assert.equal(JSON.parse(setup.cursor).mcpServers.chartbrew.url, url);
+    assert.deepEqual(JSON.parse(setup.opencode), {
+      mcp: { chartbrew: { type: "remote", url } },
+    });
+    assert.deepEqual(JSON.parse(setup.antigravity), {
+      mcpServers: { chartbrew: { serverUrl: url } },
+    });
+    assert.deepEqual(JSON.parse(setup.muse), {
+      schema_version: 1,
+      mcpServers: { chartbrew: { type: "streamable-http", url } },
+    });
     assert.equal(setup.local, !url.startsWith("https:"));
   }
   for (const url of [

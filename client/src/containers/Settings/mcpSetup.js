@@ -35,5 +35,11 @@ export function getMcpSetup(resource) {
     codex: `codex mcp add chartbrew --url ${quoted} --oauth-resource ${quoted} --oauth-client-registration dcr`,
     claudeCode: `claude mcp add --transport http --scope user chartbrew ${quoted}`,
     cursor: JSON.stringify({ mcpServers: { chartbrew: { url: url.href } } }, null, 2),
+    opencode: JSON.stringify({ mcp: { chartbrew: { type: "remote", url: url.href } } }, null, 2),
+    antigravity: JSON.stringify({ mcpServers: { chartbrew: { serverUrl: url.href } } }, null, 2),
+    muse: JSON.stringify({
+      schema_version: 1,
+      mcpServers: { chartbrew: { type: "streamable-http", url: url.href } },
+    }, null, 2),
   };
 }

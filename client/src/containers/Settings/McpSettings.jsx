@@ -12,6 +12,9 @@ import { selectUser } from "../../slices/user";
 import canAccess from "../../config/canAccess";
 import AuthorizedApps from "./AuthorizedApps";
 import { getMcpSetup } from "./mcpSetup";
+import opencodeLogo from "../../assets/ai-opencode.svg";
+import antigravityLogo from "../../assets/ai-antigravity.svg";
+import museLogo from "../../assets/ai-muse.svg";
 
 export default function McpSettings() {
   const team = useSelector(selectTeam);
@@ -113,11 +116,48 @@ export default function McpSettings() {
       name: "Cursor",
       icon: SiCursor,
       command: setup?.cursor,
+      copyLabel: "Copy configuration",
       steps: [
         "Add this entry to .cursor/mcp.json in your project. Keep any servers already in the file.",
         "Open Cursor’s MCP settings and connect Chartbrew. If sign-in is not supported by your client version, use an API key instead.",
       ],
       docs: "https://cursor.com/docs/mcp",
+    },
+    {
+      name: "OpenCode",
+      logo: opencodeLogo,
+      color: "invert dark:invert-0",
+      command: setup?.opencode,
+      copyLabel: "Copy configuration",
+      steps: [
+        "Add this entry to opencode.json in your project. Keep any settings and servers already in the file.",
+        "Run opencode mcp auth chartbrew in that project, then sign in to Chartbrew and approve access.",
+      ],
+      docs: "https://opencode.ai/docs/mcp-servers/",
+    },
+    {
+      name: "Antigravity",
+      logo: antigravityLogo,
+      command: setup?.antigravity,
+      copyLabel: "Copy configuration",
+      steps: [
+        "In the agent panel, open MCP Servers → Manage MCP Servers → View raw config.",
+        "Add this entry to mcp_config.json. Keep any servers already in the file, save it, and refresh the server list.",
+        "Open Settings → Customizations and select Authenticate next to Chartbrew. Complete sign-in in your browser.",
+      ],
+      docs: "https://antigravity.google/docs/mcp",
+    },
+    {
+      name: "Muse CLI",
+      logo: museLogo,
+      command: setup?.muse,
+      copyLabel: "Copy configuration",
+      steps: [
+        "Add this entry to ~/.config/muse/settings.json (or $XDG_CONFIG_HOME/muse/settings.json if set). Keep your existing settings and servers.",
+        "If the file uses mcp_servers, rename that key to mcpServers before merging. Do not keep both keys.",
+        "Run muse mcp login chartbrew, then sign in to Chartbrew and approve access. Use /mcp in Muse to check the connection.",
+      ],
+      docs: "https://meta-models.github.io/muse-code-sdk/next/guides/extend/mcp-servers/",
     },
     {
       name: "Other clients",
@@ -231,17 +271,25 @@ export default function McpSettings() {
           )}
         </div>
         <Accordion className="rounded-3xl border border-divider">
-          {clients.map(({ name, icon: Icon, color, steps, command, docs, cloud }) => (
+          {clients.map(({ name, icon: Icon, logo, color, steps, command, copyLabel, docs, cloud }) => (
             <Accordion.Item
               key={name}
               id={name}
             >
               <Accordion.Heading>
                 <Accordion.Trigger className="gap-3 py-4 text-sm font-medium">
-                  <Icon
-                    aria-hidden
-                    className={`size-5 shrink-0 ${color || "text-muted"}`}
-                  />
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt=""
+                      className={`size-5 shrink-0 object-contain ${color || ""}`}
+                    />
+                  ) : (
+                    <Icon
+                      aria-hidden
+                      className={`size-5 shrink-0 ${color || "text-muted"}`}
+                    />
+                  )}
                   {name}
                   <Accordion.Indicator />
                 </Accordion.Trigger>
@@ -277,9 +325,7 @@ export default function McpSettings() {
                         <span aria-live="polite">
                           {copied?.value === command
                             ? "Copied"
-                            : name === "Cursor"
-                              ? "Copy configuration"
-                              : "Copy command"}
+                            : copyLabel || "Copy command"}
                         </span>
                       </Button>
                     </div>
