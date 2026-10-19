@@ -21,6 +21,7 @@ module.exports = (app) => {
     const userToken = {
       id: user.id,
       email: user.email,
+      sessionVersion: user.sessionVersion,
     };
     jwt.sign(userToken, app.settings.encryptionKey, {
       expiresIn: 2592000 // a month
@@ -216,7 +217,10 @@ module.exports = (app) => {
   */
   app.put("/user/:id", verifyUser, (req, res) => {
     if (!req.body || !req.params.id) return res.status(400).send("Missing fields");
-    return userController.update(req.params.id, req.body)
+    const updates = Object.fromEntries(
+      Object.entries(req.body).filter(([field]) => ["name", "icon", "tutorials"].includes(field))
+    );
+    return userController.update(req.params.id, updates)
       .then((user) => {
         return res.status(200).send(userResponse(user));
       })
@@ -286,7 +290,9 @@ module.exports = (app) => {
   ** Route to request a password reset email
   */
   app.post("/user/password/reset", apiLimiter(10), (req, res) => {
-    userController.requestPasswordReset(req.body.email);
+    userController.requestPasswordReset(req.body?.email).catch(() => {
+      // Keep account lookup and mail failures private while handling the rejection.
+    });
     return res.status(200).send({ "success": true });
   });
   // --------------------------------------
@@ -436,7 +442,8 @@ module.exports = (app) => {
     return userController.pinDashboard(req.body.project_id, req.user.id)
       .then((pinnedDashboard) => {
         return res.status(200).send(pinnedDashboard);
-      });
+      })
+      .catch(() => res.status(403).send("Cannot pin this dashboard."));
   });
   // -------------------------------------------
 
@@ -444,7 +451,7 @@ module.exports = (app) => {
   ** Route to unpin a dashboard
   */
   app.delete("/user/:id/pin/:pin_id", verifyToken, (req, res) => {
-    return userController.unpinDashboard(req.params.pin_id)
+    return userController.unpinDashboard(req.params.pin_id, req.user.id)
       .then(() => {
         return res.status(200).send({ removed: true });
       });

@@ -9,6 +9,7 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
+const socketManager = require("../modules/socketManager");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -279,7 +280,8 @@ class UserController {
 
   async login(email, password) {
     try {
-      const foundUser = await db.User.findOne({ where: { email: { [Op.like]: email } } });
+      if (typeof email !== "string" || typeof password !== "string") throw new Error(401);
+      const foundUser = await db.User.findOne({ where: { email } });
 
       if (!foundUser) {
         throw new Error(401);
@@ -361,7 +363,7 @@ class UserController {
 
   findAll() {
     return db.User.findAll({
-      attributes: { exclude: ["password", "passwordResetToken"] },
+      attributes: { exclude: ["password", "passwordResetToken", "sessionVersion"] },
     })
       .then((users) => {
         return Promise.resolve(users);
@@ -444,11 +446,8 @@ class UserController {
         where: {
           team_id: teamId
         }
-      }, {
-        model: db.PinnedDashboard,
-        required: false,
       }],
-      attributes: { exclude: ["password", "passwordResetToken"] },
+      attributes: { exclude: ["password", "passwordResetToken", "sessionVersion"] },
     }).then((users) => {
       return users;
     }).catch((error) => {
@@ -497,6 +496,7 @@ class UserController {
     const [updatedUsers] = await db.User.update({
       passwordResetToken: null,
       password: bcryptHash,
+      sessionVersion: existingUser.sessionVersion + 1,
     }, {
       where: {
         id: existingUser.id,
@@ -505,6 +505,7 @@ class UserController {
     });
 
     if (!updatedUsers) throw new Error(401);
+    socketManager.io?.in(`user:${existingUser.id}`).disconnectSockets(true);
     return { completed: true };
   }
 
@@ -714,6 +715,16 @@ class UserController {
 
   async pinDashboard(projectId, userId) {
     const project = await db.Project.findByPk(projectId);
+    if (!project) throw new Error("403");
+
+    const role = await db.TeamRole.findOne({
+      where: { team_id: project.team_id, user_id: userId },
+    });
+    const hasProjectAccess = role?.projects?.some((id) => `${id}` === `${project.id}`);
+    if (!role || (!["teamOwner", "teamAdmin"].includes(role.role) && !hasProjectAccess)) {
+      throw new Error("403");
+    }
+
     return db.PinnedDashboard.create({
       project_id: projectId,
       user_id: userId,
@@ -721,10 +732,11 @@ class UserController {
     });
   }
 
-  async unpinDashboard(pinId) {
+  async unpinDashboard(pinId, userId) {
     return db.PinnedDashboard.destroy({
       where: {
         id: pinId,
+        user_id: userId,
       },
     });
   }

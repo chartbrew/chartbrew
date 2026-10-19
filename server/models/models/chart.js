@@ -207,6 +207,7 @@ module.exports = (sequelize, DataTypes) => {
     snapshotToken: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
+      validate: { isUUID: "all" },
       description: "A token used to authenticate the automated snapshot generation"
     },
     isLogarithmic: {

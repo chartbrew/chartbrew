@@ -3,10 +3,13 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const { nanoid } = require("nanoid");
 const fs = require("fs");
+const { validate: isUuid } = require("uuid");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 module.exports.snapChart = async (shareString) => {
+  if (!isUuid(shareString)) return null;
+
   let browser = null;
   try {
     browser = await chromium.launch();

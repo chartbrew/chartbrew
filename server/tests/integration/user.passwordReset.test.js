@@ -47,6 +47,11 @@ describe("User Password Reset API", () => {
       tutorials: JSON.stringify({}),
     });
 
+    const login = await request(app)
+      .post("/user/login")
+      .send({ email: user.email, password: "password123" })
+      .expect(200);
+
     await request(app)
       .post("/user/password/reset")
       .send({ email: user.email })
@@ -95,7 +100,20 @@ describe("User Password Reset API", () => {
 
     const updatedUser = await models.User.findByPk(user.id);
     expect(updatedUser.passwordResetToken).toBeNull();
+    expect(updatedUser.sessionVersion).toBe(1);
     await expect(bcrypt.compare(newPassword, updatedUser.password)).resolves.toBe(true);
+    await request(app)
+      .get(`/user/${user.id}`)
+      .set("Authorization", `Bearer ${login.body.token}`)
+      .expect(401);
+    const newLogin = await request(app)
+      .post("/user/login")
+      .send({ email: user.email, password: newPassword })
+      .expect(200);
+    await request(app)
+      .get(`/user/${user.id}`)
+      .set("Authorization", `Bearer ${newLogin.body.token}`)
+      .expect(200);
   });
 
   it("changes the password and consumes the reset token", async () => {

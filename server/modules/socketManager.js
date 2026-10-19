@@ -41,7 +41,7 @@ class SocketManager {
     }
 
     const user = await db.User.findByPk(decoded.id);
-    if (!user) {
+    if (!user || !verifySessionToken.isCurrentSession(decoded, user)) {
       throw new Error("Unauthorized access");
     }
 

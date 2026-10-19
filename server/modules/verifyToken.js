@@ -34,6 +34,10 @@ module.exports = async (req, res, next) => {
       .then((user) => {
         if (!user) return res.status(400).send("Could not process the request. Please try again.");
 
+        if (!verifySessionToken.isCurrentSession(decoded, user)) {
+          return res.status(401).send("Unauthorized access.");
+        }
+
         const userObj = userResponse(user);
         userObj.token = token;
         userObj.admin = user.admin;

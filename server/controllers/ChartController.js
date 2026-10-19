@@ -297,26 +297,7 @@ class ChartController {
         attributes: { exclude: ["chartData"] },
       })
         .then(() => {
-          const updatePromises = [];
-
-          if (data.ChartDatasets || data.dataRequests) {
-            if (data.ChartDatasets) {
-              updatePromises
-                .push(this.updateDatasets(id, data.ChartDatasets));
-            }
-            if (data.dataRequests) {
-              data.dataRequests.forEach((dataRequest) => {
-                if (dataRequest.id) {
-                  updatePromises
-                    .push(this.dataRequestController.update(dataRequest.id, dataRequest));
-                }
-              });
-            }
-
-            return Promise.all(updatePromises).then(() => this.findById(id));
-          } else {
-            return this.findById(id);
-          }
+          return this.findById(id);
         })
         .then(async (chart) => {
           const updatedChart = shouldSyncLegacyChart(data)
@@ -339,44 +320,7 @@ class ChartController {
           this.chartCache.remove(user.id, id);
         }
 
-        const updatePromises = [];
-        if (data.ChartDatasetConfigs || data.dataRequests) {
-          if (data.ChartDatasetConfigs) {
-            const datasetsToUpdate = [];
-            for (const dataset of data.ChartDatasetConfigs) {
-              if (!dataset.deleted && !dataset.id) {
-                dataset.chart_id = id;
-                updatePromises.push(this.datasetController.create(dataset));
-              } else if (!dataset.deleted && dataset.id) {
-                datasetsToUpdate.push(dataset);
-              }
-            }
-
-            if (datasetsToUpdate.length > 0) {
-              updatePromises
-                .push(this.updateDatasets(id, data.ChartDatasetConfigs));
-            }
-          }
-          if (data.dataRequests) {
-            data.dataRequests.forEach((dataRequest) => {
-              if (dataRequest.id) {
-                updatePromises
-                  .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
-              }
-            });
-          }
-
-          if (data.dataRequests) {
-            data.dataRequests.forEach((dataRequest) => {
-              if (!dataRequest.id) {
-                const newDataRequest = { ...data.dataRequest, chart_id: id };
-                updatePromises.push(this.dataRequestController.create(newDataRequest));
-              }
-            });
-          }
-
-          return Promise.all(updatePromises).then(() => this.findById(id));
-        } else if (justUpdates) {
+        if (justUpdates) {
           return this.findById(id, {
             where: { id },
             attributes: ["id"].concat(Object.keys(data)),
@@ -404,30 +348,6 @@ class ChartController {
       })
       .then((chart) => {
         return this.findById(chart.id);
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
-  }
-
-  updateDatasets(chartId, datasets) {
-    const updatePromises = [];
-    for (const dataset of datasets) {
-      if (dataset.id && !dataset.deleted) {
-        if (parseInt(dataset.chart_id, 10) === parseInt(chartId, 10)) {
-          updatePromises.push(this.datasetController.update(dataset.id, dataset));
-        }
-      } else if (dataset.id && dataset.deleted) {
-        updatePromises.push(this.datasetController.remove(dataset.id));
-      } else if (!dataset.id && !dataset.deleted) {
-        dataset.chart_id = chartId;
-        updatePromises.push(this.datasetController.create(dataset));
-      }
-    }
-
-    return Promise.all(updatePromises)
-      .then(() => {
-        return this.findById(chartId);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

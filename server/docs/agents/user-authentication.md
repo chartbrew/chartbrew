@@ -23,6 +23,7 @@ This document covers all authentication and user management flows in Chartbrew.
 - **Module**: [`server/modules/verifyToken.js`](../modules/verifyToken.js)
 - Verifies HS256 session tokens only with `settings.encryptionKey`
 - Loads the user from DB and places a sanitized user on `req.user`
+- Compares the session version in the token with the stored user version. Tokens without a version use version 0. Password resets increase the stored version and disconnect active user sockets.
 
 ## 2FA Endpoints
 
@@ -35,7 +36,7 @@ This document covers all authentication and user management flows in Chartbrew.
 ## Password Reset Flow
 
 - **Request reset**: `POST /user/password/reset`
-  - Always returns `{ "success": true }` immediately (does not await controller)
+  - Always returns `{ "success": true }` immediately and handles rejected reset requests without exposing account or mail errors.
   - Controller path: `UserController.requestPasswordReset(email)`
     - Sets `User.passwordResetToken` to a new UUID-based token with a 30-minute expiry
     - Emails a reset URL like:
@@ -45,6 +46,7 @@ This document covers all authentication and user management flows in Chartbrew.
   - Finds the user by the non-expired `passwordResetToken`, then:
     - Updates password (bcrypt)
     - Clears `passwordResetToken`
+    - Increases `sessionVersion` in the same update to revoke existing sessions
 
 ## Email Update Flow
 
@@ -69,7 +71,8 @@ This document covers all authentication and user management flows in Chartbrew.
   - Protected by [`server/modules/verifyUser.js`](../modules/verifyUser.js) (token user id must match `:id`)
 - **Update user**: `PUT /user/:id`
   - Protected by [`server/modules/verifyUser.js`](../modules/verifyUser.js)
-  - `admin` cannot be set through this API (model hook forces `admin=false`)
+  - Only `name`, `icon`, and `tutorials` can be set through this API. Credential changes use separate routes.
+  - The model validation hook also forces `admin=false`, including static updates.
 - **Delete user**: `DELETE /user/:id`
   - Protected by [`server/modules/verifyToken.js`](../modules/verifyToken.js) and additionally checks `req.user.id === :id`
 - **Admin listing**: `GET /user`
