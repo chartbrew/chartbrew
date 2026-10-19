@@ -416,10 +416,26 @@ function McpConnectionForm({ editConnection, catalogueEntry, onComplete, addErro
   };
 
   const onTest = async () => {
-    if (!validate()) return;
+    if (testLoading || saveLoading || oauthLoading || !validate()) return;
     setTestLoading(true);
     setTestResult(null);
     try {
+      if (editConnection?.id) {
+        let savedConnection;
+        try {
+          savedConnection = await onComplete(buildConnection({ includeApprovals: false }));
+        } catch (error) {
+          savedConnection = null;
+        }
+        if (!savedConnection?.id) {
+          setTestResult({
+            ok: false,
+            message: "The connection could not be saved. Try again before testing.",
+            details: "",
+          });
+          return;
+        }
+      }
       const action = editConnection?.id
         ? await dispatch(testSavedConnection({ team_id: team.id, connection_id: editConnection.id }))
         : await dispatch(testRequest({ team_id: team.id, connection: buildConnection() }));
@@ -454,7 +470,7 @@ function McpConnectionForm({ editConnection, catalogueEntry, onComplete, addErro
   };
 
   const onSave = async () => {
-    if (saveLoading || oauthLoading) return false;
+    if (testLoading || saveLoading || oauthLoading) return false;
     if (authenticationType === "oauth" && !editConnection?.id) return onStartOAuth();
     if (!validate()) return false;
     setSaveLoading(true);
@@ -466,7 +482,7 @@ function McpConnectionForm({ editConnection, catalogueEntry, onComplete, addErro
   };
 
   const onStartOAuth = async () => {
-    if (saveLoading || oauthLoading || !validate()) return;
+    if (testLoading || saveLoading || oauthLoading || !validate()) return;
     setOauthLoading(true);
     try {
       const url = await saveAndStartMcpOAuth({
@@ -798,7 +814,7 @@ function McpConnectionForm({ editConnection, catalogueEntry, onComplete, addErro
           {authenticationType === "oauth" && (
             <div className="flex flex-wrap items-center gap-3">
               {editConnection?.id ? (
-                <Button variant="outline" isDisabled={saveLoading || allowAllLoading} isPending={oauthLoading} onPress={onStartOAuth}>
+                <Button variant="outline" isDisabled={testLoading || saveLoading || allowAllLoading} isPending={oauthLoading} onPress={onStartOAuth}>
                   {oauthLoading ? <ButtonSpinner /> : null}
                   {editConnection?.authentication?.hasToken ? "Reconnect OAuth" : "Connect with OAuth"}
                 </Button>
@@ -825,7 +841,7 @@ function McpConnectionForm({ editConnection, catalogueEntry, onComplete, addErro
               {testLoading ? <ButtonSpinner /> : <LuRefreshCw />}
               Test and load tools
             </Button>
-            <Button variant="primary" isDisabled={allowAllLoading} isPending={saveLoading || oauthLoading} onPress={onSave}>
+            <Button variant="primary" isDisabled={testLoading || allowAllLoading} isPending={saveLoading || oauthLoading} onPress={onSave}>
               {(saveLoading || oauthLoading) && <ButtonSpinner />}
               {authenticationType === "oauth" && !editConnection?.id ? "Save and connect" : "Save connection"}
             </Button>

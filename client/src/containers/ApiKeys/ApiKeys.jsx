@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert, Checkbox,
-  Button, Chip, EmptyState, InputGroup, Label, Modal, ProgressCircle, Radio, RadioGroup, Table, TextField, Tooltip,
+  Button, Chip, EmptyState, InputGroup, Label, Link, Modal, ProgressCircle, Radio, RadioGroup, Table, TextField, Tooltip,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
 import {
-  LuCheck, LuCopy, LuKeyRound, LuPlus, LuTrash, LuTriangleAlert,
+  LuChartNoAxesCombined, LuCheck, LuCopy, LuDatabase, LuKeyRound, LuPlus, LuRefreshCw, LuTrash, LuTriangleAlert,
 } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -159,119 +159,176 @@ function ApiKeys() {
   }
 
   return (
-    <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
-      {loading && (
-        <div className="flex justify-center">
-          <CupLoader label="Loading keys" />
-        </div>
-      )}
-      <div>
-        <Button
-          onPress={_onCreateRequested}
-        >
-          Create a new API Key
-          <LuPlus />
-        </Button>
-      </div>
-      <div className="h-4" />
-
-      <Table className="shadow-none min-h-50">
-        <Table.ScrollContainer>
-          <Table.Content
-            aria-label="API keys"
-            className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
+    <div className="flex flex-col gap-6">
+      <section aria-labelledby="api-automation-heading" className="rounded-3xl border border-divider bg-surface p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="api-automation-heading" className="text-lg font-medium">Build your next automation</h2>
+          <Link
+            href="https://docs.chartbrew.com/api-reference/introduction"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-foreground!"
           >
-            <Table.Header>
-              <Table.Column id="token" isRowHeader>
-                API Tokens list
-              </Table.Column>
-              <Table.Column id="created" className="text-end">
-                Date created
-              </Table.Column>
-              <Table.Column id="access">
-                Access
-              </Table.Column>
-              <Table.Column id="permissions">
-                Permissions
-              </Table.Column>
-              <Table.Column id="actions" className="text-end">
-                <span className="sr-only">Actions</span>
-              </Table.Column>
-            </Table.Header>
-
-            <Table.Body
-              renderEmptyState={() => (
-                <EmptyState className="flex h-full w-full min-h-40 flex-col items-center justify-center gap-2 text-center">
-                  <LuKeyRound className="size-6 text-muted" aria-hidden />
-                  <span className="text-sm text-muted">You don&apos;t have any API Keys yet</span>
-                </EmptyState>
-              )}
+            API reference
+            <Link.Icon aria-hidden />
+          </Link>
+        </div>
+        <ul className="mt-6 flex flex-col gap-5 md:flex-row md:gap-0">
+          <li className="flex-1 md:pr-6">
+            <LuDatabase className="mb-3 size-5 text-muted" aria-hidden />
+            <Link
+              href="https://docs.chartbrew.com/api-reference/guides/data-api#read-default-data"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-foreground!"
             >
-              {apiKeys.map((key) => {
-                const isLegacy = isLegacyApiKey(key);
-                const permissionLabels = getPermissionLabels(key);
+              Feed your reports
+              <Link.Icon className="text-muted" aria-hidden />
+            </Link>
+            <p className="mt-2 text-sm leading-relaxed text-muted">Read chart and dataset values for a daily summary.</p>
+          </li>
+          <li className="flex-1 border-t border-divider pt-5 md:border-t-0 md:border-l md:px-6 md:pt-0">
+            <LuRefreshCw className="mb-3 size-5 text-muted" aria-hidden />
+            <Link
+              href="https://docs.chartbrew.com/api-reference/guides/data-api#send-runtime-values"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-foreground!"
+            >
+              Get filtered results
+              <Link.Icon className="text-muted" aria-hidden />
+            </Link>
+            <p className="mt-2 text-sm leading-relaxed text-muted">Refresh data for a customer, region, or date range.</p>
+          </li>
+          <li className="flex-1 border-t border-divider pt-5 md:border-t-0 md:border-l md:pl-6 md:pt-0">
+            <LuChartNoAxesCombined className="mb-3 size-5 text-muted" aria-hidden />
+            <Link
+              href="https://docs.chartbrew.com/api-reference/guides/data-api#use-chart-rows"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-foreground!"
+            >
+              Build charts in your app
+              <Link.Icon className="text-muted" aria-hidden />
+            </Link>
+            <p className="mt-2 text-sm leading-relaxed text-muted">Use chart data to create your own visualizations.</p>
+          </li>
+        </ul>
+      </section>
+      <section aria-labelledby="api-keys-heading" className="rounded-3xl border border-divider bg-surface p-4">
+        {loading && (
+          <div className="flex justify-center">
+            <CupLoader label="Loading keys" />
+          </div>
+        )}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="api-keys-heading" className="text-lg font-medium">Your API keys</h2>
+          <Button
+            onPress={_onCreateRequested}
+          >
+            <LuPlus aria-hidden />
+            Create API key
+          </Button>
+        </div>
 
-                return (
-                  <Table.Row key={key.id} id={String(key.id)}>
-                    <Table.Cell>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span>{key.name}</span>
-                        {isLegacy && (
-                          <Tooltip delay={0}>
-                            <Tooltip.Trigger>
-                              <Chip color="warning" size="sm" variant="soft">
-                                <LuTriangleAlert size={14} aria-hidden />
-                                Legacy key
-                              </Chip>
-                            </Tooltip.Trigger>
-                            <Tooltip.Content>
-                              This key still works with existing integrations. Create a new key to use the Data API.
-                            </Tooltip.Content>
-                          </Tooltip>
-                        )}
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="text-end">
-                      {formatRelative(new Date(key.createdAt), new Date())}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Chip size="sm" variant="secondary">
-                        {getProjectAccessLabel(key, projects)}
-                      </Chip>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <div className="flex flex-wrap gap-1">
-                        {permissionLabels.length > 0 ? permissionLabels.map((label) => (
-                          <Chip key={label} size="sm" variant="secondary">
-                            {label}
-                          </Chip>
-                        )) : (
-                          <Chip size="sm" variant="secondary">
-                            Not available
-                          </Chip>
-                        )}
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="text-end">
-                      <div className="flex items-center justify-end">
-                        <Button
-                          isIconOnly
-                          variant="danger-soft"
-                          onPress={() => _onRemoveConfirmation(key)}
-                          size="sm"
-                          aria-label={`Delete API key ${key.name}`}
-                        >
-                          <LuTrash />
-                        </Button>
-                      </div>
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              })}
-            </Table.Body>
-          </Table.Content>
-        </Table.ScrollContainer>
-      </Table>
+        <Table className="shadow-none">
+          <Table.ScrollContainer>
+            <Table.Content
+              aria-label="API keys"
+              className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
+            >
+              <Table.Header>
+                <Table.Column id="token" isRowHeader>
+                  Name
+                </Table.Column>
+                <Table.Column id="created" className="text-end">
+                  Date created
+                </Table.Column>
+                <Table.Column id="access">
+                  Access
+                </Table.Column>
+                <Table.Column id="permissions">
+                  Permissions
+                </Table.Column>
+                <Table.Column id="actions" className="text-end">
+                  <span className="sr-only">Actions</span>
+                </Table.Column>
+              </Table.Header>
+
+              <Table.Body
+                renderEmptyState={() => (
+                  <EmptyState className="flex h-full w-full min-h-40 flex-col items-center justify-center gap-2 text-center">
+                    <LuKeyRound className="size-6 text-muted" aria-hidden />
+                    <span className="text-sm text-muted">You don&apos;t have any API Keys yet</span>
+                  </EmptyState>
+                )}
+              >
+                {apiKeys.map((key) => {
+                  const isLegacy = isLegacyApiKey(key);
+                  const permissionLabels = getPermissionLabels(key);
+
+                  return (
+                    <Table.Row key={key.id} id={String(key.id)}>
+                      <Table.Cell>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span>{key.name}</span>
+                          {isLegacy && (
+                            <Tooltip delay={0}>
+                              <Tooltip.Trigger>
+                                <Chip color="warning" size="sm" variant="soft">
+                                  <LuTriangleAlert size={14} aria-hidden />
+                                  Legacy key
+                                </Chip>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>
+                                This key still works with existing integrations. Create a new key to use the Data API.
+                              </Tooltip.Content>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="text-end">
+                        {formatRelative(new Date(key.createdAt), new Date())}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Chip size="sm" variant="secondary">
+                          {getProjectAccessLabel(key, projects)}
+                        </Chip>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className="flex flex-wrap gap-1">
+                          {permissionLabels.length > 0 ? permissionLabels.map((label) => (
+                            <Chip key={label} size="sm" variant="secondary">
+                              {label}
+                            </Chip>
+                          )) : (
+                            <Chip size="sm" variant="secondary">
+                              Not available
+                            </Chip>
+                          )}
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="text-end">
+                        <div className="flex items-center justify-end">
+                          <Button
+                            isIconOnly
+                            variant="danger-soft"
+                            onPress={() => _onRemoveConfirmation(key)}
+                            size="sm"
+                            aria-label={`Delete API key ${key.name}`}
+                          >
+                            <LuTrash />
+                          </Button>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })}
+              </Table.Body>
+            </Table.Content>
+          </Table.ScrollContainer>
+        </Table>
+      </section>
 
       <Modal>
         <Modal.Backdrop isOpen={!!createdKey.id} onOpenChange={(nextOpen) => { if (!nextOpen) setCreatedKey({}); }}>

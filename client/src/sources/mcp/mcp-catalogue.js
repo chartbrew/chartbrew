@@ -4,7 +4,7 @@ const mcpCatalogue = [
     provider: "posthog",
     name: "PostHog",
     description: "Explore product usage, events, and insights.",
-    host: "https://mcp.posthog.com/mcp",
+    host: "https://mcp.posthog.com/mcp?mode=tools&readonly=true",
     documentationUrl: "https://posthog.com/docs/model-context-protocol",
   },
   {

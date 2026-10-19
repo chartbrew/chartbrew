@@ -4,7 +4,7 @@
 
 No new environment variables or migrations are required.
 
-For PostHog, use the official `https://mcp.posthog.com/mcp` connection. Reload its tools. Enable `read-data-schema` for Ask and confirm read-only use. Enable the query tool, such as `execute-sql`, for both Ask and datasets. Chartbrew does not grant access automatically.
+For PostHog, use the official `https://mcp.posthog.com/mcp?mode=tools&readonly=true` connection. Reload its tools. Enable `read-data-schema` for Ask and confirm read-only use. Enable the query tool, such as `execute-sql`, for both Ask and datasets. Chartbrew does not grant access automatically.
 
 In chat, request a country map, then a US state map, then a world point map. Keep the measure and dates the same. The AI must inspect the required fields and create separate datasets when the grouping changes. A missing field in a saved aggregate is not proof that the source lacks the field.
 

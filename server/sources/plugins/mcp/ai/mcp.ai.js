@@ -253,13 +253,13 @@ function getContextResourceCandidates(connection, query) {
 }
 
 function parseToolCall(response, functionName) {
-  const toolCall = response?.choices?.[0]?.message?.tool_calls?.find(
-    (call) => call?.function?.name === functionName
+  const toolCall = response?.output?.find(
+    (call) => call?.type === "function_call" && call.name === functionName
   );
-  if (!toolCall?.function?.arguments) return null;
+  if (!toolCall?.arguments) return null;
 
   try {
-    return JSON.parse(toolCall.function.arguments);
+    return JSON.parse(toolCall.arguments);
   } catch (error) {
     return null;
   }
@@ -354,11 +354,12 @@ async function requestContextSearch({
 }) {
   const response = await callAiProvider({
     client,
-    api: "chat",
+    api: "responses",
     purpose: "mcp_configuration",
     request: {
       model: openAiModel || "gpt-5.4-nano",
-      messages: [
+      store: false,
+      input: [
         {
           role: "system",
           content: [
@@ -384,17 +385,16 @@ async function requestContextSearch({
       ],
       tools: [{
         type: "function",
-        function: {
-          name: "search_mcp_context",
-          description: "Search MCP documentation, resources, and approved read-only tools for useful context.",
-          parameters: {
-            type: "object",
-            properties: {
-              query: { type: "string" },
-            },
-            required: ["query"],
-            additionalProperties: false,
+        strict: false,
+        name: "search_mcp_context",
+        description: "Search MCP documentation, resources, and approved read-only tools for useful context.",
+        parameters: {
+          type: "object",
+          properties: {
+            query: { type: "string" },
           },
+          required: ["query"],
+          additionalProperties: false,
         },
       }],
       tool_choice: "auto",
@@ -459,11 +459,12 @@ async function inspectDatasetContext({
 
   const response = await callAiProvider({
     client,
-    api: "chat",
+    api: "responses",
     purpose: "mcp_configuration",
     request: {
       model: openAiModel || "gpt-5.4-nano",
-      messages: [
+      store: false,
+      input: [
         {
           role: "system",
           content: [
@@ -491,26 +492,25 @@ async function inspectDatasetContext({
       ],
       tools: [{
         type: "function",
-        function: {
-          name: "inspect_mcp_context",
-          description: "Read selected MCP context before building the final dataset setup.",
-          parameters: {
-            type: "object",
-            properties: {
-              actions: {
-                type: "array",
-                maxItems: AI_CONTEXT_ACTION_LIMIT,
-                items: {
-                  type: "object",
-                  properties: actionProperties,
-                  required: ["kind"],
-                  additionalProperties: false,
-                },
+        strict: false,
+        name: "inspect_mcp_context",
+        description: "Read selected MCP context before building the final dataset setup.",
+        parameters: {
+          type: "object",
+          properties: {
+            actions: {
+              type: "array",
+              maxItems: AI_CONTEXT_ACTION_LIMIT,
+              items: {
+                type: "object",
+                properties: actionProperties,
+                required: ["kind"],
+                additionalProperties: false,
               },
             },
-            required: ["actions"],
-            additionalProperties: false,
           },
+          required: ["actions"],
+          additionalProperties: false,
         },
       }],
       tool_choice: "auto",
@@ -650,11 +650,12 @@ async function requestConfigurationProposal({
 }) {
   const response = await callAiProvider({
     client,
-    api: "chat",
+    api: "responses",
     purpose: "mcp_configuration",
     request: {
       model: openAiModel || "gpt-5.4-nano",
-      messages: [
+      store: false,
+      input: [
         {
           role: "system",
           content: [
@@ -691,29 +692,28 @@ async function requestConfigurationProposal({
       ],
       tools: [{
         type: "function",
-        function: {
-          name: "propose_mcp_dataset",
-          description: "Select one approved MCP tool and provide its complete arguments.",
-          parameters: {
-            type: "object",
-            properties: {
-              toolName: {
-                type: "string",
-                enum: candidates.map((candidate) => candidate.toolName),
-              },
-              arguments: {
-                type: "object",
-                additionalProperties: true,
-              },
+        strict: false,
+        name: "propose_mcp_dataset",
+        description: "Select one approved MCP tool and provide its complete arguments.",
+        parameters: {
+          type: "object",
+          properties: {
+            toolName: {
+              type: "string",
+              enum: candidates.map((candidate) => candidate.toolName),
             },
-            required: ["toolName", "arguments"],
-            additionalProperties: false,
+            arguments: {
+              type: "object",
+              additionalProperties: true,
+            },
           },
+          required: ["toolName", "arguments"],
+          additionalProperties: false,
         },
       }],
       tool_choice: {
         type: "function",
-        function: { name: "propose_mcp_dataset" },
+        name: "propose_mcp_dataset",
       },
     },
   });
@@ -770,7 +770,13 @@ function needsConfigurationCorrection(preview) {
 }
 
 function generateConfiguration(input = {}) {
-  return withAiUsageContext({ teamId: input.connection?.team_id }, () => executeConfiguration(input));
+  return withAiUsageContext({ teamId: input.connection?.team_id }, () => executeConfiguration(input))
+    .catch((error) => {
+      if (error instanceof OpenAI.APIError) {
+        throw new Error("AI could not build this setup. Try again. If this continues, ask a team owner to check the AI settings.", { cause: error });
+      }
+      throw error;
+    });
 }
 
 async function executeConfiguration({

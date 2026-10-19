@@ -10,6 +10,7 @@ import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 const db = require("../../models/models");
+const OpenAI = require("openai");
 const mcpAi = require("../../sources/plugins/mcp/ai/mcp.ai");
 const { buildAiVisualization } = require("../../visualization/aiVisualization");
 const { VisualizationEngine } = require("../../visualization/VisualizationEngine");
@@ -89,10 +90,23 @@ function createConnection(tool, approval = {}) {
 }
 
 function modelCall(name, args) {
-  return { choices: [{ message: { tool_calls: [{ function: { name, arguments: JSON.stringify(args) } }] } }] };
+  return { output: [{ type: "function_call", name, arguments: JSON.stringify(args) }] };
 }
 
 describe("MCP planning and repair", () => {
+  it("keeps provider API details out of setup errors", async () => {
+    const tool = createTool();
+    const create = vi.fn().mockRejectedValue(new OpenAI.APIError(400, {
+      message: "Internal model and endpoint details",
+    }, "Internal model and endpoint details", new Headers()));
+    await expect(mcpAi.generateConfiguration({
+      client: { responses: { create } },
+      connection: createConnection(tool),
+      question: "Show paid orders",
+    })).rejects.toThrow("AI could not build this setup. Try again. If this continues, ask a team owner to check the AI settings.");
+    expect(create).toHaveBeenCalledOnce();
+  });
+
   const queryTool = () => createTool({
     name: "execute-sql",
     title: "Execute SQL",
@@ -121,21 +135,21 @@ describe("MCP planning and repair", () => {
     const tool = queryTool();
     const proposal = { toolName: tool.name, arguments: { query: "SELECT country, count() AS visits FROM events GROUP BY country" } };
     const create = vi.fn()
-      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce({ output: [] })
       .mockResolvedValueOnce(modelCall("propose_mcp_dataset", proposal))
       .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
         ...proposal, arguments: { ...proposal.arguments, context: "Visits by country" },
       }));
     const execute = vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({ data: [{ country: "US", visits: 25 }], tool });
     const result = await mcpAi.planDataset({
-      client: { chat: { completions: { create } } }, connection: createConnection(tool),
+      client: { responses: { create } }, connection: createConnection(tool),
       question: "Make a world map of visits", overrides: { generate: true },
     });
     expect(result.status).toBe("ok");
     expect(result.configuration.arguments.context).toBe("Visits by country");
     expect(result.preview.rows).toEqual([{ country: "US", visits: 25 }]);
     expect(execute).toHaveBeenCalledOnce();
-    expect(JSON.parse(create.mock.calls[2][0].messages[1].content).correction.preview.requiredArguments).toEqual(["context"]);
+    expect(JSON.parse(create.mock.calls[2][0].input[1].content).correction.preview.requiredArguments).toEqual(["context"]);
   });
 
   it("retains an approved provider query tool when metadata tools rank higher", () => {
@@ -162,7 +176,7 @@ describe("MCP planning and repair", () => {
     const create = vi.fn().mockResolvedValueOnce(modelCall("search_mcp_context", { query: "geoip schema" }));
     const execute = vi.spyOn(mcpProtocol._private, "executeTool");
     await expect(mcpAi.planDataset({
-      client: { chat: { completions: { create } } }, connection,
+      client: { responses: { create } }, connection,
       question: "Create a point map with latitude and longitude", overrides: { generate: true },
     })).rejects.toMatchObject({
       code: "MCP_TOOL_NOT_APPROVED", connectionId: 8,
@@ -176,7 +190,7 @@ describe("MCP planning and repair", () => {
     const tool = queryTool();
     const proposal = { toolName: tool.name, arguments: { query: "SELECT bad_field FROM events", context: "Visits" } };
     const create = vi.fn()
-      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce({ output: [] })
       .mockResolvedValueOnce(modelCall("propose_mcp_dataset", proposal))
       .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
         ...proposal, arguments: { query: "SELECT visits FROM events", context: "Visits" },
@@ -185,10 +199,10 @@ describe("MCP planning and repair", () => {
       .mockRejectedValueOnce(createMcpError("MCP_TOOL_ERROR", 'Unknown field bad_field. Bearer abcsecret123456789 {"api_key":"private-key"}'))
       .mockResolvedValueOnce({ data: [{ visits: 25 }], tool });
     const result = await mcpAi.generateConfiguration({
-      client: { chat: { completions: { create } } }, connection: createConnection(tool), question: "Visits",
+      client: { responses: { create } }, connection: createConnection(tool), question: "Visits",
     });
     expect(result.status).toBe("ready");
-    const correction = create.mock.calls[2][0].messages[1].content;
+    const correction = create.mock.calls[2][0].input[1].content;
     expect(correction).toContain("Unknown field bad_field");
     expect(correction).not.toContain("abcsecret");
     expect(correction).not.toContain("private-key");
@@ -221,17 +235,17 @@ describe("MCP planning and repair", () => {
       .mockResolvedValueOnce({ data: [{ city: "string", latitude: "number", longitude: "number" }], tool: schemaTool })
       .mockResolvedValueOnce({ data: [{ city: "London", latitude: 51.5, longitude: -0.1, visits: 100 }], tool });
     const result = await mcpAi.generateConfiguration({
-      client: { chat: { completions: { create } } }, connection,
+      client: { responses: { create } }, connection,
       currentConfiguration: { tool: { name: tool.name }, arguments: { query: "SELECT properties.$geoip_latitude FROM events", context: "Visits" } },
       question: "Group by lat/long and show a count of visits in the last 30 days on a map",
     });
     expect(result.status).toBe("ready");
     expect(result.configuration.arguments.query).toBe(query);
-    const correction = JSON.parse(create.mock.calls[2][0].messages[1].content).correction;
+    const correction = JSON.parse(create.mock.calls[2][0].input[1].content).correction;
     expect(correction[0]).toMatchObject({ toolName: schemaTool.name, failed: true });
     expect(JSON.stringify(correction)).toContain(nested ? "kind" : "context");
     expect(execute).toHaveBeenCalledTimes(2);
-    const prompt = create.mock.calls[3][0].messages[0].content;
+    const prompt = create.mock.calls[3][0].input[0].content;
     expect(prompt).toContain("GROUP BY latitude, longitude");
     expect(prompt).toContain("$geoip_city_name");
   });
@@ -262,12 +276,12 @@ describe("MCP planning and repair", () => {
       execute.mockResolvedValueOnce({ data: [{ content: "$pageview properties: $geoip_country_code, $geoip_subdivision_1_code, $geoip_latitude, $geoip_longitude" }], tool: schemaTool })
         .mockResolvedValueOnce({ data: scenario.rows, tool });
       const result = await mcpAi.planDataset({
-        client: { chat: { completions: { create } } }, connection,
+        client: { responses: { create } }, connection,
         question: buildSourceQuestion(scenario.question, history), overrides: { generate: true },
       });
       expect(result.status).toBe("ok");
       expect(result.preview.rows).toEqual(scenario.rows);
-      const proposalContext = JSON.parse(create.mock.calls[2][0].messages[1].content);
+      const proposalContext = JSON.parse(create.mock.calls[2][0].input[1].content);
       expect(proposalContext.discovery).toEqual(expect.arrayContaining([
         expect.objectContaining({ toolName: "read-data-schema", rows: [expect.stringContaining("$geoip_latitude")] }),
       ]));
@@ -282,13 +296,13 @@ describe("MCP planning and repair", () => {
   it.each(["MCP_TOOL_NOT_APPROVED", "MCP_RECONNECT_REQUIRED"])("does not retry %s", async (code) => {
     const tool = queryTool();
     const create = vi.fn()
-      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce({ output: [] })
       .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
         toolName: tool.name, arguments: { query: "SELECT count() FROM events", context: "Visits" },
       }));
     const execute = vi.spyOn(mcpProtocol._private, "executeTool").mockRejectedValue(createMcpError(code, "Access needed"));
     await expect(mcpAi.generateConfiguration({
-      client: { chat: { completions: { create } } }, connection: createConnection(tool), question: "Visits",
+      client: { responses: { create } }, connection: createConnection(tool), question: "Visits",
     })).rejects.toMatchObject({ code });
     expect(create).toHaveBeenCalledTimes(2);
     expect(execute).toHaveBeenCalledOnce();
@@ -297,7 +311,7 @@ describe("MCP planning and repair", () => {
   it("rejects a repeated failed request even when argument order changes", async () => {
     const tool = queryTool();
     const create = vi.fn()
-      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce({ output: [] })
       .mockResolvedValueOnce(modelCall("propose_mcp_dataset", {
         toolName: tool.name, arguments: { query: "SELECT bad_field FROM events", context: "Visits" },
       }))
@@ -306,7 +320,7 @@ describe("MCP planning and repair", () => {
       }));
     const execute = vi.spyOn(mcpProtocol._private, "executeTool").mockRejectedValue(createMcpError("MCP_TOOL_ERROR", "Unknown field"));
     await expect(mcpAi.generateConfiguration({
-      client: { chat: { completions: { create } } }, connection: createConnection(tool), question: "Visits",
+      client: { responses: { create } }, connection: createConnection(tool), question: "Visits",
     })).rejects.toMatchObject({ code: "MCP_TOOL_ERROR" });
     expect(execute).toHaveBeenCalledOnce();
   });
@@ -931,26 +945,21 @@ describe("MCP source integration contracts", () => {
       },
     });
     const create = vi.fn()
-      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce({ output: [] })
       .mockResolvedValueOnce({
-        choices: [{
-          message: {
-            tool_calls: [{
-              function: {
-                name: "propose_mcp_dataset",
-                arguments: JSON.stringify({
-                  toolName: tool.name,
-                  arguments: { status: "paid" },
-                }),
-              },
-            }],
-          },
+        output: [{
+          type: "function_call",
+          name: "propose_mcp_dataset",
+          arguments: JSON.stringify({
+            toolName: tool.name,
+            arguments: { status: "paid" },
+          }),
         }],
       });
 
     vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({ data: [{ status: "paid", total: 12 }], tool });
     const result = await mcpAi.generateConfiguration({
-      client: { chat: { completions: { create } } },
+      client: { responses: { create } },
       connection: createConnection(tool),
       currentConfiguration: {},
       question: "Show paid orders",
@@ -1012,51 +1021,36 @@ describe("MCP source integration contracts", () => {
     ].join(" ");
     const create = vi.fn()
       .mockResolvedValueOnce({
-        choices: [{
-          message: {
-            tool_calls: [{
-              function: {
-                name: "search_mcp_context",
-                arguments: JSON.stringify({ query: "page view event definitions" }),
-              },
-            }],
-          },
+        output: [{
+          type: "function_call",
+          name: "search_mcp_context",
+          arguments: JSON.stringify({ query: "page view event definitions" }),
         }],
       })
       .mockResolvedValueOnce({
-        choices: [{
-          message: {
-            tool_calls: [{
-              function: {
-                name: "inspect_mcp_context",
-                arguments: JSON.stringify({
-                  actions: [{
-                    kind: "tool",
-                    toolName: discoveryTool.name,
-                    arguments: {},
-                  }],
-                }),
-              },
+        output: [{
+          type: "function_call",
+          name: "inspect_mcp_context",
+          arguments: JSON.stringify({
+            actions: [{
+              kind: "tool",
+              toolName: discoveryTool.name,
+              arguments: {},
             }],
-          },
+          }),
         }],
       })
       .mockResolvedValueOnce({
-        choices: [{
-          message: {
-            tool_calls: [{
-              function: {
-                name: "propose_mcp_dataset",
-                arguments: JSON.stringify({
-                  toolName: queryTool.name,
-                  arguments: {
-                    query,
-                    context: "Daily blog visitors for the last 30 days",
-                  },
-                }),
-              },
-            }],
-          },
+        output: [{
+          type: "function_call",
+          name: "propose_mcp_dataset",
+          arguments: JSON.stringify({
+            toolName: queryTool.name,
+            arguments: {
+              query,
+              context: "Daily blog visitors for the last 30 days",
+            },
+          }),
         }],
       });
     const executeSpy = vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
@@ -1066,7 +1060,7 @@ describe("MCP source integration contracts", () => {
 
     try {
       const result = await mcpAi.generateConfiguration({
-        client: { chat: { completions: { create } } },
+        client: { responses: { create } },
         connection,
         currentConfiguration: {},
         question: "Show visitors to my blog in the last 30 days",
@@ -1075,9 +1069,20 @@ describe("MCP source integration contracts", () => {
       expect(result.configuration.arguments.query).toBe(query);
       expect(create).toHaveBeenCalledTimes(3);
       const finalRequest = create.mock.calls[2][0];
-      expect(finalRequest.messages[1].content).toContain("Use HogQL");
-      expect(finalRequest.messages[1].content).toContain("$pageview");
-      expect(finalRequest.messages[0].content).not.toContain("page traffic");
+      expect(finalRequest.input[1].content).toContain("Use HogQL");
+      expect(finalRequest.input[1].content).toContain("$pageview");
+      expect(finalRequest.input[0].content).not.toContain("page traffic");
+      expect(create.mock.calls.map(([request]) => request.tools[0].name)).toEqual([
+        "search_mcp_context", "inspect_mcp_context", "propose_mcp_dataset",
+      ]);
+      for (const [request] of create.mock.calls) {
+        expect(request.store).toBe(false);
+        expect(request.messages).toBeUndefined();
+        expect(request.tools[0].function).toBeUndefined();
+        expect(request.tools[0].strict).toBe(false);
+        expect(request.input).toHaveLength(2);
+      }
+      expect(finalRequest.tool_choice).toEqual({ type: "function", name: "propose_mcp_dataset" });
     } finally {
       executeSpy.mockRestore();
     }
@@ -1109,35 +1114,25 @@ describe("MCP source integration contracts", () => {
       "GROUP BY day ORDER BY day",
     ].join(" ");
     const create = vi.fn()
-      .mockResolvedValueOnce({ choices: [{ message: {} }] })
+      .mockResolvedValueOnce({ output: [] })
       .mockResolvedValueOnce({
-        choices: [{
-          message: {
-            tool_calls: [{
-              function: {
-                name: "propose_mcp_dataset",
-                arguments: JSON.stringify({
-                  toolName: queryTool.name,
-                  arguments: { query: badQuery },
-                }),
-              },
-            }],
-          },
+        output: [{
+          type: "function_call",
+          name: "propose_mcp_dataset",
+          arguments: JSON.stringify({
+            toolName: queryTool.name,
+            arguments: { query: badQuery },
+          }),
         }],
       })
       .mockResolvedValueOnce({
-        choices: [{
-          message: {
-            tool_calls: [{
-              function: {
-                name: "propose_mcp_dataset",
-                arguments: JSON.stringify({
-                  toolName: queryTool.name,
-                  arguments: { query: fixedQuery },
-                }),
-              },
-            }],
-          },
+        output: [{
+          type: "function_call",
+          name: "propose_mcp_dataset",
+          arguments: JSON.stringify({
+            toolName: queryTool.name,
+            arguments: { query: fixedQuery },
+          }),
         }],
       });
     const executeSpy = vi.spyOn(mcpProtocol._private, "executeTool")
@@ -1149,7 +1144,7 @@ describe("MCP source integration contracts", () => {
 
     try {
       const result = await mcpAi.generateConfiguration({
-        client: { chat: { completions: { create } } },
+        client: { responses: { create } },
         connection: createConnection(queryTool),
         currentConfiguration: {
           tool: {
@@ -1164,7 +1159,7 @@ describe("MCP source integration contracts", () => {
 
       expect(result.configuration.arguments.query).toBe(fixedQuery);
       expect(create).toHaveBeenCalledTimes(3);
-      expect(create.mock.calls[2][0].messages[1].content).toContain("previousProposal");
+      expect(create.mock.calls[2][0].input[1].content).toContain("previousProposal");
       expect(executeSpy).toHaveBeenCalledTimes(2);
     } finally {
       executeSpy.mockRestore();

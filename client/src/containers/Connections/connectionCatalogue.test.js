@@ -32,7 +32,7 @@ test("MCP presets reuse the MCP source with OAuth defaults and unique picker ide
   assert.equal(new Set(catalogue.map((entry) => entry.id)).size, catalogue.length);
   const posthog = catalogue.find((entry) => entry.id === "mcp-posthog");
   assert.equal(posthog.sourceId, "mcp");
-  assert.equal(posthog.connectionDefaults.host, "https://mcp.posthog.com/mcp");
+  assert.equal(posthog.connectionDefaults.host, "https://mcp.posthog.com/mcp?mode=tools&readonly=true");
   assert.equal(posthog.connectionDefaults.authentication.type, "oauth");
   assert.equal(catalogue.find((entry) => entry.id === "mcp").connectionDefaults, undefined);
   assert.equal(catalogue.find((entry) => entry.id === "jira").method, "API");
