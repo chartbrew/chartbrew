@@ -74,7 +74,7 @@ describe("Platform analytics", () => {
     expect(chart.dataset.source[6][1]).toBe(0.123);
     expect(chart.dataset.source).toHaveLength(7);
     expect(chart.series[0].showSymbol).toBe(true);
-    expect(chart.series[0].connectNulls).toBe(false);
+    expect(chart.series[0].connectNulls).toBe(true);
     expect(chart.legend.show).toBe(false);
   });
 

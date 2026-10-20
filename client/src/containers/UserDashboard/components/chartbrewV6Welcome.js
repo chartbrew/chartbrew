@@ -1,5 +1,5 @@
-export const CHARTBREW_V6_WELCOME_TUTORIAL = "chartbrewV6Preview";
-export const CHARTBREW_V6_WELCOME_CUTOFF = "2026-10-18T00:00:00.000Z";
+export const CHARTBREW_V6_WELCOME_TUTORIAL = "chartbrewV6WelcomeModal";
+export const CHARTBREW_V6_WELCOME_CUTOFF = "2026-10-21T00:00:00.000Z";
 
 export function shouldShowChartbrewV6Welcome(user, team) {
   if (!user?.id || !team?.id || user.tutorials?.[CHARTBREW_V6_WELCOME_TUTORIAL]) {

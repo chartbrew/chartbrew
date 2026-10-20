@@ -200,6 +200,8 @@ async function getAnalytics(days = "30", now = new Date(), teamId) {
     { field: "failed", name: "Failed requests", color: Colors.negative },
   ];
   const durationMeasure = { field: "meanSeconds", name: "Mean request time", color: chartColors.teal.hex, formula: "{val} s" };
+  const durationChart = renderAnalytics("line", points, [durationMeasure]);
+  durationChart.configuration.series[0].connectNulls = true;
 
   return {
     from: from.toISOString(),
@@ -214,7 +216,7 @@ async function getAnalytics(days = "30", now = new Date(), teamId) {
     ]).configuration.items,
     charts: {
       outcomes: renderAnalytics("bar", points, outcomes),
-      duration: renderAnalytics("line", points, [durationMeasure]),
+      duration: durationChart,
     },
     ai: await getAiAnalytics(from, now, points.map((item) => item.date), teamId),
   };
