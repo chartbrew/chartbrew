@@ -16,6 +16,8 @@ import StripeTemplateSetup from "./stripe/stripe-template-setup";
 import StripeOfficialConnectionForm from "./stripeOfficial/stripeOfficial-connection-form";
 import CustomerioConnectionForm from "./customerio/customerio-connection-form";
 import ClickHouseConnectionForm from "./clickhouse/clickhouse-connection-form";
+import PrivatusAnalyticsConnectionForm from "./privatusAnalytics/privatusAnalytics-connection-form";
+import PrivatusAnalyticsTemplateSetup from "./privatusAnalytics/privatusAnalytics-template-setup";
 import ApiBuilder from "./api/api-builder";
 import PostgresBuilder from "./postgres/postgres-builder";
 import MysqlBuilder from "./mysql/mysql-builder";
@@ -88,6 +90,11 @@ const FRONTEND_BY_SOURCE_ID = {
     ConnectionForm: StripeOfficialConnectionForm,
     DataRequestBuilder: StripeOfficialBuilder,
     ChartTemplateSetup: StripeOfficialTemplateSetup,
+  },
+  privatusAnalytics: {
+    ConnectionForm: PrivatusAnalyticsConnectionForm,
+    DataRequestBuilder: ApiBuilder,
+    ChartTemplateSetup: PrivatusAnalyticsTemplateSetup,
   },
   customerio: {
     ConnectionForm: CustomerioConnectionForm,

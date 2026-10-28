@@ -15,6 +15,7 @@ import stripeSource from "./stripe/stripe.source";
 import stripeOfficialSource from "./stripeOfficial/stripeOfficial.source";
 import strapiSource from "./strapi/strapi.source";
 import customerioSource from "./customerio/customerio.source";
+import privatusAnalyticsSource from "./privatusAnalytics/privatusAnalytics.source";
 import { applySourceAvailability } from "./sourceAvailability";
 
 const SOURCE_DEFINITIONS = [{
@@ -41,6 +42,8 @@ const SOURCE_DEFINITIONS = [{
   ...stripeOfficialSource,
 }, {
   ...customerioSource,
+}, {
+  ...privatusAnalyticsSource,
 }, {
   ...timescaledbSource,
 }, {
