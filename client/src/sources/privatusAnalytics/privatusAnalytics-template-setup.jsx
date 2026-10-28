@@ -41,6 +41,12 @@ const LAYOUT_GROUPS = [
   { kind: "comparison", label: "Top lists" },
 ];
 
+function getChartGroup(chart) {
+  if (chart.type === "kpi") return "kpi";
+  if (chart.type === "line") return "trend";
+  return "comparison";
+}
+
 export function getDatasetIdsForCharts(template, chartIds) {
   if (!template) return [];
 
@@ -185,7 +191,7 @@ function PrivatusAnalyticsTemplateSetup(props) {
   const groupedCharts = LAYOUT_GROUPS
     .map((group) => ({
       ...group,
-      charts: (template?.charts || []).filter((chart) => (chart.layoutIntent?.kind || "comparison") === group.kind),
+      charts: (template?.charts || []).filter((chart) => getChartGroup(chart) === group.kind),
     }))
     .filter((group) => group.charts.length > 0);
 
