@@ -1,7 +1,9 @@
 {
   "icons": [
     "grid", "chart", "pie", "briefcase", "people", "shop", "target", "database", "activity", "line",
-    "calendar", "wallet", "globe", "package", "megaphone", "trending", "building", "monitor", "shield", "zap"
+    "calendar", "wallet", "globe", "package", "megaphone", "trending", "building", "monitor", "shield", "zap",
+    "hospital", "stethoscope", "factory", "tractor", "graduation", "hotel", "utensils", "plane", "truck", "hardhat",
+    "house", "landmark", "scale", "clapperboard", "gamepad", "smartphone", "tablet", "laptop", "printer", "cpu"
   ],
   "colors": [
     "neutral", "blue", "orange", "teal", "green", "rose", "purple",

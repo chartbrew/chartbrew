@@ -139,6 +139,7 @@ class VisualizationEngine {
         chart: this.chart,
         preparedData,
         renderContext: options.renderContext,
+        runtimeContext: resolved.runtimeContext,
         visualization: resolved.visualization,
       });
     }

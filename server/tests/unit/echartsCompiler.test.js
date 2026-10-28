@@ -796,6 +796,61 @@ describe("ECharts compiler", () => {
     expect(option.visualMap.show).toBe(false);
   });
 
+  it.each([
+    { currentEndDate: true, fixedStartDate: false, start: "Aug 18, 2026", end: "Aug 20, 2026", days: 3 },
+    { currentEndDate: true, fixedStartDate: true, start: "Aug 1, 2026", end: "Aug 20, 2026", days: 20 },
+    { currentEndDate: false, fixedStartDate: false, start: "Aug 1, 2026", end: "Aug 3, 2026", days: 3 },
+  ])("uses the matrix date range with auto-update=$currentEndDate and fixed start=$fixedStartDate", ({
+    currentEndDate, fixedStartDate, start, end, days,
+  }) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-20T12:00:00.000Z"));
+    try {
+      const fixture = buildFixture("matrix");
+      fixture.visualization.settings.dateWindow = {
+        start: "2026-08-01T00:00:00.000Z",
+        end: "2026-08-03T23:59:59.999Z",
+        currentEndDate,
+        fixedStartDate,
+      };
+      const source = buildEChartsOption(fixture).dataset[0].source;
+
+      expect(source).toHaveLength(days);
+      expect(source[0].date).toBe(start);
+      expect(source.at(-1).date).toBe(end);
+      expect(source.at(-1).value).toBe(currentEndDate ? 9 : 0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("uses the effective filter range when rendering a prepared matrix", () => {
+    const fixture = buildFixture("matrix");
+    fixture.visualization.settings.dateWindow = {
+      start: "2026-08-01T00:00:00.000Z",
+      end: "2026-08-31T23:59:59.999Z",
+    };
+    const engine = new VisualizationEngine({
+      chart: { id: 42, visualization: fixture.visualization },
+      datasets: [],
+      timezone: "UTC",
+    });
+    const compiled = engine.renderPrepared(fixture.preparedData, {
+      runtimeContext: {
+        effectiveDateRange: {
+          startDate: "2026-08-19T00:00:00.000Z",
+          endDate: "2026-08-20T23:59:59.999Z",
+        },
+      },
+    });
+
+    expect(compiled.configuration.dataset[0].source.map(({ date, value }) => ({ date, value })))
+      .toEqual([
+        { date: "Aug 19, 2026", value: 4 },
+        { date: "Aug 20, 2026", value: 9 },
+      ]);
+  });
+
   it("sizes bounded matrix cells as squares and keeps readable axes", () => {
     const fixture = buildFixture("matrix");
     fixture.preparedData.results[0].rows = [

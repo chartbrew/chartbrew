@@ -1,4 +1,5 @@
 const moment = require("moment-timezone");
+const { resolveChartConfiguredDateRange } = require("../../modules/chartRuntimeFilters");
 const kpiFont = require("../../../shared/visualization/kpiFont.json");
 const { buildMapOption } = require("./map");
 
@@ -1130,10 +1131,10 @@ function parseMatrixDate(value, timezone) {
   return timezone ? parsed.tz(timezone) : parsed;
 }
 
-function getMatrixDateRange(rows, visualization, timezone) {
+function getMatrixDateRange(rows, visualization, timezone, dateRange) {
   const dates = rows.map((row) => parseMatrixDate(row.time, timezone)).filter(Boolean);
-  const configuredStart = parseMatrixDate(visualization.settings?.dateWindow?.start, timezone);
-  const configuredEnd = parseMatrixDate(visualization.settings?.dateWindow?.end, timezone);
+  const configuredStart = parseMatrixDate(dateRange?.startDate ?? visualization.settings?.dateWindow?.start, timezone);
+  const configuredEnd = parseMatrixDate(dateRange?.endDate ?? visualization.settings?.dateWindow?.end, timezone);
   const sorted = dates.sort((left, right) => left.valueOf() - right.valueOf());
   const start = configuredStart || sorted[0];
   const end = configuredEnd || sorted[sorted.length - 1];
@@ -1144,7 +1145,7 @@ function getMatrixDateRange(rows, visualization, timezone) {
   };
 }
 
-function buildMatrixSource(result, layer, visualization, timezone, valuesAreFinal = false) {
+function buildMatrixSource(result, layer, visualization, timezone, valuesAreFinal = false, dateRange) {
   const rows = result.rows || [];
   const valuesByDate = new Map();
   rows.forEach((row) => {
@@ -1155,7 +1156,7 @@ function buildMatrixSource(result, layer, visualization, timezone, valuesAreFina
       : applyValueFormula(row.value, layer.encoding?.value?.formula));
     valuesByDate.set(date.format("YYYY-MM-DD"), Number.isFinite(value) ? value : 0);
   });
-  const range = getMatrixDateRange(rows, visualization, timezone);
+  const range = getMatrixDateRange(rows, visualization, timezone, dateRange);
   if (!range) return { source: [], weekLabels: [] };
 
   const firstWeek = range.start.clone().startOf("isoWeek");
@@ -1228,7 +1229,17 @@ function buildCategoricalMatrixSource(result, layer, valuesAreFinal = false) {
   };
 }
 
-function buildMatrixOption({ preparedData, visualization, renderContext }) {
+function buildMatrixOption({ chart, preparedData, visualization, renderContext, runtimeContext }) {
+  const timezone = renderContext.timezone || preparedData.timezone;
+  const dateWindow = visualization.settings?.dateWindow;
+  const dateRange = runtimeContext?.effectiveDateRange || resolveChartConfiguredDateRange({
+    startDate: dateWindow?.start,
+    endDate: dateWindow?.end,
+    currentEndDate: dateWindow?.currentEndDate,
+    fixedStartDate: dateWindow?.fixedStartDate,
+    timeInterval: visualization.settings?.timeInterval || "day",
+    ...chart,
+  }, timezone);
   const result = preparedData.results[0];
   const layer = getLayer(visualization, result.id);
   const seriesDefinition = result.series[0] || { id: `series-${result.id}`, label: result.name };
@@ -1239,8 +1250,9 @@ function buildMatrixOption({ preparedData, visualization, renderContext }) {
       result,
       layer,
       visualization,
-      renderContext.timezone || preparedData.timezone,
-      preparedData.__valuesFinal
+      timezone,
+      preparedData.__valuesFinal,
+      dateRange
     )
     : buildCategoricalMatrixSource(result, layer, preparedData.__valuesFinal);
   const { source } = matrix;
@@ -1588,7 +1600,7 @@ function buildGaugeResponsiveMedia() {
   }];
 }
 
-function buildEChartsOption({ chart, preparedData, visualization, renderContext = {} }) {
+function buildEChartsOption({ chart, preparedData, visualization, renderContext = {}, runtimeContext }) {
   const context = createRenderContext({
     timezone: preparedData.timezone,
     ...renderContext,
@@ -1612,7 +1624,7 @@ function buildEChartsOption({ chart, preparedData, visualization, renderContext 
   } else if (presetId === "polar") {
     option = buildPolarOption({ preparedData, visualization, renderContext: context });
   } else if (presetId === "matrix") {
-    option = buildMatrixOption({ preparedData, visualization, renderContext: context });
+    option = buildMatrixOption({ chart, preparedData, visualization, renderContext: context, runtimeContext });
   } else if (presetId === "gauge") {
     option = buildGaugeOption({ chart, preparedData, visualization, renderContext: context });
   } else {

@@ -40,6 +40,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router";
 
 import ProjectForm from "../../components/ProjectForm";
+import { ButtonSpinner } from "../../components/ButtonSpinner";
 import canAccess from "../../config/canAccess";
 import { cn, displayInitials } from "../../modules/utils";
 import { removeProject, selectProjects, updateProject } from "../../slices/project";
@@ -202,7 +203,8 @@ function DashboardAppearancePopover({ project, canEdit }) {
                 && draft.sidebarDisplay === (project.sidebarDisplay || "icon"))}
               onPress={save}
             >
-              Save changes
+              {saving ? <ButtonSpinner /> : null}
+              {saving ? "Saving..." : "Save changes"}
             </Button>
           </div>
         </Popover.Dialog>

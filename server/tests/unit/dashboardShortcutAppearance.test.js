@@ -17,7 +17,7 @@ it("saves dashboard shortcuts and rejects unknown choices", async () => {
     sidebarDisplay: "logo",
   }, { where: { id: project.id } });
   const saved = await Project.findByPk(project.id);
-  expect([saved.sidebarIcon, saved.sidebarColor, saved.sidebarDisplay]).toEqual(["zap", "slate", "logo"]);
+  expect([saved.sidebarIcon, saved.sidebarColor, saved.sidebarDisplay]).toEqual(["cpu", "slate", "logo"]);
 
   await Project.update({ sidebarColor: "neutral" }, { where: { id: project.id } });
   await saved.reload();
