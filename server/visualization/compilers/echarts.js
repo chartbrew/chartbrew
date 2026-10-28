@@ -119,11 +119,16 @@ function getLayerSeriesStyle(styles, series, layer) {
   };
 }
 
-function getHorizontalBarRadius(stacked, stackIndex, stackCount, radius) {
-  if (!stacked || stackCount <= 1) return radius;
-  const start = stackIndex === 0 ? radius : 0;
-  const end = stackIndex === stackCount - 1 ? radius : 0;
-  return [start, end, end, start];
+function getStackedBarRadius(series, seriesIndex, stackMembers, valueIndex, horizontal, radius) {
+  const value = series[seriesIndex].values[valueIndex];
+  if (!value) return 0;
+  const visible = stackMembers.filter((index) => {
+    return series[index].values[valueIndex] * value > 0;
+  });
+  const start = visible[0] === seriesIndex ? radius : 0;
+  const end = visible[visible.length - 1] === seriesIndex ? radius : 0;
+  if (horizontal) return value > 0 ? [start, end, end, start] : [end, start, start, end];
+  return value > 0 ? [end, end, start, start] : [start, start, end, end];
 }
 
 function getXAxisLabelInterval(value, pointCount) {
@@ -723,7 +728,6 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
       const formula = parseValueFormula(layer.encoding?.value?.formula);
       const stacked = Boolean(layer.stack && layer.stack !== "none");
       const stackMembers = stacked ? stackGroups.get(`stack-${layer.stack}`) || [] : [];
-      const stackIndex = stackMembers.indexOf(seriesIndex);
       let labelPosition = "top";
       if (mark === "bar") labelPosition = horizontal && !stacked ? "right" : "inside";
       const baseSeries = {
@@ -741,15 +745,8 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
         itemStyle: mark === "bar"
           ? {
             borderColor: style.color,
-            borderRadius: horizontal
-              ? getHorizontalBarRadius(
-                stacked,
-                stackIndex,
-                stackMembers.length,
-                barAppearance.borderRadius
-              )
-              : barAppearance.borderRadius,
-            borderWidth: horizontal && stacked ? 0 : 1.5,
+            borderRadius: stacked ? 0 : barAppearance.borderRadius,
+            borderWidth: stacked && style.fill !== false ? 0 : 1.5,
             color: style.fill === false ? "transparent" : style.color,
             opacity: style.fill === false ? 1 : style.fillOpacity ?? 1,
           }
@@ -770,6 +767,22 @@ function buildCartesianOption({ preparedData, visualization, renderContext }) {
         symbolSize: Number(style.pointRadius) > 0 ? Number(style.pointRadius) * 2 : 6,
         type: mark,
       };
+      if (mark === "bar" && stacked) {
+        baseSeries.dimensions = ["category", series.id];
+        baseSeries.data = series.values.map((value, valueIndex) => ({
+          value: [projection.labels[valueIndex], value],
+          itemStyle: {
+            borderRadius: getStackedBarRadius(
+              projection.series,
+              seriesIndex,
+              stackMembers,
+              valueIndex,
+              horizontal,
+              barAppearance.borderRadius
+            ),
+          },
+        }));
+      }
       const lastIndex = series.values.length - 1;
       const dashedLastPoint = mark === "line"
         && visualization.settings?.dashedLastPoint

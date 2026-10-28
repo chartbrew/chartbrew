@@ -702,6 +702,7 @@ describe("ECharts compiler", () => {
       value: null,
     };
     fixture.visualization.layers[0].stack = "normal";
+    fixture.visualization.layers[0].style.fill = true;
     fixture.visualization.layers.push({
       ...fixture.visualization.layers[0],
       bindingId: "binding-2",
@@ -734,9 +735,51 @@ describe("ECharts compiler", () => {
     expect(option.series.every((series) => series.emphasis.focus === "self")).toBe(true);
     expect(option.series.every((series) => series.emphasis.itemStyle.opacity === 1)).toBe(true);
     expect(option.series.every((series) => series.blur.itemStyle.opacity === 0.24)).toBe(true);
-    expect(option.series[0].itemStyle.borderRadius).toEqual([3, 0, 0, 3]);
-    expect(option.series[1].itemStyle.borderRadius).toEqual([0, 3, 3, 0]);
+    expect(option.series[0].data[0].itemStyle.borderRadius).toEqual([3, 0, 0, 3]);
+    expect(option.series[1].data[0].itemStyle.borderRadius).toEqual([0, 3, 3, 0]);
     expect(option.series.every((series) => series.itemStyle.borderWidth === 0)).toBe(true);
+  });
+
+  it.each(["bar", "horizontalBar"])("rounds only the outside corners of %s stacks", (mark) => {
+    const fixture = buildFixture(mark);
+    const values = [[4, 4, -4, 4, 0], [2, null, -2, -2, 2], [3, 0, -3, 3, 0]];
+    fixture.visualization.layers[0].style.fill = true;
+    const categories = ["Full", "Missing", "Negative", "Mixed", "Zero"];
+    const layer = fixture.visualization.layers[0];
+    const result = fixture.preparedData.results[0];
+    fixture.visualization.layers = values.map((_, index) => ({
+      ...layer, id: `layer-${index}`, stack: "normal",
+    }));
+    fixture.preparedData.results = values.map((points, index) => {
+      const series = { ...defaultSeries[0], id: `series-${index}` };
+      return {
+        ...result,
+        id: `layer-${index}`,
+        series: [series],
+        availableSeries: [series],
+        rows: points.map((value, point) => ({ category: categories[point], seriesId: series.id, value })),
+      };
+    });
+    const option = buildEChartsOption(fixture);
+    const radii = option.series.map((series) => series.data.map((point) => point.itemStyle.borderRadius));
+    const start = mark === "bar" ? [0, 0, 3, 3] : [3, 0, 0, 3];
+    const end = mark === "bar" ? [3, 3, 0, 0] : [0, 3, 3, 0];
+    const all = [3, 3, 3, 3];
+
+    expect(radii).toEqual([
+      [start, all, end, start, 0],
+      [[0, 0, 0, 0], 0, [0, 0, 0, 0], all, all],
+      [end, 0, start, end, 0],
+    ]);
+    expect(option.series.every((series) => series.itemStyle.borderWidth === 0)).toBe(true);
+    expect(option.series[0].data.map((point) => point.value)).toEqual(
+      categories.map((category, index) => [category, values[0][index]])
+    );
+    fixture.visualization.layers[0].style.fill = false;
+    expect(buildEChartsOption(fixture).series[0].itemStyle).toMatchObject({
+      borderWidth: 1.5,
+      color: "transparent",
+    });
   });
 
   it("limits wide line charts when their mark density is high", () => {

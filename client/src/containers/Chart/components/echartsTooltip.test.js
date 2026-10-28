@@ -53,6 +53,21 @@ test("formats cartesian tooltips with one heading and regular-weight rows", () =
   assert.doesNotMatch(html, /font-weight:(?:600|700|bold)/);
 });
 
+test("formats stacked bar values with per-item corner styles", () => {
+  for (const encode of [{ y: [1], x: [0] }, { x: [1], y: [0] }]) {
+    const html = createEChartsTooltipFormatter(colors)({
+      axisValueLabel: "Aug 11",
+      data: { value: ["Aug 11", 8], itemStyle: { borderRadius: [3, 3, 0, 0] } },
+      encode,
+      seriesName: "Signups",
+      seriesType: "bar",
+      value: ["Aug 11", 8],
+    });
+    assert.match(html, />8<\/span>/);
+    assert.equal((html.match(/Aug 11/g) || []).length, 1);
+  }
+});
+
 test("formats compact cartesian tooltips as date and value", () => {
   const html = createEChartsTooltipFormatter(colors, { compact: true })({
     axisValueLabel: "Aug 7",

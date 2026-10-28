@@ -14,10 +14,12 @@ function escapeHtml(value) {
 }
 
 function getValue(param) {
-  if (param?.data && !Array.isArray(param.data) && param.data.value !== undefined) {
+  if (param?.data && !Array.isArray(param.data) && param.data.value !== undefined
+    && !Array.isArray(param.data.value)) {
     return param.data.value;
   }
-  if (!Array.isArray(param?.value)) return param?.value;
+  const value = param?.value ?? param?.data?.value;
+  if (!Array.isArray(value)) return value;
 
   const encodedIndexes = [
     ...(param.encode?.y || []),
@@ -25,9 +27,9 @@ function getValue(param) {
     ...(param.encode?.value || []),
   ];
   const valueIndex = encodedIndexes.find((index) => {
-    return typeof param.value[index] === "number";
+    return typeof value[index] === "number";
   });
-  return valueIndex === undefined ? param.value.at(-1) : param.value[valueIndex];
+  return valueIndex === undefined ? value.at(-1) : value[valueIndex];
 }
 
 function marker(color) {
