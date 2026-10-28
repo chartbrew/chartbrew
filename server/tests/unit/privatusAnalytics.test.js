@@ -123,6 +123,28 @@ describe("Privatus Analytics source", () => {
     })).toThrow("Invalid Privatus Analytics site ID");
   });
 
+  it("does not echo the token when a saved connection test fails", async () => {
+    const error = Object.assign(new Error("401 - unauthorized"), {
+      statusCode: 401,
+      options: { headers: { Authorization: "Bearer pat_secret" } },
+    });
+    vi.spyOn(apiProtocol, "testApi").mockRejectedValue(error);
+    const source = getSourceById("privatusAnalytics");
+
+    const thrown = await source.backend.testConnection({
+      connection: {
+        type: "api",
+        subType: "privatusAnalytics",
+        host: "https://privatusanalytics.com/sites/pa_7Q2K9XH3AB",
+        authentication: { type: "bearer_token", token: "pat_secret" },
+      },
+    }).catch((rejection) => rejection);
+
+    expect(thrown.message).toBe("401");
+    expect(thrown.options).toBeUndefined();
+    expect(JSON.stringify(thrown)).not.toContain("pat_secret");
+  });
+
   it("keeps saved connection headers when testing", () => {
     const savedConnection = {
       type: "api",
