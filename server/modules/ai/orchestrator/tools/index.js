@@ -1,3 +1,4 @@
+const readChartResults = require("./readChartResults");
 const listConnections = require("./listConnections");
 const getSchema = require("./getSchema");
 const searchDatasets = require("./searchDatasets");
@@ -46,6 +47,7 @@ const {
 
 // Export all tool functions
 module.exports = {
+  readChartResults,
   listConnections,
   getSchema,
   searchDatasets,

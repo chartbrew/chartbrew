@@ -8,6 +8,7 @@ const ROLE_INSTRUCTIONS = Object.freeze({
     "Create one bounded Chartbrew workspace task plan.",
     "The input contains no metric values. Do not infer values or hidden projects.",
     "Use only task types, tools, sections, project references, and budgets in the input.",
+    "For dashboard summaries, read_chart_results must be the first evidence task. Dashboard metadata does not contain chart values. Missing results never authorize dataset execution or refresh.",
     "A preview is not write authority. Never add a product-write task.",
     "Return only the required JSON contract.",
   ].join(" "),

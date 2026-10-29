@@ -11,6 +11,7 @@ const AI_ACCESS_MODES = Object.freeze({
 const VIEWER_REPORTING_AI_TOOLS = Object.freeze([
   "get_workspace_activity",
   "get_workspace_context",
+  "read_chart_results",
   "list_kpi_reviews",
   "list_metric_monitors",
 ]);

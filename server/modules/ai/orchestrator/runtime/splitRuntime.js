@@ -108,6 +108,10 @@ function getAllowedSplitToolNames({ envelope, options, policy }) {
 
 function getTaskCatalog(allowedToolNames) {
   return [{
+    allowedSections: ["dashboards"],
+    allowedTools: allowedToolNames.has("read_chart_results") ? ["read_chart_results"] : [],
+    taskType: "read_workspace_section",
+  }, {
     allowedSections: [...(TOOL_SECTIONS.get("get_workspace_activity") || [])],
     allowedTools: allowedToolNames.has("get_workspace_activity")
       ? ["get_workspace_activity"]

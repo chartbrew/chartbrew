@@ -266,6 +266,20 @@ This is the chart-runtime entry point. `VisualizationEngine` is the preparation 
 6. Save the default prepared snapshot unless the request is runtime-only
 7. Compile ECharts options or native KPI, average, table, and markdown data at runtime
 
+### AI reads of saved chart results
+
+The orchestrator tool `read_chart_results` reads the saved default chart view for an accessible dashboard. It loads `PreparedData` directly and uses `compilePreparedRender()` to extract displayed values, units, and time ranges. It does not call chart hydration, dataset execution, source execution, or refresh methods.
+
+- Inputs: required `project_id`, optional `offset` for chart pagination.
+- Access: current team membership, dashboard access, caller project scope, and non-draft charts.
+- Missing or invalid snapshots return `unavailable`. Changed visualization settings return `configuration_changed`; the tool does not rebuild the result.
+- Results include the last saved update time. They do not include active browser filters or establish that the data is current.
+- Output is bounded by chart, row, column, and character limits. `nextOffset` identifies the next chart page; `truncated` identifies omitted data.
+- Dashboard summary requests use this tool first. Recognized summary requests cannot use source execution or write tools.
+- Chart results are not retained as reusable tool evidence in conversation history.
+
+No new settings or migrations are required. Test with `npm --prefix server run test:pure -- tests/unit/readChartResults.test.js` from the repository root.
+
 ### API Pattern
 
 - Base route: `/project/:project_id/chart/*`

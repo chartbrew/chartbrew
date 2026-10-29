@@ -52,6 +52,7 @@ const {
 const NON_PERSISTENT_WORKSPACE_TOOLS = new Set([
   "get_workspace_activity",
   "get_workspace_context",
+  "read_chart_results",
   "list_kpi_reviews",
   "list_metric_monitors",
   "preview_kpi_review",

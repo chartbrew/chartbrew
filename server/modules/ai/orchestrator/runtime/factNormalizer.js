@@ -499,6 +499,23 @@ function boundFacts(facts, maximumCharacters) {
 
 function normalizeToolResult(toolName, result = {}, store, options = {}) {
   let facts = [];
+  if (toolName === "read_chart_results") {
+    facts = (result.items || []).map((item) => store.addFact({
+      attributes: {
+        view: "saved_default",
+        updatedAt: cleanDate(item.updatedAt),
+        timezone: item.timezone || null,
+        truncated: Boolean(item.truncated),
+      },
+      factType: "chart_result",
+      label: item.name,
+      project: item.project,
+      state: item.status,
+      stale: Boolean(item.sourceChanged),
+      period: item.timeRange || null,
+      values: { metrics: item.metrics || [], tables: item.tables || [] },
+    }));
+  }
   if (toolName === "get_workspace_activity") facts = normalizeActivity(result, store);
   if (toolName === "list_metric_monitors") facts = normalizeWatches(result.items || [], store);
   if (toolName === "list_kpi_reviews") facts = normalizeKpiReviews(result.items || [], store);
@@ -519,11 +536,13 @@ function normalizeToolResult(toolName, result = {}, store, options = {}) {
       ...normalizeBusinessProfile(result.business_profile, store),
     ];
   }
+  const missingChartResults = toolName === "read_chart_results"
+    && (result.items || []).some((item) => item.status !== "available");
   const bounded = boundFacts(facts, options.maximumCharacters || 12000);
   return {
     coverage: {
-      complete: !(result.truncated || result.coverage?.truncated || bounded.truncated),
-      missingEvidence: [],
+      complete: !(missingChartResults || result.truncated || result.coverage?.truncated || bounded.truncated),
+      missingEvidence: missingChartResults ? ["saved_chart_results_unavailable"] : [],
       truncated: Boolean(result.truncated || result.coverage?.truncated || bounded.truncated),
     },
     facts: bounded.facts,

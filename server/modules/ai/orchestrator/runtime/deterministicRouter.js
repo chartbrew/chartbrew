@@ -1,3 +1,11 @@
+function isDashboardSummary(message, projects = []) {
+  const normalized = normalizeMessage(message);
+  if (/\b(create|build|add|delete|remove|edit|refresh)\b/.test(normalized)) return false;
+  const hasDashboard = /\b(dashboards?|charts?)\b/.test(normalized)
+    || projects.some((project) => project.name && normalized.includes(project.name.toLowerCase()));
+  return hasDashboard && /\b(summar\w*|overview|developments?|happened|happening|changed|changes|showing|performance|update on)\b/.test(normalized);
+}
+
 function isSetupQuestion(message) {
   return /\b(get started|getting started|where (?:do|should) I start|plan (?:my|our|a|the) (?:first )?report)\b/i.test(message)
     || /^(?:please )?(?:help(?: me)?|how (?:do|can|should) (?:I|we)|which .+ should (?:I|we))\b/i.test(message);
@@ -36,6 +44,7 @@ function routeWorkspaceRequest({ action, message }) {
   if (isTypedConfirmation(normalized)) {
     return { intent: "confirm_pending_action", mode: "executor" };
   }
+  if (isDashboardSummary(normalized)) return null;
   if (isSetupQuestion(normalized)) return null;
   if (isVisualizationAction(normalized)) return null;
   if (/\b(data freshness|freshness (issues|status)|check (data )?freshness)\b/.test(normalized)) {
@@ -68,6 +77,7 @@ function routeWorkspaceRequest({ action, message }) {
 }
 
 module.exports = {
+  isDashboardSummary,
   isVisualizationAction,
   isTypedConfirmation,
   normalizeMessage,

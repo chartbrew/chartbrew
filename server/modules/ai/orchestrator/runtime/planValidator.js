@@ -3,6 +3,7 @@ const { getWorkspaceOrchestratorPolicy } = require("../../../workspaceContext/po
 const READ_TOOLS = new Set([
   "get_workspace_activity",
   "get_workspace_context",
+  "read_chart_results",
   "list_kpi_reviews",
   "list_metric_monitors",
   "recommend_metric_monitors",
@@ -44,6 +45,7 @@ const ALLOWED_SECTIONS = new Set([
 ]);
 const TASK_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const TOOL_SECTIONS = new Map([
+  ["read_chart_results", new Set(["dashboards"])],
   ["get_workspace_activity", new Set(["activity", "alerts", "health"])],
   ["get_workspace_context", new Set([
     "account",
