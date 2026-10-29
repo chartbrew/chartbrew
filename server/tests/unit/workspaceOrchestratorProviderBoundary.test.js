@@ -195,7 +195,14 @@ describe("workspace orchestrator provider boundary", () => {
       policy: getPolicy(),
     });
 
-    expect([...allowed]).toEqual(VIEWER_REPORTING_AI_TOOLS);
+    expect([...allowed]).toEqual([
+      "get_workspace_activity",
+      "get_workspace_context",
+      "read_chart_results",
+      "list_kpi_reviews",
+      "list_metric_monitors",
+    ]);
+    expect([...allowed].every((tool) => VIEWER_REPORTING_AI_TOOLS.includes(tool))).toBe(true);
     expect(getCapabilities(envelope, options)).toEqual({
       canPreviewKpiReview: false,
       canPreviewMetricMonitor: false,

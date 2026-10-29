@@ -43,6 +43,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        npm run prepareSettings
         cd server
         npm ci
 
@@ -104,6 +105,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        npm run prepareSettings
         cd server
         npm ci
 
