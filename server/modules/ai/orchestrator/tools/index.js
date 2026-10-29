@@ -1,3 +1,4 @@
+const { listDashboardFilters, setDashboardFilter, deleteDashboardFilter } = require("./dashboardFilters");
 const readChartResults = require("./readChartResults");
 const listConnections = require("./listConnections");
 const getSchema = require("./getSchema");
@@ -47,6 +48,9 @@ const {
 
 // Export all tool functions
 module.exports = {
+  listDashboardFilters,
+  setDashboardFilter,
+  deleteDashboardFilter,
   readChartResults,
   listConnections,
   getSchema,

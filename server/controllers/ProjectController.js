@@ -423,7 +423,7 @@ class ProjectController {
     return snapDashboard(project, options);
   }
 
-  async createDashboardFilter(projectId, data) {
+  async createDashboardFilter(projectId, data, options = {}) {
     if (data.id && (!validateUuid(data.id) || uuidVersion(data.id) !== 4)) {
       throw new Error("Dashboard filter id must be a UUID v4");
     }
@@ -434,6 +434,7 @@ class ProjectController {
     const normalizedProjectId = parseInt(projectId, 10);
     const currentPosition = await db.DashboardFilter.max("position", {
       where: { project_id: normalizedProjectId },
+      ...options,
     });
     const numericPosition = currentPosition === null ? null : Number(currentPosition);
 
@@ -441,12 +442,13 @@ class ProjectController {
       ...newFields,
       position: numericPosition !== null && Number.isFinite(numericPosition) ? numericPosition + 1 : 0,
       project_id: normalizedProjectId,
-    });
+    }, options);
   }
 
-  getDashboardFilter(projectId, dashboardFilterId) {
+  getDashboardFilter(projectId, dashboardFilterId, options = {}) {
     return db.DashboardFilter.findOne({
       where: { id: dashboardFilterId, project_id: projectId },
+      ...options,
     })
       .then((dashboardFilter) => {
         return dashboardFilter;
@@ -456,9 +458,10 @@ class ProjectController {
       });
   }
 
-  getDashboardFilters(projectId) {
+  getDashboardFilters(projectId, options = {}) {
     return db.DashboardFilter.findAll({
       where: { project_id: projectId },
+      ...options,
       order: [["position", "ASC"], ["createdAt", "ASC"]],
     })
       .then((dashboardFilters) => {
@@ -469,25 +472,27 @@ class ProjectController {
       });
   }
 
-  updateDashboardFilter(projectId, dashboardFilterId, data) {
+  updateDashboardFilter(projectId, dashboardFilterId, data, options = {}) {
     const newFields = Object.fromEntries(
       Object.entries(data).filter(([field]) => ["configuration", "onReport"].includes(field))
     );
     return db.DashboardFilter.update(newFields, {
       where: { id: dashboardFilterId, project_id: projectId },
+      ...options,
     })
       .then(([updated]) => {
         if (!updated) return null;
-        return this.getDashboardFilter(projectId, dashboardFilterId);
+        return this.getDashboardFilter(projectId, dashboardFilterId, options);
       })
       .catch((error) => {
         return Promise.reject(error);
       });
   }
 
-  deleteDashboardFilter(projectId, dashboardFilterId) {
+  deleteDashboardFilter(projectId, dashboardFilterId, options = {}) {
     return db.DashboardFilter.destroy({
       where: { id: dashboardFilterId, project_id: projectId },
+      ...options,
     })
       .catch((error) => {
         return Promise.reject(error);

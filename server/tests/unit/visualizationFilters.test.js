@@ -91,6 +91,21 @@ describe("visualization dataset filtering", () => {
     ]);
   });
 
+  it("restores all rows when a dashboard dropdown is cleared", async () => {
+    const { buildChartRuntimeRequest } = await import("../../../client/src/modules/chartRuntimeFilters.js");
+    const input = buildInput();
+    const filter = { type: "field", field: "root[].status", operator: "is", options: ["paid", "pending"] };
+    const render = (value) => new VisualizationEngine(input).render(buildChartRuntimeRequest({
+      chart: input.chart, dashboardFilters: [{ ...filter, value }], chartFilters: [],
+    }));
+
+    expect(getPreparedRows(render("pending"))).toEqual([expect.objectContaining({ category: "Feb", value: 200 })]);
+    expect(getPreparedRows(render(""))).toEqual([
+      expect.objectContaining({ category: "Jan", value: 100 }),
+      expect.objectContaining({ category: "Feb", value: 200 }),
+    ]);
+  });
+
   it("resolves mustache-backed CDC conditions from runtime variables", () => {
     const input = buildInput({
       conditions: [{

@@ -12,6 +12,7 @@ const VIEWER_REPORTING_AI_TOOLS = Object.freeze([
   "get_workspace_activity",
   "get_workspace_context",
   "read_chart_results",
+  "list_dashboard_filters",
   "list_kpi_reviews",
   "list_metric_monitors",
 ]);

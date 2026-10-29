@@ -100,11 +100,35 @@ describe("saved completion checks", () => {
   it("requires completion requirements on write tools but not summary tools", async () => {
     const { availableTools } = require("../../modules/ai/orchestrator/orchestrator");
     const tools = await availableTools();
-    for (const name of ["create_chart", "update_chart", "create_dashboard", "create_dashboard_from_template"]) {
+    for (const name of ["create_chart", "update_chart", "create_dashboard", "create_dashboard_from_template", "set_dashboard_filter", "delete_dashboard_filter"]) {
       const tool = tools.find((item) => item.name === name);
       expect(tool.parameters.required).toContain("completion_requirements");
     }
     expect(tools.find((item) => item.name === "read_chart_results").parameters.required).toEqual(["project_id"]);
+    expect(tools.find((item) => item.name === "list_dashboard_filters").parameters.required).toEqual(["project_id"]);
+  });
+
+  it("checks the exact saved filter and its report visibility", async () => {
+    const configuration = { type: "field", field: "state", label: "State", operator: "is", value: "", options: ["CA"], allLabel: "All" };
+    vi.spyOn(db.DashboardFilter, "findOne").mockResolvedValue({ configuration, onReport: false });
+    const request = {
+      toolName: "set_dashboard_filter", result: { project_id: 10, filter_id: "filter" },
+      args: { field: "state", label: "State", options: ["CA"], on_report: false, completion_requirements: { dashboard_filters: [], unverified: [] } },
+    };
+    expect((await verify(request)).checks[0].status).toBe("verified");
+    expect((await verify({ ...request, args: { ...request.args, options: ["NY"] } })).checks[0].status).toBe("partial");
+    expect((await verify({ ...request, args: { ...request.args, on_report: true } })).checks[0].status).toBe("partial");
+  });
+
+  it("checks that a removed filter is absent", async () => {
+    const count = vi.spyOn(db.DashboardFilter, "count").mockResolvedValue(1);
+    const request = {
+      toolName: "delete_dashboard_filter", result: { project_id: 10 },
+      args: { filter_id: "filter", completion_requirements: { dashboard_filters: [], unverified: [] } },
+    };
+    expect((await verify(request)).checks[0].status).toBe("partial");
+    count.mockResolvedValue(0);
+    expect((await verify(request)).checks[0].status).toBe("verified");
   });
 
   it("does not let a later write discard outcomes that still need verification", async () => {

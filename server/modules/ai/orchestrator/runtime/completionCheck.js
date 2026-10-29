@@ -8,7 +8,7 @@ const CHART_WRITES = new Set([
   "create_chart", "create_temporary_chart", "create_dashboard_chart",
   "update_chart", "move_chart_to_dashboard",
 ]);
-const DASHBOARD_WRITES = new Set(["create_dashboard", "create_dashboard_from_template"]);
+const DASHBOARD_WRITES = new Set(["create_dashboard", "create_dashboard_from_template", "set_dashboard_filter", "delete_dashboard_filter"]);
 const REQUIREMENTS_SCHEMA = {
   type: "object",
   description: "Completion requirements from the whole user request. Carry unfinished requirements into each write. Use empty arrays only when no such requirements exist.",
@@ -126,6 +126,23 @@ async function verifySavedResult({ toolName, args, result = {}, teamId, userId }
           db.DashboardFilter.findAll({ where: { project_id: projectId }, order: [["position", "ASC"]], limit: 51 }),
         ]);
         const issues = [];
+        if (toolName === "set_dashboard_filter") {
+          // oxlint-disable-next-line no-await-in-loop
+          const filter = await db.DashboardFilter.findOne({ where: { id: result.filter_id, project_id: projectId } });
+          const config = filter?.configuration;
+          if (!config || config.type !== "field" || config.field !== args.field
+            || config.label !== args.label?.trim() || config.operator !== "is" || config.value !== ""
+            || config.allLabel !== (args.all_label || "All").trim()
+            || (args.on_report !== undefined && filter.onReport !== args.on_report)
+            || !isDeepStrictEqual(config.options, args.options)) {
+            issues.push("The saved filter does not match the requested choices.");
+          }
+        }
+        if (toolName === "delete_dashboard_filter") {
+          // oxlint-disable-next-line no-await-in-loop
+          const remaining = await db.DashboardFilter.count({ where: { id: args.filter_id, project_id: projectId } });
+          if (remaining) issues.push("The filter was not removed.");
+        }
         if (!validRequirements) issues.push("The requested outcome was not fully checked.");
         if (validRequirements && requirements.unverified.length) {
           issues.push("Some requested outcomes still need verification.");
