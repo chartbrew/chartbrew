@@ -843,7 +843,7 @@ describe("Stripe Official AI layer", () => {
       "stripe_official_preview_configuration",
     ]));
     expect(createDataset.parameters.required).toEqual(["connection_id", "name"]);
-    expect(createTemporaryChart.parameters.required).toEqual(["name"]);
+    expect(createTemporaryChart.parameters.required).toEqual(["name", "completion_requirements"]);
     expect(createTemporaryChart.parameters.properties.dataset_id.description)
       .toContain("Existing reusable dataset ID");
   });
