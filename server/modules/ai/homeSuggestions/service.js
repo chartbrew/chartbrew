@@ -3,7 +3,7 @@ const { randomUUID } = require("crypto");
 const { Op } = require("sequelize");
 const db = require("../../../models/models");
 const { getObservationAccess, getProjectScope, createHttpError } = require("../../observations/access");
-const { getWorkspaceAccessEnvelope } = require("../../workspaceContext/accessEnvelope");
+const { canReadHistoryMessage, getWorkspaceAccessEnvelope } = require("../../workspaceContext/accessEnvelope");
 const { getWorkspaceOrchestratorPolicy } = require("../../workspaceContext/policy");
 const { buildContextManifest } = require("../../workspaceContext/contextManifest");
 const { searchAiContext, validateAiContext, serializeAiContext } = require("../contextAuthorization");
@@ -153,7 +153,7 @@ async function snapshotFor(access, state, config, now = new Date()) {
         db.AiConversationContext.findAll({ where: { conversation_id: conversation.id, team_id: access.teamId } }),
         db.AiMessage.findAll({
           where: { conversation_id: conversation.id, role: { [Op.in]: ["user", "assistant"] }, createdAt: { [Op.gt]: cutoff } },
-          attributes: ["id", "role", "sequence", "content", "createdAt", "sensitive_workspace_context", "workspace_access_version"],
+          attributes: ["id", "role", "sequence", "content", "createdAt", "sensitive_workspace_context", "workspace_access_version", "workspace_access_scope"],
           order: [["sequence", "DESC"]], limit: 6,
         }),
       ]);
@@ -168,7 +168,7 @@ async function snapshotFor(access, state, config, now = new Date()) {
         });
         messages.filter((item) => item.role === "user" && !(state.payload.forgottenSources || []).includes(`chat:${item.id}`)
           && !/^\/remember\b/i.test(item.content || "")
-          && (!item.sensitive_workspace_context || item.workspace_access_version === config.envelope.accessVersion))
+          && canReadHistoryMessage(item, config.envelope))
           .slice(0, 3).forEach((item) => evidence.push({
             answered: messages.some((reply) => reply.role === "assistant" && reply.sequence > item.sequence && reply.content),
             ref: `chat:${item.id}`, kind: "chat", conversationId: conversation.id,

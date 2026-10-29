@@ -59,6 +59,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false,
     },
     workspace_access_version: DataTypes.STRING,
+    workspace_access_scope: DataTypes.JSON,
     sequence: {
       type: DataTypes.INTEGER,
       allowNull: false,

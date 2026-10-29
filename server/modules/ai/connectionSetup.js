@@ -3,7 +3,7 @@ const { getSourceById } = require("../../sources");
 const { assertSourceServerEnabled } = require("../../sources/sourceAvailability");
 const providers = require("../../sources/plugins/mcp/mcp.providers");
 const { createHttpError, getObservationAccess } = require("../observations/access");
-const { getWorkspaceAccessEnvelope } = require("../workspaceContext/accessEnvelope");
+const { canReadHistoryMessage, getWorkspaceAccessEnvelope } = require("../workspaceContext/accessEnvelope");
 
 async function connectionSetup({ teamId, userId, conversationId, providerId, create = false }) {
   const access = await getObservationAccess(teamId, userId);
@@ -37,7 +37,7 @@ async function connectionSetup({ teamId, userId, conversationId, providerId, cre
         return;
       }
       if (message.tool_name !== "list_connections") return;
-      if (message.sensitive_workspace_context && message.workspace_access_version !== envelope.accessVersion) return;
+      if (!canReadHistoryMessage(message, envelope)) return;
       try {
         const content = JSON.parse(message.content);
         const option = content.options?.find((entry) => entry.provider_id === providerId);

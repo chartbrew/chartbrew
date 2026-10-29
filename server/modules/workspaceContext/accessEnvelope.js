@@ -1,5 +1,6 @@
 const { editorRoles, viewerRoles } = require("../../../shared/roles.json");
 const crypto = require("crypto");
+const { isDeepStrictEqual } = require("node:util");
 
 const db = require("../../models/models");
 const { getWorkspaceOrchestratorPolicy } = require("./policy");
@@ -15,6 +16,28 @@ function buildAccessVersion(value) {
     .createHash("sha256")
     .update(JSON.stringify(value))
     .digest("hex");
+}
+
+function canReadHistoryMessage(message, envelope) {
+  if (!message.sensitive_workspace_context) return true;
+  if (!envelope?.accessVersion) return false;
+  if (message.workspace_access_version === envelope.accessVersion) return true;
+
+  const previous = message.workspace_access_scope;
+  const current = envelope.historyAccessScope;
+  if (!previous || !current) return false;
+
+  const { visibleProjectIds, editableProjectIds, ...previousPermissions } = previous;
+  const {
+    visibleProjectIds: currentVisible,
+    editableProjectIds: currentEditable,
+    ...currentPermissions
+  } = current;
+  if (!Array.isArray(visibleProjectIds) || !Array.isArray(editableProjectIds)) return false;
+  if (!isDeepStrictEqual(previousPermissions, currentPermissions)) return false;
+
+  return visibleProjectIds.every((id) => currentVisible.includes(id))
+    && editableProjectIds.every((id) => currentEditable.includes(id));
 }
 
 async function getWorkspaceAccessEnvelope(access) {
@@ -48,17 +71,19 @@ async function getWorkspaceAccessEnvelope(access) {
     metricMonitorWritesEnabled: orchestratorPolicy.metricMonitorWritesEnabled,
     workspaceOrchestratorEnabled,
   };
-  const accessVersion = buildAccessVersion({
+  const historyAccessScope = {
     editableProjectIds,
     policy,
     role: access.role,
     teamId: access.teamId,
     userId: access.userId,
     visibleProjectIds,
-  });
+  };
+  const accessVersion = buildAccessVersion(historyAccessScope);
 
   return {
     accessVersion,
+    historyAccessScope,
     canConfigureConnections: access.canConfigureTeam,
     canCreatePersonalKpiReview: !reportingOnly && Boolean(user?.email),
     canUseExternalAi: policy.externalAiEnabled,
@@ -82,5 +107,6 @@ async function getWorkspaceAccessEnvelope(access) {
 
 module.exports = {
   buildAccessVersion,
+  canReadHistoryMessage,
   getWorkspaceAccessEnvelope,
 };

@@ -32,7 +32,11 @@ const {
   canEditProject,
   getObservationAccess,
 } = require("../modules/observations/access");
-const { getWorkspaceAccessEnvelope } = require("../modules/workspaceContext/accessEnvelope");
+const {
+  buildAccessVersion,
+  canReadHistoryMessage,
+  getWorkspaceAccessEnvelope,
+} = require("../modules/workspaceContext/accessEnvelope");
 const {
   CHARTBREW_AI_DISABLED_MESSAGE,
   getWorkspaceOrchestratorPolicy,
@@ -376,10 +380,22 @@ async function getOrchestration(
   );
   orchestrationOptions.activeChartId = conversation.studio_chart_id;
 
-  const fullHistory = messages.filter((msg) => {
-    return !msg.sensitive_workspace_context
-      || msg.workspace_access_version === orchestrationOptions.workspaceAccessVersion;
-  }).map((msg) => {
+  const legacyMessageIds = messages.filter((msg) => msg.sensitive_workspace_context
+    && !msg.workspace_access_scope
+    && msg.workspace_access_version === orchestrationOptions.workspaceAccessVersion)
+    .map((msg) => msg.id);
+  if (legacyMessageIds.length) {
+    await db.AiMessage.update({
+      workspace_access_scope: orchestrationOptions.workspaceHistoryAccessScope,
+    }, {
+      where: { id: { [Op.in]: legacyMessageIds }, conversation_id: conversation.id },
+    });
+  }
+
+  const fullHistory = messages.filter((msg) => canReadHistoryMessage(msg, {
+    accessVersion: orchestrationOptions.workspaceAccessVersion,
+    historyAccessScope: orchestrationOptions.workspaceHistoryAccessScope,
+  })).map((msg) => {
     const messageObj = {
       role: msg.role,
       content: msg.content,
@@ -461,6 +477,18 @@ async function getOrchestration(
         sessionId: getAiSessionBinding("conversation", conversation.id),
       });
 
+      const historyAccessScope = { ...orchestrationOptions.workspaceHistoryAccessScope };
+      if (resolvedOrchestration.contextManifest) {
+        const finalEnvelope = await getWorkspaceAccessEnvelope(await getObservationAccess(teamId, userId));
+        // Include dashboards created during this turn without dropping earlier access requirements.
+        for (const field of ["visibleProjectIds", "editableProjectIds"]) {
+          historyAccessScope[field] = [...new Set([
+            ...historyAccessScope[field], ...finalEnvelope.historyAccessScope[field],
+          ])].sort((left, right) => left - right);
+        }
+      }
+      const historyAccessVersion = buildAccessVersion(historyAccessScope);
+
       // Get the starting sequence number (0 for new conversations, or continue from existing)
       const existingMessageCount = await db.AiMessage.count({
         where: { conversation_id: conversation.id }
@@ -481,9 +509,13 @@ async function getOrchestration(
           sequence: existingMessageCount + index,
           sensitive_workspace_context: msg.role !== "user"
             && Boolean(resolvedOrchestration.contextManifest),
+          workspace_access_scope: msg.role !== "user"
+            && resolvedOrchestration.contextManifest
+            ? historyAccessScope
+            : null,
           workspace_access_version: msg.role !== "user"
             && resolvedOrchestration.contextManifest
-            ? orchestrationOptions.workspaceAccessVersion
+            ? historyAccessVersion
             : null,
         };
 
@@ -557,6 +589,7 @@ async function getOrchestrationOptions(access, userId, aiSessionId) {
     kpiReviewWritesEnabled: envelope.kpiReviewWritesEnabled,
     metricMonitorWritesEnabled: envelope.metricMonitorWritesEnabled,
     workspaceAccessVersion: envelope.accessVersion,
+    workspaceHistoryAccessScope: envelope.historyAccessScope,
     userId,
   };
 }
@@ -614,6 +647,7 @@ async function confirmPersistentAction({ action, aiConversationId, teamId, userI
     sensitive_workspace_context: true,
     sequence: existingMessageCount + 1,
     workspace_access_version: envelope.accessVersion,
+    workspace_access_scope: envelope.historyAccessScope,
   }]);
   await conversation.update({
     error_message: null,
@@ -682,10 +716,8 @@ async function confirmEphemeralAction({ action, sessionId, teamId, userId }) {
   };
 }
 
-function hasChartReference(message, chartId, accessVersion = null) {
-  if (accessVersion
-    && message.sensitive_workspace_context
-    && message.workspace_access_version !== accessVersion) return false;
+function hasChartReference(message, chartId, envelope = null) {
+  if (envelope && !canReadHistoryMessage(message, envelope)) return false;
   if (!CHART_REFERENCE_TOOLS.has(message.tool_name || message.name)) return false;
   try {
     return `${JSON.parse(message.content).chart_id}` === `${chartId}`;
@@ -734,7 +766,7 @@ async function placeChartPreview({ action, aiConversationId, persistence, sessio
   }
 
   const previewIndexes = history.map((item, index) => (
-    hasChartReference(item, chartId, envelope.accessVersion) ? index : -1
+    hasChartReference(item, chartId, envelope) ? index : -1
   )).filter((index) => index !== -1);
   if (previewIndexes.length === 0) {
     throw createAiError("This chart preview is not part of this conversation", 409);
@@ -1097,6 +1129,7 @@ async function promoteSession({ sessionId, teamId, userId }) {
     tool_calls: message.tool_calls,
     tool_name: message.name,
     workspace_access_version: message.role !== "user" ? envelope.accessVersion : null,
+    workspace_access_scope: message.role !== "user" ? envelope.historyAccessScope : null,
   })));
   await replaceAiConversationContext(conversation.id, teamId, validatedContext);
   await clearPendingActions({
@@ -1203,14 +1236,8 @@ async function getConversation(conversationId, teamId, userId) {
     where: { conversation_id: conversationId },
     order: [["sequence", "ASC"]],
   });
-  const hiddenMessageCount = storedMessages.filter((message) => {
-    return message.sensitive_workspace_context
-      && message.workspace_access_version !== envelope.accessVersion;
-  }).length;
-  const messages = storedMessages.filter((message) => {
-    return !message.sensitive_workspace_context
-      || message.workspace_access_version === envelope.accessVersion;
-  });
+  const messages = storedMessages.filter((message) => canReadHistoryMessage(message, envelope));
+  const hiddenMessageCount = storedMessages.length - messages.length;
 
   // Rebuild full_history for backward compatibility with client
   const fullHistory = messages.map((msg) => {
