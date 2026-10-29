@@ -101,9 +101,7 @@ function parseReasoningEffort(value, fallback) {
 }
 
 function getEnvIntelligencePolicy(env = process.env) {
-  const compatibilityModel = env.NODE_ENV === "production"
-    ? env.CB_OPENAI_MODEL
-    : env.CB_OPENAI_MODEL_DEV || env.CB_OPENAI_MODEL;
+  const compatibilityModel = env.CB_OPENAI_MODEL;
   const analysisDepth = getAnalysisDepth(env.CB_WORKSPACE_ANALYSIS_DEPTH);
   const analysisDepthPreset = getAnalysisDepthPreset(analysisDepth);
   const maximumRequestTimeMs = parseInteger(

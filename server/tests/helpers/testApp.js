@@ -19,10 +19,9 @@ export async function createTestApp() {
   const app = express();
 
   // Mimic production behavior: server/index.js sets app.settings = settings
-  // In tests, NODE_ENV is not "production", so settings-dev is used.
-  // settings-dev reads process.env at require-time (set defaults in tests/setup.js).
+  // settings reads process.env at require-time (set defaults in tests/setup.js).
   // eslint-disable-next-line global-require
-  const settings = require("../../settings-dev.js");
+  const settings = require("../../settings.js");
   app.settings = settings;
 
   // Basic middleware setup (mimicking your main app)

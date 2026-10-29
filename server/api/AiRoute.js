@@ -88,13 +88,7 @@ const checkAdminAccess = (req, res, next) => {
   return next();
 };
 
-const isOpenAiApiKeySet = () => {
-  if (process.env.NODE_ENV === "production") {
-    return process.env.CB_OPENAI_API_KEY;
-  } else {
-    return process.env.CB_OPENAI_API_KEY_DEV;
-  }
-};
+const isOpenAiApiKeySet = () => process.env.CB_OPENAI_API_KEY;
 
 module.exports = (app) => {
   app.get("/ai/availability", apiLimiter(20), verifyToken, checkAccess, (req, res) => {

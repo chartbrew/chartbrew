@@ -73,10 +73,10 @@ describe("Platform settings API", () => {
   });
 
   it("shows the external feedback control only when a provider is configured", async () => {
-    const originalKey = process.env.CB_OPENAI_API_KEY_DEV;
+    const originalKey = process.env.CB_OPENAI_API_KEY;
     const session = await createSession(true);
     try {
-      delete process.env.CB_OPENAI_API_KEY_DEV;
+      delete process.env.CB_OPENAI_API_KEY;
       const withoutProvider = await request(app)
         .get("/platform/settings")
         .set(session.headers)
@@ -88,7 +88,7 @@ describe("Platform settings API", () => {
         "workspaceOrchestrator.externalLearningContextEnabled"
       );
 
-      process.env.CB_OPENAI_API_KEY_DEV = "test-provider-key";
+      process.env.CB_OPENAI_API_KEY = "test-provider-key";
       const withProvider = await request(app)
         .get("/platform/settings")
         .set(session.headers)
@@ -105,8 +105,8 @@ describe("Platform settings API", () => {
       expect(JSON.stringify(withProvider.body)).not.toContain("test-provider-key");
       expect(JSON.stringify(withProvider.body)).not.toContain("requiresProvider");
     } finally {
-      if (originalKey === undefined) delete process.env.CB_OPENAI_API_KEY_DEV;
-      else process.env.CB_OPENAI_API_KEY_DEV = originalKey;
+      if (originalKey === undefined) delete process.env.CB_OPENAI_API_KEY;
+      else process.env.CB_OPENAI_API_KEY = originalKey;
     }
   });
 

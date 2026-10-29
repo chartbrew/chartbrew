@@ -2,25 +2,29 @@ import "../modules/legacyCryptoCompat.js";
 import { beforeEach, inject } from "vitest";
 import { testDbManager } from "./helpers/testDbManager.js";
 
-// Ensure required env vars exist for settings-dev.js during tests
-// (settings-dev reads process.env at require-time)
-process.env.CB_SECRET_DEV = process.env.CB_SECRET_DEV || "test-secret-dev";
+// Ensure required env vars exist for settings.js during tests
+// (settings reads process.env at require-time)
+process.env.CB_SECRET = process.env.CB_SECRET || "test-secret-dev";
 // Must be 64 hex chars (32 bytes) because server/modules/cbCrypto.js uses it as AES-256 key in hex.
-process.env.CB_ENCRYPTION_KEY_DEV = process.env.CB_ENCRYPTION_KEY_DEV
+process.env.CB_ENCRYPTION_KEY = process.env.CB_ENCRYPTION_KEY
   || "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-process.env.VITE_APP_CLIENT_HOST_DEV = process.env.VITE_APP_CLIENT_HOST_DEV || "http://localhost:3000";
-process.env.CB_RESTRICT_TEAMS_DEV = process.env.CB_RESTRICT_TEAMS_DEV || "0";
-process.env.CB_RESTRICT_SIGNUP_DEV = process.env.CB_RESTRICT_SIGNUP_DEV || "0";
+process.env.VITE_APP_CLIENT_HOST = process.env.VITE_APP_CLIENT_HOST || "http://localhost:3000";
+process.env.CB_RESTRICT_TEAMS = process.env.CB_RESTRICT_TEAMS || "0";
+process.env.CB_RESTRICT_SIGNUP = process.env.CB_RESTRICT_SIGNUP || "0";
 
 const testDbConnection = inject("testDbConnection");
 if (testDbConnection) {
   process.env.CB_TEST_DB_REUSE = "1";
-  process.env.CB_DB_HOST_DEV = testDbConnection.host;
-  process.env.CB_DB_PORT_DEV = testDbConnection.port.toString();
-  process.env.CB_DB_NAME_DEV = testDbConnection.database;
-  process.env.CB_DB_USERNAME_DEV = testDbConnection.username;
-  process.env.CB_DB_PASSWORD_DEV = testDbConnection.password;
-  process.env.CB_DB_DIALECT_DEV = testDbConnection.dialect;
+  process.env.CB_DB_HOST = testDbConnection.host;
+  process.env.CB_DB_PORT = testDbConnection.port.toString();
+  process.env.CB_DB_NAME = testDbConnection.database;
+  process.env.CB_DB_USERNAME = testDbConnection.username;
+  process.env.CB_DB_PASSWORD = testDbConnection.password;
+  process.env.CB_DB_DIALECT = testDbConnection.dialect;
+  process.env.CB_DB_SSL = "";
+  process.env.CB_DB_CERT = "";
+  process.env.CB_DB_SSL_KEY = "";
+  process.env.CB_DB_SSL_CERT = "";
 }
 
 function usesSharedTestDatabase(context) {

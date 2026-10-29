@@ -43,7 +43,7 @@ restricted to owners and administrators. Revoking one authorization does not aff
 ### Deployment
 
 OAuth runs in the existing API process. The public URL defaults to `VITE_APP_API_HOST` plus `/mcp`
-(`VITE_APP_API_HOST_DEV` in development). The existing client-host setting supplies the consent page URL.
+in all environments. The existing client-host setting supplies the consent page URL.
 Production OAuth requires HTTPS. No new signing secret is needed.
 
 For a separate public hostname, set only `CB_MCP_PUBLIC_URL`, for example

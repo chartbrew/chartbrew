@@ -22,7 +22,7 @@ describe("Home suggestion access and persistence", () => {
   afterEach(() => { setPlatformSettingOverrides({}); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
   async function seed() {
-    vi.stubEnv("CB_OPENAI_API_KEY_DEV", "test-key");
+    vi.stubEnv("CB_OPENAI_API_KEY", "test-key");
     setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": true });
     const user = await models.User.create(userFactory.build());
     const team = await models.Team.create(teamFactory.build());

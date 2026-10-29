@@ -11,12 +11,8 @@ const { getDataRecovery, getDataRepair } = require("../../../../modules/dataReco
 const { getFieldValue } = require("../../../../visualization/fieldPath");
 const { canonicalizeAiEncoding } = require("../../../../visualization/aiVisualization");
 
-const openAiKey = process.env.NODE_ENV === "production"
-  ? process.env.CB_OPENAI_API_KEY
-  : process.env.CB_OPENAI_API_KEY_DEV;
-const openAiModel = process.env.NODE_ENV === "production"
-  ? process.env.CB_OPENAI_MODEL
-  : process.env.CB_OPENAI_MODEL_DEV;
+const openAiKey = process.env.CB_OPENAI_API_KEY;
+const openAiModel = process.env.CB_OPENAI_MODEL;
 const openaiClient = openAiKey ? new OpenAI({ apiKey: openAiKey }) : null;
 
 const SOURCE_ID = "mcp";

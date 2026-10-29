@@ -20,7 +20,7 @@ const require = createRequire(import.meta.url);
 function generateProjectShareToken(projectId, sharePolicyId) {
   return jwt.sign(
     { sub: { type: "Project", id: projectId, sharePolicyId } },
-    process.env.CB_ENCRYPTION_KEY_DEV,
+    process.env.CB_ENCRYPTION_KEY,
     { expiresIn: "1h" }
   );
 }

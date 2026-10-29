@@ -86,7 +86,7 @@ Focused checks:
 ```sh
 npm --prefix server run test:pure -- tests/unit/sourceExecution.test.js tests/unit/sourceExecutionSources.test.js tests/unit/googleAnalyticsConnection.test.js
 CB_TEST_DB_REUSE=0 npm --prefix server run test:database -- tests/integration/sourceExecution.test.js tests/unit/updateAudit.test.js tests/integration/updateRunRoute.test.js tests/unit/mcpHttpFixture.test.js
-CB_TEST_DB_REUSE=0 CB_DB_DIALECT_DEV=postgres npm --prefix server run test:database -- tests/integration/sourceExecution.test.js
+CB_TEST_DB_REUSE=0 CB_DB_DIALECT=postgres npm --prefix server run test:database -- tests/integration/sourceExecution.test.js
 npm --prefix server run lint
 ```
 

@@ -7,12 +7,7 @@ export default ({ mode }) => {
   // Load app-level env vars to node-level env vars.
   process.env = { ...process.env, ...loadEnv(mode, `${process.cwd()}/..`) };
 
-  let port = 4018;
-  if (process.env.NODE_ENV === "production" && process.env.VITE_APP_CLIENT_PORT) {
-    port = process.env.VITE_APP_CLIENT_PORT;
-  } else if (process.env.NODE_ENV !== "production" && process.env.VITE_APP_CLIENT_PORT_DEV) {
-    port = process.env.VITE_APP_CLIENT_PORT_DEV;
-  }
+  const port = process.env.VITE_APP_CLIENT_PORT || 4018;
 
   process.env.VITE_APP_VERSION = process.env.npm_package_version;
 

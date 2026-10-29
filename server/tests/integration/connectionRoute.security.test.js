@@ -179,7 +179,7 @@ describe("ConnectionRoute project scoping", () => {
   });
 
   it("serves bounded MCP OAuth client metadata for a public HTTPS API", async () => {
-    vi.stubEnv("VITE_APP_API_HOST_DEV", "https://chartbrew.example");
+    vi.stubEnv("VITE_APP_API_HOST", "https://chartbrew.example");
     const response = await request(app)
       .get("/mcp/oauth/client-metadata?team_id=4&connection_id=8")
       .expect(200);

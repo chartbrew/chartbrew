@@ -24,7 +24,7 @@ const {
 } = require("../modules/outboundTargetPolicy");
 const { verifyProjectPassword } = require("../modules/projectPassword");
 const { validateShareTokenPolicy, verifyShareToken } = require("../modules/shareToken");
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({

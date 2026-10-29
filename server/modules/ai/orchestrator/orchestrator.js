@@ -56,8 +56,8 @@ const {
   getTemplateSourceIds,
 } = require("./sourceSupport");
 
-const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
-const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
+const openAiKey = process.env.CB_OPENAI_API_KEY;
+const openAiModel = process.env.CB_OPENAI_MODEL;
 let openaiClient;
 
 if (openAiKey) {
@@ -66,7 +66,7 @@ if (openAiKey) {
   });
 }
 
-const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
+const clientUrl = process.env.VITE_APP_CLIENT_HOST;
 
 // Import tool functions
 const {

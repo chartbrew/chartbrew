@@ -12,7 +12,7 @@ const { runSourceDataRequest } = require("../../sources/runSourceDataRequest");
 const { getSourceById } = require("../../sources");
 const webhook = require("../../modules/alerts/webhookAlerts");
 const jwt = require("jsonwebtoken");
-const settings = require("../../settings-dev");
+const settings = require("../../settings");
 
 function routeHandler(routeModule, method, route) {
   const routes = new Map();

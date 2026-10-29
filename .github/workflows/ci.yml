@@ -123,7 +123,7 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         cd server
-        export CB_DB_DIALECT_DEV=mysql
+        export CB_DB_DIALECT=mysql
         export FORCE_CONTAINERS=true
         npm run test:database -- --shard=${{ matrix.shard }}
       env:
@@ -134,7 +134,7 @@ jobs:
       if: github.event_name == 'push'
       run: |
         cd server
-        export CB_DB_DIALECT_DEV=mysql
+        export CB_DB_DIALECT=mysql
         export FORCE_CONTAINERS=true
         npm run test:coverage
       env:
@@ -180,7 +180,7 @@ jobs:
     - name: Run integration tests (PostgreSQL)
       run: |
         cd server
-        export CB_DB_DIALECT_DEV=postgres
+        export CB_DB_DIALECT=postgres
         export FORCE_CONTAINERS=true
         export PGSSLMODE=disable
         npm run test:integration

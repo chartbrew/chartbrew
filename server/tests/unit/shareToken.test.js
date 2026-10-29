@@ -9,7 +9,7 @@ const {
   validateShareTokenPolicy,
   verifyShareToken,
 } = require("../../modules/shareToken.js");
-const settings = require("../../settings-dev.js");
+const settings = require("../../settings.js");
 
 const sharePolicy = {
   id: 7,
@@ -61,7 +61,7 @@ describe("shareToken", () => {
   it("rejects legacy tokens when compatibility is disabled", () => {
     const token = jwt.sign(
       { sub: { type: "Chart", id: 42, sharePolicyId: 7 } },
-      process.env.CB_SECRET_DEV,
+      process.env.CB_SECRET,
       { algorithm: "HS256" }
     );
     const previousValue = settings.allowLegacyShareTokens;
@@ -77,7 +77,7 @@ describe("shareToken", () => {
   it("rejects unexpected algorithms", () => {
     const token = jwt.sign(
       { sub: { type: "Chart", id: 42, sharePolicyId: 7 } },
-      process.env.CB_ENCRYPTION_KEY_DEV,
+      process.env.CB_ENCRYPTION_KEY,
       { algorithm: "HS384" }
     );
 

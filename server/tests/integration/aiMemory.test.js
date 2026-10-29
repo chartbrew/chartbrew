@@ -39,7 +39,7 @@ describe("personal AI memory", () => {
   }
 
   it("saves the command from Home and an existing chat without a provider key or usage", async () => {
-    vi.stubEnv("CB_OPENAI_API_KEY_DEV", "");
+    vi.stubEnv("CB_OPENAI_API_KEY", "");
     const { app, scope, token } = await seed();
     const result = await request(app).post("/ai/respond").auth(token, { type: "bearer" })
       .send({ teamId: scope.teamId, message: "/remember Use weekly totals." });

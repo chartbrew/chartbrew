@@ -18,7 +18,7 @@ const {
   verifyShareToken,
 } = require("../modules/shareToken");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const PROJECT_UPDATE_FIELDS = new Set([
   "name",

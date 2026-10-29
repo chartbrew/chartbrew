@@ -19,22 +19,22 @@ echo "📊 Running npm audit..."
 npm audit --audit-level=high || echo "⚠️  Audit found issues but continuing..."
 
 echo "🐳 Testing with MySQL containers..."
-export CB_DB_DIALECT_DEV=mysql
+export CB_DB_DIALECT=mysql
 export FORCE_CONTAINERS=true
 npm run test:run
 
 echo "🐘 Testing with PostgreSQL containers..."
-export CB_DB_DIALECT_DEV=postgres
+export CB_DB_DIALECT=postgres
 export FORCE_CONTAINERS=true
 npm run test:run
 
 echo "📈 Generating coverage report..."
-export CB_DB_DIALECT_DEV=mysql
+export CB_DB_DIALECT=mysql
 export FORCE_CONTAINERS=true
 npm run test:coverage
 
 echo "🗂️  Testing SQLite fallback..."
-export CB_DB_DIALECT_DEV=sqlite
+export CB_DB_DIALECT=sqlite
 export FORCE_CONTAINERS=false
 npm run test:run
 

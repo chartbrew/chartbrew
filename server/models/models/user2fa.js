@@ -1,6 +1,6 @@
 const CryptoJS = require("crypto-js");
 
-const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+const settings = require("../../settings");
 
 function encrypt(text, secretKey) {
   return CryptoJS.AES.encrypt(text, secretKey).toString();

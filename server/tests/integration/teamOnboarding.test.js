@@ -17,7 +17,7 @@ describe("Team onboarding API", () => {
   let ownerToken;
 
   const createToken = (user) => {
-    const settings = require("../../settings-dev");
+    const settings = require("../../settings");
     return jwt.sign({ id: user.id, email: user.email }, settings.encryptionKey, {
       expiresIn: "1h",
     });

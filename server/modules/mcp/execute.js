@@ -25,10 +25,7 @@ const datasetController = new DatasetController();
 const imageController = new ChartImageController();
 
 function clientLink(path) {
-  const host =
-    process.env.NODE_ENV === "production"
-      ? process.env.VITE_APP_CLIENT_HOST
-      : process.env.VITE_APP_CLIENT_HOST_DEV;
+  const host = process.env.VITE_APP_CLIENT_HOST;
   return host && URL.canParse(path, host) ? new URL(path, host).href : null;
 }
 

@@ -5,7 +5,7 @@ const { nanoid } = require("nanoid");
 const fs = require("fs");
 const { resolveReportMode } = require("../../shared/reportAppearance.mjs");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 module.exports.snapChart = async (shareString) => {
   let browser = null;

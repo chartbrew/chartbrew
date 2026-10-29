@@ -30,7 +30,7 @@ const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
 const { getDataRecovery } = require("../../modules/dataRecovery");
 const mcpOauth = require("../../sources/plugins/mcp/mcp.oauth");
 const jwt = require("jsonwebtoken");
-const settings = require("../../settings-dev");
+const settings = require("../../settings");
 const {
   applyVariables,
   applyVariablesToValue,
@@ -1587,7 +1587,7 @@ describe("MCP source integration contracts", () => {
   });
 
   it("uses a public HTTPS OAuth client metadata URL when available", () => {
-    vi.stubEnv("VITE_APP_API_HOST_DEV", "https://chartbrew.example");
+    vi.stubEnv("VITE_APP_API_HOST", "https://chartbrew.example");
     expect(mcpOauth.getClientMetadataUrl({ id: 8, team_id: 4 })).toBe(
       "https://chartbrew.example/mcp/oauth/client-metadata?team_id=4&connection_id=8"
     );

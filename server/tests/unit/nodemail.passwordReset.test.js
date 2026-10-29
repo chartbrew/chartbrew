@@ -10,7 +10,7 @@ describe("nodemail React Email templates", () => {
   beforeEach(() => {
     vi.resetModules();
     process.env.NODE_ENV = "test";
-    process.env.CB_ADMIN_MAIL_DEV = "support@chartbrew.com";
+    process.env.CB_ADMIN_MAIL = "support@chartbrew.com";
   });
 
   it("renders the forgot password React email template into HTML", async () => {

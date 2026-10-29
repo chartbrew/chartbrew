@@ -1,8 +1,8 @@
 const { callAiProvider } = require("./usage");
 const OpenAI = require("openai");
 
-const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
-const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
+const openAiKey = process.env.CB_OPENAI_API_KEY;
+const openAiModel = process.env.CB_OPENAI_MODEL;
 let openaiClient;
 
 if (openAiKey) {

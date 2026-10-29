@@ -11,7 +11,7 @@ const mail = require("../modules/mail");
 const runtimeCache = require("../modules/runtimeCache");
 const createOwnedTeam = require("../modules/teamOnboarding/createOwnedTeam");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const PASSWORD_RESET_TOKEN_TTL = 30 * 60 * 1000;
 

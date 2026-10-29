@@ -207,7 +207,7 @@ describe("workspace orchestrator routes", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     setPlatformSettingOverrides({});
-    delete process.env.CB_OPENAI_API_KEY_DEV;
+    delete process.env.CB_OPENAI_API_KEY;
   });
 
   afterEach(() => {

@@ -7,7 +7,7 @@ const verifySessionToken = require("../../modules/verifySessionToken.js");
 
 describe("verifySessionToken", () => {
   it("accepts HS256 tokens signed with the session encryption key", () => {
-    const token = jwt.sign({ id: 42 }, process.env.CB_ENCRYPTION_KEY_DEV, { algorithm: "HS256" });
+    const token = jwt.sign({ id: 42 }, process.env.CB_ENCRYPTION_KEY, { algorithm: "HS256" });
 
     expect(verifySessionToken(token).id).toBe(42);
   });
@@ -17,20 +17,20 @@ describe("verifySessionToken", () => {
       id: 42,
       email: "admin@example.test",
       newEmail,
-    }, process.env.CB_ENCRYPTION_KEY_DEV, { algorithm: "HS256", expiresIn: "3h" });
+    }, process.env.CB_ENCRYPTION_KEY, { algorithm: "HS256", expiresIn: "3h" });
 
     expect(() => verifySessionToken(token)).toThrow("Email-change tokens cannot authenticate a session");
-    expect(jwt.verify(token, process.env.CB_ENCRYPTION_KEY_DEV).newEmail).toBe(newEmail);
+    expect(jwt.verify(token, process.env.CB_ENCRYPTION_KEY).newEmail).toBe(newEmail);
   });
 
   it("rejects tokens signed with the legacy secret", () => {
-    const token = jwt.sign({ id: 42 }, process.env.CB_SECRET_DEV, { algorithm: "HS256" });
+    const token = jwt.sign({ id: 42 }, process.env.CB_SECRET, { algorithm: "HS256" });
 
     expect(() => verifySessionToken(token)).toThrow("invalid signature");
   });
 
   it("rejects session tokens using an unexpected algorithm", () => {
-    const token = jwt.sign({ id: 42 }, process.env.CB_ENCRYPTION_KEY_DEV, { algorithm: "HS384" });
+    const token = jwt.sign({ id: 42 }, process.env.CB_ENCRYPTION_KEY, { algorithm: "HS384" });
 
     expect(() => verifySessionToken(token)).toThrow("invalid algorithm");
   });

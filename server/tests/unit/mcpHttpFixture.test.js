@@ -572,7 +572,7 @@ describe("MCP HTTP fixture", () => {
 
   it("stops OAuth when the authorization server does not respond", async () => {
     vi.stubEnv("CB_ALLOW_PRIVATE_NETWORK_CALLS", "true");
-    vi.stubEnv("VITE_APP_API_HOST_DEV", "http://localhost:3210");
+    vi.stubEnv("VITE_APP_API_HOST", "http://localhost:3210");
     const rawServer = await startRawServer(() => {});
     try {
       await expect(mcpOauth._private.runOauth({

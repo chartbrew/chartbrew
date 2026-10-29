@@ -25,9 +25,7 @@ const {
   isSourceDisabledError,
   serializeSourceDisabledError,
 } = require("../sources/sourceAvailability");
-const settings = process.env.NODE_ENV === "production"
-  ? require("../settings")
-  : require("../settings-dev");
+const settings = require("../settings");
 
 const upload = multer({
   dest: ".connectionFiles/",

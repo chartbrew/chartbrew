@@ -83,7 +83,7 @@ describe("User Management API", () => {
       const testUser = await models.User.create(userFactory.build());
       const forgedToken = jwt.sign(
         { id: testUser.id },
-        process.env.CB_SECRET_DEV,
+        process.env.CB_SECRET,
         { algorithm: "HS256" }
       );
 

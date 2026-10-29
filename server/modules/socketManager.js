@@ -76,9 +76,7 @@ class SocketManager {
   async initialize(server) {
     this.io = new Server(server, {
       cors: {
-        origin: process.env.NODE_ENV === "production"
-          ? process.env.VITE_APP_CLIENT_HOST || false
-          : process.env.VITE_APP_CLIENT_HOST_DEV || false,
+        origin: process.env.VITE_APP_CLIENT_HOST || false,
         methods: ["GET", "POST"],
         credentials: true
       },

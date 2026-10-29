@@ -41,7 +41,6 @@ function setUpEncryptionKeys(targetEnvPath = envPath) {
   try {
     let data = fs.readFileSync(targetEnvPath, "utf8");
     const defaults = [
-      ["CB_ENCRYPTION_KEY_DEV", generateAESKey],
       ["CB_ENCRYPTION_KEY", generateAESKey],
       ["CB_BULLMQ_USERNAME", () => "chartbrew"],
       ["CB_BULLMQ_PASSWORD", generatePassword],

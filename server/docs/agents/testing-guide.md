@@ -11,12 +11,13 @@ This document covers how to write and run tests in the Chartbrew backend.
 
 - **Global setup**: [`server/tests/globalSetup.js`](../tests/globalSetup.js)
   - Starts a containerized MySQL or PostgreSQL database by default.
-- Set `CB_TEST_DB_REUSE=1` with the `CB_DB_*_DEV` variables to use an existing,
-  isolated test database when containers are unavailable. Never point this at a
+- Set `CB_TEST_DB_REUSE=1` with the `CB_DB_*` variables to use an existing,
+  isolated test database when containers are unavailable. Its name must contain a
+  `test` segment separated by underscores, such as `chartbrew_test`. Never point this at a
   development or production database because tests truncate tables.
 - **Test setup**: [`server/tests/setup.js`](../tests/setup.js)
   - Truncates/cleans between tests
-  - Important: tests set env defaults here because `settings-dev.js` reads env at require-time.
+  - Important: tests set env defaults here because `settings.js` reads env at require-time.
 
 ## Express App Helper
 

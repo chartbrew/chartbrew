@@ -1,22 +1,17 @@
-const isProduction = () => process.env.NODE_ENV === "production";
-
 const getRedisEnvValue = (name, overridePrefix = null) => {
-  const suffix = isProduction() ? "" : "_DEV";
-
   if (overridePrefix) {
-    const overrideValue = process.env[`${overridePrefix}_${name}${suffix}`];
+    const overrideValue = process.env[`${overridePrefix}_${name}`];
     if (overrideValue !== undefined && overrideValue !== "") {
       return overrideValue;
     }
   }
 
-  return process.env[`CB_REDIS_${name}${suffix}`];
+  return process.env[`CB_REDIS_${name}`];
 };
 
 const hasRedisOverrides = (overridePrefix) => {
   if (!overridePrefix) return false;
 
-  const suffix = isProduction() ? "" : "_DEV";
   return [
     "HOST",
     "PORT",
@@ -25,7 +20,7 @@ const hasRedisOverrides = (overridePrefix) => {
     "CA",
     "CLUSTER_NODES",
   ].some((name) => {
-    const value = process.env[`${overridePrefix}_${name}${suffix}`];
+    const value = process.env[`${overridePrefix}_${name}`];
     return value !== undefined && value !== "";
   });
 };
@@ -33,7 +28,7 @@ const hasRedisOverrides = (overridePrefix) => {
 const getRedisOptions = (overridePrefix = null) => {
   const host = getRedisEnvValue("HOST", overridePrefix);
   if (!host) {
-    const envKey = `${overridePrefix || "CB_REDIS"}_HOST${isProduction() ? "" : "_DEV"}`;
+    const envKey = `${overridePrefix || "CB_REDIS"}_HOST`;
     console.error(`${envKey} is not set. The charts are not going to update automatically.`); // oxlint-disable-line no-console
   }
 

@@ -38,7 +38,6 @@ describe("setUpEncryptionKeys helpers", () => {
     try {
       fs.writeFileSync(envPath, [
         "CB_ENCRYPTION_KEY=",
-        "CB_ENCRYPTION_KEY_DEV=",
         "CB_BULLMQ_USERNAME=",
         "CB_BULLMQ_PASSWORD=",
         "",
@@ -48,7 +47,6 @@ describe("setUpEncryptionKeys helpers", () => {
 
       const generatedEnv = fs.readFileSync(envPath, "utf8");
       expect(generatedEnv).toMatch(/^CB_ENCRYPTION_KEY=[a-f0-9]{64}$/m);
-      expect(generatedEnv).toMatch(/^CB_ENCRYPTION_KEY_DEV=[a-f0-9]{64}$/m);
       expect(generatedEnv).toMatch(/^CB_BULLMQ_USERNAME=chartbrew$/m);
       expect(generatedEnv).toMatch(/^CB_BULLMQ_PASSWORD=[A-Za-z0-9_-]{32}$/m);
     } finally {

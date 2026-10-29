@@ -23,9 +23,7 @@ const ALLOWED_FEATURES = new Set([
 ]);
 
 function getAuditClient() {
-  const apiKey = process.env.NODE_ENV === "production"
-    ? process.env.CB_OPENAI_API_KEY
-    : process.env.CB_OPENAI_API_KEY_DEV;
+  const apiKey = process.env.CB_OPENAI_API_KEY;
   return apiKey ? new OpenAI({ apiKey }) : null;
 }
 

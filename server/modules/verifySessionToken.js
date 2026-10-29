@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 module.exports = (token) => {
   const decoded = jwt.verify(token, settings.encryptionKey, { algorithms: ["HS256"] });

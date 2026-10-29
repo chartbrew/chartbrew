@@ -18,7 +18,7 @@ const { buildAiVisualization } = require("../../../../visualization/aiVisualizat
 
 const datasetController = new DatasetController();
 const chartController = new ChartController();
-const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
+const clientUrl = process.env.VITE_APP_CLIENT_HOST;
 
 function resolveXAxis({
   chartType, xAxis, yAxis, spec = {}

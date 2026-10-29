@@ -17,7 +17,7 @@ const helmet = require("helmet");
 const fs = require("fs");
 const busboy = require("connect-busboy");
 
-const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
+const settings = require("./settings");
 const routes = require("./api");
 const appsRoutes = require("./apps");
 

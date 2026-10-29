@@ -967,8 +967,8 @@ describe("workspace orchestrator safety", () => {
   it("uses external workspace context whenever Chartbrew AI is enabled", async () => {
     vi.spyOn(db.Project, "findAll").mockResolvedValue([{ id: 4 }]);
     vi.spyOn(db.User, "findByPk").mockResolvedValue({ email: "ren@example.com" });
-    const originalKey = process.env.CB_OPENAI_API_KEY_DEV;
-    process.env.CB_OPENAI_API_KEY_DEV = "test-provider-key";
+    const originalKey = process.env.CB_OPENAI_API_KEY;
+    process.env.CB_OPENAI_API_KEY = "test-provider-key";
     try {
       setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": true });
       const enabledEnvelope = await getWorkspaceAccessEnvelope(access);
@@ -978,16 +978,16 @@ describe("workspace orchestrator safety", () => {
       expect(enabledEnvelope.canUseExternalWorkspaceContext).toBe(true);
       expect(disabledEnvelope.canUseExternalWorkspaceContext).toBe(false);
     } finally {
-      if (originalKey === undefined) delete process.env.CB_OPENAI_API_KEY_DEV;
-      else process.env.CB_OPENAI_API_KEY_DEV = originalKey;
+      if (originalKey === undefined) delete process.env.CB_OPENAI_API_KEY;
+      else process.env.CB_OPENAI_API_KEY = originalKey;
     }
   });
 
   it("does not use Chartbrew AI when it is disabled for the team", async () => {
     vi.spyOn(db.Project, "findAll").mockResolvedValue([{ id: 4 }]);
     vi.spyOn(db.User, "findByPk").mockResolvedValue({ email: "ren@example.com" });
-    const originalKey = process.env.CB_OPENAI_API_KEY_DEV;
-    process.env.CB_OPENAI_API_KEY_DEV = "test-provider-key";
+    const originalKey = process.env.CB_OPENAI_API_KEY;
+    process.env.CB_OPENAI_API_KEY = "test-provider-key";
     try {
       setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": true });
       const envelope = await getWorkspaceAccessEnvelope({
@@ -998,8 +998,8 @@ describe("workspace orchestrator safety", () => {
       expect(envelope.workspaceOrchestratorEnabled).toBe(false);
       expect(envelope.canUseExternalWorkspaceContext).toBe(false);
     } finally {
-      if (originalKey === undefined) delete process.env.CB_OPENAI_API_KEY_DEV;
-      else process.env.CB_OPENAI_API_KEY_DEV = originalKey;
+      if (originalKey === undefined) delete process.env.CB_OPENAI_API_KEY;
+      else process.env.CB_OPENAI_API_KEY = originalKey;
     }
   });
 

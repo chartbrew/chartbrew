@@ -6,7 +6,7 @@ const { nanoid } = require("nanoid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const { saveDashboardLayout } = require("../modules/dashboardLayout");
 const ProjectController = require("../controllers/ProjectController");

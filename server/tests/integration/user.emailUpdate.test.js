@@ -35,7 +35,7 @@ describe("User Email Update API", () => {
 
     const authToken = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.CB_ENCRYPTION_KEY_DEV,
+      process.env.CB_ENCRYPTION_KEY,
       { expiresIn: "1h" }
     );
 
@@ -54,7 +54,7 @@ describe("User Email Update API", () => {
     // with the same payload/signing key as UserController.requestEmailUpdate().
     const token = jwt.sign(
       { id: user.id, email: user.email, newEmail },
-      process.env.CB_ENCRYPTION_KEY_DEV,
+      process.env.CB_ENCRYPTION_KEY,
       { expiresIn: "3h" }
     );
 
@@ -80,7 +80,7 @@ describe("User Email Update API", () => {
 
     const authToken = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.CB_ENCRYPTION_KEY_DEV,
+      process.env.CB_ENCRYPTION_KEY,
       { expiresIn: "1h" }
     );
 

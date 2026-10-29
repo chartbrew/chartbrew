@@ -20,7 +20,7 @@ describe("Data API key security", () => {
   beforeAll(async () => {
     if (!testDbManager.getSequelize()) await testDbManager.start();
     db = await getModels();
-    settings = require("../../settings-dev.js");
+    settings = require("../../settings.js");
     TeamController = require("../../controllers/TeamController.js");
   });
 

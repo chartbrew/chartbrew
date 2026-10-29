@@ -6,7 +6,7 @@ const analyticsAdmin = require("@google-analytics/admin");
 
 const oauthController = require("../../../controllers/OAuthController");
 
-const settings = process.env.NODE_ENV === "production" ? require("../../../settings") : require("../../../settings-dev");
+const settings = require("../../../settings");
 
 const getOAuthClient = () => {
   return new google.auth.OAuth2(

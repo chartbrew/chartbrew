@@ -6,12 +6,12 @@ export default async function globalSetup({ provide }) {
   // Set test environment variables
   process.env.NODE_ENV = "test";
   process.env.CB_SECRET = "test-secret-key-for-testing-only";
-  process.env.CB_ENCRYPTION_KEY = "0123456789abcdef0123456789abcdef"; // 32-char hex for testing
+  process.env.CB_ENCRYPTION_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
   process.env.CB_API_HOST = "127.0.0.1";
   process.env.CB_API_PORT = "0"; // Let the system assign a random port
 
   // Use containerized MySQL by default for testing.
-  process.env.CB_DB_DIALECT_DEV = process.env.CB_DB_DIALECT_DEV || "mysql";
+  process.env.CB_DB_DIALECT = process.env.CB_DB_DIALECT || "mysql";
 
   // The global setup owns a container by default. Developers may explicitly
   // provide an isolated reusable test database when containers are unavailable.

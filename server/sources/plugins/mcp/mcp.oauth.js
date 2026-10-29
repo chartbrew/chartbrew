@@ -8,7 +8,7 @@ const { createMcpSafeFetch } = require("./mcp.safeFetch");
 const { createMcpError, sanitizeMcpClientError } = require("./mcp.policy");
 
 const refreshes = new Map();
-const settings = process.env.NODE_ENV === "production" ? require("../../../settings") : require("../../../settings-dev");
+const settings = require("../../../settings");
 
 function getReturnConversation({ connection, state }) {
   if (!state || state !== connection.authentication?.state) return null;
@@ -23,9 +23,7 @@ function getReturnConversation({ connection, state }) {
 }
 
 function getApiBaseUrl() {
-  const value = process.env.NODE_ENV === "production"
-    ? process.env.VITE_APP_API_HOST
-    : process.env.VITE_APP_API_HOST_DEV;
+  const value = process.env.VITE_APP_API_HOST;
   if (!value) {
     throw createMcpError(
       "MCP_OAUTH_CALLBACK_MISSING",

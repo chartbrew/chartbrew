@@ -91,7 +91,7 @@ describe("User Auth API", () => {
     });
 
     it("does not create an owned team for an invited signup", async () => {
-      const settings = require("../../settings-dev");
+      const settings = require("../../settings");
       const inviteToken = jwt.sign({ team_id: 987, role: "projectViewer" }, settings.encryptionKey);
       const response = await request(app)
         .post("/user/invited")
@@ -159,7 +159,7 @@ describe("User Auth API", () => {
       const password = "password123";
 
       const sc = simplecrypt({
-        password: process.env.CB_SECRET_DEV,
+        password: process.env.CB_SECRET,
         salt: "10",
       });
 

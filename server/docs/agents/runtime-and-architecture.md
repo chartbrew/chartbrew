@@ -13,16 +13,15 @@ This document covers the foundational architecture of the Chartbrew backend: how
 ## Settings and Environment Variables
 
 - **Settings modules**:
-  - [`server/settings.js`](../settings.js) (production)
-  - [`server/settings-dev.js`](../settings-dev.js) (non-production)
+  - [`server/settings.js`](../settings.js) (all environments)
 - Many modules load settings with:
-  - `process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev")`
+  - `require("../settings")`
 - Key env vars used by auth:
-  - `CB_SECRET_DEV` (legacy `simplecrypt` secret)
-  - `CB_ALLOW_LEGACY_SHARE_TOKENS_DEV` (temporary opt-in verification for pre-v2 share tokens)
-  - `CB_ENCRYPTION_KEY_DEV` (JWT secret used by current auth and share-token flows)
-  - `CB_RESTRICT_SIGNUP_DEV` (restrict signup once users exist)
-  - `CB_RESTRICT_TEAMS_DEV` (restrict team auto-creation on signup)
+  - `CB_SECRET` (legacy `simplecrypt` secret)
+  - `CB_ALLOW_LEGACY_SHARE_TOKENS` (temporary opt-in verification for pre-v2 share tokens)
+  - `CB_ENCRYPTION_KEY` (JWT secret used by current auth and share-token flows)
+  - `CB_RESTRICT_SIGNUP` (restrict signup once users exist)
+  - `CB_RESTRICT_TEAMS` (restrict team auto-creation on signup)
 
 ## API Routes Registration
 

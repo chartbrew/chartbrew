@@ -2,7 +2,7 @@ const simplecrypt = require("simplecrypt");
 
 const { encrypt, decrypt } = require("../../modules/cbCrypto");
 
-const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+const settings = require("../../settings");
 
 const sc = simplecrypt({
   password: settings.secret,

@@ -10,8 +10,7 @@ const {
   buildDataApiAccess,
   normalizeProjectIds,
 } = require("../dataApiAccess");
-const settings =
-  process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+const settings = require("../../settings");
 
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const secret = () => randomBytes(32).toString("base64url");
@@ -24,10 +23,7 @@ const validString = (value, max = 2048) =>
 const equal = (a, b) => timingSafeEqual(Buffer.from(hash(a)), Buffer.from(hash(b)));
 
 function urls() {
-  const apiHost =
-    process.env.NODE_ENV === "production"
-      ? process.env.VITE_APP_API_HOST
-      : process.env.VITE_APP_API_HOST_DEV;
+  const apiHost = process.env.VITE_APP_API_HOST;
   const resource = new URL(
     process.env.CB_MCP_PUBLIC_URL || new URL("/mcp", apiHost || "http://localhost:3210").href
   );

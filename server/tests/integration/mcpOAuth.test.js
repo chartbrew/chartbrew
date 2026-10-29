@@ -6,7 +6,7 @@ import { beforeAll, afterEach, describe, expect, it, vi } from "vitest";
 import { getModels } from "../helpers/dbHelpers.js";
 import { testDbManager } from "../helpers/testDbManager.js";
 
-const settings = require("../../settings-dev");
+const settings = require("../../settings");
 const resource = "http://localhost:3210/mcp";
 const verifier = "a".repeat(43);
 const challenge = createHash("sha256").update(verifier).digest("base64url");

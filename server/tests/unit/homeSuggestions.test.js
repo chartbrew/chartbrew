@@ -20,7 +20,7 @@ describe("personal Home suggestions", () => {
   beforeAll(async () => { await stateModel.sync(); });
   beforeEach(async () => {
     await stateModel.destroy({ where: {} });
-    vi.stubEnv("CB_OPENAI_API_KEY_DEV", "test-key");
+    vi.stubEnv("CB_OPENAI_API_KEY", "test-key");
     setPlatformSettingOverrides({ "workspaceOrchestrator.enabled": true, "workspaceOrchestrator.externalLearningContextEnabled": false });
     team = { aiEnabled: true, aiSuggestionsEnabled: true, updatedAt: new Date("2026-10-01") };
     role = { role: "projectViewer", projects: [10], Team: team };

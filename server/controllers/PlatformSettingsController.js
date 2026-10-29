@@ -21,9 +21,7 @@ const PLATFORM_LINKS = Object.freeze([
 ]);
 
 function isAiProviderConfigured(env = process.env) {
-  const apiKey = env.NODE_ENV === "production"
-    ? env.CB_OPENAI_API_KEY
-    : env.CB_OPENAI_API_KEY_DEV;
+  const apiKey = env.CB_OPENAI_API_KEY;
   return Boolean(apiKey);
 }
 

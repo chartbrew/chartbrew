@@ -15,12 +15,12 @@ import { projectFactory } from "../factories/projectFactory.js";
 
 const require = createRequire(import.meta.url);
 const ChartController = require("../../controllers/ChartController.js");
-const settings = require("../../settings-dev.js");
+const settings = require("../../settings.js");
 
 function generateProjectShareToken(projectId, sharePolicyId) {
   return jwt.sign(
     { sub: { type: "Project", id: projectId, sharePolicyId } },
-    process.env.CB_ENCRYPTION_KEY_DEV,
+    process.env.CB_ENCRYPTION_KEY,
     { expiresIn: "1h" }
   );
 }
@@ -122,11 +122,11 @@ describe("ChartRoute public access", () => {
     const tokenPayload = {
       sub: { type: "Chart", id: seeded.chart.id, sharePolicyId: sharePolicy.id },
     };
-    const validToken = jwt.sign(tokenPayload, process.env.CB_ENCRYPTION_KEY_DEV, {
+    const validToken = jwt.sign(tokenPayload, process.env.CB_ENCRYPTION_KEY, {
       algorithm: "HS256",
       expiresIn: "1h",
     });
-    const forgedToken = jwt.sign(tokenPayload, process.env.CB_SECRET_DEV, {
+    const forgedToken = jwt.sign(tokenPayload, process.env.CB_SECRET, {
       algorithm: "HS256",
       expiresIn: "1h",
     });
@@ -194,7 +194,7 @@ describe("ChartRoute public access", () => {
       sharePolicyId: sharePolicy.id,
       exp: new Date(Date.now() + 60 * 60 * 1000),
     });
-    const decodedToken = jwt.verify(result.token, process.env.CB_ENCRYPTION_KEY_DEV, {
+    const decodedToken = jwt.verify(result.token, process.env.CB_ENCRYPTION_KEY, {
       algorithms: ["HS256"],
     });
 
@@ -221,7 +221,7 @@ describe("ChartRoute public access", () => {
         sharePolicyId: sharePolicy.id,
         preserveLegacy: true,
       });
-      const decodedToken = jwt.verify(result.token, process.env.CB_SECRET_DEV, {
+      const decodedToken = jwt.verify(result.token, process.env.CB_SECRET, {
         algorithms: ["HS256"],
       });
 

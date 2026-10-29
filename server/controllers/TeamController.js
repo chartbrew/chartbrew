@@ -24,7 +24,7 @@ const {
 } = require("../modules/dataApiAccess");
 const UserController = require("./UserController");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const TEAM_ROLES = new Set([
   "teamOwner",

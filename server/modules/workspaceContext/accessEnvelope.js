@@ -6,9 +6,7 @@ const db = require("../../models/models");
 const { getWorkspaceOrchestratorPolicy } = require("./policy");
 
 function getOpenAiKey() {
-  return process.env.NODE_ENV === "production"
-    ? process.env.CB_OPENAI_API_KEY
-    : process.env.CB_OPENAI_API_KEY_DEV;
+  return process.env.CB_OPENAI_API_KEY;
 }
 
 function buildAccessVersion(value) {

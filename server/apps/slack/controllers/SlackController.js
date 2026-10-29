@@ -18,12 +18,8 @@ const {
 } = require("../utils/slackClient");
 const { formatResponse, formatError } = require("../utils/formatResponse");
 
-const settings = process.env.NODE_ENV === "production"
-  ? require("../../../settings")
-  : require("../../../settings-dev"); // eslint-disable-line
-const clientUrl = process.env.NODE_ENV === "production"
-  ? process.env.VITE_APP_CLIENT_HOST
-  : process.env.VITE_APP_CLIENT_HOST_DEV;
+const settings = require("../../../settings"); // eslint-disable-line
+const clientUrl = process.env.VITE_APP_CLIENT_HOST;
 
 class SlackController {
   constructor() {

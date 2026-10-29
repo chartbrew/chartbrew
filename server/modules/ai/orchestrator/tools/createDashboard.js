@@ -3,7 +3,7 @@ const ProjectController = require("../../../../controllers/ProjectController");
 const { normalizeTeamId } = require("./teamScope");
 
 const projectController = new ProjectController();
-const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
+const clientUrl = process.env.VITE_APP_CLIENT_HOST;
 
 async function createDashboard(payload) {
   const {

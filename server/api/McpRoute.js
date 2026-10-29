@@ -26,10 +26,7 @@ module.exports = (app) => {
     (req, res, next) => {
       ensureRequestId(req);
       res.set("Cache-Control", "private, no-store").vary("Authorization");
-      const clientHost =
-        process.env.NODE_ENV === "production"
-          ? process.env.VITE_APP_CLIENT_HOST
-          : process.env.VITE_APP_CLIENT_HOST_DEV;
+      const clientHost = process.env.VITE_APP_CLIENT_HOST;
       if (
         req.headers.origin &&
         (!URL.canParse(clientHost) || req.headers.origin !== new URL(clientHost).origin)

@@ -4,7 +4,7 @@ const nodemailer = require("nodemailer");
 const { render } = require("@react-email/render");
 const createJiti = require("jiti");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 const jiti = createJiti(__filename, { jsx: true, interopDefault: true });
 const emailTemplatePaths = {
   forgotPassword: path.join(__dirname, "../email-templates/emails/forgot-password.tsx"),

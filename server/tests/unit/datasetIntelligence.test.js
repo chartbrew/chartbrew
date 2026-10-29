@@ -2,7 +2,7 @@ import {
   afterEach, describe, expect, it, vi
 } from "vitest";
 
-process.env.CB_ENCRYPTION_KEY_DEV = "00".repeat(32);
+process.env.CB_ENCRYPTION_KEY = "00".repeat(32);
 
 const { DataTypes, Sequelize } = require("sequelize");
 const db = require("../../models/models");
