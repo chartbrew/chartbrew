@@ -35,6 +35,15 @@ function useAiChat({
   const [sessionId, setSessionId] = useState(null);
   const [toolDisplayNames, setToolDisplayNames] = useState({});
 
+  const inlineChatKey = messages.length > 0 || history.length > 0 || isLoading
+    ? chatKeyRef.current : null;
+
+  useEffect(() => {
+    if (!inlineChatKey) return undefined;
+    dispatch(setInlineAiConversationKey(inlineChatKey));
+    return () => { dispatch(clearInlineAiConversationKey(inlineChatKey)); };
+  }, [dispatch, inlineChatKey]);
+
   const ensureSessionId = useCallback(() => {
     if (sessionIdRef.current) return sessionIdRef.current;
     const nextId = crypto.randomUUID();
@@ -105,7 +114,6 @@ function useAiChat({
       requestIdRef.current += 1;
       socketClient.off("ai-progress", handleProgress);
       socketClient.off("conversation-created", handleCreated);
-      dispatch(clearInlineAiConversationKey(chatKeyRef.current));
       if (sessionIdRef.current) {
         socketClient.leaveConversation(sessionIdRef.current);
       }
@@ -122,7 +130,6 @@ function useAiChat({
       key: chatKey, id: aiConversationId, userId: user.id, teamId,
       title: question.slice(0, 100), busy: true, studio_chart_id: activeChartId || null,
     }));
-    dispatch(setInlineAiConversationKey(chatKey));
     setTitle((current) => current || question.slice(0, 100));
     setError(null);
     setIsLoading(true);
@@ -202,7 +209,6 @@ function useAiChat({
   const clear = useCallback(() => {
     savePromiseRef.current = null;
     requestIdRef.current += 1;
-    dispatch(clearInlineAiConversationKey(chatKeyRef.current));
     chatKeyRef.current = crypto.randomUUID();
     if (sessionIdRef.current) {
       socketClient.leaveConversation(sessionIdRef.current);
@@ -244,7 +250,6 @@ function useAiChat({
       setHistory(conversation.full_history || []);
       setTitle(conversation.title);
       setSavedContext(conversation.context || []);
-      dispatch(setInlineAiConversationKey(chatKeyRef.current));
       await joinProgressRoom(conversation.id);
       if (requestId !== requestIdRef.current) {
         socketClient.leaveConversation(conversation.id);

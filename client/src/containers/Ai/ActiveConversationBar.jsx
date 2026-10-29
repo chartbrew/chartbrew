@@ -59,7 +59,7 @@ export default function ActiveConversationBar() {
   }, [active?.id, active?.key, active?.busy, inScope, team?.id]);
 
   if (!inScope || active.studio_chart_id !== null || (!active.id && !active.busy)
-    || isConversationBarHiddenOnRoute(pathname) || modalOpen || active.key === inlineKey) return null;
+    || isConversationBarHiddenOnRoute(pathname, inlineKey) || modalOpen || active.key === inlineKey) return null;
 
   return (
     <div className="active-conversation-bar" role="region" aria-label="Active conversation">

@@ -15,6 +15,16 @@ test("the conversation bar stays hidden on settings and public pages", () => {
   }
 });
 
+test("Home hides quick access while an inline chat is visible and restores it after minimize", () => {
+  let state = reducer(undefined, setActiveAiConversation({ key: "restored", id: "saved" }));
+  state = reducer(state, setInlineAiConversationKey("home-chat"));
+  assert.equal(isConversationBarHiddenOnRoute("/", state.inlineAiConversationKey), true);
+  assert.equal(isConversationBarHiddenOnRoute("/dashboard/1", state.inlineAiConversationKey), false);
+  state = reducer(state, clearInlineAiConversationKey("home-chat"));
+  assert.equal(isConversationBarHiddenOnRoute("/", state.inlineAiConversationKey), false);
+  assert.equal(state.activeAiConversation.id, "saved");
+});
+
 test("navigation and dismissal keep saved history but reject late updates from older requests", () => {
   let state = reducer(undefined, setActiveAiConversation({ key: "first", id: "saved", userId: 1, teamId: 2, studio_chart_id: null }));
   state = reducer(state, showAiModal());

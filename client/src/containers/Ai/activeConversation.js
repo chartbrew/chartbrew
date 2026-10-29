@@ -1,7 +1,8 @@
 export const activeConversationStorageKey = (userId, teamId) => `cb-active-chat:${userId}:${teamId}`;
 
-export function isConversationBarHiddenOnRoute(pathname) {
-  return /^\/(settings|login|signup|passwordReset|b|report|share|google-auth|invite)(\/|$)/.test(pathname)
+export function isConversationBarHiddenOnRoute(pathname, inlineConversationKey) {
+  return (pathname === "/" && Boolean(inlineConversationKey))
+    || /^\/(settings|login|signup|passwordReset|b|report|share|google-auth|invite)(\/|$)/.test(pathname)
     || /\/(embedded|share)(\/|$)/.test(pathname);
 }
 
