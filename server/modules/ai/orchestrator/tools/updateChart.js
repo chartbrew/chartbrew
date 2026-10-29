@@ -398,8 +398,16 @@ async function updateChart(payload) {
       };
       delete canonicalVisualization.metadata.migratedFrom;
       delete canonicalVisualization.metadata.migrationWarnings;
+      if (chartUpdates.timeInterval !== undefined) {
+        canonicalVisualization = applyChartCompatibilityUpdate(canonicalVisualization, {
+          timeInterval: chartUpdates.timeInterval,
+        });
+      }
       canonicalVisualization = finalizeAiVisualization(canonicalVisualization);
-      await db.Chart.update({ visualization: canonicalVisualization }, { where: { id: chart_id }, transaction });
+      await db.Chart.update({
+        visualization: canonicalVisualization,
+        timeInterval: canonicalVisualization.settings.timeInterval,
+      }, { where: { id: chart_id }, transaction });
 
     });
 

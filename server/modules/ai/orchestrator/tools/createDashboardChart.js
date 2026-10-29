@@ -163,6 +163,7 @@ async function prepareDashboardChart(payload, options = {}) {
       ? { id: null, name: datasetData.name }
       : await datasetController.createWithDataRequests(datasetData);
     const canonicalVisualization = buildAiVisualization({
+      timeInterval,
       bindingId: "binding-1",
       chart: {
         ...spec,
@@ -205,7 +206,7 @@ async function prepareDashboardChart(payload, options = {}) {
       pointRadius: pointRadius || spec.pointRadius || 0,
       dataLabels: dataLabels || spec.dataLabels || false,
       includeZeros: resolvedIncludeZeros,
-      timeInterval: timeInterval || spec.timeInterval || "day",
+      timeInterval: canonicalVisualization.settings.timeInterval,
       stacked: stacked ?? spec.stacked ?? spec.options?.stacked ?? false,
       horizontal: horizontal ?? spec.horizontal ?? spec.options?.horizontal ?? false,
       xLabelTicks: xLabelTicks || spec.xLabelTicks || "default",

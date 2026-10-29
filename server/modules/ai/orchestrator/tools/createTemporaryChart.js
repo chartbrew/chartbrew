@@ -227,6 +227,7 @@ async function createTemporaryChart(payload) {
       ? dataset.DataRequests[0].id
       : dataset.main_dr_id;
     const canonicalVisualization = buildAiVisualization({
+      timeInterval,
       bindingId: "binding-1",
       chart: {
         ...spec,
@@ -276,7 +277,7 @@ async function createTemporaryChart(payload) {
         : spec.includeZeros !== undefined
           ? spec.includeZeros
           : true,
-      timeInterval: timeInterval || spec.timeInterval || "day",
+      timeInterval: canonicalVisualization.settings.timeInterval,
       stacked: stacked ?? spec.stacked ?? spec.options?.stacked ?? false,
       horizontal: horizontal ?? spec.horizontal ?? spec.options?.horizontal ?? false,
       xLabelTicks: xLabelTicks || spec.xLabelTicks || "default",

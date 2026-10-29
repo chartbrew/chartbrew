@@ -120,6 +120,7 @@ async function createChart(payload, options = {}) {
       }
     }
     const canonicalVisualization = buildAiVisualization({
+      timeInterval,
       bindingId: "binding-1",
       chart: {
         ...chartSpec,
@@ -188,7 +189,7 @@ async function createChart(payload, options = {}) {
         : chartSpec.includeZeros !== undefined
           ? chartSpec.includeZeros
           : true,
-      timeInterval: timeInterval || chartSpec.timeInterval || "day",
+      timeInterval: canonicalVisualization.settings.timeInterval,
       stacked: stacked ?? chartSpec.stacked ?? chartSpec.options?.stacked ?? false,
       horizontal: horizontal ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false,
       xLabelTicks: xLabelTicks || chartSpec.xLabelTicks || "default",

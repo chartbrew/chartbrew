@@ -75,10 +75,15 @@ function buildAiVisualization(options = {}) {
     encoding,
     goal,
     visualization,
+    timeInterval,
   } = options;
 
   if (visualization?.layers) {
     const next = clone(visualization);
+    next.settings = {
+      ...next.settings,
+      timeInterval: timeInterval ?? next.settings?.timeInterval ?? chart.timeInterval,
+    };
     next.metadata = { ...(next.metadata || {}), createdBy: "ai" };
     delete next.metadata.migratedFrom;
     next.layers = next.layers.map((layer) => ({
@@ -114,13 +119,14 @@ function buildAiVisualization(options = {}) {
       settings: {
         includeZeros: chart.includeZeros,
         legend: { visible: chart.displayLegend !== false },
-        timeInterval: chart.timeInterval,
+        timeInterval: timeInterval ?? chart.timeInterval,
       },
     });
   }
 
   const legacy = legacyChartToVisualization({
     ...chart,
+    timeInterval: timeInterval ?? chart.timeInterval,
     ChartDatasetConfigs: [{ ...cdc, id: bindingId }],
   }).visualization;
   return finalizeAiVisualization({

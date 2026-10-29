@@ -5,6 +5,34 @@ const require = createRequire(import.meta.url);
 const { buildAiVisualization } = require("../../visualization/aiVisualization.js");
 
 describe("AI canonical visualization builder", () => {
+  it.each([undefined, "month"])("resolves supplied visualization settings with explicit interval %s", (timeInterval) => {
+    const visualization = buildAiVisualization({
+      chart: { type: "line", timeInterval: "day" },
+      timeInterval,
+      visualization: {
+        version: 2,
+        settings: { timeInterval: "week" },
+        layers: [{
+          id: "jobs", mark: "line",
+          encoding: {
+            time: { field: "root[].date", type: "temporal" },
+            value: { field: "root[].count", type: "quantitative" },
+          },
+        }],
+      },
+    });
+    expect(visualization.settings.timeInterval).toBe(timeInterval || "week");
+  });
+
+  it("uses the explicit interval for legacy chart bindings", () => {
+    const visualization = buildAiVisualization({
+      chart: { type: "line", timeInterval: "day" },
+      timeInterval: "month",
+      cdc: { xAxis: "root[].date", yAxis: "root[].count", dateField: "root[].date" },
+    });
+    expect(visualization.settings.timeInterval).toBe("month");
+  });
+
   it("creates canonical encodings directly when semantic fields are provided", () => {
     const visualization = buildAiVisualization({
       bindingId: "orders",
