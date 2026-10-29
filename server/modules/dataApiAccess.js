@@ -3,7 +3,7 @@ const { Op } = require("sequelize");
 
 const TEAM_WIDE_ROLES = new Set(teamRoles);
 const PROJECT_ROLES = new Set(["projectAdmin", "projectEditor", "projectViewer"]);
-const DATA_API_SCOPES = new Set(["data:read", "data:refresh", "charts:preview", "datasets:write"]);
+const DATA_API_SCOPES = new Set(["data:read", "data:refresh", "charts:preview", "datasets:write", "dashboard-filters:write"]);
 
 function getRoleScopes(role) {
   if (role === "teamViewer") return ["data:read"];

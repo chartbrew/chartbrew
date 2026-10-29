@@ -13,6 +13,9 @@ const { startRun, completeRun, failRun } = require("../updateAudit");
 const { findSourceForConnection } = require("../../sources");
 const { isSourceServerEnabled } = require("../../sources/sourceAvailability");
 const createTemporaryChart = require("../ai/orchestrator/tools/createTemporaryChart");
+const readChartResults = require("../ai/orchestrator/tools/readChartResults");
+const { listDashboardFilters, setDashboardFilter, deleteDashboardFilter } = require("../ai/orchestrator/tools/dashboardFilters");
+const { verifySavedResult } = require("../ai/orchestrator/runtime/completionCheck");
 const { TOOLS } = require("./tools");
 const { getFieldValue, selectRows } = require("../../visualization/fieldPath");
 const { getDataRecovery } = require("../dataRecovery");
@@ -259,7 +262,7 @@ async function createPreview(req, args) {
     if (args.xAxis && rows.every((row) => getFieldValue(row, args.xAxis) == null))
       throw new DataApiError("INVALID_REQUEST");
   }
-  const { datasetId, includeImage, ...chartOptions } = args;
+  const { datasetId, includeImage, completionRequirements, ...chartOptions } = args;
   if (chartOptions.type === "bar" && chartOptions.horizontal) chartOptions.type = "horizontalBar";
   const preview = await createTemporaryChart({
     ...chartOptions,
@@ -279,6 +282,14 @@ async function createPreview(req, args) {
     },
     dataset: { id: dataset.id, name: dataset.name, url: clientLink(`/datasets/${dataset.id}`) },
   };
+  result.completion_check = await verifySavedResult({
+    toolName: "create_temporary_chart",
+    args: { ...chartOptions, completion_requirements: completionRequirements || { dashboard_filters: [], unverified: [] } },
+    result: preview,
+    teamId: access.teamId,
+    userId: access.userId,
+  });
+  if (!result.completion_check?.checks.every((check) => check.status === "verified")) result.status = "partial";
   let image;
   if (includeImage) {
     try {
@@ -305,6 +316,33 @@ async function createPreview(req, args) {
 
 async function execute(req, name, args) {
   const access = req.apiKeyAccess;
+  if (["read_chart_results", "list_dashboard_filters", "set_dashboard_filter", "delete_dashboard_filter"].includes(name)) {
+    if (!access.projectIds.includes(args.projectId)) throw new DataApiError("RESOURCE_NOT_FOUND");
+    const payload = {
+      team_id: access.teamId,
+      user_id: access.userId,
+      allowed_project_ids: access.projectIds,
+      project_id: args.projectId,
+      offset: args.offset,
+      filter_id: args.filterId,
+      field: args.field,
+      label: args.label,
+      options: args.options,
+      all_label: args.allLabel,
+      on_report: args.onReport,
+      completion_requirements: args.completionRequirements,
+    };
+    if (name === "read_chart_results") return { result: await withExecutionDeadline(() => readChartResults(payload)) };
+    if (name === "list_dashboard_filters") return { result: await withExecutionDeadline(() => listDashboardFilters(payload)) };
+    const result = name === "set_dashboard_filter"
+      ? await setDashboardFilter(payload)
+      : await deleteDashboardFilter(payload);
+    result.completion_check = await verifySavedResult({
+      toolName: name, args: payload, result, teamId: access.teamId, userId: access.userId,
+    });
+    result.status = result.completion_check?.checks.every((check) => check.status === "verified") ? "saved" : "partial";
+    return { result };
+  }
   if (name === "search_workspace")
     return {
       result: await withExecutionDeadline(({ signal }) => searchWorkspace(access, args, signal)),

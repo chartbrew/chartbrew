@@ -26,7 +26,7 @@ describe("Chartbrew MCP private server", () => {
 
   async function fixture({
     allProjects = true,
-    scopes = ["data:read", "data:refresh", "charts:preview", "datasets:write"],
+    scopes = ["data:read", "data:refresh", "charts:preview", "datasets:write", "dashboard-filters:write"],
   } = {}) {
     const team = await db.Team.create({ name: "MCP team" });
     const user = await db.User.create({
@@ -111,13 +111,17 @@ describe("Chartbrew MCP private server", () => {
     return { app, team, user, project, hidden, key, role, connection, dataset, rpc, call };
   }
 
-  it("serves discovery, six bounded tools, and scope-filtered definitions without sessions", async () => {
+  it("serves discovery, bounded tools, and scope-filtered definitions without sessions", async () => {
     const { rpc, key } = await fixture();
     const discovery = await rpc("server/discover", {});
     expect(discovery.status).toBe(200);
     expect(discovery.headers["mcp-session-id"]).toBeUndefined();
     const list = await rpc("tools/list", {});
     expect(list.body.result.tools.map((tool) => tool.name)).toEqual([
+      "read_chart_results",
+      "list_dashboard_filters",
+      "set_dashboard_filter",
+      "delete_dashboard_filter",
       "search_workspace",
       "get_workspace_activity",
       "run_dataset",
@@ -125,7 +129,7 @@ describe("Chartbrew MCP private server", () => {
       "create_chart_preview",
       "explore_data",
     ]);
-    expect(JSON.stringify(list.body.result).length).toBeLessThanOrEqual(8000);
+    expect(JSON.stringify(list.body.result).length).toBeLessThanOrEqual(13000);
     expect(
       list.body.result.tools.find((tool) => tool.name === "create_chart_preview").inputSchema
         .properties.type.enum
@@ -139,6 +143,84 @@ describe("Chartbrew MCP private server", () => {
     expect(readList.body.result.tools.some((tool) => tool.name === "create_chart_preview")).toBe(
       false
     );
+  });
+
+  it("reads saved chart results without source runs or refresh, including missing results", async () => {
+    const { call, project, dataset, key, role, hidden } = await fixture({ allProjects: false, scopes: ["data:read"] });
+    const run = vi.spyOn(DatasetController.prototype, "runRequest").mockRejectedValue(new Error("No execution"));
+    const refresh = vi.spyOn(ChartController.prototype, "updateChartData").mockRejectedValue(new Error("No refresh"));
+    const cache = require("../../modules/runtimeCache");
+    const background = vi.spyOn(cache, "triggerBackgroundRefresh").mockImplementation(() => { throw new Error("No refresh"); });
+    const chart = await db.Chart.create({ project_id: project.id, name: "Saved visits", type: "bar", draft: false,
+      visualization: { version: 2, status: "ready", settings: {}, layers: [{ id: "visits", bindingId: 8, mark: "bar", status: "ready",
+        encoding: { category: { field: "root[].country", type: "nominal" }, value: { field: "root[].visits", type: "quantitative", aggregate: "sum" } } }] },
+    });
+    const missing = await call("read_chart_results", { projectId: project.id });
+    expect(missing.body.result.structuredContent.result.items[0].status).toBe("unavailable");
+    const preparedData = {
+      frameVersion: 1, generatedAt: "2026-10-20T00:00:00.000Z", identityVersion: 1,
+      resource: { id: chart.id, kind: "chart" }, timezone: "UTC", version: 1, stats: {}, warnings: [],
+      results: [{ id: "visits", bindingId: 8, mark: "bar", name: "Visits", availableSeries: [], warnings: [],
+        fields: [{ key: "category", role: "dimension", type: "nominal" }, { key: "value", role: "measure", type: "quantitative" }],
+        rows: [{ category: "UK", seriesId: "series-1111111111111111", value: 42 }],
+        series: [{ id: "series-1111111111111111", key: "string:__default__", label: "Visits", value: null }],
+      }],
+    };
+    await chart.update({ preparedData, preparedDataUpdatedAt: preparedData.generatedAt,
+      preparedDataVisualizationFingerprint: "viz", preparedDataSourceFingerprint: "source" });
+    vi.spyOn(cache, "buildChartFingerprints").mockResolvedValue({ visualization: "viz", source: "source" });
+    const saved = await call("read_chart_results", { projectId: project.id });
+    expect(saved.body.result.structuredContent.result).toMatchObject({ view: "saved_default", nextOffset: null,
+      items: [{ status: "available", tables: [{ values: [[{ trust: "untrusted_data", value: "UK" }, 42]] }] }],
+    });
+    expect((await call("read_chart_results", { projectId: project.id, offset: 1 })).body.result.structuredContent.result.items).toEqual([]);
+    expect((await call("read_chart_results", { projectId: hidden.id })).body.result.isError).toBe(true);
+    for (const extra of [{ refresh: true }, { filters: [] }, { team_id: 99 }, { offset: -1 }]) {
+      const invalid = await call("read_chart_results", { projectId: project.id, ...extra });
+      expect(Boolean(invalid.body.error || invalid.body.result?.isError)).toBe(true);
+    }
+    await dataset.update({ fieldsSchema: { "root[].country": "string" } });
+    await db.ChartDatasetConfig.create({ chart_id: chart.id, dataset_id: dataset.id });
+    expect((await call("list_dashboard_filters", { projectId: project.id })).body.result.structuredContent.result.fields).toHaveLength(1);
+    await role.update({ role: "projectViewer", projects: [hidden.id] });
+    expect((await call("read_chart_results", { projectId: project.id })).body.result.isError).toBe(true);
+    expect((await call("list_dashboard_filters", { projectId: project.id })).body.result.isError).toBe(true);
+    expect(run).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    expect(background).not.toHaveBeenCalled();
+    await db.Apikey.destroy({ where: { id: key.id } });
+    expect((await call("read_chart_results", { projectId: project.id })).status).toBe(401);
+  });
+
+  it("requires explicit filter permission and verifies saved writes within the key's projects", async () => {
+    const { call, rpc, project, hidden, dataset, key, role } = await fixture({ allProjects: false, scopes: ["data:read"] });
+    const chart = await db.Chart.create({ project_id: project.id, name: "Jobs", type: "bar", draft: false });
+    await dataset.update({ fieldsSchema: { "root[].employer": "string" } });
+    await db.ChartDatasetConfig.create({ chart_id: chart.id, dataset_id: dataset.id });
+    const args = { projectId: project.id, field: "root[].employer", label: "Employer", options: ["Acme", "Bio"], allLabel: "All Employers",
+      completionRequirements: { dashboard_filters: ["Employer"], unverified: [] } };
+    const list = await rpc("tools/list", {});
+    expect(list.body.result.tools.map((tool) => tool.name)).not.toContain("set_dashboard_filter");
+    const denied = await call("set_dashboard_filter", args);
+    expect(Boolean(denied.body.error || denied.body.result?.isError)).toBe(true);
+    await db.Apikey.update({ scopes: ["data:read", "dashboard-filters:write"] }, { where: { id: key.id } });
+    const run = vi.spyOn(DatasetController.prototype, "runRequest").mockRejectedValue(new Error("No execution"));
+    const first = (await call("set_dashboard_filter", args)).body.result.structuredContent.result;
+    expect(first.status).toBe("saved");
+    expect(first.completion_check.checks[0].status).toBe("verified");
+    expect((await call("set_dashboard_filter", args)).body.result.structuredContent.result.filter_id).toBe(first.filter_id);
+    expect(await db.DashboardFilter.count()).toBe(1);
+    expect((await call("set_dashboard_filter", { ...args, projectId: hidden.id })).body.result.isError).toBe(true);
+    const partial = await call("set_dashboard_filter", { ...args, completionRequirements: { dashboard_filters: ["Employer", "State"], unverified: [] } });
+    expect(partial.body.result.structuredContent.result.status).toBe("partial");
+    const deleted = await call("delete_dashboard_filter", { projectId: project.id, filterId: first.filter_id,
+      completionRequirements: { dashboard_filters: [], unverified: [] } });
+    expect(deleted.body.result.structuredContent.result.status).toBe("saved");
+    expect(await db.DashboardFilter.count()).toBe(0);
+    await role.update({ role: "projectViewer" });
+    const revoked = await call("set_dashboard_filter", args);
+    expect(Boolean(revoked.body.error || revoked.body.result?.isError)).toBe(true);
+    expect(run).not.toHaveBeenCalled();
   });
 
   it("rejects invalid and revoked keys, unsafe origins, invalid arguments, and unsupported HTTP methods", async () => {
@@ -328,6 +410,7 @@ describe("Chartbrew MCP private server", () => {
       yAxisOperation: "sum",
     });
     expect(result.body.result.structuredContent.result.status).toBe("preview");
+    expect(result.body.result.structuredContent.result.completion_check.checks.every((check) => check.status === "verified")).toBe(true);
     const chart = await db.Chart.findByPk(result.body.result.structuredContent.result.chart.id, {
       include: [db.Project],
     });

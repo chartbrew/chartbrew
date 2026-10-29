@@ -242,7 +242,7 @@ describe("MCP OAuth", () => {
 
   it("requests all permissions by default but grants only the user's selection", async () => {
     const f = await fixture();
-    const allScopes = ["data:read", "data:refresh", "charts:preview", "datasets:write"];
+    const allScopes = ["data:read", "data:refresh", "charts:preview", "datasets:write", "dashboard-filters:write"];
     const denied = await request(f.app).post("/mcp").send({});
     expect(denied.headers["www-authenticate"]).toContain(`scope="${allScopes.join(" ")}"`);
     const metadata = await request(f.app).get("/.well-known/oauth-protected-resource/mcp");
@@ -277,6 +277,30 @@ describe("MCP OAuth", () => {
       .auth(f.session, { type: "bearer" })
       .send({ allow: true, teamId: f.team.id, scopes: allScopes });
     expect(expanded.status).toBe(403);
+  });
+
+  it("grants filter writes only after explicit consent and removes them when the role changes", async () => {
+    const f = await fixture();
+    const oldGrant = await f.approve();
+    const oldToken = (await f.exchange(oldGrant.code)).body.access_token;
+    const oldList = await f.rpc(oldToken, "tools/list", {});
+    expect(oldList.body.result.tools.map((tool) => tool.name)).not.toContain("set_dashboard_filter");
+
+    const scope = "data:read dashboard-filters:write";
+    const started = await f.begin({ scope });
+    const id = new URL(started.headers.location).searchParams.get("request");
+    await request(f.app).get(`/oauth/consent/${id}`).auth(f.session, { type: "bearer" });
+    const approved = await request(f.app).post(`/oauth/consent/${id}`)
+      .auth(f.session, { type: "bearer" })
+      .send({ allow: true, teamId: f.team.id, scopes: scope.split(" ") });
+    expect(approved.status).toBe(200);
+    const token = (await f.exchange(new URL(approved.body.redirect).searchParams.get("code"))).body.access_token;
+    const list = await f.rpc(token, "tools/list", {});
+    expect(list.body.result.tools.map((tool) => tool.name)).toContain("set_dashboard_filter");
+    await f.role.update({ role: "teamViewer" });
+    const reduced = await f.rpc(token, "tools/list", {});
+    expect(reduced.body.result.tools.map((tool) => tool.name)).not.toContain("set_dashboard_filter");
+    expect(reduced.body.result.tools.map((tool) => tool.name)).toContain("read_chart_results");
   });
 
   it("accepts repeated identical resources for authorization, exchange, and refresh only", async () => {

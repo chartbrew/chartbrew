@@ -35,6 +35,7 @@ function ApiKeys() {
   const [allowRefresh, setAllowRefresh] = useState(false);
   const [allowPreviews, setAllowPreviews] = useState(false);
   const [allowDatasets, setAllowDatasets] = useState(false);
+  const [allowDashboardFilters, setAllowDashboardFilters] = useState(false);
   const [createError, setCreateError] = useState("");
 
   const dispatch = useDispatch();
@@ -76,6 +77,7 @@ function ApiKeys() {
     setAllowRefresh(false);
     setAllowPreviews(false);
     setAllowDatasets(false);
+    setAllowDashboardFilters(false);
     setCreateError("");
     setCreateMode(true);
   };
@@ -102,7 +104,8 @@ function ApiKeys() {
       key: {
         name: newKey,
         scopes: ["data:read", ...(allowRefresh ? ["data:refresh"] : []),
-          ...(allowPreviews && allProjects ? ["charts:preview"] : []), ...(allowDatasets && allProjects ? ["datasets:write"] : [])],
+          ...(allowPreviews && allProjects ? ["charts:preview"] : []), ...(allowDatasets && allProjects ? ["datasets:write"] : []),
+          ...(allowDashboardFilters ? ["dashboard-filters:write"] : [])],
         allProjects,
         projectIds: allProjects ? [] : selectedProjects,
       },
@@ -495,6 +498,14 @@ function ApiKeys() {
                     </Checkbox.Content>
                   </Checkbox>
                   {!allProjects && <p className="text-sm text-muted">Chart previews and dataset creation require access to all projects.</p>}
+                  <Checkbox isSelected={allowDashboardFilters} onChange={setAllowDashboardFilters} variant="secondary">
+                    <Checkbox.Content>
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      Manage dashboard filters
+                    </Checkbox.Content>
+                  </Checkbox>
                 </div>
               </Modal.Body>
               <Modal.Footer>

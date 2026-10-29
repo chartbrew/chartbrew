@@ -32,7 +32,20 @@ const MAP_CHART_RULES = `**Maps:**
 - Region map colors use layer.style.fillColor for low values and layer.style.color for high values. Point maps use layer.style.color for every point and size for magnitude. Show or hide the color legend with visualization.settings.legend.visible.
 - Unmatched region names and invalid coordinates are excluded with warnings. Prefer full region codes when names are ambiguous. Do not claim all locations were matched without checking the result.`;
 
+const VALUE_FORMULA_SCHEMA = {
+  type: "string",
+  description: "Chartbrew value formula: put the calculation inside one pair of braces and use lowercase val for the final aggregated value, never value. Divide by 100 with {val / 100}, not value / 100. Use spreadsheet functions such as {ROUND(val / 100, 0)}, not JavaScript or SQL. Text outside braces is a literal prefix or suffix: $ {val / 100} or {val / 100} USD. Preserve existing units unless asked to change them. Use an empty string to remove a formula.",
+};
+
+const FORMULA_RULES = `**Value formulas:**
+- ${VALUE_FORMULA_SCHEMA.description}
+- Formulas transform the final chart values after aggregation; they do not change source rows or dataset queries. Apply a requested division once, not in both the query and the formula.
+- In canonical visualization specifications, put the formula on the intended layer's encoding.value.formula. For compatibility updates, use the tool's formula field. Preserve other layers, field bindings, and aggregation settings.
+- For val=12345, {val / 100} gives 123.45 and {ROUND(val / 100, 0)} gives 123. Verify the saved formula before reporting completion.`;
+
 const ENTITY_CREATION_RULES = `## Entity Creation Rules
+
+${FORMULA_RULES}
 
 **Dataset:**
 - Required: team_id, connection_id, name
@@ -314,6 +327,8 @@ function validateEntityPayload(entityType, payload) {
 }
 
 module.exports = {
+  VALUE_FORMULA_SCHEMA,
+  FORMULA_RULES,
   ENTITY_CREATION_RULES,
   MAP_CHART_RULES,
   FIELD_SPECS,

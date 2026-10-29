@@ -53,7 +53,7 @@ test("states that an all-project key is limited to its team", () => {
   }), "All projects in this team");
 });
 
-test("shows the two explicit MCP write permissions", () => {
-  assert.deepEqual(getPermissionLabels({ dataApiAccess: "ready", permissions: ["charts:preview", "datasets:write"] }),
-    ["Read data", "Create chart previews", "Create datasets"]);
+test("shows the explicit MCP write permissions", () => {
+  assert.deepEqual(getPermissionLabels({ dataApiAccess: "ready", permissions: ["charts:preview", "datasets:write", "dashboard-filters:write"] }),
+    ["Read data", "Create chart previews", "Create datasets", "Manage dashboard filters"]);
 });

@@ -21,4 +21,5 @@ export const MCP_PERMISSIONS = {
   "data:refresh": "Refresh data",
   "charts:preview": "Create chart previews",
   "datasets:write": "Create datasets",
+  "dashboard-filters:write": "Manage dashboard filters",
 };

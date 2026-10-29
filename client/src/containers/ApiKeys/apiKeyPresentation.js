@@ -13,6 +13,7 @@ export function getPermissionLabels(apiKey) {
   if (apiKey.permissions?.includes("data:refresh")) permissions.push("Refresh data");
   if (apiKey.permissions?.includes("charts:preview")) permissions.push("Create chart previews");
   if (apiKey.permissions?.includes("datasets:write")) permissions.push("Create datasets");
+  if (apiKey.permissions?.includes("dashboard-filters:write")) permissions.push("Manage dashboard filters");
   return permissions;
 }
 

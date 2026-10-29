@@ -1,5 +1,5 @@
 const { callAiProvider } = require("../../usage");
-const { MAP_CHART_RULES } = require("../entityCreationRules");
+const { MAP_CHART_RULES, FORMULA_RULES } = require("../entityCreationRules");
 
 async function suggestChart(payload) {
   const {
@@ -22,6 +22,7 @@ async function suggestChart(payload) {
 Available chart types: line, bar, horizontalBar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, map.
 
 ${MAP_CHART_RULES}
+${FORMULA_RULES}
 For map suggestions, return the geographic roles in encodings and map settings in options.map. Suggest maps only when the result fields contain geographic data.
 
 Respond with JSON only: { "type": "...", "title": "...", "encodings": {}, "options": {} }`;

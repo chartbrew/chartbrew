@@ -34,7 +34,7 @@ const {
   getWorkspaceOrchestratorPolicy,
 } = require("../../workspaceContext/policy");
 const { emitProgressEvent, parseProgressEvents } = require("./responseParser");
-const { ENTITY_CREATION_RULES } = require("./entityCreationRules");
+const { ENTITY_CREATION_RULES, VALUE_FORMULA_SCHEMA } = require("./entityCreationRules");
 const { isCapabilityQuestion, generateCapabilityResponse } = require("./capabilityHandler");
 const {
   AI_ACCESS_MODES,
@@ -131,7 +131,7 @@ const AI_FIELD_ENCODING_SCHEMA = {
     title: { type: "string" },
     nullPolicy: { type: "string", enum: ["exclude", "preserve", "label"] },
     nullLabel: { type: "string" },
-    formula: { type: "string" },
+    formula: VALUE_FORMULA_SCHEMA,
   },
   required: ["field"],
   additionalProperties: false,
@@ -1013,7 +1013,7 @@ async function availableTools({ activeChartId } = {}) {
           dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
           dateFormat: { type: "string", description: "ChartDatasetConfig date format (e.g. YYYY-MM-DD)" },
           conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
-          formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
+          formula: VALUE_FORMULA_SCHEMA,
           seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
           encoding: AI_ENCODING_SCHEMA,
           visualization: AI_VISUALIZATION_SCHEMA,
@@ -1091,7 +1091,7 @@ async function availableTools({ activeChartId } = {}) {
           dateField: { type: "string", description: "ChartDatasetConfig date field for filtering" },
           dateFormat: { type: "string", description: "ChartDatasetConfig date format (e.g. YYYY-MM-DD)" },
           conditions: { type: "array", items: { type: "object" }, description: "ChartDatasetConfig chart-specific filtering conditions" },
-          formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
+          formula: VALUE_FORMULA_SCHEMA,
           seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
           encoding: AI_ENCODING_SCHEMA,
           visualization: AI_VISUALIZATION_SCHEMA,
@@ -1174,7 +1174,7 @@ async function availableTools({ activeChartId } = {}) {
             description: "Query variables/parameters"
           },
           transform: { type: "object", description: "Data transformation rules" },
-          formula: { type: "string", description: "ChartDatasetConfig formula for transforming displayed values" },
+          formula: VALUE_FORMULA_SCHEMA,
           seriesConfiguration: { type: "object", description: "ChartDatasetConfig.configuration for series-specific settings such as variable overrides" },
           encoding: AI_ENCODING_SCHEMA,
           visualization: AI_VISUALIZATION_SCHEMA,
@@ -1246,7 +1246,7 @@ async function availableTools({ activeChartId } = {}) {
           variables: { type: "array", items: { type: "string" }, default: [] },
           variableBindings: { type: "array", items: { type: "object" } },
           transform: { type: "object" },
-          formula: { type: "string" },
+          formula: VALUE_FORMULA_SCHEMA,
           seriesConfiguration: { type: "object" },
           encoding: AI_ENCODING_SCHEMA,
           visualization: AI_VISUALIZATION_SCHEMA,
