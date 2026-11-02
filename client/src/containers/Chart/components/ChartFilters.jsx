@@ -11,6 +11,7 @@ import {
   Label,
   ListBox,
   SearchField,
+  TextField,
   useFilter,
 } from "@heroui/react";
 import { I18nProvider } from "react-aria";
@@ -172,24 +173,28 @@ function ChartFilters(props) {
               )}
               {condition.type !== "date" && condition.hideValues && (
                 <>
-                  <Input
-                    type="text"
-                    value={optionFilter[condition.id]}
-                    label={!inline ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}` : null}
-                    placeholder={inline
-                      ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`
-                      : "Enter a value here"
-                    }
-                    onChange={(e) => {
-                      setOptionFilter({
-                        ...optionFilter, [condition.id]: e.target.value
-                      });
-                    }}
-                    variant="secondary"
-                    onKeyDown={(e) => _onKeyDown(e, condition)}
-                    size={size}
-                    className="placeholder:text-xs py-1"
-                  />
+                  <TextField>
+                    <Label className={inline ? "sr-only" : ""}>
+                      {`${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`}
+                    </Label>
+                    <Input
+                      type="text"
+                      value={optionFilter[condition.id]}
+                      placeholder={inline
+                        ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`
+                        : "Enter a value here"
+                      }
+                      onChange={(e) => {
+                        setOptionFilter({
+                          ...optionFilter, [condition.id]: e.target.value
+                        });
+                      }}
+                      variant="secondary"
+                      onKeyDown={(e) => _onKeyDown(e, condition)}
+                      size={size}
+                      className="placeholder:text-xs py-1"
+                    />
+                  </TextField>
                   <div className="h-2" />
                 </>
               )}
