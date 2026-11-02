@@ -8,7 +8,8 @@
     "dev": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && vite",
     "build": "npm run prepareSettings && vite build",
     "lint": "oxlint",
-    "test": "npm run test:visualization && npm run test:dataset && npm run test:loading && npm run test:welcome",
+    "test": "npm run test:settings && npm run test:visualization && npm run test:dataset && npm run test:loading && npm run test:welcome",
+    "test:settings": "node --test ../scripts/prepareClientSettings.test.js",
     "test:loading": "node --experimental-vm-modules --test src/containers/ProjectBoard/ProjectBoard.test.js",
     "test:dataset": "node --test src/containers/Dataset/querySuggestion.test.js",
     "test:ai": "node --experimental-vm-modules --test src/containers/Ai/AiComposer.test.js src/containers/Ai/activeConversation.test.js src/containers/Ai/aiAvailability.test.js src/containers/Ai/aiMessageUtils.test.js src/containers/Ai/chartPreviewState.test.js src/containers/Ai/chatScroll.test.js src/modules/workspaceAuditFormat.test.js",
@@ -18,7 +19,7 @@
     "test:data-api": "node --test src/containers/ApiKeys/apiKeyPresentation.test.js",
     "preview": "vite preview",
     "tailwind": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
-    "prepareSettings": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js | true"
+    "prepareSettings": "node ../scripts/prepareClientSettings.js"
   },
   "dependencies": {
     "@heroui/react": "^3.2.7",

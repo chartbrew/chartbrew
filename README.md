@@ -74,6 +74,12 @@ The `nvm` commands select the version in `.nvmrc`. If you do not use nvm, instal
 
 Complete the required environmental variables in `chartbrew/.env`. [Check out which need to be set here.](https://docs.chartbrew.com/quickstart#environmental-variables)
 
+`npm run prepareSettings` creates missing client settings and updates the standard v5 host definitions
+in existing `client/src/config/settings.js` files to use environment variables without the `_DEV` suffix.
+Client start and build commands also run this step. Other settings remain unchanged. Custom host
+definitions are preserved; if they still use `_DEV` variables, the command prints a warning to update
+them manually. Set `VITE_APP_API_HOST` and `VITE_APP_CLIENT_HOST` to the values for your installation.
+
 ### Run the project in Development
 
 Open two terminals, one for front-end and the other for back-end.
