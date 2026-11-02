@@ -4,10 +4,13 @@ const jwt = require("jsonwebtoken");
 const { nanoid } = require("nanoid");
 const fs = require("fs");
 const { resolveReportMode } = require("../../shared/reportAppearance.mjs");
+const { validate: isUuid } = require("uuid");
 
 const settings = require("../settings");
 
 module.exports.snapChart = async (shareString) => {
+  if (!isUuid(shareString)) return null;
+
   let browser = null;
   try {
     browser = await chromium.launch();

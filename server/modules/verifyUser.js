@@ -23,6 +23,9 @@ module.exports = async (req, res, next) => {
 
     return db.User.findByPk(decoded.id).then((user) => {
       if (!user) return res.status(400).send("Could not process your user information. Try again later.");
+      if (!verifySessionToken.isCurrentSession(decoded, user)) {
+        return res.status(401).send("Unauthorized access.");
+      }
       if (user.id === parseInt(requestedOwner, 10)) {
         req.decoded = decoded;
         req.token = token;

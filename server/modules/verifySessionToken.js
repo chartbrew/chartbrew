@@ -10,3 +10,7 @@ module.exports = (token) => {
 
   return decoded;
 };
+
+module.exports.isCurrentSession = (decoded, user) => {
+  return (decoded.sessionVersion ?? 0) === (user.sessionVersion ?? 0);
+};

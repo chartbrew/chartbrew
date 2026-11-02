@@ -62,6 +62,10 @@ async function verifyToken(req, res, next, failureHandler = null, options = {}) 
           );
         }
 
+        if (!verifySessionToken.isCurrentSession(decoded, user)) {
+          return res.status(401).send("Unauthorized access.");
+        }
+
         const userObj = userResponse(user);
         userObj.token = token;
         userObj.admin = user.admin;

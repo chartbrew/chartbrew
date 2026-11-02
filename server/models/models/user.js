@@ -59,6 +59,11 @@ module.exports = (sequelize, DataTypes) => {
     passwordResetToken: {
       type: DataTypes.STRING,
     },
+    sessionVersion: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     tutorials: {
       type: DataTypes.TEXT,
       allowNull: false,

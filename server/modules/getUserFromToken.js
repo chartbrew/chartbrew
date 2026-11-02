@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
 
   return db.User.findByPk(decoded.id)
     .then((user) => {
-      if (!user) return next();
+      if (!user || !verifySessionToken.isCurrentSession(decoded, user)) return next();
 
       const userObj = userResponse(user);
       userObj.token = token;
