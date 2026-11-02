@@ -92,6 +92,12 @@ const bannerData = {
     url: "https://chartbrew.com/blog/visualizing-clickhouse-data-with-chartbrew-a-step-by-step-guide/",
     info: "5 min read",
   },
+  mcp: {
+    title: "How to connect an MCP server to Chartbrew",
+    description: "Connect a remote MCP server, review its tools, and turn approved results into charts and dashboards.",
+    url: "https://chartbrew.com/blog/how-to-connect-an-mcp-server-to-chartbrew/",
+    info: "5 min read",
+  },
 }
 
 function HelpBanner(props) {
@@ -123,9 +129,10 @@ function HelpBanner(props) {
         <div className="mb-1">
           <img
             src={imageUrl}
+            alt=""
             width={60}
             height={60}
-            className="rounded-2xl border border-divider"
+            className="size-[60px] rounded-2xl border border-divider object-contain p-2"
           />
         </div>
         <Card.Title>

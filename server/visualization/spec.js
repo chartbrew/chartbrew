@@ -1,4 +1,5 @@
 const { getMarkDefinition } = require("./registry");
+const mapManifest = require("../../shared/geo/manifest.json");
 
 const VISUALIZATION_SPEC_VERSION = 2;
 const AGGREGATIONS = new Set([
@@ -58,6 +59,11 @@ function normalizeFieldEncoding(encoding = {}) {
   return normalized;
 }
 
+function normalizeMark(mark) {
+  const normalized = `${mark || "line"}`.toLowerCase();
+  return normalized === "horizontalbar" ? "horizontalBar" : normalized;
+}
+
 function normalizeVisualizationSpec(input = {}) {
   const source = input && typeof input === "object" ? input : {};
   const layers = Array.isArray(source.layers) ? source.layers : [];
@@ -69,7 +75,7 @@ function normalizeVisualizationSpec(input = {}) {
       ...layer,
       id: layer?.id ? `${layer.id}` : `layer-${index + 1}`,
       bindingId: layer?.bindingId ?? null,
-      mark: layer?.mark ? `${layer.mark}`.toLowerCase() : "line",
+      mark: normalizeMark(layer?.mark),
       encoding: normalizeEncoding(layer?.encoding),
       transforms: Array.isArray(layer?.transforms) ? layer.transforms.map((item) => ({ ...item })) : [],
       style: layer?.style && typeof layer.style === "object" ? { ...layer.style } : {},
@@ -109,6 +115,7 @@ function validateVisualizationSpec(input, options = {}) {
   const errors = [];
   const allowIncomplete = Boolean(options.allowIncomplete || spec.status !== "ready");
   const layerIds = new Set();
+  const scatterBindings = new Set();
 
   if (input?.version !== undefined && input.version !== VISUALIZATION_SPEC_VERSION) {
     errors.push(`version must be ${VISUALIZATION_SPEC_VERSION}`);
@@ -122,6 +129,10 @@ function validateVisualizationSpec(input, options = {}) {
     const layerPath = `layers[${layerIndex}]`;
     const markDefinition = getMarkDefinition(layer.mark);
 
+    if (!allowIncomplete && !input.layers[layerIndex]?.id) {
+      errors.push(`${layerPath}.id is required for a ready visualization`);
+    }
+
     if (layerIds.has(layer.id)) {
       errors.push(`${layerPath}.id must be unique`);
     }
@@ -130,6 +141,47 @@ function validateVisualizationSpec(input, options = {}) {
     if (!markDefinition) {
       errors.push(`${layerPath}.mark is not supported`);
       return;
+    }
+
+    if (layer.mark === "scatter") {
+      if (scatterBindings.has(`${layer.bindingId}`)) {
+        errors.push("Scatter charts need one series per dataset row. Remove extra values before switching to Scatter.");
+      }
+      scatterBindings.add(`${layer.bindingId}`);
+      Object.values(layer.encoding).forEach((encoding) => {
+        if (encoding.type && encoding.type !== "quantitative") {
+          errors.push("Select numeric X and Y fields for scatter charts.");
+        }
+        if (encoding.aggregate && encoding.aggregate !== "none") {
+          errors.push("Scatter charts use individual points without aggregation.");
+        }
+      });
+      if (layer.transforms.some((transform) => transform.type !== "filter")) {
+        errors.push("Scatter charts preserve all points. Use row filters to select points.");
+      }
+    }
+
+    if (layer.mark === "map") {
+      const map = layer.options?.map || {};
+      if (!mapManifest.maps.some((item) => item.id === (map.area || "world"))) {
+        errors.push("Select an available map area.");
+      }
+      if (map.mode && !["regions", "points"].includes(map.mode)) {
+        errors.push("Select filled regions or points.");
+      }
+      if (!allowIncomplete) {
+        if (spec.layers.length !== 1) errors.push("Map charts need one dataset and one value.");
+        if (map.mode === "points") {
+          if (!layer.encoding.point && !(layer.encoding.latitude && layer.encoding.longitude)) {
+            errors.push("Select both latitude and longitude, or a GeoJSON Point field.");
+          }
+          if (layer.encoding.point && (layer.encoding.latitude || layer.encoding.longitude)) {
+            errors.push("Select one coordinate format.");
+          }
+        } else if (!layer.encoding.location) {
+          errors.push("Select a location field.");
+        }
+      }
     }
 
     if (markDefinition.bindingRequired !== false

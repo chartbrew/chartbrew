@@ -1,4 +1,5 @@
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
@@ -107,6 +108,7 @@ delete require.cache[googleAnalyticsConnectionPath];
 const googleAnalyticsConnection = require(googleAnalyticsConnectionPath);
 
 describe("googleAnalytics.connection", () => {
+  afterEach(() => vi.restoreAllMocks());
   beforeEach(() => {
     vi.clearAllMocks();
     googleMocks.latestOAuthClient = null;
@@ -172,4 +174,52 @@ describe("googleAnalytics.connection", () => {
 
     expect(dataMocks.runReport).not.toHaveBeenCalled();
   });
+
+  it("records an empty report before formatting and keeps API failures uncounted", async () => {
+    const execution = require("../../modules/sourceExecution");
+    const run = execution.runSourceExecution;
+    let record;
+    const model = {
+      create: async (values) => { record = { ...values }; return record; },
+      update: async (values) => Object.assign(record, values),
+      findByPk: async () => record,
+    };
+    vi.spyOn(execution, "runSourceExecution").mockImplementation((options, operation) => run(options, operation, { model }));
+    const context = { connection: { id: 4, team_id: 7, type: "googleAnalytics" } };
+    const request = { configuration: { propertyId: "properties/1", metrics: "sessions" } };
+    const oauth = { id: 1, refreshToken: "example" };
+    dataMocks.runReport.mockResolvedValue([{}]);
+    expect(await googleAnalyticsConnection.getAnalytics(oauth, request, context)).toEqual([]);
+    expect(record).toMatchObject({ sourceId: "googleAnalytics", status: "success" });
+    dataMocks.runReport.mockRejectedValue(new Error("Report failed"));
+    await expect(googleAnalyticsConnection.getAnalytics(oauth, request, context)).rejects.toThrow("Report failed");
+    expect(record.status).toBe("failed");
+  });
+
+
+  it("builds a template without an unused report query", async () => {
+    const builderPath = require.resolve("../../templates/googleAnalytics/builder");
+    const templatePath = require.resolve("../../templates/googleAnalytics/model");
+    const previousBuilder = require.cache[builderPath];
+    const previousTemplate = require.cache[templatePath];
+    const builder = vi.fn().mockResolvedValue([]);
+    require.cache[builderPath] = { id: builderPath, filename: builderPath, loaded: true, exports: builder };
+    delete require.cache[templatePath];
+    const db = require("../../models/models");
+    vi.spyOn(db.Connection, "findOne").mockResolvedValue({ id: 4, OAuth: {} });
+    const report = vi.spyOn(googleAnalyticsConnection, "getAnalytics").mockResolvedValue([]);
+    try {
+      const template = require(templatePath);
+      await expect(template.build(7, 8, { configuration: {}, connection_id: 4 })).resolves.toEqual([]);
+      expect(builder).toHaveBeenCalledWith(7, 8, {}, template.template, undefined, 4);
+      expect(report).not.toHaveBeenCalled();
+      await expect(template.build(7, 8, {})).rejects.toBe("Missing required parameters");
+    } finally {
+      if (previousBuilder) require.cache[builderPath] = previousBuilder;
+      else delete require.cache[builderPath];
+      if (previousTemplate) require.cache[templatePath] = previousTemplate;
+      else delete require.cache[templatePath];
+    }
+  });
+
 });

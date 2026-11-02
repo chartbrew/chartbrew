@@ -1,11 +1,12 @@
-import realtimeDbLogo from "./assets/rd-light.webp";
-import realtimeDbDarkLogo from "./assets/rd-dark.webp";
+import realtimeDbLogo from "./assets/logo-light.svg";
+import realtimeDbDarkLogo from "./assets/logo-light.svg";
 
 const realtimeDbSource = {
   id: "realtimedb",
   type: "realtimedb",
   subType: "realtimedb",
   name: "Realtime DB",
+  description: "Build charts from your Firebase app data.",
   category: "database",
   capabilities: {
     ai: {

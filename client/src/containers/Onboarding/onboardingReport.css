@@ -1,0 +1,52 @@
+.onboarding-report {
+  position: absolute;
+  inset: 6rem 0 0;
+  overflow: hidden;
+}
+
+.onboarding-report-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: min(2400px, calc(100% - 5rem));
+  margin: 0 auto;
+  opacity: 0.20;
+}
+
+.onboarding-report-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 136px minmax(280px, 1fr) 268px repeat(2, minmax(280px, 1fr));
+  gap: 1.25rem;
+  height: max(1404px, calc(100svh - 16rem));
+}
+
+@media (max-width: 640px) {
+  .onboarding-report-content {
+    width: calc(100% - 2rem);
+  }
+
+  .onboarding-report-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, 136px) repeat(7, 280px);
+    height: auto;
+  }
+
+  .onboarding-report-grid > :nth-child(n + 5) {
+    grid-column: span 2;
+  }
+}
+
+.onboarding-loading-message {
+  display: inline-block;
+  animation: onboarding-message-in 400ms ease-out;
+}
+
+@keyframes onboarding-message-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-loading-message { animation: none; }
+}

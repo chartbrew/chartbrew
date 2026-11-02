@@ -2,7 +2,7 @@ import {
   afterEach, describe, expect, it, vi
 } from "vitest";
 
-process.env.CB_ENCRYPTION_KEY_DEV = "00".repeat(32);
+process.env.CB_ENCRYPTION_KEY = "00".repeat(32);
 
 const { DataTypes, Sequelize } = require("sequelize");
 const db = require("../../models/models");
@@ -42,6 +42,7 @@ const {
 } = require("../../modules/datasetIntelligence/profileSchema");
 const {
   scoreDataset,
+  searchDatasetProfiles,
 } = require("../../modules/datasetIntelligence/searchDatasetProfiles");
 const {
   getProfileResponse,
@@ -141,6 +142,24 @@ afterEach(() => {
   resetIntelligencePolicyProvider();
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
+});
+
+it("keeps source connection links when a saved aggregate lacks the requested fields", async () => {
+  const find = vi.spyOn(db.Dataset, "findAll").mockResolvedValue([{
+    id: 42, name: "Visits by country", project_ids: [3],
+    DataRequests: [{ Connection: { id: 8 } }, { Connection: { id: 8 } }, { Connection: null }],
+    DatasetIntelligence: { status: "ready", profile: { fields: { "root[].country": {}, "root[].visits": {} } } },
+  }, {
+    id: 43, name: "Private visits", project_ids: [4], DataRequests: [{ Connection: { id: 9 } }],
+  }]);
+  const result = await searchDatasetProfiles({ teamId: 7, query: "visits latitude longitude", allowedProjectIds: [3] });
+  expect(result.datasets).toEqual([expect.objectContaining({
+    dataset_id: 42, fields: ["root[].country", "root[].visits"], connection_ids: [8],
+  })]);
+  expect(find.mock.calls[0][0].include[1].include[0]).toMatchObject({
+    model: db.Connection, required: false, where: { team_id: 7 }, attributes: ["id"],
+  });
+  expect(result.nextAction).toContain("not the source schema");
 });
 
 describe("intelligence policy", () => {
@@ -572,6 +591,28 @@ describe("dataset intelligence search", () => {
     expect(result.score).toBeGreaterThan(0);
     expect(result.reasons).toContain("existing_chart");
     expect(result.reasons).toContain("field");
+  });
+
+  it("does not use a path-scoped dataset for a site-wide request", () => {
+    const dataset = { ...buildDataset(), name: "Top Countries Visiting /tools" };
+    const profile = buildDatasetProfile({
+      dataset,
+      sampleData: sampleRows,
+      policy,
+    }).profile;
+
+    expect(scoreDataset(dataset, profile, "top countries visiting my site"))
+      .toEqual({ score: 0, reasons: ["scope_mismatch"] });
+    const scopedResult = scoreDataset(dataset, profile, "top countries visiting /tools");
+    expect(scopedResult.score).toBeGreaterThan(0);
+  });
+
+  it("matches nested paths with hyphens and does not treat ratios as paths", () => {
+    expect(scoreDataset({ name: "Visitors to /tools/plan-builder" }, null,
+      "visitors to /tools/plan-builder").score).toBeGreaterThan(0);
+    expect(scoreDataset({ name: "Visitors to /tools/plan-builder" }, null,
+      "visitors to /tools").reasons).toContain("scope_mismatch");
+    expect(scoreDataset({ name: "Revenue/Cost" }, null, "revenue").score).toBeGreaterThan(0);
   });
 });
 

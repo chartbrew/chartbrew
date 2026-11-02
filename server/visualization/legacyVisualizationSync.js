@@ -19,6 +19,8 @@ const LEGACY_CHART_FIELDS = new Set([
   "timeInterval",
   "type",
   "xLabelTicks",
+  "ranges",
+  "dataLabelsFormat",
 ]);
 
 const LEGACY_CDC_FIELDS = new Set([

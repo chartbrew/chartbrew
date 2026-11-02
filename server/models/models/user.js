@@ -1,6 +1,6 @@
 const simplecrypt = require("simplecrypt");
 
-const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+const settings = require("../../settings");
 
 const sc = simplecrypt({
   password: settings.secret,
@@ -99,12 +99,8 @@ module.exports = (sequelize, DataTypes) => {
     models.User.hasMany(models.ChartCache, { foreignKey: "user_id" });
     models.User.hasMany(models.User2fa, { foreignKey: "user_id" });
     models.User.hasMany(models.PinnedDashboard, { foreignKey: "user_id" });
+    models.User.hasMany(models.Apikey, { foreignKey: "user_id", constraints: false });
   };
-
-  User.beforeValidate((user) => {
-    user.admin = false; // eslint-disable-line
-    return new Promise((resolve) => resolve(user));
-  });
 
   return User;
 };

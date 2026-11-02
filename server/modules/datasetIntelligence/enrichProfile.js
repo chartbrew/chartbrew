@@ -1,3 +1,4 @@
+const { callAiProvider } = require("../ai/usage");
 const { validateProfile } = require("./profileSchema");
 
 function buildEnrichmentEvidence(profile) {
@@ -22,22 +23,27 @@ function buildEnrichmentEvidence(profile) {
 async function enrichProfile(profile, client = global.openaiClient) {
   if (!client) return profile;
 
-  const response = await client.chat.completions.create({
-    model: global.openAiModel || "gpt-4o-mini",
-    messages: [{
-      role: "system",
-      content: [
-        "Return JSON only.",
-        "Describe the dataset purpose and grain using only the provided metadata.",
-        "Do not invent fields, calculations, or business meaning.",
-        "Shape: {\"summary\": string, \"grain\": string|null}.",
-      ].join(" "),
-    }, {
-      role: "user",
-      content: JSON.stringify(buildEnrichmentEvidence(profile)),
-    }],
-    response_format: { type: "json_object" },
-    max_tokens: 300,
+  const response = await callAiProvider({
+    client,
+    api: "chat",
+    purpose: "dataset_enrichment",
+    request: {
+      model: global.openAiModel || "gpt-4o-mini",
+      messages: [{
+        role: "system",
+        content: [
+          "Return JSON only.",
+          "Describe the dataset purpose and grain using only the provided metadata.",
+          "Do not invent fields, calculations, or business meaning.",
+          "Shape: {\"summary\": string, \"grain\": string|null}.",
+        ].join(" "),
+      }, {
+        role: "user",
+        content: JSON.stringify(buildEnrichmentEvidence(profile)),
+      }],
+      response_format: { type: "json_object" },
+      max_tokens: 300,
+    },
   });
 
   const parsed = JSON.parse(response.choices[0].message.content);

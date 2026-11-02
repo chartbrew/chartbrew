@@ -1,5 +1,5 @@
 import {
-  beforeAll, beforeEach, describe, expect, it, vi,
+  beforeAll, describe, expect, it, vi,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -19,10 +19,6 @@ describe("ChartController CDC bindings", () => {
 
     models = await getModels();
     ChartController = require("../../controllers/ChartController.js");
-  });
-
-  beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
   });
 
   it("merges CDC binding fields over legacy dataset fields and persists condition options to the CDC", async () => {
@@ -103,8 +99,9 @@ describe("ChartController CDC bindings", () => {
 
     runRequestSpy.mockRestore();
 
-    expect(updatedChart.chartData.data.datasets[0].data).toEqual([100]);
-    expect(updatedChart.chartData.data.datasets[0].label).toBe("Revenue");
+    expect(updatedChart.render.configuration.dataset.source).toEqual([["Jan", 100]]);
+    expect(updatedChart.render.metadata.series[0].label).toBe("Revenue");
+    expect(JSON.parse(JSON.stringify(updatedChart))).not.toHaveProperty("chartData");
 
     const refreshedCdc = await models.ChartDatasetConfig.findByPk(cdc.id);
     const refreshedDataset = await models.Dataset.findByPk(dataset.id);
@@ -200,9 +197,9 @@ describe("ChartController CDC bindings", () => {
       id: chart.id,
       project_id: project.id,
     });
-    expect(filteredChart.chartData.data.labels).toEqual(["Jan"]);
-    expect(filteredChart.chartData.data.datasets[0].data).toEqual([1]);
-    expect(new Date(filteredChart.chartDataUpdated).getTime()).toBeGreaterThan(
+    expect(filteredChart.render.configuration.dataset.source).toEqual([["Jan", 1]]);
+    expect(JSON.parse(JSON.stringify(filteredChart))).not.toHaveProperty("chartData");
+    expect(new Date(filteredChart.render.updatedAt).getTime()).toBeGreaterThan(
       new Date("2020-01-01T00:00:00.000Z").getTime()
     );
   });

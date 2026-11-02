@@ -2,7 +2,7 @@ const { legacyChartToVisualization } = require("./legacyChartToVisualization");
 const { getMarkDefinition } = require("./registry");
 const { assertVisualizationSpec, normalizeVisualizationSpec } = require("./spec");
 
-const CARTESIAN_MARKS = new Set(["bar", "line"]);
+const CARTESIAN_MARKS = new Set(["bar", "horizontalBar", "line"]);
 const CATEGORY_MARKS = new Set(["doughnut", "pie", "polar", "radar"]);
 const METRIC_MARKS = new Set(["avg", "gauge", "kpi"]);
 
@@ -12,6 +12,11 @@ function clone(value) {
 
 function isTemporalEncoding(encoding = {}) {
   return encoding.type === "temporal";
+}
+
+function normalizeAiMark(mark) {
+  const normalized = `${mark || "line"}`.toLowerCase();
+  return normalized === "horizontalbar" ? "horizontalBar" : normalized;
 }
 
 function canonicalizeAiEncoding(encoding = {}, mark = "line") {
@@ -38,10 +43,14 @@ function canonicalizeAiEncoding(encoding = {}, mark = "line") {
 
 function finalizeAiVisualization(input = {}) {
   const source = clone(input);
-  source.layers = (source.layers || []).map((layer) => ({
-    ...layer,
-    encoding: canonicalizeAiEncoding(layer.encoding, `${layer.mark || "line"}`.toLowerCase()),
-  }));
+  source.layers = (source.layers || []).map((layer) => {
+    const mark = normalizeAiMark(layer.mark);
+    return {
+      ...layer,
+      encoding: canonicalizeAiEncoding(layer.encoding, mark),
+      mark,
+    };
+  });
 
   const normalized = normalizeVisualizationSpec(source);
   normalized.layers.forEach((layer) => {
@@ -66,10 +75,15 @@ function buildAiVisualization(options = {}) {
     encoding,
     goal,
     visualization,
+    timeInterval,
   } = options;
 
   if (visualization?.layers) {
     const next = clone(visualization);
+    next.settings = {
+      ...next.settings,
+      timeInterval: timeInterval ?? next.settings?.timeInterval ?? chart.timeInterval,
+    };
     next.metadata = { ...(next.metadata || {}), createdBy: "ai" };
     delete next.metadata.migratedFrom;
     next.layers = next.layers.map((layer) => ({
@@ -90,7 +104,7 @@ function buildAiVisualization(options = {}) {
         id: "ai-value-1",
         mark: chart.type || "line",
         name: cdc.legend || chart.name || "Value",
-        orientation: chart.horizontal ? "horizontal" : "vertical",
+        orientation: chart.type === "horizontalBar" ? "horizontal" : "vertical",
         stack: chart.stacked ? "normal" : "none",
         style: {
           color: cdc.datasetColor,
@@ -105,13 +119,14 @@ function buildAiVisualization(options = {}) {
       settings: {
         includeZeros: chart.includeZeros,
         legend: { visible: chart.displayLegend !== false },
-        timeInterval: chart.timeInterval,
+        timeInterval: timeInterval ?? chart.timeInterval,
       },
     });
   }
 
   const legacy = legacyChartToVisualization({
     ...chart,
+    timeInterval: timeInterval ?? chart.timeInterval,
     ChartDatasetConfigs: [{ ...cdc, id: bindingId }],
   }).visualization;
   return finalizeAiVisualization({

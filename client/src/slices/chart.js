@@ -1,3 +1,4 @@
+import { saveChartChange } from "../api/chartHistory";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getAuthToken } from "../modules/auth";
 import { API_HOST } from "../config/settings";
@@ -82,52 +83,16 @@ export const createChart = createAsyncThunk(
 
 export const updateChart = createAsyncThunk(
   "chart/updateChart",
-  async ({ project_id, chart_id, data, justUpdates }) => {
-    const token = getAuthToken();
-    let url = `${API_HOST}/project/${project_id}/chart/${chart_id}`;
-    const method = "PUT";
-    const body = JSON.stringify(data);
-    const headers = new Headers({
-      "Accept": "application/json",
-      "Content-Type": "application/json",
-      "authorization": `Bearer ${token}`,
-    });
-
-    if (justUpdates) url += "?justUpdates=true";
-
-    const response = await fetch(url, { method, body, headers });
-    const responseJson = await response.json();
-
-    if (response.status >= 400) {
-      throw new Error(responseJson.message);
-    }
-
-    return responseJson;
-  }
+  async ({ project_id, chart_id, data, justUpdates }, thunkApi) => saveChartChange(
+    { project_id, chart_id }, thunkApi, justUpdates ? "?justUpdates=true" : "", "PUT", data
+  )
 );
 
 export const repairChartVisualization = createAsyncThunk(
   "chart/repairChartVisualization",
-  async ({ project_id, chart_id, binding_id }) => {
-    const token = getAuthToken();
-    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/visualization/repair`;
-    const method = "POST";
-    const body = JSON.stringify({ bindingId: binding_id });
-    const headers = new Headers({
-      "Accept": "application/json",
-      "Content-Type": "application/json",
-      "authorization": `Bearer ${token}`,
-    });
-
-    const response = await fetch(url, { method, body, headers });
-    const responseJson = await response.json();
-
-    if (response.status >= 400) {
-      throw new Error(responseJson.message);
-    }
-
-    return responseJson;
-  }
+  async ({ project_id, chart_id, binding_id }, thunkApi) => saveChartChange(
+    { project_id, chart_id }, thunkApi, "/visualization/repair", "POST", { bindingId: binding_id }
+  )
 );
 
 export const changeOrder = createAsyncThunk(
@@ -180,7 +145,7 @@ export const removeChart = createAsyncThunk(
 
 export const runQuery = createAsyncThunk(
   "chart/runQuery",
-  async ({ project_id, chart_id, noSource, skipParsing, getCache, filters, variables }) => {
+  async ({ project_id, chart_id, noSource, skipParsing, getCache, filters, variables }, { rejectWithValue }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/project/${project_id}/chart/${chart_id}/query?no_source=${noSource || false}&skip_parsing=${skipParsing || false}`;
     const method = "POST";
@@ -202,7 +167,7 @@ export const runQuery = createAsyncThunk(
     const responseJson = await response.json();
 
     if (response.status >= 400) {
-      throw new Error(responseJson.message);
+      return rejectWithValue({ message: responseJson.message || "The chart could not be updated. Try again.", recovery: responseJson.recovery });
     }
 
     return responseJson;
@@ -510,26 +475,9 @@ export const createShareString = createAsyncThunk(
 
 export const createCdc = createAsyncThunk(
   "chart/createCdc",
-  async ({ project_id, chart_id, data }) => {
-    const token = getAuthToken();
-    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/chart-dataset-config`;
-    const method = "POST";
-    const body = JSON.stringify(data);
-    const headers = new Headers({
-      "Accept": "application/json",
-      "Content-Type": "application/json",
-      "authorization": `Bearer ${token}`,
-    });
-
-    const response = await fetch(url, { method, headers, body });
-    const responseJson = await response.json();
-
-    if (response.status >= 400) {
-      throw new Error(responseJson.message);
-    }
-
-    return responseJson;
-  }
+  async ({ project_id, chart_id, data }, thunkApi) => saveChartChange(
+    { project_id, chart_id }, thunkApi, "/chart-dataset-config", "POST", data
+  )
 );
 
 export const createSharePolicy = createAsyncThunk(
@@ -616,48 +564,16 @@ export const deleteSharePolicy = createAsyncThunk(
 
 export const updateCdc = createAsyncThunk(
   "chart/updateCdc",
-  async ({ project_id, chart_id, cdc_id, data }) => {
-    const token = getAuthToken();
-    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/chart-dataset-config/${cdc_id}`;
-    const method = "PUT";
-    const body = JSON.stringify(data);
-    const headers = new Headers({
-      "Accept": "application/json",
-      "Content-Type": "application/json",
-      "authorization": `Bearer ${token}`,
-    });
-
-    const response = await fetch(url, { method, headers, body });
-    const responseJson = await response.json();
-
-    if (response.status >= 400) {
-      throw new Error(responseJson.message);
-    }
-
-    return responseJson;
-  }
+  async ({ project_id, chart_id, cdc_id, data }, thunkApi) => saveChartChange(
+    { project_id, chart_id }, thunkApi, `/chart-dataset-config/${cdc_id}`, "PUT", data
+  )
 );
 
 export const removeCdc = createAsyncThunk(
   "chart/removeCdc",
-  async ({ project_id, chart_id, cdc_id }) => {
-    const token = getAuthToken();
-    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/chart-dataset-config/${cdc_id}`;
-    const method = "DELETE";
-    const headers = new Headers({
-      "Accept": "application/json",
-      "authorization": `Bearer ${token}`,
-    });
-
-    const response = await fetch(url, { method, headers });
-    const responseJson = await response.json();
-
-    if (response.status >= 400) {
-      throw new Error(responseJson.message);
-    }
-
-    return responseJson;
-  }
+  async ({ project_id, chart_id, cdc_id }, thunkApi) => saveChartChange(
+    { project_id, chart_id }, thunkApi, `/chart-dataset-config/${cdc_id}`, "DELETE", {}
+  )
 );
 
 export const generateShareToken = createAsyncThunk(
@@ -759,6 +675,7 @@ export const chartSlice = createSlice({
         state.loading = false;
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
+            if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
             return {
               ...chart,
               ...action.payload,
@@ -816,6 +733,7 @@ export const chartSlice = createSlice({
         state.loading = false;
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
+            if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
             return {
               ...chart,
               ...action.payload,
@@ -837,6 +755,7 @@ export const chartSlice = createSlice({
         state.loading = false;
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
+            if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
             return {
               ...chart,
               ...action.payload,
@@ -895,9 +814,11 @@ export const chartSlice = createSlice({
         if (!action.meta.arg.skipStateUpdate) {
           state.data = state.data.map((chart) => {
             if (chart.id === action.payload.id) {
+              if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
               return {
                 ...chart,
                 ...action.payload,
+                refreshError: null,
                 loading: false,
               };
             }
@@ -912,6 +833,7 @@ export const chartSlice = createSlice({
           if (chart.id === action.meta.arg.chart_id) {
             return {
               ...chart,
+              refreshError: action.payload?.recovery || { message: action.payload?.message || "The chart could not be updated. Try again." },
               loading: false,
             };
           }
@@ -939,6 +861,7 @@ export const chartSlice = createSlice({
         
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
+            if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
             if (action.payload.cacheMiss) {
               return {
                 ...chart,
@@ -992,6 +915,7 @@ export const chartSlice = createSlice({
         state.loading = false;
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
+            if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
             return {
               ...chart,
               ...action.payload,
@@ -1032,6 +956,7 @@ export const chartSlice = createSlice({
         state.loading = false;
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
+            if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
             return {
               ...chart,
               ...action.payload,

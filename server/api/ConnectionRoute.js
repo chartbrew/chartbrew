@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const multer = require("multer");
 const fs = require("fs");
 
@@ -24,6 +25,7 @@ const {
   isSourceDisabledError,
   serializeSourceDisabledError,
 } = require("../sources/sourceAvailability");
+const settings = require("../settings");
 
 const upload = multer({
   dest: ".connectionFiles/",
@@ -50,13 +52,23 @@ module.exports = (app) => {
     return res.status(400).send(serializeOutboundPolicyError(error));
   };
 
+  const sendMcpError = (res, error) => {
+    if (!String(error?.code || "").startsWith("MCP_")) return false;
+    const payload = {
+      code: error.code,
+      error: error.message || "The MCP request failed.",
+    };
+    if (error.details) payload.details = String(error.details);
+    return res.status(error.statusCode || 400).send(payload);
+  };
+
   const sendSourceDisabledError = (res, error) => {
     if (!isSourceDisabledError(error)) return false;
     return res.status(error.statusCode || 400).send(serializeSourceDisabledError(error));
   };
 
   const redactConnectionSecrets = (connection) => {
-    const redactedConnection = connection?.toJSON ? connection.toJSON() : { ...connection };
+    let redactedConnection = connection?.toJSON ? connection.toJSON() : { ...connection };
 
     redactedConnection.hasSshPassword = Boolean(redactedConnection.sshPassword);
     redactedConnection.hasSshPrivateKey = Boolean(redactedConnection.sshPrivateKey);
@@ -64,6 +76,11 @@ module.exports = (app) => {
     delete redactedConnection.sshPassword;
     delete redactedConnection.sshPrivateKey;
     delete redactedConnection.sshPassphrase;
+
+    const source = findSourceForConnection(redactedConnection);
+    if (source?.backend?.redactConnection) {
+      redactedConnection = source.backend.redactConnection({ connection: redactedConnection });
+    }
 
     return redactedConnection;
   };
@@ -112,6 +129,13 @@ module.exports = (app) => {
       // Handle permissions for teamOwner and teamAdmin
       if (["teamOwner", "teamAdmin"].includes(role)) {
         req.user.isEditor = true;
+        return next();
+      }
+
+      if (role === "teamEditor") {
+        const teamProjects = await db.Project.findAll({ attributes: ["id"], where: { team_id, ghost: false } });
+        req.user.projects = teamProjects.map((project) => project.id);
+        req.user.permittedFields = permission.attributes;
         return next();
       }
 
@@ -226,8 +250,20 @@ module.exports = (app) => {
         assertSourceServerEnabled(source);
       }
 
+      if (source?.backend?.authorizeConnectionWrite) {
+        await source.backend.authorizeConnectionWrite({
+          connection: requestData,
+          existingConnection: null,
+          user: req.user,
+        });
+      }
+
       const connectionData = source?.backend?.prepareConnectionData
-        ? await source.backend.prepareConnectionData({ connection: requestData })
+        ? await source.backend.prepareConnectionData({
+          connection: requestData,
+          existingConnection: null,
+          user: req.user,
+        })
         : requestData;
       const connection = await connectionController.create({
         ...connectionData,
@@ -243,6 +279,10 @@ module.exports = (app) => {
       }
       const sourceDisabledResponse = sendSourceDisabledError(res, error);
       if (sourceDisabledResponse) return sourceDisabledResponse;
+      const policyResponse = sendPolicyError(res, error);
+      if (policyResponse) return policyResponse;
+      const mcpResponse = sendMcpError(res, error);
+      if (mcpResponse) return mcpResponse;
       return res.status(400).send(error);
     }
   });
@@ -303,10 +343,11 @@ module.exports = (app) => {
   app.get("/project/:project_id/connection", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("connection");
+        const permission = accessControl.can(teamRole.role)[teamRole.role === "teamEditor" ? "readOwn" : "readAny"]("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
+        if (!permission.attributes.includes("*")) req.user.permittedFields = permission.attributes;
         return connectionController.findByProject(req.params.project_id);
       })
       .then((connections) => {
@@ -337,19 +378,41 @@ module.exports = (app) => {
   /*
   ** Route to update a connection
   */
-  app.put("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("updateOwn"), ensureConnectionBelongsToTeam, (req, res) => {
-    req.body.team_id = req.params.team_id;
-
-    return connectionController.update(req.params.connection_id, req.body)
-      .then((connection) => {
-        return res.status(200).send(redactConnectionSecrets(connection));
-      })
-      .catch((error) => {
-        if (error.message === "401") {
-          return res.status(401).send({ error: "Not authorized" });
-        }
-        return res.status(400).send(error);
-      });
+  app.put("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("updateOwn"), ensureConnectionBelongsToTeam, async (req, res) => {
+    try {
+      const requestData = { ...req.body, team_id: req.params.team_id };
+      const source = findSourceForConnection(req.connection);
+      if (source?.backend?.prepareConnectionData || source?.backend?.authorizeConnectionWrite) {
+        assertSourceServerEnabled(source);
+      }
+      if (source?.backend?.authorizeConnectionWrite) {
+        await source.backend.authorizeConnectionWrite({
+          connection: requestData,
+          existingConnection: req.connection,
+          user: req.user,
+        });
+      }
+      const connectionData = source?.backend?.prepareConnectionData
+        ? await source.backend.prepareConnectionData({
+          connection: requestData,
+          existingConnection: req.connection,
+          user: req.user,
+        })
+        : requestData;
+      const connection = await connectionController.update(req.params.connection_id, connectionData);
+      return res.status(200).send(redactConnectionSecrets(connection));
+    } catch (error) {
+      if (error.message === "401") {
+        return res.status(401).send({ error: "Not authorized" });
+      }
+      const sourceDisabledResponse = sendSourceDisabledError(res, error);
+      if (sourceDisabledResponse) return sourceDisabledResponse;
+      const policyResponse = sendPolicyError(res, error);
+      if (policyResponse) return policyResponse;
+      const mcpResponse = sendMcpError(res, error);
+      if (mcpResponse) return mcpResponse;
+      return res.status(400).send(error);
+    }
   });
   // -------------------------------------------
 
@@ -480,6 +543,8 @@ module.exports = (app) => {
         if (sourceDisabledResponse) return sourceDisabledResponse;
         const policyResponse = sendPolicyError(res, error);
         if (policyResponse) return policyResponse;
+        const mcpResponse = sendMcpError(res, error);
+        if (mcpResponse) return mcpResponse;
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
@@ -491,7 +556,9 @@ module.exports = (app) => {
   /*
   ** Route to test a potential api request
   */
-  app.post("/team/:team_id/connections/:connection_id/apiTest", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/apiTest", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, _res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.connection.team_id }, next);
+  }, (req, res) => {
     const requestData = req.body;
     requestData.connection_id = req.params.connection_id;
     const source = findSourceForConnection(req.connection);
@@ -506,7 +573,7 @@ module.exports = (app) => {
     const testRequest = source?.backend?.previewDataRequest
       ? source.backend.previewDataRequest({
         connection: req.connection,
-        dataRequest: requestData.dataRequest,
+        dataRequest: { ...requestData.dataRequest, id: undefined, dataset_id: undefined },
         itemsLimit: requestData.itemsLimit,
         items: requestData.items,
         offset: requestData.offset,
@@ -570,6 +637,8 @@ module.exports = (app) => {
         if (sourceDisabledResponse) return sourceDisabledResponse;
         const policyResponse = sendPolicyError(res, err);
         if (policyResponse) return policyResponse;
+        const mcpResponse = sendMcpError(res, err);
+        if (mcpResponse) return mcpResponse;
         return res.status(400).send(err.message || err);
       });
   });
@@ -640,6 +709,8 @@ module.exports = (app) => {
         } catch (err) {
           // do nothing
         }
+        const mcpResponse = sendMcpError(res, err);
+        if (mcpResponse) return mcpResponse;
         return res.status(400).send(err.message || err);
       });
   });
@@ -648,7 +719,9 @@ module.exports = (app) => {
   /*
   ** Route to run plugin-owned actions for a source connection
   */
-  app.post("/team/:team_id/connections/:connection_id/source-action", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, async (req, res) => {
+  app.post("/team/:team_id/connections/:connection_id/source-action", verifyToken, checkPermissions("readOwn"), ensureConnectionBelongsToTeam, (req, res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.connection.team_id }, next);
+  }, async (req, res) => {
     try {
       const source = getSourceForConnection(req.connection);
       assertSourceServerEnabled(source);
@@ -670,7 +743,72 @@ module.exports = (app) => {
     } catch (err) {
       const sourceDisabledResponse = sendSourceDisabledError(res, err);
       if (sourceDisabledResponse) return sourceDisabledResponse;
+      const policyResponse = sendPolicyError(res, err);
+      if (policyResponse) return policyResponse;
+      const mcpResponse = sendMcpError(res, err);
+      if (mcpResponse) return mcpResponse;
       return res.status(400).send(err);
+    }
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Public metadata for OAuth servers that support URL-based client IDs
+  */
+  app.get("/mcp/oauth/client-metadata", (req, res) => {
+    const teamId = Number(req.query.team_id);
+    const connectionId = Number(req.query.connection_id);
+    if (!Number.isInteger(teamId) || teamId <= 0
+      || !Number.isInteger(connectionId) || connectionId <= 0) {
+      return res.status(400).send({ error: "A valid MCP connection is required." });
+    }
+    const source = getSourceForConnection({ type: "mcp", subType: "mcp" });
+    return res.status(200).send(source.backend.oauthClientMetadata({
+      connection: { id: connectionId, team_id: teamId },
+    }));
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to finish source-owned OAuth for a connection
+  */
+  app.get("/team/:team_id/connections/:connection_id/mcp/oauth/callback", async (req, res) => {
+    const redirectBase = String(settings.client || "").replace(/\/+$/, "");
+    let conversationId = null;
+    const redirectToConnection = (status) => {
+      if (!redirectBase) return null;
+      const query = new URLSearchParams({ mcpOAuth: status });
+      if (conversationId) {
+        query.set("aiConversationId", conversationId);
+        query.set("aiTeamId", req.params.team_id);
+      }
+      return `${redirectBase}/connections/${req.params.connection_id}?${query}`;
+    };
+
+    try {
+      const connection = await connectionController.findByIdAndTeam(
+        req.params.connection_id,
+        req.params.team_id
+      );
+      const source = getSourceForConnection(connection);
+      assertSourceServerEnabled(source);
+      conversationId = source.backend.oauthReturnConversation?.({ connection, state: req.query.state }) || null;
+      if (typeof source.backend?.completeOAuth !== "function") {
+        return res.status(400).send({ error: "This connection does not support OAuth." });
+      }
+      await source.backend.completeOAuth({
+        connection,
+        code: req.query.code,
+        state: req.query.state,
+        iss: req.query.iss,
+      });
+      const successUrl = redirectToConnection("success");
+      return successUrl ? res.redirect(successUrl) : res.status(200).send({ success: true });
+    } catch (error) {
+      const errorUrl = redirectToConnection("error");
+      return errorUrl
+        ? res.redirect(errorUrl)
+        : res.status(error.statusCode || 400).send({ error: error.message || error });
     }
   });
   // -------------------------------------------------

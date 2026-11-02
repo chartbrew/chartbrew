@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../../modules/sourceExecution");
 const { DateTime } = require("luxon");
 const { Op } = require("sequelize");
 
@@ -106,11 +107,13 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
   }, dashboardTraceContext);
 
   try {
-    const chartData = await chartController.updateChartData(chart.id, null, {
+    const updateResult = await chartController.updateChartData(chart.id, null, {
       traceContext: chartTraceContext,
       finalizeRun: false,
+      returnPreparedData: true,
     });
-    checkChartForAlerts(chartData);
+    const chartData = updateResult.chart;
+    await checkChartForAlerts(chartData, updateResult.preparedData);
 
     const variantsToPrewarm = await runtimeCache.getTopChartVariants(
       chart.id,
@@ -120,7 +123,9 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
     if (variantsToPrewarm.length > 0) {
       await runWithConcurrency(
         variantsToPrewarm,
-        (variant) => chartController.updateChartData(chart.id, null, {
+        (variant) => withSourceExecutionContext({
+          activity: "background", teamId: dashboard.team_id, projectId: dashboard.id, chartId: chart.id,
+        }, () => chartController.updateChartData(chart.id, null, {
           noSource: false,
           skipParsing: false,
           filters: variant?.payload?.filters || [],
@@ -130,7 +135,7 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
           runtimeOnly: true,
           traceContext: null,
           finalizeRun: false,
-        }).catch(() => null),
+        }), false).catch(() => null),
         1
       );
     }
@@ -140,7 +145,7 @@ async function updateChart(chart, dashboard, dashboardTraceContext) {
       summary: {
         chartId: chart.id,
         dashboardId: dashboard.id,
-        chartDataUpdatedAt: chartData?.chartDataUpdated || null,
+        preparedDataUpdatedAt: chartData?.preparedDataUpdatedAt || null,
         prewarmedVariants: variantsToPrewarm.length,
       },
     });

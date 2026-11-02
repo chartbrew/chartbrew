@@ -7,6 +7,8 @@ This document covers all authentication and user management flows in Chartbrew.
 - **Endpoint**: `POST /user` in [`server/api/UserRoute.js`](../api/UserRoute.js)
 - Uses `UserController.createUser()`
 - Returns a token created with `jwt.sign(..., app.settings.encryptionKey, ...)`
+- The first user becomes a platform admin only after Chartbrew creates a `teamOwner` role for that user.
+- The platform-settings migration applies the same check to an existing instance.
 
 ## Login Flow
 
@@ -22,6 +24,7 @@ This document covers all authentication and user management flows in Chartbrew.
 
 - **Module**: [`server/modules/verifyToken.js`](../modules/verifyToken.js)
 - Verifies HS256 session tokens only with `settings.encryptionKey`
+- Rejects tokens with a `newEmail` claim, including previously issued email-change tokens, for API and socket authentication. These tokens remain valid for email confirmation.
 - Loads the user from DB and places a sanitized user on `req.user`
 - Compares the session version in the token with the stored user version. Tokens without a version use version 0. Password resets increase the stored version and disconnect active user sockets.
 
@@ -57,7 +60,7 @@ This document covers all authentication and user management flows in Chartbrew.
     - Generates a JWT signed with `settings.encryptionKey` that includes:
       - `{ id, email, newEmail }`
     - Sends an email to the **new email address** with a URL like:
-      - `${settings.client}/user/profile?email=${token}`
+      - `${settings.client}/settings/profile?email=${token}`
 - **Apply email update**: `PUT /user/:id/email/update`
   - Protected by [`server/modules/verifyUser.js`](../modules/verifyUser.js)
   - Calls `UserController.updateEmail(id, token)`
@@ -71,10 +74,31 @@ This document covers all authentication and user management flows in Chartbrew.
   - Protected by [`server/modules/verifyUser.js`](../modules/verifyUser.js) (token user id must match `:id`)
 - **Update user**: `PUT /user/:id`
   - Protected by [`server/modules/verifyUser.js`](../modules/verifyUser.js)
-  - Only `name`, `icon`, and `tutorials` can be set through this API. Credential changes use separate routes.
-  - The model validation hook also forces `admin=false`, including static updates.
+  - Only `name`, `icon`, and `tutorials` are accepted from this route.
+  - `UserController.update()` also removes `admin` before all normal user updates.
 - **Delete user**: `DELETE /user/:id`
   - Protected by [`server/modules/verifyToken.js`](../modules/verifyToken.js) and additionally checks `req.user.id === :id`
 - **Admin listing**: `GET /user`
   - Protected by `verifyToken` and checks `req.user.admin`
-  - Note: admins are intended to be set **only in DB**, not via API
+  - No API route can grant the platform-admin role.
+
+## Platform Administration
+
+- `User.admin` is a global platform-admin flag. It is not a team role.
+- The authenticated user response includes this flag so the client can show the Platform tab.
+- Every platform-settings route reloads the user from the database and checks `req.user.admin === true`.
+- Hiding the Platform tab is not an authorization control.
+- See [`server/docs/agents/platform-settings.md`](./platform-settings.md) for the settings registry and API boundary.
+
+
+## Team-wide roles
+
+`shared/roles.json` defines team, admin, editor, and viewer role groups.
+
+- `teamEditor` has Client Editor permissions across all current and future team dashboards. It can also create dashboards. It cannot delete dashboards, manage members, change connection settings, or edit dataset queries.
+- `teamViewer` can read all current and future team dashboards. It cannot write through the UI, API, AI, or MCP.
+- All four team roles can export charts and data without a project selection or export flag.
+- Client roles keep their selected-dashboard scope. A change from a team role to a client role requires an explicit dashboard selection; exports default to disabled for that change.
+- Onboarding offers team roles only and defaults to `teamEditor`.
+
+Role values use the existing string column. No database migration or new configuration is needed. API key scopes are checked against the current role, so a role change also removes stale write access.

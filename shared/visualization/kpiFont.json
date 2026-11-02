@@ -1,0 +1,11 @@
+{
+  "family": "Geist Mono",
+  "stylesheet": "https://fonts.googleapis.com/css2?family=Geist+Mono:wght@600&display=swap",
+  "file": "@fontsource/geist-mono/files/geist-mono-latin-600-normal.woff2",
+  "legacyFamilies": [
+    "Titillium Web",
+    "Geist Mono",
+    "Roboto Mono",
+    "IBM Plex Mono"
+  ]
+}

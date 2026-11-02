@@ -58,11 +58,11 @@ function QueryResultsTable({ result }) {
   return (
     <div>
       <div className="w-full">
-        <Table className="sqlbuilder-result-tut border border-divider rounded-lg shadow-none">
+        <Table className="sqlbuilder-result-tut border border-divider shadow-none">
           <Table.ScrollContainer>
             <Table.Content
               aria-label="Results table"
-              className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+              className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
             >
               {getResultHeaderRows()?.length > 0 && (
                 <Table.Header>

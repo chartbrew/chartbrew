@@ -1,5 +1,5 @@
-import stripeLogo from "../stripe/assets/stripe-connection.webp";
-import stripeDarkLogo from "../stripe/assets/stripe-dark.png";
+import stripeLogo from "../stripe/assets/logo-light.svg";
+import stripeDarkLogo from "../stripe/assets/logo-light.svg";
 
 const DEFAULT_CONFIGURATION = {
   source: "stripeOfficial",
@@ -32,6 +32,7 @@ const stripeOfficialSource = {
   type: "stripeOfficial",
   subType: "stripeOfficial",
   name: "Stripe",
+  description: "Track payments, subscriptions, and revenue over time.",
   category: "payments",
   showNewBadge: true,
   capabilities: {

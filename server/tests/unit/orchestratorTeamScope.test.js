@@ -20,42 +20,46 @@ describe("AI orchestrator team scope", () => {
   });
 
   it("scopes list_connections to the calling team", async () => {
+    vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({ role: "teamOwner" });
     vi.spyOn(db.Connection, "findAll").mockResolvedValue([
       {
         id: 12,
+        active: true,
         type: "postgres",
         subType: null,
         name: "Primary DB",
       },
       {
         id: 13,
+        active: true,
         type: "clickhouse",
         subType: "clickhouse",
         name: "Events Warehouse",
       },
       {
         id: 14,
+        active: true,
         type: "api",
         subType: null,
         name: "Generic API",
       },
       {
         id: 15,
+        active: true,
         type: "api",
         subType: "stripe",
         name: "Legacy Stripe",
       },
     ]);
 
-    const result = await listConnections({ team_id: 7 });
+    const result = await listConnections({ team_id: 7, user_id: 3 });
 
     expect(db.Connection.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
+      where: {
         team_id: 7,
-        type: expect.any(Array),
-      }),
+      },
     }));
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       connections: [{
         id: 12,
         type: "postgres",
@@ -102,6 +106,26 @@ describe("AI orchestrator team scope", () => {
       connection_id: 44,
       team_id: 7,
     })).rejects.toThrow("Connection does not belong to the specified team");
+  });
+
+  it("routes MCP schema requests to approved source discovery without dumping cached tools", async () => {
+    const connection = {
+      id: 55, team_id: 7, active: true, type: "mcp", subType: "mcp",
+      schema: { mcp: { tools: [{ name: "private-unapproved-tool" }], allowedTools: {} } },
+    };
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+    vi.spyOn(db.Connection, "findAll").mockResolvedValue([connection]);
+    vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({ role: "teamOwner" });
+    const result = await getSchema({ connection_id: 55, team_id: 7 });
+    expect(result).toMatchObject({ status: "source_discovery_required", connection_id: 55 });
+    expect(result.nextAction).toContain("source_list_resources");
+    expect(JSON.stringify(result)).not.toContain("private-unapproved-tool");
+    const source = getSourceById("mcp");
+    vi.spyOn(source.backend.ai, "getCapabilities").mockReturnValue({ approvedToolCount: 1 });
+    const listed = await listConnections({ team_id: 7, user_id: 3 });
+    expect(listed.connections).toEqual([expect.objectContaining({
+      id: 55, discovery_tool: "source_get_capabilities", planning_tool: "source_plan_dataset",
+    })]);
   });
 
   it("rejects cross-team projects and datasets in shared team scope helpers", async () => {

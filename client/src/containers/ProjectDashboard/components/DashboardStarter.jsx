@@ -14,14 +14,12 @@ import {
 } from "@heroui/react";
 import {
   LuArrowRight,
-  LuBrainCircuit,
   LuChartColumn,
   LuDatabase,
   LuFileText,
   LuPlug,
   LuPlus,
   LuShare,
-  LuSparkles,
 } from "react-icons/lu";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
@@ -30,19 +28,17 @@ import {
   createCdc,
   createChart,
   runQuery,
-  selectCharts,
 } from "../../../slices/chart";
 import { selectConnections } from "../../../slices/connection";
 import { selectDatasetsNoDrafts } from "../../../slices/dataset";
 import { showAiModal } from "../../../slices/ui";
 import { chartColors } from "../../../config/colors";
-import { placeNewWidget } from "../../../modules/autoLayout";
 import getConnectionLogo from "../../../modules/getConnectionLogo";
 import getDefaultCdcBindings from "../../../modules/getDefaultCdcBindings";
 import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
-import { widthSize } from "../../../modules/layoutBreakpoints";
 import { getPaginationPageNumbers } from "../../../modules/getPaginationPageNumbers";
 import { useTheme } from "../../../modules/ThemeContext";
+import ChartbrewAiIcon from "../../../components/ChartbrewAiIcon";
 
 const DATASETS_PER_PAGE = 5;
 
@@ -67,7 +63,7 @@ const starterIconClasses = {
     icon: "text-warning",
   },
   default: {
-    wrapper: "bg-content3",
+    wrapper: "bg-surface-tertiary",
     icon: "text-foreground",
   },
 };
@@ -141,7 +137,7 @@ function AiRecommendation({
   return (
     <div className={`rounded-2xl border border-divider bg-surface p-5 ${disabled ? "border-dashed" : ""}`}>
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
-        <div className={`flex size-12 shrink-0 items-center justify-center rounded-2xl ${disabled ? "bg-content3 text-foreground-500" : "bg-accent/10 text-accent"}`}>
+        <div className={`flex size-12 shrink-0 items-center justify-center rounded-2xl ${disabled ? "bg-surface-tertiary text-foreground-500" : "bg-accent/10 text-accent"}`}>
           <Icon size={24} />
         </div>
         <div className="min-w-0 flex-1">
@@ -151,10 +147,11 @@ function AiRecommendation({
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Button
                 onPress={onPress}
-                variant={disabled ? "outline" : "primary"}
+                variant="outline"
+                className="chartbrew-ai-button"
                 isDisabled={disabled}
               >
-                <LuSparkles size={18} />
+                <ChartbrewAiIcon size={18} />
                 {actionLabel}
               </Button>
               {disabled && (
@@ -260,37 +257,9 @@ function DashboardStarter({
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const charts = useSelector(selectCharts);
   const connections = useSelector(selectConnections);
   const datasets = useSelector(selectDatasetsNoDrafts);
   const { isDark } = useTheme();
-
-  const getNewChartLayout = () => {
-    const computedLayout = {};
-    const dashboardChartsToPlace = charts.filter((chart) => `${chart.project_id}` === projectId);
-
-    Object.keys(widthSize).forEach((bp) => {
-      const bpLayout = dashboardChartsToPlace.reduce((items, chart) => {
-        if (!chart?.layout?.[bp]) return items;
-
-        items.push({
-          i: `${chart.id}`,
-          x: chart.layout[bp][0] || 0,
-          y: chart.layout[bp][1] || 0,
-          w: chart.layout[bp][2],
-          h: chart.layout[bp][3],
-        });
-
-        return items;
-      }, []);
-
-      const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
-      const pos = placeNewWidget(bpLayout, { w, h: 2 }, bp);
-      computedLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
-    });
-
-    return computedLayout;
-  };
 
   const createChartFromDataset = async (dataset) => {
     if (!dataset?.id) return;
@@ -308,7 +277,6 @@ function DashboardStarter({
           type: "line",
           subType: "lcTimeseries",
           name: datasetName,
-          layout: getNewChartLayout(),
         },
       })).unwrap();
 
@@ -432,7 +400,7 @@ function DashboardStarter({
               description="Connect a source first so Chartbrew can inspect your schema and suggest charts."
               actionLabel="Plan my dashboard"
               disabled
-              icon={LuBrainCircuit}
+              icon={ChartbrewAiIcon}
               onPress={showAi}
             />
           </section>
@@ -467,7 +435,7 @@ function DashboardStarter({
               title="Ask AI to suggest datasets"
               description="AI can help with setup based on your connected sources. Insights come once datasets exist."
               actionLabel="Ask AI to suggest datasets"
-              icon={LuBrainCircuit}
+              icon={ChartbrewAiIcon}
               onPress={showAi}
             />
           </section>
@@ -489,7 +457,7 @@ function DashboardStarter({
               title="Build with AI"
               actionLabel="Ask your data"
               description="Ask the assistant to build the dashboard for you."
-              icon={LuBrainCircuit}
+              icon={ChartbrewAiIcon}
               iconColor="success"
               onPress={showAi}
               actionVariant="outline"
@@ -587,9 +555,10 @@ function DashboardStarter({
                         <Table.Row key={dataset.id} id={String(dataset.id)}>
                           <Table.Cell>
                             <div className="flex min-w-[220px] items-center gap-3">
-                              <Avatar size="sm" className="shrink-0 bg-content3">
+                              <Avatar size="sm" className="shrink-0 bg-surface-tertiary">
                                 {primaryConnection ? (
                                   <Avatar.Image
+                                    className="object-contain p-[15%]"
                                     src={getConnectionLogo(primaryConnection, isDark)}
                                     alt={`${primaryConnection.subType || primaryConnection.type} logo`}
                                   />

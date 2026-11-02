@@ -90,7 +90,7 @@ server/
 - [x] **Matrix Testing**: Tests run against both MySQL and PostgreSQL
 - [x] **Coverage Reporting**: Integration with Codecov for coverage tracking
 - [x] **Security Checks**: npm audit and dependency checking
-- [x] **Multi-Node Testing**: Tests run on Node.js 18.x and 20.x
+- [x] **Node.js Version**: Current CI workflows use Node.js 22.23.4, matching `.nvmrc`.
 - [x] **Local Testing Script**: Script to run CI pipeline locally before pushing
 
 ### Basic Tests
@@ -248,7 +248,7 @@ npm run lint:fix
 
 ### 1. Basic Test Workflow (`test.yml`)
 - **Trigger**: Push/PR to main/develop branches
-- **Matrix**: Node 18.x/20.x × MySQL/PostgreSQL
+- **Node.js**: Current CI uses Node.js 22.23.4 with MySQL/PostgreSQL. The Node 18.x/20.x matrix is no longer used.
 - **Features**: ESLint, Tests, Coverage reporting
 - **Fallback**: SQLite testing when containers fail
 

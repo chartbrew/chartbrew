@@ -1,3 +1,4 @@
+const sourceExecution = require("../../../modules/sourceExecution");
 const mongoose = require("mongoose");
 const { Queue } = require("bullmq");
 
@@ -301,7 +302,14 @@ async function testUnsavedConnection({ connection }) {
   }
 }
 
-async function executeMongoQuery({ connection, query, connectTimeoutMS }) {
+async function executeMongoQuery({ connection, query, connectTimeoutMS, dataRequest, auditContext }) {
+  const savedConnection = await getSavedConnection(connection);
+  return sourceExecution.runSourceExecution({ connection: savedConnection, dataRequest, auditContext, cacheHit: false }, () => {
+    return fetchMongoQuery({ connection: savedConnection, query, connectTimeoutMS });
+  });
+}
+
+async function fetchMongoQuery({ connection, query, connectTimeoutMS }) {
   let mongoConnection;
   const formattedQuery = getQueryToExecute(query);
 
@@ -312,15 +320,8 @@ async function executeMongoQuery({ connection, query, connectTimeoutMS }) {
     });
     mongoConnection = result.mongoConnection;
 
-    let data;
-    try {
-      data = await Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}.toArray()`)()(mongoConnection, ObjectId); // eslint-disable-line
-    } catch {
-      data = await Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}`)()(mongoConnection, ObjectId); // eslint-disable-line
-    }
-
-    let finalData = data;
-    if (finalData && typeof finalData?.next === "function") {
+    let finalData = await Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}`)()(mongoConnection, ObjectId); // eslint-disable-line
+    if (finalData && typeof finalData.toArray === "function") {
       finalData = await finalData.toArray();
     }
     if (formattedQuery.indexOf("count(") > -1) {
@@ -336,6 +337,7 @@ async function executeMongoQuery({ connection, query, connectTimeoutMS }) {
 async function previewDataRequest({ connection, dataRequest }) {
   const finalData = await executeMongoQuery({
     connection,
+    dataRequest,
     query: dataRequest.query,
     connectTimeoutMS: DEFAULT_CONNECT_TIMEOUT_MS,
   });
@@ -417,6 +419,8 @@ async function runDataRequest({
   try {
     const finalData = await executeMongoQuery({
       connection,
+      dataRequest,
+      auditContext,
       query: processedQuery || dataRequest.query,
       connectTimeoutMS: 100000,
     });

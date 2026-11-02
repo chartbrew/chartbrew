@@ -1,11 +1,12 @@
-import stripeLogo from "./assets/stripe-connection.webp";
-import stripeDarkLogo from "./assets/stripe-dark.png";
+import stripeLogo from "./assets/logo-light.svg";
+import stripeDarkLogo from "./assets/logo-light.svg";
 
 const stripeSource = {
   id: "stripe",
   type: "api",
   subType: "stripe",
   name: "Stripe Legacy",
+  description: "Build datasets with custom Stripe API requests.",
   category: "payments",
   capabilities: {
     ai: {

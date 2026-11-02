@@ -1,9 +1,11 @@
+const sourceExecution = require("../../../modules/sourceExecution");
 const firebase = require("firebase-admin");
 
 const determineType = require("../../../modules/determineType");
 
 class RealtimeDatabase {
   constructor(connection, dataRequestId) {
+    this.connection = connection;
     const firebaseAppName = `${connection.name}_${connection.project_id}_${connection.id}_${dataRequestId}`;
     // first check if there is a firebase app already created for this dataset
     firebase.apps.forEach((firebaseApp) => {
@@ -40,6 +42,12 @@ class RealtimeDatabase {
   }
 
   getData(dataRequest) {
+    return sourceExecution.runSourceExecution({ connection: this.connection, dataRequest, cacheHit: false }, () => {
+      return this.fetchData(dataRequest);
+    });
+  }
+
+  fetchData(dataRequest) {
     const { configuration } = dataRequest;
 
     return new Promise((resolve, reject) => {
@@ -60,7 +68,7 @@ class RealtimeDatabase {
           ref = ref.limitToFirst(parseInt(configuration.limitToFirst, 10));
         }
 
-        ref.on("value", (snapshot) => {
+        ref.once("value", (snapshot) => {
           let firebaseData = [];
           snapshot.forEach((dataPoint) => {
             firebaseData.push({ _key: dataPoint.key, ...dataPoint.val() });
@@ -71,7 +79,7 @@ class RealtimeDatabase {
           }
 
           return resolve(firebaseData);
-        });
+        }, reject);
       } catch (e) {
         reject(e);
       }

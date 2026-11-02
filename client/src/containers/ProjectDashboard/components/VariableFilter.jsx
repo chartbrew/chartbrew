@@ -13,6 +13,7 @@ import {
 import { LuArrowRight, LuVariable } from "react-icons/lu";
 import { parseDate, today } from "@internationalized/date";
 import DashboardFilterLabel from "./DashboardFilterLabel";
+import { useTheme } from "../../../modules/ThemeContext";
 
 const normalizeDateValue = (value) => {
   if (!value) return "";
@@ -38,6 +39,7 @@ function VariableFilter({
     label, variable, value, dataType, allowValueChange,
   } = filter;
   const displayLabel = label?.trim() || formatVariableLabel(variable);
+  const { reportThemeProps } = useTheme();
 
   const [textValue, setTextValue] = useState(value);
   const [dateValue, setDateValue] = useState(value);
@@ -133,7 +135,7 @@ function VariableFilter({
                   </DatePicker.Trigger>
                 </DateField.Suffix>
               </DateField.Group>
-              <DatePicker.Popover>
+              <DatePicker.Popover {...reportThemeProps}>
                 <Calendar aria-label="Filter value">
                   <Calendar.Header>
                     <Calendar.YearPickerTrigger>
@@ -181,7 +183,7 @@ function VariableFilter({
               <Select.Value />
               <Select.Indicator />
             </Select.Trigger>
-            <Select.Popover>
+            <Select.Popover {...reportThemeProps}>
               <ListBox>
                 <ListBox.Item id="true" textValue="True">
                   True

@@ -1,4 +1,4 @@
-const request = require("request-promise");
+const request = require("../../modules/safeRequest");
 const moment = require("moment");
 
 const { chartColors } = require("../../charts/colors");

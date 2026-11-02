@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Card, ProgressCircle, Separator,
+  Button, Card, Separator,
 } from "@heroui/react";
 import moment from "moment";
 import { LuChartColumn } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
+import CupLoader from "../../../components/CupLoader";
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
 import CustomTemplateForm from "./CustomTemplateForm";
 import { deleteTemplate, selectTemplates } from "../../../slices/template";
@@ -44,9 +45,7 @@ function CustomTemplates(props) {
 
   if (loading) {
     return (
-      <ProgressCircle aria-label="Loading">
-        Loading templates...
-      </ProgressCircle>
+      <CupLoader label="Loading" />
     );
   }
 
@@ -109,7 +108,7 @@ function CustomTemplates(props) {
                 setSelectedTemplate(template);
               }
             }}
-            className="h-full w-full cursor-pointer border border-divider shadow-none transition-colors hover:bg-content2/40"
+            className="h-full w-full cursor-pointer border border-divider shadow-none transition-colors hover:bg-surface-secondary/40"
           >
             <Card.Header>
               <Card.Title>{template.name}</Card.Title>

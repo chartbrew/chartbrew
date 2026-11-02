@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const request = require("request");
+const request = require("../modules/safeRequest");
 const rateLimit = require("express-rate-limit");
 
 const UserController = require("../controllers/UserController");
@@ -140,7 +140,7 @@ module.exports = (app) => {
       active: true,
     };
 
-    return userController.createUser(userObj)
+    return userController.createUser(userObj, { createOwnedTeam: false })
       .then((newUser) => {
         return tokenizeUser(newUser, res);
       })
@@ -217,10 +217,11 @@ module.exports = (app) => {
   */
   app.put("/user/:id", verifyUser, (req, res) => {
     if (!req.body || !req.params.id) return res.status(400).send("Missing fields");
-    const updates = Object.fromEntries(
-      Object.entries(req.body).filter(([field]) => ["name", "icon", "tutorials"].includes(field))
-    );
-    return userController.update(req.params.id, updates)
+    const profileUpdate = {};
+    ["name", "icon", "tutorials"].forEach((field) => {
+      if (req.body[field] !== undefined) profileUpdate[field] = req.body[field];
+    });
+    return userController.update(req.params.id, profileUpdate)
       .then((user) => {
         return res.status(200).send(userResponse(user));
       })
@@ -279,10 +280,9 @@ module.exports = (app) => {
       }
     };
 
-    return request(options, (err) => {
-      if (err) return res.status(400).send(err);
-      return res.status(200).send({});
-    });
+    return request(options)
+      .then(() => res.status(200).send({}))
+      .catch(() => res.status(400).send({ error: "Feedback could not be sent. Try again." }));
   });
   // --------------------------------------
 

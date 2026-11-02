@@ -286,6 +286,7 @@ function DatarequestSettings(props) {
                       {(request.Connection?.type && (
                         <Avatar className="size-6 rounded-sm shrink-0">
                           <Avatar.Image
+                            className="object-contain p-[15%]"
                             src={getConnectionLogo(request.Connection, isDark)}
                             alt=""
                           />
@@ -335,6 +336,7 @@ function DatarequestSettings(props) {
                           >
                             <Avatar className="size-6 rounded-sm shrink-0">
                               <Avatar.Image
+                                className="object-contain p-[15%]"
                                 src={getConnectionLogo(request.Connection, isDark)}
                                 alt=""
                               />
@@ -378,6 +380,7 @@ function DatarequestSettings(props) {
                           >
                             <Avatar className="size-6 rounded-sm shrink-0">
                               <Avatar.Image
+                                className="object-contain p-[15%]"
                                 src={getConnectionLogo(request.Connection, isDark)}
                                 alt=""
                               />

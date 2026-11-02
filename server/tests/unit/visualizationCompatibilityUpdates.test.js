@@ -7,6 +7,7 @@ const {
   applyCdcCompatibilityUpdate,
   applyChartCompatibilityUpdate,
 } = require("../../visualization/compatibilityUpdates.js");
+const { validateVisualizationSpec } = require("../../visualization/spec.js");
 
 const nativeVisualization = {
   version: 2,
@@ -26,6 +27,20 @@ const nativeVisualization = {
 };
 
 describe("native visualization compatibility updates", () => {
+  it("preserves map locations and values when switching chart types", () => {
+    const map = { version: 2, layers: [{ id: "visits", bindingId: "visits", mark: "map",
+      encoding: { location: { field: "root[].country", type: "nominal" }, value: { field: "root[].visits", aggregate: "sum", type: "quantitative" } },
+      options: { map: { area: "world", mode: "regions" } } }] };
+    for (const type of ["bar", "horizontalBar", "line", "pie"]) {
+      const changed = applyChartCompatibilityUpdate(map, { type });
+      expect(changed.layers[0].encoding.category.field).toBe("root[].country");
+      expect(changed.layers[0].encoding.value).toEqual(map.layers[0].encoding.value);
+      const restored = applyChartCompatibilityUpdate(changed, { type: "map" });
+      expect(restored.layers[0].encoding).toEqual(map.layers[0].encoding);
+      expect(restored.layers[0].options.map).toEqual(map.layers[0].options.map);
+    }
+  });
+
   it("keeps breakdown fields while mirroring legacy display controls", () => {
     const next = applyCdcCompatibilityUpdate(nativeVisualization, "cdc-income", {
       datasetColor: "#123456",
@@ -39,6 +54,34 @@ describe("native visualization compatibility updates", () => {
     expect(next.layers[0].style.color).toBe("#123456");
     expect(next.layers[0].style.label).toBe("Income");
     expect(next.layers[0].name).toBe("Income");
+  });
+
+  it("normalizes text max-record values into a canonical limit", () => {
+    const next = applyCdcCompatibilityUpdate(nativeVisualization, "cdc-income", {
+      maxRecords: "3",
+    });
+
+    expect(next.layers[0].transforms).toContainEqual({
+      count: 3,
+      type: "limit",
+    });
+  });
+
+  it("clears the canonical limit when max records is cleared", () => {
+    const visualization = {
+      ...nativeVisualization,
+      layers: [{
+        ...nativeVisualization.layers[0],
+        transforms: [{ count: 3, type: "limit" }],
+      }],
+    };
+    const next = applyCdcCompatibilityUpdate(visualization, "cdc-income", {
+      maxRecords: null,
+    });
+
+    expect(next.layers[0].transforms).not.toContainEqual(expect.objectContaining({
+      type: "limit",
+    }));
   });
 
   it("does not overwrite additional value labels when the dataset label changes", () => {
@@ -198,6 +241,13 @@ describe("native visualization compatibility updates", () => {
     expect(roundTrip.layers[0].style.fill).toBe(false);
   });
 
+  it("adds default bar fill when a same-type compatibility update runs", () => {
+    const next = applyChartCompatibilityUpdate(nativeVisualization, { type: "bar" });
+
+    expect(next.layers[0].style.fill).toBe(true);
+    expect(next.layers[0].style.fillOpacity).toBe(0.65);
+  });
+
   it("initializes radar charts with an optional same-color fill", () => {
     const radar = applyChartCompatibilityUpdate({
       ...nativeVisualization,
@@ -227,6 +277,50 @@ describe("native visualization compatibility updates", () => {
     expect(next.layers[0].mark).toBe("table");
     expect(next.layers[0].encoding).toEqual({});
     expect(next.layers[0].rowPath).toBe("root[]");
+  });
+
+  it("allows a table to change to a line while required fields are missing", () => {
+    const table = applyChartCompatibilityUpdate({
+      ...nativeVisualization,
+      status: "ready",
+      layers: [{
+        ...nativeVisualization.layers[0],
+        mark: "kpi",
+        encoding: { value: nativeVisualization.layers[0].encoding.value },
+      }],
+    }, { type: "table" });
+    const line = applyChartCompatibilityUpdate(table, { type: "line" });
+
+    expect(line.status).toBe("draft");
+    expect(line.layers[0].mark).toBe("line");
+    expect(line.layers[0].encoding.value).toEqual(nativeVisualization.layers[0].encoding.value);
+    expect(validateVisualizationSpec(line).valid).toBe(true);
+    expect(validateVisualizationSpec({ ...line, status: "ready" }).valid).toBe(false);
+    expect(table.layers[0].mark).toBe("table");
+  });
+
+  it("keeps a table without saved chart fields editable after a type change", () => {
+    const table = {
+      ...nativeVisualization,
+      status: "ready",
+      layers: [{ ...nativeVisualization.layers[0], mark: "table", encoding: {}, rowPath: "root[]" }],
+    };
+    const line = applyChartCompatibilityUpdate(table, { type: "line" });
+
+    expect(line.status).toBe("draft");
+    expect(line.layers[0].encoding).toEqual({});
+    expect(validateVisualizationSpec(line).valid).toBe(true);
+    expect(applyChartCompatibilityUpdate(line, { type: "table" }).status).toBe("ready");
+  });
+
+  it("restores ready fields when changing from a table back to a line", () => {
+    const original = applyChartCompatibilityUpdate(nativeVisualization, { type: "line" });
+    const table = applyChartCompatibilityUpdate(original, { type: "table" });
+    const line = applyChartCompatibilityUpdate(table, { type: "line" });
+
+    expect(line.status).toBe("ready");
+    expect(line.layers[0].encoding).toEqual(original.layers[0].encoding);
+    expect(validateVisualizationSpec(line).valid).toBe(true);
   });
 
   it("adds one editable layer for a newly attached dataset", () => {

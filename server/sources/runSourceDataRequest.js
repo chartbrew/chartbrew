@@ -1,5 +1,6 @@
 const { findSourceForConnection } = require("./index");
 const { assertSourceServerEnabled } = require("./sourceAvailability");
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const db = require("../models/models");
 
 function getSourceDataRequestRunner(connection) {
@@ -33,10 +34,16 @@ function runSourceDataRequest(options) {
       throw new Error("403");
     }
 
-    return runner.runDataRequest({
-      ...options,
-      source: runner.source,
-    });
+    const trace = options.auditContext?.traceContext || {};
+    return withSourceExecutionContext({
+      teamId: options.teamId || trace.teamId,
+      triggerType: trace.triggerType,
+      projectId: options.projectId || trace.projectId,
+      chartId: options.chartId || trace.chartId,
+      datasetId: options.dataRequest?.dataset_id || trace.datasetId,
+      dataRequestId: options.dataRequest?.id,
+      runId: trace.runId,
+    }, () => runner.runDataRequest({ ...options, source: runner.source }));
   });
 }
 

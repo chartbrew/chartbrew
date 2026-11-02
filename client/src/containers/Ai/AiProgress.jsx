@@ -1,65 +1,81 @@
-import React from "react";
+import React, { useMemo } from "react";
 import PropTypes from "prop-types";
-import { Avatar } from "@heroui/react";
-import { LuBrainCircuit, LuLoader } from "react-icons/lu";
+import { LuCheck } from "react-icons/lu";
 
+import PixelLoader from "../../components/PixelLoader";
 import { getProgressEventMessage } from "./aiMessageUtils";
+import { AiLoadingActivity } from "./AiTranscript";
 
-function getProgressDotClass(type) {
-  switch (type) {
-    case "processing":
-      return "bg-blue-500";
-    case "connection":
-      return "bg-green-500";
-    case "analysis":
-      return "bg-yellow-500";
-    case "query_generation":
-      return "bg-purple-500";
-    case "execution":
-    case "tool_started":
-      return "bg-orange-500";
-    case "visualization":
-      return "bg-pink-500";
-    default:
-      return "bg-gray-500";
+const PROGRESS_LOADERS = {
+  connection: "twin",
+  analysis: "heat",
+  query_generation: "diagonal",
+  execution: "columns",
+  visualization: "bars",
+  tool_started: "columns",
+};
+
+function AiProgress({
+  className,
+  isLoading = false,
+  progressEvents,
+  toolDisplayNames,
+}) {
+  const activities = useMemo(() => {
+    const entries = progressEvents.map((event) => ({
+      label: getProgressEventMessage(event, toolDisplayNames),
+      loader: PROGRESS_LOADERS[event.type] || "orbit",
+    })).filter(({ label }) => label);
+    return entries.filter(({ label }, index) => entries.findIndex((entry) => entry.label === label) === index);
+  }, [progressEvents, toolDisplayNames]);
+
+  if (activities.length === 0) {
+    if (!isLoading) return null;
+    return (
+      <div
+        aria-atomic="true"
+        aria-live="polite"
+        className={className ? `min-w-0 ${className}` : "min-w-0"}
+        role="status"
+      >
+        <AiLoadingActivity />
+      </div>
+    );
   }
-}
-
-function AiProgress({ progressEvents, toolDisplayNames }) {
-  if (progressEvents.length === 0) return null;
 
   return (
-    <div className="flex justify-center mb-4 px-4">
-      <div className="w-full max-w-[90%]">
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Avatar
-              size="sm"
-              color="accent"
-              variant="soft"
-            >
-              <Avatar.Fallback>
-                <LuBrainCircuit size={16} className="text-foreground" />
-              </Avatar.Fallback>
-            </Avatar>
-            <LuLoader size={16} className="animate-spin" />
-            <span className="text-sm">Thinking...</span>
-          </div>
-          <div className="space-y-1">
-            {progressEvents.map((event) => (
-              <div key={event.id} className="text-xs text-accent-700 flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${getProgressDotClass(event.type)}`} />
-                {getProgressEventMessage(event, toolDisplayNames)}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      className={className ? `min-w-0 ${className}` : "min-w-0"}
+      role="status"
+    >
+      <ol className="flex min-w-0 flex-col">
+        {activities.map(({ label, loader }, index) => {
+          const isCurrent = isLoading && index === activities.length - 1;
+          const isLast = index === activities.length - 1;
+          return (
+            <li className="flex min-w-0 items-start gap-2.5" key={label}>
+              <span className="flex w-4 shrink-0 flex-col items-center self-stretch">
+                <span className="mt-0.5 flex size-4 items-center justify-center rounded-full bg-surface text-foreground">
+                  {isCurrent
+                    ? <PixelLoader variant={loader} />
+                    : <LuCheck size={10} aria-hidden />}
+                </span>
+                {isLast ? null : <span aria-hidden className="mt-1 w-px flex-1 bg-divider" />}
+              </span>
+              <span className="min-w-0 break-words pb-2 text-sm text-muted">{label}</span>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
 
 AiProgress.propTypes = {
+  className: PropTypes.string,
+  isLoading: PropTypes.bool,
   progressEvents: PropTypes.arrayOf(PropTypes.object).isRequired,
   toolDisplayNames: PropTypes.object.isRequired,
 };

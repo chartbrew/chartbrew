@@ -25,6 +25,7 @@ import {
 } from "../slices/user";
 import { addTeamMember } from "../slices/team";
 import { required, email as validateEmail } from "../config/validations";
+import { oauthReturnPath } from "../modules/oauthReturn";
 
 function Login() {
   const [loading, setLoading] = useState(false);
@@ -53,7 +54,7 @@ function Login() {
       const resp = await dispatch(relog());
 
       if (!resp.error && resp.payload?.id) {
-        navigate("/");
+        navigate(oauthReturnPath(window.location.search));
       }
     };
 
@@ -154,7 +155,7 @@ function Login() {
     }
 
     setLoading(false);
-    navigate("/");
+    navigate(oauthReturnPath(window.location.search));
   };
 
   const onValidateToken = async (e) => {
@@ -202,7 +203,7 @@ function Login() {
     }
 
     setLoading(false);
-    navigate("/");
+    navigate(oauthReturnPath(window.location.search));
   };
 
   return (
@@ -223,7 +224,7 @@ function Login() {
             {!view2FaApp && (
               <>
                 <div className="space-y-2 text-center">
-                  <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground font-tw">
+                  <h1 className="text-balance text-4xl font-semibold text-foreground">
                     Welcome back
                   </h1>
                   <p className="text-sm text-muted">
@@ -339,7 +340,7 @@ function Login() {
             {view2FaApp && (
               <>
                 <div className="space-y-2 text-center">
-                  <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">
+                  <h1 className="text-balance text-3xl font-semibold text-foreground">
                     Two-factor authentication
                   </h1>
                   <p className="text-sm text-muted">

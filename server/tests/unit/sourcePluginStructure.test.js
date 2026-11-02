@@ -67,6 +67,13 @@ describe("source plugin structure", () => {
     expectFile("server/sources/plugins/jira/templates/sprint-health.json");
     expectFile("server/sources/plugins/jira/templates/bug-tracking.json");
     expectFile("server/sources/plugins/jira/templates/team-workload.json");
+    expectFile("server/sources/plugins/mcp/mcp.plugin.js");
+    expectFile("server/sources/plugins/mcp/mcp.protocol.js");
+    expectFile("server/sources/plugins/mcp/mcp.client.js");
+    expectFile("server/sources/plugins/mcp/ai/mcp.ai.js");
+    expectFile("client/src/sources/mcp/mcp.source.js");
+    expectFile("client/src/sources/mcp/mcp-connection-form.jsx");
+    expectFile("client/src/sources/mcp/mcp-builder.jsx");
   });
 
   it("keeps shared source backend code under server/sources/shared", () => {

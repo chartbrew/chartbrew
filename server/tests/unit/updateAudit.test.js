@@ -1,5 +1,5 @@
 import {
-  beforeAll, beforeEach, describe, expect, it,
+  beforeAll, describe, expect, it, vi,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -21,16 +21,13 @@ describe("updateAudit", () => {
     updateAudit = require("../../modules/updateAudit.js");
   });
 
-  beforeEach(async () => {
-    await models.sequelize.sync({ force: true });
-  });
-
   it("sanitizes payloads and persists a completed run with ordered events", async () => {
     const traceContext = await updateAudit.startRun({
       triggerType: "chart_manual",
       entityType: "chart",
       status: "running",
       teamId: 1,
+      apiKeyId: "5e951c4f-0c79-4f70-b8fb-5993ea20bc12",
       projectId: 10,
       chartId: 100,
       summary: {
@@ -66,6 +63,7 @@ describe("updateAudit", () => {
     });
 
     expect(persistedRun.status).toBe("success");
+    expect(persistedRun.apiKeyId).toBe("5e951c4f-0c79-4f70-b8fb-5993ea20bc12");
     expect(persistedRun.summary).toEqual({
       chartId: 100,
       datasetCount: 2,
@@ -108,6 +106,38 @@ describe("updateAudit", () => {
     expect(persistedRun.events[0].stage).toBe("run_failed");
   });
 
+  it("keeps events from retried jobs and concurrent copies of the same trace", async () => {
+    const trace = await updateAudit.startRun({ triggerType: "chart_auto", entityType: "chart" });
+    const queuedTrace = JSON.parse(JSON.stringify(trace));
+    await updateAudit.recordInstantEvent(trace, "worker_started");
+    const events = await Promise.all(Array.from({ length: 5 }, () => (
+      updateAudit.recordInstantEvent({ ...queuedTrace }, "worker_started")
+    )));
+
+    expect(events.every((event) => event.id)).toBe(true);
+    const stored = await models.UpdateRunEvent.findAll({
+      where: { runId: trace.runId }, order: [["sequence", "ASC"]],
+    });
+    expect(stored.map((event) => event.sequence)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(stored.every((event) => event.status === "success")).toBe(true);
+  });
+
+  it("logs the database error code without query text or request data", async () => {
+    const trace = await updateAudit.startRun({ triggerType: "chart_auto", entityType: "chart" });
+    const write = vi.spyOn(models.UpdateRunEvent, "create").mockRejectedValueOnce({
+      original: { code: "ER_DATA_TOO_LONG", sql: "private query" },
+      message: "private request data",
+    });
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await updateAudit.startEvent(trace, "worker_started");
+      expect(log).toHaveBeenCalledWith("[updateAudit] failed to create event", { code: "ER_DATA_TOO_LONG" });
+    } finally {
+      write.mockRestore();
+      log.mockRestore();
+    }
+  });
+
   it("redacts sensitive snippets", () => {
     expect(updateAudit.sanitizeSnippet("Bearer super-secret-token")).toBe("Bearer [REDACTED]");
     expect(updateAudit.sanitizePayload({
@@ -121,5 +151,81 @@ describe("updateAudit", () => {
         api_key: "[REDACTED]",
       },
     });
+  });
+
+  it("cleans update runs in batches while preserving recent failures", async () => {
+    const now = new Date("2026-07-29T00:00:00.000Z");
+    const oldDate = new Date("2026-05-01T00:00:00.000Z");
+    const recentFailedDate = new Date("2026-06-01T00:00:00.000Z");
+    const runs = await Promise.all([
+      models.UpdateRun.create({
+        traceId: "old-success-1",
+        rootTraceId: "old-success-1",
+        triggerType: "chart_auto",
+        entityType: "chart",
+        status: "success",
+        startedAt: oldDate,
+      }),
+      models.UpdateRun.create({
+        traceId: "old-success-2",
+        rootTraceId: "old-success-2",
+        triggerType: "chart_auto",
+        entityType: "chart",
+        status: "success",
+        startedAt: oldDate,
+      }),
+      models.UpdateRun.create({
+        traceId: "recent-failed",
+        rootTraceId: "recent-failed",
+        triggerType: "chart_auto",
+        entityType: "chart",
+        status: "failed",
+        startedAt: recentFailedDate,
+      }),
+    ]);
+
+    await models.UpdateRunEvent.bulkCreate(runs.map((run, index) => ({
+      runId: run.id,
+      sequence: 1,
+      stage: "run_finished",
+      status: "success",
+      startedAt: oldDate,
+      payload: { index },
+    })));
+
+    const report = await updateAudit.cleanupExpiredRuns({
+      retentionDays: 30,
+      failedRetentionDays: 90,
+      batchSize: 1,
+      now,
+    });
+
+    expect(report.deletedRuns).toBe(2);
+    expect(report.deletedEvents).toBe(2);
+    expect(report.batches).toBe(2);
+    expect(await models.UpdateRun.count()).toBe(1);
+    expect((await models.UpdateRun.findOne()).status).toBe("failed");
+  });
+
+  it("reports expired update runs without deleting them in dry-run mode", async () => {
+    await models.UpdateRun.create({
+      traceId: "dry-run",
+      rootTraceId: "dry-run",
+      triggerType: "chart_auto",
+      entityType: "chart",
+      status: "success",
+      startedAt: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    const report = await updateAudit.cleanupExpiredRuns({
+      retentionDays: 30,
+      failedRetentionDays: 90,
+      dryRun: true,
+      now: new Date("2026-07-29T00:00:00.000Z"),
+    });
+
+    expect(report.matchedRuns).toBe(1);
+    expect(report.deletedRuns).toBe(0);
+    expect(await models.UpdateRun.count()).toBe(1);
   });
 });

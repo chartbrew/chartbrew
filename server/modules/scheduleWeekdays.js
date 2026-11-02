@@ -21,15 +21,24 @@ function getWeekdayNumber(dayOfWeek) {
 }
 
 function shouldRunOnWeekday(daysOfWeek, now) {
-  if (!Array.isArray(daysOfWeek)) {
+  let normalizedDays = daysOfWeek;
+  if (typeof daysOfWeek === "string") {
+    try {
+      normalizedDays = JSON.parse(daysOfWeek);
+    } catch (error) {
+      return true;
+    }
+  }
+
+  if (!Array.isArray(normalizedDays)) {
     return true;
   }
 
-  if (daysOfWeek.length === 0) {
+  if (normalizedDays.length === 0) {
     return false;
   }
 
-  return daysOfWeek.some((dayOfWeek) => getWeekdayNumber(dayOfWeek) === now.weekday);
+  return normalizedDays.some((dayOfWeek) => getWeekdayNumber(dayOfWeek) === now.weekday);
 }
 
 module.exports = {

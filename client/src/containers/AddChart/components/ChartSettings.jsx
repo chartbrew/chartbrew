@@ -11,14 +11,15 @@ import { LuCheck, LuInfo, LuSettings, LuCircleX } from "react-icons/lu";
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 
-import Row from "../../../components/Row";
-import Text from "../../../components/Text";
 import DateRangeFilter from "../../ProjectDashboard/components/DateRangeFilter";
 import {
   updateDataLabelsFormat,
+  updateLegendVisibility,
+  updateMarkStyle,
   updateMissingValuePolicy,
 } from "../../../modules/visualization";
 import { resolveChartConfiguredDateRange } from "../../../modules/chartRuntimeFilters";
+import { hasPresetCapability } from "../../../visualization/presetRegistry";
 
 const xLabelOptions = [{
   key: "default",
@@ -105,7 +106,7 @@ const tableRowOptions = [{
   value: "50",
 }];
 
-function ChartSettings({ chart, onChange, onVisualizationChange }) {
+function ChartSettings({ chart, onChange, onVisualizationChange, section }) {
   const [max, setMax] = useState("");
   const [min, setMin] = useState("");
   const [ticksNumber, setTicksNumber] = useState("");
@@ -113,12 +114,32 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   const [dateFormattingModal, setDateFormattingModal] = useState(false);
   const [datesFormat, setDatesFormat] = useState(null);
   const hasTimeEncoding = chart.visualization?.layers?.some((layer) => layer.encoding?.time);
+  const hasCapability = (capability) => hasPresetCapability(chart.type, capability);
   const missingValuePolicy = chart.visualization?.settings?.missingValues?.policy || "preserve";
   const dataLabelsFormat = chart.visualization?.settings?.dataLabelsFormat || "percentage";
+  const dataLabelsVisible = chart.visualization?.settings?.dataLabels ?? chart.dataLabels;
   const legendVisible = chart.visualization?.settings?.legend?.visible
     ?? chart.displayLegend
     ?? true;
   const displayedDateRange = resolveChartConfiguredDateRange(chart);
+  const lineLayers = chart.visualization?.layers?.filter((layer) => layer.mark === "line") || [];
+  const pointRadius = lineLayers[0]?.style?.pointRadius ?? chart.pointRadius ?? 0;
+  const smoothLines = lineLayers.some((layer) => layer.style?.smooth);
+  const axisName = chart.type === "horizontalBar" ? "X" : "Y";
+  const hasMaxInput = max !== "" && Number.isFinite(Number(max));
+  const hasMinInput = min !== "" && Number.isFinite(Number(min));
+  const hasDisplayControls = [
+    "dashedLastPoint",
+    "dataLabels",
+    "legend",
+    "logScale",
+    "points",
+    "smooth",
+    "stack",
+  ].some(hasCapability);
+  const hasAxisControls = hasCapability("axisRange") || chart.type === "table";
+  const showData = !section || section === "data";
+  const showAppearance = !section || section === "appearance";
 
   useEffect(() => {
     setMax(chart.maxValue == null ? "" : String(chart.maxValue));
@@ -147,7 +168,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   };
 
   const _onAddPoints = (value) => {
-    onChange({ pointRadius: value });
+    onVisualizationChange(updateMarkStyle(chart.visualization, "line", { pointRadius: value }));
   };
 
   const _onChangeDateRangeNew = ({ startDate, endDate }) => {
@@ -177,18 +198,13 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
   };
 
   return (
-    <div className={"bg-surface rounded-3xl mx-auto p-4 w-full"}>
-      <Row>
-        <Text b>Chart Settings</Text>
-      </Row>
+    <div className={section ? `w-full ${section === "automation" ? "hidden" : ""}` : "bg-surface rounded-3xl mx-auto p-4 w-full"}>
+      <h2 className="mb-4 text-sm font-semibold">{showData ? "Chart data" : "Chart appearance"}</h2>
 
-      <div className="h-4" />
-      <Separator />
-      <div className="h-4" />
-
+      <div className={showData ? "" : "hidden"}>
       <div className="text-sm text-foreground-500">Date settings</div>
       <div className="h-2" />
-      <div className="flex flex-col gap-2">
+      <div className="chart-settings-fields">
         <div className="flex flex-row items-center gap-2 flex-wrap">
           <div>
             <DateRangeFilter
@@ -300,8 +316,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
         </div>
       </div>
       <div className="h-4" />
-      <div className="grid grid-cols-12 gap-2">
-        <div className="col-span-12 md:col-span-6 lg:col-span-6">
+      <div className={chart.type === "scatter" ? "hidden" : "chart-settings-fields"}>
+        <div className="min-w-0">
           <Select
             selectionMode="single"
             placeholder="Select a time interval"
@@ -328,8 +344,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Select.Popover>
           </Select>
         </div>
-        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-center">
-          {hasTimeEncoding && (
+        {hasTimeEncoding && (
+          <div className="min-w-0 flex items-center">
             <Checkbox
               id="chart-settings-include-zeros"
               isSelected={chart.includeZeros}
@@ -343,11 +359,11 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                 Fill missing time intervals
               </Checkbox.Content>
             </Checkbox>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {["line", "bar"].includes(chart.type) && chart.visualization && (
+      {hasCapability("missingValues") && chart.visualization && (
         <div className="mt-4 max-w-md">
           <Select
             aria-label="Missing data"
@@ -377,17 +393,18 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
           </Select>
         </div>
       )}
+      </div>
 
-      <div className="h-4" />
-      <Separator />
-      <div className="h-4" />
+      <div className={showAppearance ? "" : "hidden"}>
+      {hasDisplayControls && <>
+        {showData && <Separator className="my-4" />}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {chart.type === "line" && (
+        <div className="chart-settings-fields">
+        {hasCapability("points") && chart.visualization && (
           <div>
             <Checkbox
               id="chart-settings-data-points"
-              isSelected={chart.pointRadius > 0}
+              isSelected={pointRadius > 0}
               onChange={(selected) => _onAddPoints(selected ? 3 : 0)}
               variant="secondary"
             >
@@ -400,7 +417,26 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Checkbox>
           </div>
         )}
-        {chart.type === "bar" && (
+        {hasCapability("smooth") && chart.visualization && (
+          <div>
+            <Checkbox
+              id="chart-settings-smooth-lines"
+              isSelected={smoothLines}
+              onChange={(selected) => {
+                onVisualizationChange(updateMarkStyle(chart.visualization, "line", { smooth: selected }));
+              }}
+              variant="secondary"
+            >
+              <Checkbox.Content>
+                <Checkbox.Control className="size-4 shrink-0">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Smooth lines
+              </Checkbox.Content>
+            </Checkbox>
+          </div>
+        )}
+        {hasCapability("stack") && (
           <div>
             <Checkbox
               id="chart-settings-stacked"
@@ -417,29 +453,13 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Checkbox>
           </div>
         )}
-        {chart.type === "bar" && (
-          <div>
-            <Checkbox
-              id="chart-settings-horizontal"
-              isSelected={chart.horizontal}
-              onChange={(selected) => onChange({ horizontal: selected })}
-              variant="secondary"
-            >
-              <Checkbox.Content>
-                <Checkbox.Control className="size-4 shrink-0">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                Horizontal bars
-              </Checkbox.Content>
-            </Checkbox>
-          </div>
-        )}
-        <div>
+        {hasCapability("legend") && chart.visualization && <div>
           <Checkbox
             id="chart-settings-legend"
             isSelected={legendVisible}
-            onChange={(selected) => onChange({ displayLegend: selected })}
-            isDisabled={chart.type === "matrix"}
+            onChange={(selected) => {
+              onVisualizationChange(updateLegendVisibility(chart.visualization, selected));
+            }}
             variant="secondary"
           >
             <Checkbox.Content>
@@ -449,13 +469,12 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               Legend
             </Checkbox.Content>
           </Checkbox>
-        </div>
-        <div>
+        </div>}
+        {hasCapability("dataLabels") && <div>
           <Checkbox
             id="chart-settings-data-labels"
-            isSelected={chart.dataLabels}
+            isSelected={dataLabelsVisible}
             onChange={(selected) => onChange({ dataLabels: selected })}
-            isDisabled={chart.type === "matrix"}
             variant="secondary"
           >
             <Checkbox.Content>
@@ -465,8 +484,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
               Data labels
             </Checkbox.Content>
           </Checkbox>
-        </div>
-        {chart.type === "doughnut" && chart.dataLabels && chart.visualization && (
+        </div>}
+        {["doughnut", "pie"].includes(chart.type) && dataLabelsVisible && chart.visualization && (
           <div>
             <Select
               aria-label="Data label format"
@@ -495,7 +514,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Select>
           </div>
         )}
-        {(chart.type === "line" || chart.type === "bar") && (
+        {hasCapability("logScale") && (
           <div>
             <Checkbox
               id="chart-settings-log-scale"
@@ -512,7 +531,7 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Checkbox>
           </div>
         )}
-        {chart.type === "line" && (
+        {hasCapability("dashedLastPoint") && (
           <div>
             <Checkbox
               id="chart-settings-dashed-last"
@@ -529,18 +548,19 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Checkbox>
           </div>
         )}
-      </div>
+        </div>
 
-      <div className="h-4" />
-      <Separator />
-      <div className="h-4" />
+      </>}
 
-      <div className="flex flex-col gap-2">
-        {chart.type !== "table" && (
+      {hasAxisControls && <>
+        {(showData || hasDisplayControls) && <Separator className="my-4" />}
+
+        <div className="chart-settings-fields">
+        {hasCapability("axisRange") && (
           <>
-            <div className="flex flex-row items-end gap-2">
-              <TextField name="max-y-axis-value" className="w-full">
-                <Label>Max Y Axis value</Label>
+            <div className="flex flex-wrap items-end gap-2">
+              <TextField name="max-y-axis-value" className="min-w-0 flex-1 basis-36">
+                <Label>{`Max ${axisName} Axis value`}</Label>
                 <Input
                   placeholder="Enter a number"
                   type="number"
@@ -551,10 +571,10 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                 />
               </TextField>
               <div className="flex flex-row gap-1">
-                {max !== "" && (
+                {hasMaxInput && (
                   <>
                     <Button
-                      isDisabled={Number(max) === chart.maxValue}
+                      isDisabled={chart.maxValue != null && Number(max) === Number(chart.maxValue)}
                       onPress={() => onChange({ maxValue: Number(max) })}
                       variant="secondary"
                       size="sm"
@@ -575,9 +595,9 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                 )}
               </div>
             </div>
-            <div className="flex flex-row items-end gap-2">
-              <TextField name="min-y-axis-value" className="w-full">
-                <Label>Min Y Axis value</Label>
+            <div className="flex flex-wrap items-end gap-2">
+              <TextField name="min-y-axis-value" className="min-w-0 flex-1 basis-36">
+                <Label>{`Min ${axisName} Axis value`}</Label>
                 <Input
                   placeholder="Enter a number"
                   type="number"
@@ -588,10 +608,10 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
                 />
               </TextField>
               <div className="flex flex-row items-center gap-1">
-                {min !== "" && (
+                {hasMinInput && (
                   <>
                     <Button
-                      isDisabled={Number(min) === chart.minValue}
+                      isDisabled={chart.minValue != null && Number(min) === Number(chart.minValue)}
                       onPress={() => onChange({ minValue: Number(min) })} variant="secondary"
                       size="sm"
                     >
@@ -641,13 +661,13 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             </Select>
           </>
         )}
-      </div>
+        </div>
+      </>}
 
-      <div className="h-4" />
-      <Separator />
-      <div className="h-4" />
+      {hasCapability("xAxisLabels") && <>
+        {(showData || hasDisplayControls || hasAxisControls) && <Separator className="my-4" />}
 
-      <div className="grid grid-cols-12 gap-1">
+        <div className="grid grid-cols-12 gap-1">
         <div className="col-span-12">
           <Select
             selectionMode="single"
@@ -702,6 +722,8 @@ function ChartSettings({ chart, onChange, onVisualizationChange }) {
             />
           </div>
         )}
+        </div>
+      </>}
       </div>
 
       <Modal.Backdrop isOpen={dateFormattingModal} onOpenChange={setDateFormattingModal}>
@@ -795,6 +817,11 @@ ChartSettings.propTypes = {
   onChange: PropTypes.func.isRequired,
   onComplete: PropTypes.func.isRequired,
   onVisualizationChange: PropTypes.func.isRequired,
+  section: PropTypes.oneOf(["data", "appearance", "automation"]),
+};
+
+ChartSettings.defaultProps = {
+  section: null,
 };
 
 export default ChartSettings;

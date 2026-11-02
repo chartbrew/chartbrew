@@ -11,9 +11,10 @@ import {
   Label,
   ListBox,
   SearchField,
+  TextField,
   useFilter,
 } from "@heroui/react";
-import { I18nProvider } from "@react-aria/i18n";
+import { I18nProvider } from "react-aria";
 import { LuX } from "react-icons/lu";
 import { parseDate } from "@internationalized/date";
 
@@ -24,8 +25,10 @@ import determineType from "../../../modules/determineType";
 import * as operations from "../../../modules/filterOperations";
 import Row from "../../../components/Row";
 import { getExposedChartFilters } from "../../../modules/getChartDatasetConditions";
+import { useTheme } from "../../../modules/ThemeContext";
 
 function ChartFilters(props) {
+  const { reportThemeProps } = useTheme();
   const { contains } = useFilter({ sensitivity: "base" });
   const {
     chart, onAddFilter, onClearFilter, conditions, inline, size, amount,
@@ -145,7 +148,7 @@ function ChartFilters(props) {
                       <Autocomplete.ClearButton onClick={() => _onOptionSelected("", condition, true)} />
                       <Autocomplete.Indicator />
                     </Autocomplete.Trigger>
-                    <Autocomplete.Popover>
+                    <Autocomplete.Popover {...reportThemeProps}>
                       <Autocomplete.Filter filter={contains}>
                         <SearchField autoFocus name={`chart-filter-${condition.id}`} variant="secondary">
                           <SearchField.Group>
@@ -170,24 +173,28 @@ function ChartFilters(props) {
               )}
               {condition.type !== "date" && condition.hideValues && (
                 <>
-                  <Input
-                    type="text"
-                    value={optionFilter[condition.id]}
-                    label={!inline ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}` : null}
-                    placeholder={inline
-                      ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`
-                      : "Enter a value here"
-                    }
-                    onChange={(e) => {
-                      setOptionFilter({
-                        ...optionFilter, [condition.id]: e.target.value
-                      });
-                    }}
-                    variant="secondary"
-                    onKeyDown={(e) => _onKeyDown(e, condition)}
-                    size={size}
-                    className="placeholder:text-xs py-1"
-                  />
+                  <TextField>
+                    <Label className={inline ? "sr-only" : ""}>
+                      {`${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`}
+                    </Label>
+                    <Input
+                      type="text"
+                      value={optionFilter[condition.id]}
+                      placeholder={inline
+                        ? `${condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)} ${operations.operators?.find((o) => condition.operator === o.value)?.text}`
+                        : "Enter a value here"
+                      }
+                      onChange={(e) => {
+                        setOptionFilter({
+                          ...optionFilter, [condition.id]: e.target.value
+                        });
+                      }}
+                      variant="secondary"
+                      onKeyDown={(e) => _onKeyDown(e, condition)}
+                      size={size}
+                      className="placeholder:text-xs py-1"
+                    />
+                  </TextField>
                   <div className="h-2" />
                 </>
               )}
@@ -222,7 +229,7 @@ function ChartFilters(props) {
                             </DatePicker.Trigger>
                           </DateField.Suffix>
                         </DateField.Group>
-                        <DatePicker.Popover>
+                        <DatePicker.Popover {...reportThemeProps}>
                           <Calendar aria-label="Date filter">
                             <Calendar.Header>
                               <Calendar.YearPickerTrigger>
@@ -295,7 +302,7 @@ function ChartFilters(props) {
                             </DatePicker.Trigger>
                           </DateField.Suffix>
                         </DateField.Group>
-                        <DatePicker.Popover>
+                        <DatePicker.Popover {...reportThemeProps}>
                           <Calendar aria-label="Date filter">
                             <Calendar.Header>
                               <Calendar.YearPickerTrigger>

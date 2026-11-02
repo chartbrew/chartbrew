@@ -13,6 +13,8 @@ import {
 import { LuArrowRight } from "react-icons/lu";
 
 import { createProject } from "../slices/project";
+import canAccess from "../config/canAccess";
+import { selectUser } from "../slices/user";
 import { selectTeam } from "../slices/team";
 import CustomTemplates from "../containers/Connections/CustomTemplates/CustomTemplates";
 import Row from "./Row";
@@ -23,6 +25,7 @@ import ChartMogulTemplate from "../containers/Connections/ChartMogul/ChartMogulT
 import MailgunTemplate from "../containers/Connections/Mailgun/MailgunTemplate";
 import GaTemplate from "../sources/googleAnalytics/googleAnalytics-template";
 import PlausibleTemplate from "../containers/Connections/Plausible/PlausibleTemplate";
+import DashboardShortcutAppearance from "./DashboardShortcutAppearance";
 
 /*
   Contains the project creation functionality
@@ -47,6 +50,8 @@ function ProjectForm(props) {
   const [communityTemplate, setCommunityTemplate] = useState("");
 
   const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
+  const canUseTemplates = canAccess("teamAdmin", user.id, team.TeamRoles);
   const connections = useSelector(selectConnections);
 
   const dispatch = useDispatch();
@@ -93,7 +98,7 @@ function ProjectForm(props) {
               }}>
                 <div>
                   <div className="h-2" />
-                  {!hideType && (
+                  {!hideType && canUseTemplates && (
                     <div className="w-full">
                       <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth isDisabled={!newProject.name}>
                         <Tabs.ListContainer>
@@ -128,6 +133,11 @@ function ProjectForm(props) {
                       value={newProject.name}
                     />
                   </TextField>
+                  <div className="h-4" />
+                  <DashboardShortcutAppearance
+                    value={newProject}
+                    onChange={setNewProject}
+                  />
                   {error && (
                     <Row>
                       <p className="text-sm text-red-500">

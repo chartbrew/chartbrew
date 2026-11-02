@@ -1,3 +1,8 @@
+const { applyTransformation } = require("../../../dataTransformations");
+const { buildAiVisualization } = require("../../../../visualization/aiVisualization");
+const { VisualizationEngine } = require("../../../../visualization/VisualizationEngine");
+const { sanitizeSnippet } = require("../../../updateAudit");
+
 function repairSourceDatasetIntent(source, payload) {
   const repair = source.backend?.ai?.repairDatasetIntent?.({
     name: payload.name,
@@ -79,17 +84,34 @@ async function repairSourceDatasetIntentAsync(source, payload) {
     return repairedPayload;
   }
 
-  const plan = await planDataset({
-    connection: payload.connection,
-    question,
-    overrides: payload.overrides || {},
-  });
+  const generateConfiguration = source.backend?.ai?.generateConfiguration;
+  let plan;
+  if (typeof generateConfiguration === "function") {
+    const generated = await generateConfiguration({
+      connection: payload.connection,
+      question,
+      currentConfiguration: configuration,
+    });
+    plan = { status: generated.status === "ready" ? "ok" : generated.status, configuration: generated.configuration };
+  } else {
+    plan = await planDataset({
+      connection: payload.connection,
+      question,
+      overrides: payload.overrides || {},
+    });
+  }
 
   if (plan?.status !== "ok") {
     const options = Array.isArray(plan?.options) && plan.options.length > 0
       ? ` Options: ${plan.options.map((option) => option.label || option.value).join(", ")}.`
       : "";
-    throw new Error(`${plan?.message || "Source configuration is incomplete."}${options}`);
+    const error = new Error(`${plan?.message || "Source configuration is incomplete."}${options}`);
+    error.recovery = plan?.recovery;
+    error.repair = {
+      requiredContext: (plan?.requiredContext || []).slice(0, 10).map((item) => sanitizeSnippet(item, 120)),
+      message: sanitizeSnippet(plan?.nextAction || plan?.errors?.join(" "), 1000),
+    };
+    throw error;
   }
 
   return {
@@ -153,7 +175,73 @@ function removeCompiledMetricAccumulation({ configuration, type, subType, spec =
   };
 }
 
+async function alignSourceChartBindings(source, payload = {}) {
+  const align = source.backend?.ai?.alignChartBindings;
+  if (typeof align !== "function") {
+    return {
+      xAxis: payload.xAxis,
+      yAxis: payload.yAxis,
+      dateField: payload.dateField,
+    };
+  }
+
+  let rows = payload.rows;
+  const previewConfiguration = source.backend?.ai?.previewConfiguration;
+  if (!Array.isArray(rows) && typeof previewConfiguration === "function" && payload.connection) {
+    const preview = await previewConfiguration({
+      connection: payload.connection,
+      configuration: payload.configuration,
+      rowLimit: 25,
+    });
+    if (preview?.status !== "ok") {
+      const error = new Error(preview?.recovery?.message || preview?.message || "Check the source configuration and preview its data before creating a chart.");
+      error.recovery = preview?.recovery;
+      throw error;
+    }
+    rows = preview.rows;
+  }
+
+  if (!Array.isArray(rows) || !rows.length) {
+    throw new Error("No rows are available for this chart. Check the query and date range before creating a preview.");
+  }
+
+  rows = applyTransformation(rows, payload.transform);
+  const aligned = align({
+    rows,
+    type: payload.type,
+    xAxis: payload.xAxis,
+    yAxis: payload.yAxis,
+    yAxisOperation: payload.yAxisOperation,
+    dateField: payload.dateField,
+    encoding: payload.encoding,
+    visualization: payload.visualization,
+  });
+  const visualization = buildAiVisualization({
+    chart: { ...payload.chartSpec, type: payload.type },
+    cdc: { ...payload.chartSpec, ...aligned, yAxisOperation: payload.yAxisOperation, formula: payload.formula },
+    encoding: payload.encoding,
+    visualization: payload.visualization,
+  });
+  // Creation binds these layers to the single dataset; use the same binding for the sample.
+  visualization.layers.forEach((layer) => { layer.bindingId = "binding-1"; });
+  const { preparedData } = new VisualizationEngine({
+    chart: { ...payload.chartSpec, type: payload.type, visualization },
+    datasets: [{ data: rows, options: { id: "binding-1" } }],
+  }).render();
+  if (!preparedData.results.length || preparedData.results.some((result) => !result.rows.length
+    || result.fields.filter((field) => field.role === "measure")
+      .some((field) => !result.rows.some((row) => Number.isFinite(row[field.key]))))) {
+    throw new Error("The chart preview has no usable values. Correct its query, output mapping, or chart fields and preview again before creating it.");
+  }
+  return {
+    xAxis: aligned.xAxis ?? payload.xAxis,
+    yAxis: aligned.yAxis ?? payload.yAxis,
+    dateField: aligned.dateField ?? payload.dateField,
+  };
+}
+
 module.exports = {
+  alignSourceChartBindings,
   isStripeCompiledMetricConfiguration,
   removeCompiledMetricAccumulation,
   repairSourceDatasetIntent,

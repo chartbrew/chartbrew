@@ -42,6 +42,7 @@ function generateQuery({
 }
 
 module.exports = {
+  exploreReadOnly: sqlProtocol.exploreReadOnly,
   applyVariables: sqlProtocol.applyVariables,
   closeSqlConnection: sqlProtocol.closeSqlConnection,
   generateQuery,

@@ -1,5 +1,6 @@
 const { normalizeProjectScheduleTimezones } = require("../../modules/projectSnapshotTimezone");
 const { hashProjectPassword } = require("../../modules/projectPassword");
+const shortcutOptions = require("../../../shared/dashboard/shortcut-options.json");
 
 module.exports = (sequelize, DataTypes) => {
   const Project = sequelize.define("Project", {
@@ -17,8 +18,52 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    layoutOrder: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      get() {
+        const value = this.getDataValue("layoutOrder");
+        return typeof value === "string" ? JSON.parse(value) : value;
+      },
+    },
+    layoutCustom: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      get() {
+        const value = this.getDataValue("layoutCustom");
+        return typeof value === "string" ? JSON.parse(value) : value;
+      },
+    },
+    layoutRevision: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    reportAppearance: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      get() {
+        const value = this.getDataValue("reportAppearance");
+        return typeof value === "string" ? JSON.parse(value) : value;
+      },
+    },
+    reportAppearanceRevision: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     name: {
       type: DataTypes.STRING,
+    },
+    sidebarIcon: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "grid",
+      validate: { isIn: [shortcutOptions.icons] },
+    },
+    sidebarColor: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "blue",
+      validate: { isIn: [shortcutOptions.colors] },
+    },
+    sidebarDisplay: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "icon",
+      validate: { isIn: [["icon", "logo"]] },
     },
     brewName: {
       type: DataTypes.STRING,

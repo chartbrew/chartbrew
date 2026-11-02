@@ -29,7 +29,8 @@ module.exports = (app) => {
         }
 
         const permission = accessControl.can(teamRole.role)[level]("project");
-        if (!permission.granted) {
+        if (!permission.granted
+          || (level === "createOwn" && !accessControl.can(teamRole.role).createOwn("dataset").granted)) {
           throw new Error("403");
         }
 

@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import PropTypes from "prop-types"
 import {
   Card, TextArea, Dropdown, Link as LinkNext,
   Kbd, Modal, Button,
-  ButtonGroup,
   Tooltip,
   Link,
 } from "@heroui/react"
@@ -17,7 +16,6 @@ import { LuEllipsisVertical, LuMonitorX, LuMonitor, LuTrash, LuPencil, LuLayoutD
 import { FaMarkdown } from "react-icons/fa6";
 import { useParams } from "react-router";
 import toast from "react-hot-toast";
-import { debounce } from "lodash";
 
 import { removeChart, updateChart } from "../../slices/chart"
 import canAccess from "../../config/canAccess";
@@ -71,12 +69,12 @@ function TextWidget({
 
       return className ? (
         // Block code (if it has a class, meaning it's a code block)
-        <pre className="bg-content2 text-foreground p-2 rounded-md overflow-auto">
+        <pre className="bg-surface-secondary text-foreground p-2 rounded-md overflow-auto">
           <code className={className}>{formattedText}</code>
         </pre>
       ) : (
         // Inline code (if no class)
-        <span className="bg-content2 text-foreground px-1 rounded-sm">{formattedText}</span>
+        <span className="bg-surface-secondary text-foreground px-1 rounded-sm">{formattedText}</span>
       );
     },
     li: ({ children, className }) => {
@@ -163,18 +161,9 @@ function TextWidget({
     }, 0);
   };
 
-  const debouncedEditContent = useCallback(
-    debounce((content) => {
-      if (chart.staged) {
-        onEditContent(content);
-      }
-    }, 300),
-    [chart.staged, onEditContent]
-  );
-
   const _onEditContent = (content) => {
     setContent(content);
-    debouncedEditContent(content);
+    if (chart.staged) onEditContent(content);
   }
 
   const _onChangeReport = () => {
@@ -226,7 +215,7 @@ function TextWidget({
     setChartLoading(true);
 
     if (chart.staged) {
-      return onSaveChanges();
+      return Promise.resolve(onSaveChanges()).finally(() => setChartLoading(false));
     }
 
     dispatch(updateChart({
@@ -272,20 +261,20 @@ function TextWidget({
     >
       {chart && (
         <Card
-          className={"h-full bg-surface border-solid border-1 border-divider shadow-none"}
+          className={"h-full min-h-0 bg-surface border-solid border-1 border-divider shadow-none"}
         >
           {isEditing && (
             <>
-              <Card.Content>
+              <Card.Content className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
                 {!isPreview && (
                   <>
                     <div 
-                      className="flex gap-1 flex-wrap"
+                      className="flex shrink-0 gap-1 flex-wrap"
                       onMouseDown={handleInteractiveMouseDown}
                     >
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("heading", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("heading", e)}>
                             <LuHeading size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -293,7 +282,7 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("bold", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("bold", e)}>
                             <LuBold size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -301,7 +290,7 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("italic", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("italic", e)}>
                             <LuItalic size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -309,7 +298,7 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("quote", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("quote", e)}>
                             <LuQuote size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -317,7 +306,7 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("code", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("code", e)}>
                             <LuCode size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -325,7 +314,7 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("image", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("image", e)}>
                             <LuImage size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -333,7 +322,7 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("link", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("link", e)}>
                             <LuLink size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -341,7 +330,7 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("numbered", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("numbered", e)}>
                             <LuListOrdered size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -349,7 +338,7 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("unordered", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("unordered", e)}>
                             <LuList size={16} />
                           </div>
                         </Tooltip.Trigger>
@@ -357,20 +346,20 @@ function TextWidget({
                       </Tooltip>
                       <Tooltip>
                         <Tooltip.Trigger>
-                          <div className="p-1 rounded-md hover:bg-content2 cursor-pointer" onClick={(e) => insertMarkdown("task", e)}>
+                          <div className="p-1 rounded-md hover:bg-surface-secondary cursor-pointer" onClick={(e) => insertMarkdown("task", e)}>
                             <LuSquareCheck size={16} />
                           </div>
                         </Tooltip.Trigger>
                         <Tooltip.Content>Add task list</Tooltip.Content>
                       </Tooltip>
                     </div>
-                    <div className="h-2" />
-                    <div className="flex flex-col h-full">
+                    <div className="flex min-h-16 flex-1 flex-col">
                       <TextArea
                         value={content}
                         onChange={(e) => _onEditContent(e.target.value)}
                         placeholder="Enter markdown text here..."
-                        className="h-full! font-mono"
+                        className="h-full min-h-16 w-full resize-none font-mono ring-inset"
+                        aria-label="Markdown content"
                         variant="secondary"
                         onMouseDown={handleInteractiveMouseDown}
                         ref={textareaRef}
@@ -398,7 +387,7 @@ function TextWidget({
                   </>
                 )}
                 {isPreview && (
-                  <div className="relative prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
+                  <div className="relative prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-surface-secondary prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
                     <Button
                       isIconOnly
                       size="sm" 
@@ -412,24 +401,14 @@ function TextWidget({
                   </div>
                 )}
               </Card.Content>
-              <Card.Footer>
-                <ButtonGroup fullWidth size="sm">
-                  <Button
-                    variant="tertiary"
-                    onPress={_onCancelChanges}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="tertiary"
-                    onPress={_onSaveContent}
-                    isPending={chartLoading}
-                    color="primary"
-                  >
-                    {chartLoading ? <ButtonSpinner /> : null}
-                    Save
-                  </Button>
-                </ButtonGroup>
+              <Card.Footer className="shrink-0 justify-end gap-2" onMouseDown={handleInteractiveMouseDown}>
+                <Button size="sm" variant="tertiary" onPress={_onCancelChanges}>
+                  Cancel
+                </Button>
+                <Button size="sm" variant="primary" onPress={_onSaveContent} isPending={chartLoading}>
+                  {chartLoading ? <ButtonSpinner /> : null}
+                  Save
+                </Button>
               </Card.Footer>
             </>
           )}
@@ -507,7 +486,7 @@ function TextWidget({
                 </div>
               )}
 
-              <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-content2 prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
+              <div className="prose prose-xs md:prose-sm dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs prose-a:text-accent prose-a:hover:text-accent-400 prose-blockquote:border-l-2 prose-blockquote:border-primary prose-blockquote:pl-2 prose-blockquote:italic prose-strong:font-bold prose-em:italic prose-pre:bg-surface-secondary prose-pre:text-foreground prose-pre:p-2 prose-pre:rounded-sm prose-img:rounded-sm prose-img:mx-auto max-w-none p-1 leading-tight [&>p]:mb-4 *:my-2">
                 {MemoizedMarkdown}
               </div>
             </Card.Content>

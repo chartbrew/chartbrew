@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../../../sourceExecution");
 const db = require("../../../../models/models");
 const drCacheController = require("../../../../controllers/DataRequestCacheController");
 const {
@@ -10,36 +11,7 @@ const DEFAULT_ROW_LIMIT = 1000;
 const MAX_ROW_LIMIT = 10000;
 const SQL_LIMIT_SOURCES = ["postgres", "mysql", "clickhouse"];
 
-const DANGEROUS_SQL_PATTERNS = [
-  /\bdrop\b/i,
-  /\bdelete\b/i,
-  /\bupdate\b/i,
-  /\binsert\b/i,
-  /\btruncate\b/i,
-  /\balter\b/i,
-  /\bcreate\b/i,
-  /\binto\b/i,
-  // Block the whole PostgreSQL filesystem-access family in one pattern:
-  // pg_read_file, pg_read_binary_file, pg_read_server_file(s), pg_stat_file,
-  // pg_ls_dir, pg_ls_logdir, pg_ls_waldir, pg_ls_tmpdir,
-  // pg_ls_archive_statusdir, pg_current_logfile, plus any future siblings.
-  // The optional leading and trailing double-quote also covers the
-  // quoted-identifier call form ("pg_read_file"(...)), which Postgres
-  // accepts and which the per-function \bpg_read_file\b patterns missed.
-  /(?:\b|")pg_(?:read|stat|ls|current_logfile)[a-z0-9_]*"?\s*\(/i,
-  /(?:\b|")lo_export"?\s*\(/i,
-  /(?:\b|")lo_import"?\s*\(/i,
-  /\bcopy\b[\s\S]*\bto\s+program\b/i,
-  /\binto\s+(out|dump)file\b/i,
-  /\bload_file\s*\(/i,
-  /\bload\s+data\b/i,
-  /\bgrant\b/i,
-  /\brevoke\b/i,
-  /\bexec(ute)?\b/i,
-  /\bcall\b/i,
-  /\bfile\s*\(/i,
-  /\burl\s*\(/i,
-];
+const { normalizeSqlQuery } = require("../../../../sources/shared/sql/readOnlyQuery");
 
 function getSafeRowLimit(rowLimit) {
   const parsedRowLimit = Number(rowLimit);
@@ -51,45 +23,12 @@ function getSafeRowLimit(rowLimit) {
   return Math.min(parsedRowLimit, MAX_ROW_LIMIT);
 }
 
-function normalizeSqlQuery(query) {
-  if (typeof query !== "string") {
-    throw new Error("query must be a string");
-  }
-
-  let normalizedQuery = query.trim();
-
-  if (!normalizedQuery) {
-    throw new Error("query is required");
-  }
-
-  normalizedQuery = normalizedQuery.replace(/;\s*$/, "").trim();
-
-  const upperQuery = normalizedQuery.toUpperCase();
-
-  if (!upperQuery.startsWith("SELECT") && !upperQuery.startsWith("WITH")) {
-    throw new Error("Only SELECT/WITH queries are allowed");
-  }
-
-  if (normalizedQuery.includes(";")) {
-    throw new Error("Multi-statement queries are not allowed");
-  }
-
-  if (/--|\/\*|\*\//.test(normalizedQuery)) {
-    throw new Error("SQL comments are not allowed in AI queries");
-  }
-
-  if (DANGEROUS_SQL_PATTERNS.some((pattern) => pattern.test(normalizedQuery))) {
-    throw new Error("Query contains blocked operations");
-  }
-
-  return normalizedQuery;
-}
 
 function hasLimitClause(query) {
   return /\blimit\b/i.test(query);
 }
 
-async function runQuery(payload) {
+async function runQuery(payload, options = {}) {
   const {
     connection_id, query, configuration = null, row_limit = DEFAULT_ROW_LIMIT, timeout_ms = 8000, team_id
   } = payload;
@@ -124,6 +63,23 @@ async function runQuery(payload) {
       if (!hasLimitClause(limitedQuery) && SQL_LIMIT_SOURCES.includes(source.type)) {
         limitedQuery = `${limitedQuery} LIMIT ${safeRowLimit}`;
       }
+    }
+
+    if (options.transient) {
+      let preview;
+      if (source.backend.exploreReadOnly) {
+        preview = await source.backend.exploreReadOnly({ connection, operation: "query", query: limitedQuery, limit: safeRowLimit });
+      } else if (source.backend.previewDataRequest) {
+        preview = await source.backend.previewDataRequest({ connection, dataRequest: { query: limitedQuery, configuration } });
+      } else if (source.backend.runChartQuery) {
+        preview = { rows: await source.backend.runChartQuery({ connection, query: limitedQuery }) };
+      } else {
+        throw new Error("This source cannot prepare a chart without a saved dataset. Select an existing dataset.");
+      }
+      const rows = preview.rows || preview.responseData?.data || [];
+      if (!Array.isArray(rows)) throw new Error("The source must return structured rows");
+      return { rows: rows.slice(0, safeRowLimit), rowCount: rows.length,
+        columns: rows.length ? Object.keys(rows[0]).map((name) => ({ name, type: typeof rows[0][name] })) : [] };
     }
 
     // Create a temporary Dataset and DataRequest for proper database relationships
@@ -193,8 +149,10 @@ async function runQuery(payload) {
       await drCacheController.remove(tempDataRequest.id);
     }
   } catch (error) {
-    throw new Error(`Query execution failed: ${error.message}`);
+    throw new Error(`Query execution failed: ${error.message}`, { cause: error });
   }
 }
 
-module.exports = runQuery;
+module.exports = (payload, options) => {
+  return withSourceExecutionContext({ activity: "ai", teamId: payload.team_id }, () => runQuery(payload, options));
+};

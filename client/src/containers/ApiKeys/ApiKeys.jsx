@@ -1,16 +1,25 @@
 import React, { useEffect, useRef, useState } from "react";
-import PropTypes from "prop-types";
 import {
-  Alert,
-  Button, EmptyState, Input, Modal, ProgressCircle, Table,
+  Alert, Checkbox,
+  Button, Chip, EmptyState, InputGroup, Label, Link, Modal, ProgressCircle, Radio, RadioGroup, Table, TextField, Tooltip,
 } from "@heroui/react";
 import { formatRelative } from "date-fns";
-import { LuClipboard, LuClipboardCheck, LuKeyRound, LuPlus, LuTrash } from "react-icons/lu";
+import {
+  LuChartNoAxesCombined, LuCheck, LuCopy, LuDatabase, LuKeyRound, LuPlus, LuRefreshCw, LuTrash, LuTriangleAlert,
+} from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 
+import CupLoader from "../../components/CupLoader";
 import { getApiKeys, createApiKey, deleteApiKey, selectTeam } from "../../slices/team";
+import { getProjects, selectProjects } from "../../slices/project";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
+import {
+  getApiKeyProjects,
+  getPermissionLabels,
+  getProjectAccessLabel,
+  isLegacyApiKey,
+} from "./apiKeyPresentation";
 
 function ApiKeys() {
   const [apiKeys, setApiKeys] = useState([]);
@@ -21,16 +30,26 @@ function ApiKeys() {
   const [createMode, setCreateMode] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [allProjects, setAllProjects] = useState(true);
+  const [selectedProjects, setSelectedProjects] = useState([]);
+  const [allowRefresh, setAllowRefresh] = useState(false);
+  const [allowPreviews, setAllowPreviews] = useState(false);
+  const [allowDatasets, setAllowDatasets] = useState(false);
+  const [allowDashboardFilters, setAllowDashboardFilters] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   const dispatch = useDispatch();
   const initRef = useRef(false);
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
+  const teamProjects = useSelector(selectProjects);
+  const projectsLoading = useSelector((state) => state.project.loading);
+  const projectsError = useSelector((state) => state.project.error);
 
   useEffect(() => {
-    if (team?.id && !initRef.current) {
-      initRef.current = true;
+    if (team?.id && initRef.current !== team.id) {
+      initRef.current = team.id;
       _fetchApiKeys();
     }
   }, [team]);
@@ -49,24 +68,63 @@ function ApiKeys() {
       .catch(() => setLoading(false));
   };
 
+  const projects = getApiKeyProjects(teamProjects, team.id);
+
   const _onCreateRequested = () => {
+    setNewKey("");
+    setAllProjects(true);
+    setSelectedProjects([]);
+    setAllowRefresh(false);
+    setAllowPreviews(false);
+    setAllowDatasets(false);
+    setAllowDashboardFilters(false);
+    setCreateError("");
     setCreateMode(true);
+  };
+
+  const _onCreateModeChange = (nextOpen) => {
+    setCreateMode(nextOpen);
+    if (!nextOpen) {
+      setCreateError("");
+    }
+  };
+
+  const _onProjectChange = (projectId, selected) => {
+    setSelectedProjects((currentProjects) => {
+      if (selected) return [...new Set([...currentProjects, projectId])];
+      return currentProjects.filter((id) => id !== projectId);
+    });
   };
 
   const _onCreateKey = () => {
     setCreateLoading(true);
-    dispatch(createApiKey({ team_id: team.id, keyName: newKey }))
+    setCreateError("");
+    dispatch(createApiKey({
+      team_id: team.id,
+      key: {
+        name: newKey,
+        scopes: ["data:read", ...(allowRefresh ? ["data:refresh"] : []),
+          ...(allowPreviews && allProjects ? ["charts:preview"] : []), ...(allowDatasets && allProjects ? ["datasets:write"] : []),
+          ...(allowDashboardFilters ? ["dashboard-filters:write"] : [])],
+        allProjects,
+        projectIds: allProjects ? [] : selectedProjects,
+      },
+    })).unwrap()
       .then((createdKey) => {
         setCreateLoading(false);
         setCreateMode(false);
         setNewKey("");
+        setTokenCopied(false);
         _fetchApiKeys();
 
         setTimeout(() => {
-          setCreatedKey(createdKey.payload);
+          setCreatedKey(createdKey);
         }, 500);
       })
-      .catch(() => setCreateLoading(false));
+      .catch((error) => {
+        setCreateError(error.message || "The API key could not be created.");
+        setCreateLoading(false);
+      });
   };
 
   const _onRemoveConfirmation = (key) => {
@@ -104,107 +162,206 @@ function ApiKeys() {
   }
 
   return (
-    <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
-      <div className="text-lg font-semibold font-tw">Developer settings</div>
-      <div className="text-sm text-gray-500">Manage your API keys and create new ones.</div>
-      <div className="h-4" />
-      {loading && (
-        <div className="flex justify-center">
-          <ProgressCircle aria-label="Loading keys">Loading keys...</ProgressCircle>
-        </div>
-      )}
-      <div>
-        <Button
-          onPress={_onCreateRequested}
-        >
-          Create a new API Key
-          <LuPlus />
-        </Button>
-      </div>
-      <div className="h-4" />
-
-      <Table className="shadow-none min-h-[200px]">
-        <Table.ScrollContainer>
-          <Table.Content
-            aria-label="API keys"
-            className="min-w-full even:[&_tbody>tr]:bg-content2/30"
+    <div className="flex flex-col gap-6">
+      <section aria-labelledby="api-automation-heading" className="rounded-3xl border border-divider bg-surface p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="api-automation-heading" className="text-lg font-medium">Build your next automation</h2>
+          <Link
+            href="https://docs.chartbrew.com/api-reference/introduction"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-foreground!"
           >
-            <Table.Header>
-              <Table.Column id="token" isRowHeader>
-                API Tokens list
-              </Table.Column>
-              <Table.Column id="created" className="text-end">
-                Date created
-              </Table.Column>
-              <Table.Column id="actions" className="w-12 text-end">
-                <span className="sr-only">Actions</span>
-              </Table.Column>
-            </Table.Header>
-
-            <Table.Body
-              renderEmptyState={() => (
-                <EmptyState className="flex h-full w-full min-h-[160px] flex-col items-center justify-center gap-2 text-center">
-                  <LuKeyRound className="size-6 text-muted" aria-hidden />
-                  <span className="text-sm text-muted">You don&apos;t have any API Keys yet</span>
-                </EmptyState>
-              )}
+            API reference
+            <Link.Icon aria-hidden />
+          </Link>
+        </div>
+        <ul className="mt-6 flex flex-col gap-5 md:flex-row md:gap-0">
+          <li className="flex-1 md:pr-6">
+            <LuDatabase className="mb-3 size-5 text-muted" aria-hidden />
+            <Link
+              href="https://docs.chartbrew.com/api-reference/guides/data-api#read-default-data"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-foreground!"
             >
-              {apiKeys.map((key) => (
-                <Table.Row key={key.id} id={String(key.id)}>
-                  <Table.Cell>
-                    {key.name}
-                  </Table.Cell>
-                  <Table.Cell className="text-end">
-                    {formatRelative(new Date(key.createdAt), new Date())}
-                  </Table.Cell>
-                  <Table.Cell className="text-end">
-                    <Button
-                      isIconOnly
-                      variant="danger-soft"
-                      onPress={() => _onRemoveConfirmation(key)}
-                      size="sm"
-                      aria-label={`Delete API key ${key.name}`}
-                    >
-                      <LuTrash />
-                    </Button>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Content>
-        </Table.ScrollContainer>
-      </Table>
+              Feed your reports
+              <Link.Icon className="text-muted" aria-hidden />
+            </Link>
+            <p className="mt-2 text-sm leading-relaxed text-muted">Read chart and dataset values for a daily summary.</p>
+          </li>
+          <li className="flex-1 border-t border-divider pt-5 md:border-t-0 md:border-l md:px-6 md:pt-0">
+            <LuRefreshCw className="mb-3 size-5 text-muted" aria-hidden />
+            <Link
+              href="https://docs.chartbrew.com/api-reference/guides/data-api#send-runtime-values"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-foreground!"
+            >
+              Get filtered results
+              <Link.Icon className="text-muted" aria-hidden />
+            </Link>
+            <p className="mt-2 text-sm leading-relaxed text-muted">Refresh data for a customer, region, or date range.</p>
+          </li>
+          <li className="flex-1 border-t border-divider pt-5 md:border-t-0 md:border-l md:pl-6 md:pt-0">
+            <LuChartNoAxesCombined className="mb-3 size-5 text-muted" aria-hidden />
+            <Link
+              href="https://docs.chartbrew.com/api-reference/guides/data-api#use-chart-rows"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-foreground!"
+            >
+              Build charts in your app
+              <Link.Icon className="text-muted" aria-hidden />
+            </Link>
+            <p className="mt-2 text-sm leading-relaxed text-muted">Use chart data to create your own visualizations.</p>
+          </li>
+        </ul>
+      </section>
+      <section aria-labelledby="api-keys-heading" className="rounded-3xl border border-divider bg-surface p-4">
+        {loading && (
+          <div className="flex justify-center">
+            <CupLoader label="Loading keys" />
+          </div>
+        )}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="api-keys-heading" className="text-lg font-medium">Your API keys</h2>
+          <Button
+            onPress={_onCreateRequested}
+          >
+            <LuPlus aria-hidden />
+            Create API key
+          </Button>
+        </div>
+
+        <Table className="shadow-none">
+          <Table.ScrollContainer>
+            <Table.Content
+              aria-label="API keys"
+              className="min-w-full even:[&_tbody>tr]:bg-surface-secondary/30"
+            >
+              <Table.Header>
+                <Table.Column id="token" isRowHeader>
+                  Name
+                </Table.Column>
+                <Table.Column id="created" className="text-end">
+                  Date created
+                </Table.Column>
+                <Table.Column id="access">
+                  Access
+                </Table.Column>
+                <Table.Column id="permissions">
+                  Permissions
+                </Table.Column>
+                <Table.Column id="actions" className="text-end">
+                  <span className="sr-only">Actions</span>
+                </Table.Column>
+              </Table.Header>
+
+              <Table.Body
+                renderEmptyState={() => (
+                  <EmptyState className="flex h-full w-full min-h-40 flex-col items-center justify-center gap-2 text-center">
+                    <LuKeyRound className="size-6 text-muted" aria-hidden />
+                    <span className="text-sm text-muted">You don&apos;t have any API Keys yet</span>
+                  </EmptyState>
+                )}
+              >
+                {apiKeys.map((key) => {
+                  const isLegacy = isLegacyApiKey(key);
+                  const permissionLabels = getPermissionLabels(key);
+
+                  return (
+                    <Table.Row key={key.id} id={String(key.id)}>
+                      <Table.Cell>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span>{key.name}</span>
+                          {isLegacy && (
+                            <Tooltip delay={0}>
+                              <Tooltip.Trigger>
+                                <Chip color="warning" size="sm" variant="soft">
+                                  <LuTriangleAlert size={14} aria-hidden />
+                                  Legacy key
+                                </Chip>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content>
+                                This key still works with existing integrations. Create a new key to use the Data API.
+                              </Tooltip.Content>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="text-end">
+                        {formatRelative(new Date(key.createdAt), new Date())}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Chip size="sm" variant="secondary">
+                          {getProjectAccessLabel(key, projects)}
+                        </Chip>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className="flex flex-wrap gap-1">
+                          {permissionLabels.length > 0 ? permissionLabels.map((label) => (
+                            <Chip key={label} size="sm" variant="secondary">
+                              {label}
+                            </Chip>
+                          )) : (
+                            <Chip size="sm" variant="secondary">
+                              Not available
+                            </Chip>
+                          )}
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="text-end">
+                        <div className="flex items-center justify-end">
+                          <Button
+                            isIconOnly
+                            variant="danger-soft"
+                            onPress={() => _onRemoveConfirmation(key)}
+                            size="sm"
+                            aria-label={`Delete API key ${key.name}`}
+                          >
+                            <LuTrash />
+                          </Button>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })}
+              </Table.Body>
+            </Table.Content>
+          </Table.ScrollContainer>
+        </Table>
+      </section>
 
       <Modal>
         <Modal.Backdrop isOpen={!!createdKey.id} onOpenChange={(nextOpen) => { if (!nextOpen) setCreatedKey({}); }}>
           <Modal.Container>
             <Modal.Dialog className="sm:max-w-xl">
-              <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
-                  Your new API Key
-                </Modal.Heading>
+              <Modal.CloseTrigger />
+              <Modal.Header className="flex flex-col items-start gap-1 pr-12">
+                <Modal.Heading>Your new API Key</Modal.Heading>
+                <p className="text-sm font-normal text-foreground-500">
+                  Copy it now. This is the only time Chartbrew shows the key.
+                </p>
               </Modal.Header>
-              <Modal.Body className="p-6">
-                <div className="text-success">{"Congrats! your new API key has been created."}</div>
-                <div className="text-gray-500">{"This is the only time we show you the code, so please copy it before closing this window."}</div>
-                <div className="h-1" />
-                <div>
-                  <Input
-                    label="Your new API Key"
-                    value={createdKey.token}
-                    variant="secondary"
-                    fullWidth
-                  />
-                </div>
-                <div>
-                  <Button
-                    onPress={_onCopyToken}
-                    variant={tokenCopied ? "secondary" : "primary"}
-                  >
-                    {tokenCopied ? <LuClipboardCheck /> : <LuClipboard />}
-                    {tokenCopied ? "Copied!" : "Copy to clipboard"}
-                  </Button>
-                </div>
+              <Modal.Body className="flex flex-col gap-5">
+                <TextField className="w-full" name="created-api-key">
+                  <Label>API key</Label>
+                  <InputGroup variant="secondary" fullWidth>
+                    <InputGroup.Input readOnly value={createdKey.token || ""} />
+                    <InputGroup.Suffix className="pr-0">
+                      <Button
+                        aria-label={tokenCopied ? "API key copied" : "Copy API key"}
+                        isIconOnly
+                        onPress={_onCopyToken}
+                        size="sm"
+                        variant={tokenCopied ? "primary" : "tertiary"}
+                      >
+                        {tokenCopied ? <LuCheck /> : <LuCopy />}
+                      </Button>
+                    </InputGroup.Suffix>
+                  </InputGroup>
+                </TextField>
               </Modal.Body>
               <Modal.Footer>
                 <Button slot="close" variant="secondary">
@@ -217,36 +374,148 @@ function ApiKeys() {
       </Modal>
 
       <Modal>
-        <Modal.Backdrop isOpen={createMode} onOpenChange={(nextOpen) => { if (!nextOpen) setCreateMode(false); }}>
+        <Modal.Backdrop isOpen={createMode} onOpenChange={_onCreateModeChange}>
           <Modal.Container>
             <Modal.Dialog className="sm:max-w-xl">
-              <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
-                  Create a new API Key
-                </Modal.Heading>
+              <Modal.CloseTrigger />
+              <Modal.Header className="flex flex-col items-start gap-1 pr-12">
+                <Modal.Heading>Create a new API Key</Modal.Heading>
               </Modal.Header>
-              <Modal.Body className="p-2">
-                <div className="text-gray-500">{"The API key will give the same access to your team as your current account. Please make sure you do not misplace the key."}</div>
-                <div className="h-1" />
-                <div>
-                  <Input
-                    label="Enter a name to remember it later"
-                    value={newKey}
-                    onChange={(e) => setNewKey(e.target.value)}
-                    placeholder="Enter a name here"
+              <Modal.Body className="flex flex-col gap-5">
+                {createError && (
+                  <Alert status="danger">
+                    <Alert.Indicator />
+                    <Alert.Content>
+                      <Alert.Title>{createError}</Alert.Title>
+                    </Alert.Content>
+                  </Alert>
+                )}
+                <TextField className="w-full" name="api-key-name">
+                  <Label>Key name</Label>
+                  <InputGroup variant="secondary" fullWidth>
+                    <InputGroup.Input
+                      autoFocus
+                      onChange={(e) => setNewKey(e.target.value)}
+                      placeholder="Enter a descriptive name for your key"
+                      value={newKey}
+                    />
+                  </InputGroup>
+                </TextField>
+                <RadioGroup
+                  name="api-key-project-access"
+                  onChange={(value) => {
+                    const nextAll = value === "all";
+                    setAllProjects(nextAll);
+                    if (nextAll) setSelectedProjects([]);
+                  }}
+                  value={allProjects ? "all" : "selected"}
+                  variant="secondary"
+                >
+                  <Label>Project access</Label>
+                  <Radio value="all">
+                    <Radio.Content>
+                      <Radio.Control>
+                        <Radio.Indicator />
+                      </Radio.Control>
+                      All projects in this team
+                    </Radio.Content>
+                  </Radio>
+                  <Radio value="selected">
+                    <Radio.Content>
+                      <Radio.Control>
+                        <Radio.Indicator />
+                      </Radio.Control>
+                      Selected projects
+                    </Radio.Content>
+                  </Radio>
+                </RadioGroup>
+                {!allProjects && (
+                  <div role="group" aria-label="Selected projects" className="flex max-h-60 shrink-0 flex-col gap-2 overflow-y-auto">
+                    {projects.map((project) => (
+                      <Checkbox
+                        key={project.id}
+                        isSelected={selectedProjects.includes(project.id)}
+                        onChange={(selected) => _onProjectChange(project.id, selected)}
+                        variant="secondary"
+                      >
+                        <Checkbox.Content>
+                          <Checkbox.Control className="size-4 shrink-0">
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          {project.name}
+                        </Checkbox.Content>
+                      </Checkbox>
+                    ))}
+                    {projects.length === 0 && projectsLoading && (
+                      <ProgressCircle aria-label="Loading projects" />
+                    )}
+                    {projects.length === 0 && !projectsLoading && projectsError && (
+                      <div className="flex flex-col items-start gap-2">
+                        <p className="text-sm text-muted">Projects could not be loaded.</p>
+                        <Button size="sm" variant="secondary" onPress={() => dispatch(getProjects({ team_id: team.id }))}>
+                          Retry
+                        </Button>
+                      </div>
+                    )}
+                    {projects.length === 0 && !projectsLoading && !projectsError && (
+                      <p className="text-sm text-muted">No projects available. Select all projects or create a project first.</p>
+                    )}
+                  </div>
+                )}
+                <div className="flex flex-col gap-3">
+                  <Label>Permissions</Label>
+                  <Checkbox id="api-key-read-data" isDisabled isSelected variant="secondary">
+                    <Checkbox.Content>
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      Read chart and dataset data
+                    </Checkbox.Content>
+                  </Checkbox>
+                  <Checkbox
+                    id="api-key-refresh-data"
+                    isSelected={allowRefresh}
+                    onChange={setAllowRefresh}
                     variant="secondary"
-                    fullWidth
-                  />
+                  >
+                    <Checkbox.Content>
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      Refresh data from sources
+                    </Checkbox.Content>
+                  </Checkbox>
+                  <Checkbox isSelected={allowPreviews && allProjects} isDisabled={!allProjects} onChange={setAllowPreviews} variant="secondary">
+                    <Checkbox.Content>
+                      <Checkbox.Control className="size-4 shrink-0"><Checkbox.Indicator /></Checkbox.Control>
+                      Create chart previews
+                    </Checkbox.Content>
+                  </Checkbox>
+                  <Checkbox isSelected={allowDatasets && allProjects} isDisabled={!allProjects} onChange={setAllowDatasets} variant="secondary">
+                    <Checkbox.Content>
+                      <Checkbox.Control className="size-4 shrink-0"><Checkbox.Indicator /></Checkbox.Control>
+                      Create datasets
+                    </Checkbox.Content>
+                  </Checkbox>
+                  {!allProjects && <p className="text-sm text-muted">Chart previews and dataset creation require access to all projects.</p>}
+                  <Checkbox isSelected={allowDashboardFilters} onChange={setAllowDashboardFilters} variant="secondary">
+                    <Checkbox.Content>
+                      <Checkbox.Control className="size-4 shrink-0">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      Manage dashboard filters
+                    </Checkbox.Content>
+                  </Checkbox>
                 </div>
               </Modal.Body>
               <Modal.Footer>
                 <Button slot="close" variant="secondary">
-                  Close
+                  Cancel
                 </Button>
                 <Button
-                  onPress={_onCreateKey}
-                  isDisabled={!newKey}
+                  isDisabled={!newKey.trim() || (!allProjects && selectedProjects.length === 0)}
                   isPending={createLoading}
+                  onPress={_onCreateKey}
                   variant="primary"
                 >
                   Create the key
@@ -258,25 +527,26 @@ function ApiKeys() {
       </Modal>
 
       <Modal>
-        <Modal.Backdrop variant="blur" isOpen={!!confirmDelete} onOpenChange={(nextOpen) => { if (!nextOpen) setConfirmDelete(false); }}>
+        <Modal.Backdrop isOpen={!!confirmDelete} onOpenChange={(nextOpen) => { if (!nextOpen) setConfirmDelete(false); }} variant="blur">
           <Modal.Container>
             <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
+              <Modal.CloseTrigger />
+              <Modal.Header className="pr-12">
+                <Modal.Heading>
                   Are you sure you want to delete the key?
                 </Modal.Heading>
               </Modal.Header>
               <Modal.Body>
-                <div className="text-gray-500">{"This key will lose access to Chartbrew. This action cannot be undone."}</div>
+                <p className="text-foreground-500">This key will lose access to Chartbrew. This action cannot be undone.</p>
               </Modal.Body>
               <Modal.Footer>
                 <Button slot="close" variant="secondary">
-                  Go back
+                  Cancel
                 </Button>
                 <Button
-                  variant="danger"
-                  onPress={_onRemoveKey}
                   isPending={createLoading}
+                  onPress={_onRemoveKey}
+                  variant="danger"
                 >
                   Remove key permanently
                 </Button>
@@ -288,9 +558,5 @@ function ApiKeys() {
     </div>
   );
 }
-
-ApiKeys.propTypes = {
-  teamId: PropTypes.number.isRequired,
-};
 
 export default ApiKeys;

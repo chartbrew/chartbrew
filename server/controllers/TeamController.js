@@ -1,22 +1,50 @@
+const { normalizeRoleAccess } = require("../modules/teamRolePolicy");
+const { teamRoles } = require("../../shared/roles.json");
 const { v4: uuidv4 } = require("uuid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
-const { nanoid } = require("nanoid");
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const runtimeCache = require("../modules/runtimeCache");
+const createOwnedTeam = require("../modules/teamOnboarding/createOwnedTeam");
+const {
+  applyTeamBrandDefaultsToExistingProjects,
+} = require("../modules/teamOnboarding/projectBrandDefaults");
+const {
+  sanitizeBusinessProfile,
+  sanitizeTeamName,
+  sanitizeUseCases,
+} = require("../modules/teamOnboarding/businessProfile");
+const {
+  DATA_API_SCOPES,
+  normalizeProjectIds,
+  normalizeScopes,
+  validateKeyProjectIds,
+} = require("../modules/dataApiAccess");
 const UserController = require("./UserController");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const TEAM_ROLES = new Set([
   "teamOwner",
   "teamAdmin",
+  "teamEditor",
+  "teamViewer",
   "projectAdmin",
   "projectEditor",
   "projectViewer",
 ]);
 const TEAM_ROLE_UPDATE_FIELDS = new Set(["role", "projects", "canExport"]);
+const TEAM_UPDATE_FIELDS = new Set([
+  "name",
+  "aiEnabled",
+  "aiSuggestionsEnabled",
+  "showBranding",
+  "useCases",
+  "allowReportRefresh",
+  "allowReportExport",
+]);
 
 class TeamController {
   constructor() {
@@ -35,39 +63,20 @@ class TeamController {
 
   // create a new team
   async createTeam(data, userId) {
-    const team = await db.Team.create({ "name": data.name });
-    await db.TeamRole.create({
-      team_id: team.id,
-      user_id: userId,
-      role: "teamOwner",
-    });
-
-    // create an empty ghost project for the team
-    await db.Project.create({
-      team_id: team.id,
-      name: "Ghost Project",
-      brewName: `ghost-project-${nanoid(8)}`,
-      dashboardTitle: "Ghost Project",
-      ghost: true,
-      public: false,
-    });
-
-    // create a default dashboard for the team
-    await db.Project.create({
-      team_id: team.id,
-      name: "First Dashboard",
-      brewName: `first-dashboard-${nanoid(8)}`,
-      description: `First dashboard for ${team.name}`,
-      public: false,
-    });
-
-    // get the team with the TeamRoles
-    const teamWithRoles = await db.Team.findOne({
-      where: { id: team.id },
-      include: [{ model: db.TeamRole }],
-    });
-
-    return teamWithRoles;
+    const transaction = await db.sequelize.transaction();
+    try {
+      const team = await createOwnedTeam({
+        name: data?.name,
+        useCases: data?.useCases,
+        userId,
+        transaction,
+      });
+      await transaction.commit();
+      return this.findById(team.id);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async deleteTeam(teamId, userId) {
@@ -83,6 +92,19 @@ class TeamController {
     const transaction = await db.sequelize.transaction();
 
     try {
+      const conversations = await db.AiConversation.findAll({
+        attributes: ["id"],
+        where: { team_id: teamId },
+        transaction,
+      });
+      await db.AiMessage.destroy({
+        where: { conversation_id: { [Op.in]: conversations.map((conversation) => conversation.id) } },
+        transaction,
+      });
+      await db.AiUsage.destroy({ where: { team_id: teamId }, transaction });
+      await db.SourceExecution.destroy({ where: { teamId }, transaction });
+      await db.AiConversation.destroy({ where: { team_id: teamId }, transaction });
+
       // Delete all related models with team_id
       await db.PinnedDashboard.destroy({ where: { team_id: teamId }, transaction });
       await db.SavedQuery.destroy({ where: { team_id: teamId }, transaction });
@@ -98,6 +120,7 @@ class TeamController {
       // Finally delete the team (this will cascade delete TeamRole and TeamInvitation)
       await db.Team.destroy({ where: { id: teamId }, transaction });
 
+      await runtimeCache.clearPendingAiActions({ teamId });
       // Commit the transaction
       await transaction.commit();
 
@@ -146,17 +169,14 @@ class TeamController {
       return Promise.reject(new Error("Invalid invitation role"));
     }
 
-    const teamRoleObj = { "team_id": teamId, "user_id": userId, "role": roleName };
-    if (projects) teamRoleObj.projects = projects;
-    if (canExport) teamRoleObj.canExport = canExport;
+    const teamRoleObj = normalizeRoleAccess(roleName, { team_id: teamId, user_id: userId, role: roleName, projects: projects || [], canExport: canExport === true });
 
     let gRole;
     return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId } })
       .then((teamRole) => {
         if (teamRole) {
           gRole = teamRole;
-          // don't update if the role is the owner or teamAdmin
-          if (teamRole.role === "teamOwner" || teamRole.role === "teamAdmin") return teamRole;
+          if (teamRoles.includes(teamRole.role)) return teamRole;
 
           return db.TeamRole.update(teamRoleObj, { where: { id: teamRole.id } });
         }
@@ -165,7 +185,7 @@ class TeamController {
       })
       .then((role) => {
         if (!gRole) gRole = role;
-        return db.TeamRole.findByPk(role.id);
+        return db.TeamRole.findByPk(gRole.id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -290,7 +310,7 @@ class TeamController {
     );
 
     return this.getTeamRole(teamId, userId)
-      .then((currentTeamRole) => {
+      .then(async (currentTeamRole) => {
         if (!currentTeamRole) {
           throw new Error(404);
         }
@@ -304,7 +324,24 @@ class TeamController {
           }
         }
 
-        return db.TeamRole.update(updateData, { where: { "team_id": teamId, "user_id": userId } });
+        const nextRole = updateData.role || currentTeamRole.role;
+        if (teamRoles.includes(currentTeamRole.role) && !teamRoles.includes(nextRole)) {
+          if (!Array.isArray(updateData.projects) || !updateData.projects.length) {
+            throw new Error("Select dashboards before changing to a client role.");
+          }
+          if (updateData.canExport === undefined) updateData.canExport = false;
+        }
+        if (!teamRoles.includes(nextRole) && updateData.projects !== undefined) {
+          const ids = updateData.projects;
+          if (!Array.isArray(ids) || ids.some((id) => !Number.isInteger(id) || id <= 0)
+            || new Set(ids).size !== ids.length
+            || await db.Project.count({ where: { id: ids, team_id: teamId, ghost: false } }) !== ids.length) {
+            throw new Error("Select valid dashboards from this team.");
+          }
+        }
+        return db.TeamRole.update(normalizeRoleAccess(nextRole, updateData), {
+          where: { team_id: teamId, user_id: userId },
+        });
       })
       .then(() => {
         return this.getTeamRole(teamId, userId);
@@ -320,8 +357,9 @@ class TeamController {
   deleteTeamMember(id) {
     let teamId;
     return db.TeamRole.findByPk(id)
-      .then((role) => {
+      .then(async (role) => {
         teamId = role.team_id;
+        await db.AiHomeState.destroy({ where: { team_id: role.team_id, user_id: role.user_id } });
         return db.TeamRole.destroy({ where: { id } });
       })
       .then(() => {
@@ -358,6 +396,10 @@ class TeamController {
       include: [
         { model: db.TeamRole },
         {
+          model: db.TeamBusinessProfile,
+          attributes: { exclude: ["logoData"] },
+        },
+        {
           model: db.Project,
           include: [{ model: db.Chart, attributes: ["id"] }],
         }
@@ -373,7 +415,15 @@ class TeamController {
   }
 
   update(id, data) {
-    return db.Team.update(data, { where: { "id": id } })
+    if (data?.aiSuggestionsEnabled !== undefined && typeof data.aiSuggestionsEnabled !== "boolean") {
+      return Promise.reject(new Error("Choose a valid suggestions setting."));
+    }
+    const updateData = Object.fromEntries(
+      Object.entries(data || {}).filter(([field]) => TEAM_UPDATE_FIELDS.has(field))
+    );
+    if (updateData.name !== undefined) updateData.name = sanitizeTeamName(updateData.name);
+    if (updateData.useCases !== undefined) updateData.useCases = sanitizeUseCases(updateData.useCases);
+    return db.Team.update(updateData, { where: { "id": id } })
       .then(() => {
         return this.findById(id);
       })
@@ -395,6 +445,10 @@ class TeamController {
           include: [
             { model: db.TeamRole },
             {
+              model: db.TeamBusinessProfile,
+              attributes: { exclude: ["logoData"] },
+            },
+            {
               model: db.Project,
               include: [
                 { model: db.Chart, attributes: ["id"] },
@@ -409,7 +463,7 @@ class TeamController {
         const newTeams = teams.map((team) => {
           const newTeam = team;
           const teamRole = team.TeamRoles.find((role) => role.user_id === parseInt(userId, 10));
-          if (teamRole.role !== "teamOwner" && teamRole.role !== "teamAdmin") {
+          if (!teamRoles.includes(teamRole.role)) {
             const allowedProjects = [];
             let projectsRole = [];
             projectsRole = teamRole.projects || [];
@@ -433,6 +487,83 @@ class TeamController {
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
+  }
+
+  async saveOnboarding(teamId, userId, data = {}) {
+    const teamRole = await this.getTeamRole(teamId, userId);
+    if (!teamRole || teamRole.role !== "teamOwner") throw new Error(401);
+    const transaction = await db.sequelize.transaction();
+    try {
+      const teamUpdate = {};
+      if (data.name !== undefined) teamUpdate.name = sanitizeTeamName(data.name);
+      if (data.useCases !== undefined) teamUpdate.useCases = sanitizeUseCases(data.useCases);
+      for (const field of ["aiEnabled", "aiSuggestionsEnabled", "showBranding"]) {
+        if (data[field] !== undefined) {
+          if (typeof data[field] !== "boolean") throw new Error("Choose a valid setting.");
+          teamUpdate[field] = data[field];
+        }
+      }
+      if (data.timezone !== undefined) {
+        try {
+          if (typeof data.timezone !== "string" || !data.timezone.trim()) throw new Error();
+          new Intl.DateTimeFormat("en", { timeZone: data.timezone });
+        } catch (error) {
+          throw new Error("Choose a valid timezone.");
+        }
+        const project = await db.Project.findOne({
+          where: { team_id: teamId, ghost: false },
+          order: [["id", "ASC"]],
+          transaction,
+        });
+        if (project) await project.update({ timezone: data.timezone }, { transaction });
+      }
+      if (data.complete === true) teamUpdate.onboardingCompletedAt = new Date();
+      if (Object.keys(teamUpdate).length) {
+        await db.Team.update(teamUpdate, { where: { id: teamId }, transaction });
+      }
+      if (data.businessProfile !== undefined) {
+        const profile = sanitizeBusinessProfile(data.businessProfile, {
+          includeLogo: data.businessProfile.logo !== undefined,
+        });
+        await db.TeamBusinessProfile.upsert({
+          team_id: parseInt(teamId, 10),
+          ...profile,
+        }, { transaction });
+        await applyTeamBrandDefaultsToExistingProjects(teamId, { transaction });
+      }
+      await transaction.commit();
+      return this.findById(teamId);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async updateBusinessProfile(teamId, userId, data = {}) {
+    const teamRole = await this.getTeamRole(teamId, userId);
+    if (!teamRole || !["teamOwner", "teamAdmin"].includes(teamRole.role)) throw new Error(401);
+    const profileInput = data.businessProfile || data;
+    const sanitized = sanitizeBusinessProfile(profileInput, {
+      includeLogo: profileInput.logo !== undefined,
+    });
+    await db.TeamBusinessProfile.upsert({
+      team_id: parseInt(teamId, 10),
+      ...sanitized,
+    });
+    await applyTeamBrandDefaultsToExistingProjects(teamId);
+    return db.TeamBusinessProfile.findOne({
+      where: { team_id: teamId },
+      attributes: { exclude: ["logoData"] },
+    });
+  }
+
+  async getBusinessProfileLogo(teamId, userId) {
+    const teamRole = await this.getTeamRole(teamId, userId);
+    if (!teamRole) throw new Error(401);
+    return db.TeamBusinessProfile.findOne({
+      where: { team_id: teamId },
+      attributes: ["logoData", "logoMimeType", "updatedAt"],
+    });
   }
 
   saveTeamInvite(teamId, data, userId) {
@@ -498,31 +629,112 @@ class TeamController {
 
   async createApiKey(teamId, userData, body) {
     try {
-      const token = jwt.sign({
+      const name = typeof body.name === "string" ? body.name.trim() : "";
+      if (!name) throw new Error("A key name is required.");
+
+      const requestedFields = Object.keys(body);
+      const isDataApiKey = requestedFields.some((field) => field !== "name");
+      const allowedFields = new Set(["name", "scopes", "allProjects", "projectIds"]);
+      if (requestedFields.some((field) => !allowedFields.has(field))) {
+        throw new Error("The key settings are not valid.");
+      }
+
+      const apiKeyId = uuidv4();
+      const claims = {
         id: userData.id,
         email: userData.email,
-      }, settings.encryptionKey, { expiresIn: "9999 years" });
+      };
+      const createValues = {
+        id: apiKeyId,
+        name,
+        team_id: Number(teamId),
+      };
 
-      return await db.Apikey.create({
-        name: body.name,
-        team_id: teamId,
+      if (isDataApiKey) {
+        if (!Array.isArray(body.scopes) || body.scopes.some((scope) => !DATA_API_SCOPES.has(scope))) {
+          throw new Error("The key permissions are not valid.");
+        }
+
+        const scopes = normalizeScopes(body.scopes);
+        if (!scopes.includes("data:read")) {
+          throw new Error("Read access is required.");
+        }
+        if (typeof body.allProjects !== "boolean") {
+          throw new Error("Select the projects that this key can access.");
+        }
+
+        const projectIds = normalizeProjectIds(body.projectIds);
+        if (!body.allProjects && projectIds.length === 0) {
+          throw new Error("Select at least one project.");
+        }
+        if (!Array.isArray(body.projectIds) || !await validateKeyProjectIds(db, Number(teamId), body.projectIds)) {
+          throw new Error("The selected projects are not valid.");
+        }
+
+        Object.assign(claims, {
+          apiKeyId,
+          teamId: Number(teamId),
+          tokenType: "api_key",
+        });
+        Object.assign(createValues, {
+          user_id: userData.id,
+          scopes,
+          project_ids: body.allProjects ? [] : projectIds,
+          all_projects: body.allProjects,
+        });
+      }
+
+      const token = jwt.sign(claims, settings.encryptionKey, { expiresIn: "9999 years" });
+      createValues.token = token;
+
+      const apiKey = await db.Apikey.create(createValues);
+
+      return {
+        id: apiKey.id,
+        name: apiKey.name,
         token,
-      });
+        createdAt: apiKey.createdAt,
+        lastUsedAt: apiKey.last_used_at,
+        dataApiAccess: isDataApiKey ? "ready" : "unavailable",
+        permissions: isDataApiKey ? apiKey.scopes : [],
+        projectAccess: isDataApiKey ? {
+          allProjects: apiKey.all_projects,
+          projectIds: apiKey.project_ids,
+        } : null,
+      };
     } catch (e) {
       return Promise.reject(e);
     }
   }
 
   getApiKeys(teamId) {
-    return db.Apikey.findAll({ where: { team_id: teamId } })
+    return db.Apikey.findAll({
+      attributes: [
+        "id", "name", "user_id", "scopes", "project_ids", "all_projects", "last_used_at",
+        "createdAt",
+      ],
+      where: { team_id: teamId },
+    })
       .then((apiKeys) => {
         if (!apiKeys || apiKeys.length < 1) return [];
 
-        return apiKeys.map((key) => ({
-          id: key.id,
-          name: key.name,
-          createdAt: key.createdAt,
-        }));
+        return apiKeys.map((key) => {
+          const permissions = normalizeScopes(key.scopes);
+          const dataApiReady = Boolean(key.user_id) && permissions.includes("data:read");
+
+          return {
+            id: key.id,
+            name: key.name,
+            createdAt: key.createdAt,
+            lastUsedAt: key.last_used_at,
+            dataApiAccess: dataApiReady ? "ready" : "unavailable",
+            permissions: dataApiReady ? permissions : [],
+            projectAccess: dataApiReady ? {
+              allProjects: Boolean(key.all_projects),
+              projectIds: normalizeProjectIds(key.project_ids),
+            } : null,
+          };
+        });
       })
       .catch((err) => {
         return Promise.reject(err);

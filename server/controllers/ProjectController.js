@@ -1,3 +1,5 @@
+const { teamRoles } = require("../../shared/roles.json");
+const { getReportOrder } = require("../../shared/dashboard/layout.mjs");
 const { cloneDeep } = require("lodash");
 const { validate: validateUuid, version: uuidVersion } = require("uuid");
 
@@ -5,8 +7,10 @@ const db = require("../models/models");
 const TeamController = require("./TeamController");
 const templateModels = require("../templates");
 const { snapDashboard } = require("../modules/snapshots");
+const runtimeCache = require("../modules/runtimeCache");
 const { normalizeProjectScheduleTimezones } = require("../modules/projectSnapshotTimezone");
 const { hashProjectPassword, verifyProjectPassword } = require("../modules/projectPassword");
+const { applyTeamBrandDefaults } = require("../modules/teamOnboarding/projectBrandDefaults");
 const {
   signLegacyShareToken,
   signShareToken,
@@ -14,10 +18,13 @@ const {
   verifyShareToken,
 } = require("../modules/shareToken");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const PROJECT_UPDATE_FIELDS = new Set([
   "name",
+  "sidebarIcon",
+  "sidebarColor",
+  "sidebarDisplay",
   "brewName",
   "dashboardTitle",
   "description",
@@ -44,6 +51,41 @@ class ProjectController {
     this.teamController = new TeamController();
   }
 
+  async hydrateProjectCharts(project, options = {}) {
+    if (!project?.Charts?.length) return project;
+    const order = getReportOrder(project.Charts, project.layoutOrder);
+    project.Charts.sort((a, b) => order.indexOf(String(a.id)) - order.indexOf(String(b.id)));
+    const ChartController = require("./ChartController"); // eslint-disable-line
+    const chartController = new ChartController();
+    const charts = await chartController.hydratePreparedCharts(project.Charts, {
+      refresh: options.refreshPreparedData === true,
+      timezone: project.timezone,
+    });
+    const hydratedCharts = project.Charts.map((chart, index) => {
+      const hydrated = charts[index];
+      if (!chart?.setDataValue || !hydrated) return hydrated || chart;
+      ["chartData", "chartDataUpdated", "preparedData"].forEach((field) => {
+        delete chart.dataValues[field];
+      });
+      [
+        "dateFormat",
+        "isTimeseries",
+        "preparedDataUpdatedAt",
+        "render",
+      ].forEach((field) => {
+        const value = hydrated[field] ?? hydrated.dataValues?.[field];
+        if (value !== undefined) {
+          chart.setDataValue(field, value);
+          if (chart[field] === undefined) chart[field] = value;
+        }
+      });
+      return chart;
+    });
+    project.setDataValue("Charts", hydratedCharts);
+    project.Charts = hydratedCharts;
+    return project;
+  }
+
   findAll() {
     return db.Project.findAll()
       .then((projects) => {
@@ -54,7 +96,7 @@ class ProjectController {
       });
   }
 
-  findById(id) {
+  findById(id, options = {}) {
     return db.Project.findOne({
       where: { id },
       order: [
@@ -66,6 +108,7 @@ class ProjectController {
       include: [
         {
           model: db.Chart,
+          ...(options.includeDrafts === false ? { where: { draft: false }, required: false } : {}),
           include: [{
             model: db.ChartDatasetConfig, include: [{ model: db.Dataset }]
           }, {
@@ -87,16 +130,23 @@ class ProjectController {
         }
       ],
     })
+      .then((project) => this.hydrateProjectCharts(project, options))
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
   }
 
-  create(userId, data, options = {}) {
+  async create(userId, data, options = {}) {
     let newProject = {};
     const { transaction } = options;
+    const projectData = await applyTeamBrandDefaults(data, { transaction });
+    projectData.reportAppearance = null;
+    projectData.reportAppearanceRevision = 0;
+    projectData.layoutCustom = ["lg"];
+    projectData.layoutOrder = [];
+    projectData.layoutRevision = 0;
 
-    return db.Project.create(data, { transaction })
+    return db.Project.create(projectData, { transaction })
       .then((project) => {
         newProject = project;
         return this.updateProjectRole(project.id, userId, "teamOwner", options);
@@ -111,10 +161,12 @@ class ProjectController {
       })
       .then(() => {
         // now update the projects access in TeamRole
-        return this.teamController.addProjectAccess(data.team_id, userId, newProject.id, options);
+        return this.teamController.addProjectAccess(projectData.team_id, userId, newProject.id, options);
       })
       .then(() => {
-        return this.teamController.addProjectAccessToOwner(data.team_id, newProject.id, options);
+        return this.teamController.addProjectAccessToOwner(
+          projectData.team_id, newProject.id, options
+        );
       })
       .then(() => {
         if (transaction) {
@@ -151,22 +203,19 @@ class ProjectController {
       });
   }
 
-  remove(id) {
-    // remove the project and any associated items alongs with that
-    return db.Variable.destroy({ where: { project_id: id } })
-      .then(() => {
-        return db.Project.destroy({ where: { id } });
-      })
-      .then(() => {
-        // make sure all charts from this project are deleted as well
-        return db.Chart.destroy({ where: { project_id: id } });
-      })
-      .then(() => {
-        return { removed: true };
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
+  async remove(id) {
+    const project = await db.Project.findByPk(id, { attributes: ["id", "team_id"] });
+    if (project) {
+      await runtimeCache.clearPendingAiActions({
+        projectId: project.id,
+        teamId: project.team_id,
       });
+    }
+    await db.Variable.destroy({ where: { project_id: id } });
+    await db.Project.destroy({ where: { id } });
+    // Make sure all charts from this project are deleted as well.
+    await db.Chart.destroy({ where: { project_id: id } });
+    return { removed: true };
   }
 
   updateProjectRole(projectId, userId, role, options = {}) {
@@ -212,14 +261,15 @@ class ProjectController {
       });
   }
 
-  getPublicDashboard(brewName) {
+  getPublicDashboard(brewName, options = {}) {
     return db.Project.findOne({
       where: { brewName },
       include: [
         {
           model: db.Chart,
           attributes: { exclude: ["query"] },
-          where: { onReport: true },
+          where: { onReport: true, draft: false },
+          required: false,
           include: [{
             model: db.ChartDatasetConfig,
             order: [["order", "ASC"]],
@@ -247,9 +297,9 @@ class ProjectController {
         [db.DashboardFilter, "createdAt", "ASC"],
       ],
     })
-      .then((dashboard) => {
+      .then(async (dashboard) => {
         if (!dashboard) return new Promise((resolve, reject) => reject(new Error(404)));
-        return dashboard;
+        return this.hydrateProjectCharts(dashboard, options);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -373,7 +423,7 @@ class ProjectController {
     return snapDashboard(project, options);
   }
 
-  async createDashboardFilter(projectId, data) {
+  async createDashboardFilter(projectId, data, options = {}) {
     if (data.id && (!validateUuid(data.id) || uuidVersion(data.id) !== 4)) {
       throw new Error("Dashboard filter id must be a UUID v4");
     }
@@ -384,6 +434,7 @@ class ProjectController {
     const normalizedProjectId = parseInt(projectId, 10);
     const currentPosition = await db.DashboardFilter.max("position", {
       where: { project_id: normalizedProjectId },
+      ...options,
     });
     const numericPosition = currentPosition === null ? null : Number(currentPosition);
 
@@ -391,12 +442,13 @@ class ProjectController {
       ...newFields,
       position: numericPosition !== null && Number.isFinite(numericPosition) ? numericPosition + 1 : 0,
       project_id: normalizedProjectId,
-    });
+    }, options);
   }
 
-  getDashboardFilter(projectId, dashboardFilterId) {
+  getDashboardFilter(projectId, dashboardFilterId, options = {}) {
     return db.DashboardFilter.findOne({
       where: { id: dashboardFilterId, project_id: projectId },
+      ...options,
     })
       .then((dashboardFilter) => {
         return dashboardFilter;
@@ -406,9 +458,10 @@ class ProjectController {
       });
   }
 
-  getDashboardFilters(projectId) {
+  getDashboardFilters(projectId, options = {}) {
     return db.DashboardFilter.findAll({
       where: { project_id: projectId },
+      ...options,
       order: [["position", "ASC"], ["createdAt", "ASC"]],
     })
       .then((dashboardFilters) => {
@@ -419,25 +472,27 @@ class ProjectController {
       });
   }
 
-  updateDashboardFilter(projectId, dashboardFilterId, data) {
+  updateDashboardFilter(projectId, dashboardFilterId, data, options = {}) {
     const newFields = Object.fromEntries(
       Object.entries(data).filter(([field]) => ["configuration", "onReport"].includes(field))
     );
     return db.DashboardFilter.update(newFields, {
       where: { id: dashboardFilterId, project_id: projectId },
+      ...options,
     })
       .then(([updated]) => {
         if (!updated) return null;
-        return this.getDashboardFilter(projectId, dashboardFilterId);
+        return this.getDashboardFilter(projectId, dashboardFilterId, options);
       })
       .catch((error) => {
         return Promise.reject(error);
       });
   }
 
-  deleteDashboardFilter(projectId, dashboardFilterId) {
+  deleteDashboardFilter(projectId, dashboardFilterId, options = {}) {
     return db.DashboardFilter.destroy({
       where: { id: dashboardFilterId, project_id: projectId },
+      ...options,
     })
       .catch((error) => {
         return Promise.reject(error);
@@ -617,8 +672,7 @@ class ProjectController {
       if (
         teamRole
       && (
-        teamRole.role === "teamOwner"
-        || teamRole.role === "teamAdmin"
+        teamRoles.includes(teamRole.role)
         || hasProjectAccess
       )
       ) {
@@ -660,7 +714,9 @@ class ProjectController {
       finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
     }
 
-    const report = await this.getPublicDashboard(project.brewName);
+    const report = await this.getPublicDashboard(project.brewName, {
+      refreshPreparedData: true,
+    });
 
     // Process the project for public access
     const processedProject = cloneDeep(report);

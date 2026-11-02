@@ -4,6 +4,7 @@ module.exports = (user) => {
     email: user.email,
     name: user.name,
     icon: user.icon,
+    admin: user.admin === true,
     active: user.active,
     tutorials: user.tutorials,
     createdAt: user.createdAt,

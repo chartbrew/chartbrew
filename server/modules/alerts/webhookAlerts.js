@@ -1,6 +1,6 @@
 const safeRequest = require("../safeRequest");
 
-const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+const settings = require("../../settings");
 
 function send(data) {
   const {

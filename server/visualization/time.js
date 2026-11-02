@@ -26,6 +26,10 @@ function createMoment(value, timezone, formatHint) {
   }
 
   if (!parsed.isValid()) return null;
+  const dateParts = parsed.parsingFlags().parsedDateParts;
+  if (typeof value === "string" && dateParts?.length > 0 && dateParts.length <= 3) {
+    return moment.tz(parsed.format("YYYY-MM-DD"), "YYYY-MM-DD", true, timezone || "UTC");
+  }
   return timezone ? parsed.tz(timezone) : parsed;
 }
 

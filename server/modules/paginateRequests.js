@@ -1,10 +1,6 @@
 const _ = require("lodash");
 const safeRequest = require("./safeRequest");
-
-function parseResponseBody(response) {
-  if (_.isObject(response.body)) return response.body;
-  return JSON.parse(response.body);
-}
+const { parseSourceResponse } = require("./sourceResponse");
 
 function extractArrayResults(parsedResponse) {
   if (parsedResponse instanceof Array) {
@@ -12,16 +8,17 @@ function extractArrayResults(parsedResponse) {
   }
 
   if (!parsedResponse || typeof parsedResponse !== "object") {
-    return [];
+    throw new Error("The data source returned a page without records.");
   }
 
-  let results = [];
+  let results;
   Object.keys(parsedResponse).forEach((key) => {
     if (parsedResponse[key] instanceof Array) {
       results = parsedResponse[key];
     }
   });
 
+  if (!results) throw new Error("The data source returned a page without records.");
   return results;
 }
 
@@ -29,40 +26,31 @@ function PaginateRequests(options, limit, items, offset, policyContext, totalRes
   return safeRequest(options, policyContext)
     .then((response) => {
       let results;
-      try {
-        const parsedResponse = parseResponseBody(response);
-        results = extractArrayResults(parsedResponse);
-      } catch (error) {
-        return new Promise((resolve, reject) => reject(response.statusCode));
-      }
+      const parsedResponse = parseSourceResponse(response);
+      results = extractArrayResults(parsedResponse);
 
       // check if results are the same as previous ones (infinite request loop?)
-      let skipping = false;
-
-      if (_.isEqual(results, totalResults)) {
-        skipping = true;
+      if (results?.length > 0 && _.isEqual(results, totalResults)) {
+        throw new Error("The data source repeated a page. Check the pagination settings.");
       }
 
       const tempResults = totalResults.concat(results);
 
-      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
-        let finalResults = skipping ? results : tempResults;
+      if (results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
+        let finalResults = tempResults;
 
         // check if it goes above the limit
         if (tempResults.length > limit && limit !== 0) {
           finalResults = tempResults.slice(0, limit);
         }
 
-        return new Promise((resolve) => resolve(finalResults));
+        return finalResults;
       }
 
       const newOptions = options;
       newOptions.qs[offset] = parseInt(options.qs[offset], 10) + parseInt(options.qs[items], 10);
 
       return PaginateRequests(newOptions, limit, items, offset, policyContext, tempResults);
-    })
-    .catch((e) => {
-      return Promise.reject(e);
     });
 }
 
@@ -72,31 +60,25 @@ function PaginatePages(options, limit, offset, policyContext, totalResults = [])
   return safeRequest(options, policyContext)
     .then((response) => {
       let results;
-      try {
-        const parsedResponse = parseResponseBody(response);
-        results = extractArrayResults(parsedResponse);
-      } catch (error) {
-        return new Promise((resolve, reject) => reject(response.statusCode));
-      }
+      const parsedResponse = parseSourceResponse(response);
+      results = extractArrayResults(parsedResponse);
 
       // check if results are the same as previous ones (infinite request loop?)
-      let skipping = false;
-
-      if (_.isEqual(results, totalResults)) {
-        skipping = true;
+      if (results?.length > 0 && _.isEqual(results, totalResults)) {
+        throw new Error("The data source repeated a page. Check the pagination settings.");
       }
 
       const tempResults = totalResults.concat(results);
 
-      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
-        let finalResults = skipping ? results : tempResults;
+      if (results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
+        let finalResults = tempResults;
 
         // check if it goes above the limit
         if (tempResults.length > limit && limit !== 0) {
           finalResults = tempResults.slice(0, limit);
         }
 
-        return new Promise((resolve) => resolve(finalResults));
+        return finalResults;
       }
 
       // increment page number
@@ -104,9 +86,6 @@ function PaginatePages(options, limit, offset, policyContext, totalResults = [])
       newOptions.qs[offset] = parseInt(options.qs[offset], 10) + 1;
 
       return PaginatePages(newOptions, limit, offset, policyContext, tempResults);
-    })
-    .catch((e) => {
-      return Promise.reject(e);
     });
 }
 
@@ -117,34 +96,27 @@ function PaginateStripe(options, limit, policyContext, totalResults) {
       return new Promise((resolve) => setTimeout(() => resolve(response), 1500));
     })
     .then((response) => {
-      try {
-        const result = JSON.parse(response.body);
-        const tempResults = result;
-        tempResults.data = (
-          totalResults && totalResults.data && totalResults.data.concat(result.data)
-        ) || result.data;
+      const result = parseSourceResponse(response);
+      const tempResults = result;
+      tempResults.data = (
+        totalResults && totalResults.data && totalResults.data.concat(result.data)
+      ) || result.data;
 
-        if (!result.has_more
-          || (tempResults.data && tempResults.data.length >= limit && limit !== 0)
-        ) {
-          if (tempResults.data.length > limit && limit !== 0) {
-            tempResults.data = tempResults.data.slice(0, limit);
-          }
-          // the recursion ends here
-          return new Promise((resolve) => resolve(tempResults));
+      if (!result.has_more
+        || (tempResults.data && tempResults.data.length >= limit && limit !== 0)
+      ) {
+        if (tempResults.data.length > limit && limit !== 0) {
+          tempResults.data = tempResults.data.slice(0, limit);
         }
-
-        // continue the recursion
-        const newOptions = options;
-        newOptions.qs.starting_after = tempResults.data[tempResults.data.length - 1].id;
-
-        return PaginateStripe(newOptions, limit, policyContext, tempResults);
-      } catch (error) {
-        return new Promise((resolve, reject) => reject(response.statusCode));
+        // the recursion ends here
+        return tempResults;
       }
-    })
-    .catch((err) => {
-      return Promise.reject(err);
+
+      // continue the recursion
+      const newOptions = options;
+      newOptions.qs.starting_after = tempResults.data[tempResults.data.length - 1].id;
+
+      return PaginateStripe(newOptions, limit, policyContext, tempResults);
     });
 }
 
@@ -155,37 +127,30 @@ function PaginateUrl(options, paginationField, limit, policyContext, totalResult
       let paginationURL;
       let resultsKey;
       let parsedResponse;
-      try {
-        parsedResponse = JSON.parse(response.body);
-        const formattedPaginationField = paginationField.replace("root.", "").replace("root[].", "");
-        paginationURL = _.get(parsedResponse, formattedPaginationField);
+      parsedResponse = parseSourceResponse(response);
+      const formattedPaginationField = paginationField.replace("root.", "").replace("root[].", "");
+      paginationURL = _.get(parsedResponse, formattedPaginationField);
 
-        Object.keys(parsedResponse).forEach((key) => {
-          if (parsedResponse[key] instanceof Array) {
-            results = parsedResponse[key];
-            resultsKey = key;
-          }
-        });
-      } catch (error) {
-        return new Promise((resolve, reject) => reject(response.statusCode));
-      }
+      Object.keys(parsedResponse).forEach((key) => {
+        if (parsedResponse[key] instanceof Array) {
+          results = parsedResponse[key];
+          resultsKey = key;
+        }
+      });
 
       // check if results are the same as previous ones (infinite request loop?)
-      let skipping = false;
-
-      if (_.isEqual(results, totalResults)) {
-        skipping = true;
+      if (results?.length > 0 && _.isEqual(results, totalResults)) {
+        throw new Error("The data source repeated a page. Check the pagination settings.");
       }
 
+      if (!results) throw new Error("The data source returned a page without records.");
       const tempResults = totalResults.concat(results);
 
-      if (skipping
-          || !results
-          || results.length === 0
+      if (results.length === 0
           || (tempResults.length >= limit && limit !== 0)
           || !paginationURL
       ) {
-        let finalResults = skipping ? results : tempResults;
+        let finalResults = tempResults;
 
         // check if it goes above the limit
         if (tempResults.length > limit && limit !== 0) {
@@ -193,16 +158,14 @@ function PaginateUrl(options, paginationField, limit, policyContext, totalResult
         }
 
         parsedResponse[resultsKey] = finalResults;
-        return new Promise((resolve) => resolve(parsedResponse));
+        return parsedResponse;
       }
 
       const newOptions = options;
+      if (paginationURL === options.url) throw new Error("The data source repeated a page. Check the pagination settings.");
       newOptions.url = paginationURL;
 
       return PaginateUrl(newOptions, paginationField, limit, policyContext, tempResults);
-    })
-    .catch((err) => {
-      return Promise.reject(err);
     });
 }
 
@@ -210,53 +173,53 @@ function PaginateCursor(options, limit, items, offset, policyContext, totalResul
   return safeRequest(options, policyContext)
     .then((response) => {
       const resultsKey = [];
-      try {
-        const result = JSON.parse(response.body);
-        Object.keys(result).forEach((key) => {
-          if (result[key] instanceof Array) {
-            resultsKey.push(key);
-          }
-        });
-
-        const tempResults = result;
-        let endRecursion = false;
-
-        resultsKey.forEach((resultKey) => {
-          tempResults[resultKey] = (
-            totalResults
-            && totalResults[resultKey]
-            && totalResults[resultKey].concat(result[resultKey])
-          ) || result[resultKey];
-
-          const nextCursor = _.get(result, items);
-          if (!nextCursor
-            || (tempResults[resultKey] && tempResults[resultKey].length >= limit && limit !== 0)
-          ) {
-            if (tempResults[resultKey].length > limit && limit !== 0) {
-              tempResults[resultKey] = tempResults[resultKey].slice(0, limit);
-            }
-            endRecursion = true;
-          }
-        });
-
-        if (endRecursion) {
-          // the recursion ends here
-          return new Promise((resolve) => resolve(tempResults));
-        }
-
-        // continue the recursion
-        const newOptions = options;
-        const nextCursor = _.get(tempResults, items);
-        if (!newOptions.qs) newOptions.qs = {};
-        newOptions.qs[offset] = nextCursor;
-
-        return PaginateCursor(newOptions, limit, items, offset, policyContext, tempResults);
-      } catch (error) {
-        return new Promise((resolve, reject) => reject(response.statusCode));
+      const result = parseSourceResponse(response);
+      if (Array.isArray(result) && result.length === 0) {
+        return Array.isArray(totalResults) ? totalResults : _.set(totalResults, items, null);
       }
-    })
-    .catch((err) => {
-      return Promise.reject(err);
+      Object.keys(result).forEach((key) => {
+        if (result[key] instanceof Array) {
+          resultsKey.push(key);
+        }
+      });
+
+      const tempResults = result;
+      let endRecursion = false;
+      if (resultsKey.length === 0) {
+        throw new Error("The data source returned a page without records.");
+      }
+
+      resultsKey.forEach((resultKey) => {
+        tempResults[resultKey] = (
+          totalResults
+          && totalResults[resultKey]
+          && totalResults[resultKey].concat(result[resultKey])
+        ) || result[resultKey];
+
+        const nextCursor = _.get(result, items);
+        if (!nextCursor
+          || (tempResults[resultKey] && tempResults[resultKey].length >= limit && limit !== 0)
+        ) {
+          if (tempResults[resultKey].length > limit && limit !== 0) {
+            tempResults[resultKey] = tempResults[resultKey].slice(0, limit);
+          }
+          endRecursion = true;
+        }
+      });
+
+      if (endRecursion) {
+        // the recursion ends here
+        return tempResults;
+      }
+
+      // continue the recursion
+      const newOptions = options;
+      const nextCursor = _.get(tempResults, items);
+      if (!newOptions.qs) newOptions.qs = {};
+      if (nextCursor === newOptions.qs[offset]) throw new Error("The data source repeated a page. Check the pagination settings.");
+      newOptions.qs[offset] = nextCursor;
+
+      return PaginateCursor(newOptions, limit, items, offset, policyContext, tempResults);
     });
 }
 

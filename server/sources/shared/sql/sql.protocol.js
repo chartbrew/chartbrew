@@ -1,4 +1,5 @@
 const Sequelize = require("sequelize");
+const sourceExecution = require("../../../modules/sourceExecution");
 
 const db = require("../../../models/models");
 const drCacheController = require("../../../controllers/DataRequestCacheController");
@@ -12,6 +13,33 @@ const {
   failConnectorAudit,
 } = require("../connectorRuntime");
 const externalDbConnection = require("./externalDbConnection");
+const { normalizeSqlQuery } = require("./readOnlyQuery");
+
+async function exploreReadOnly({ connection, operation, query, search = "", names = [], limit = 20 }) {
+  if (operation === "inspect") {
+    const schema = connection.schema || await getSchema({ connection });
+    const tables = schema.tables || Object.keys(schema.description || {});
+    const matches = tables.filter((table) => typeof table === "string"
+      && (!names.length || names.includes(table)) && table.toLowerCase().includes(search.toLowerCase()));
+    return { resources: matches.slice(0, limit).map((name) => ({ name, fields: schema.description?.[name] || [] })), truncated: matches.length > limit };
+  }
+  const validatedQuery = normalizeSqlQuery(query);
+  let sqlDb;
+  try {
+    const rows = await sourceExecution.runSourceExecution({ connection, cacheHit: false }, async () => {
+      sqlDb = await externalDbConnection(connection);
+      return sqlDb.transaction({ readOnly: true }, async (transaction) => {
+        // Sequelize's readOnly option selects a replica; enforce read-only execution on the database too.
+        await sqlDb.query(connection.type === "mysql" ? "START TRANSACTION READ ONLY" : "SET TRANSACTION READ ONLY", { transaction });
+        return sqlDb.query(`SELECT * FROM (${validatedQuery}) AS chartbrew_preview LIMIT ${limit}`,
+          { type: Sequelize.QueryTypes.SELECT, transaction });
+      });
+    });
+    return { rows, dataRequest: { query: validatedQuery, method: "GET" } };
+  } finally {
+    await closeSqlConnection(sqlDb);
+  }
+}
 
 async function closeSqlConnection(sqlDb) {
   if (!sqlDb) {
@@ -166,8 +194,12 @@ async function runDataRequest({
   try {
     const savedConnection = await getSavedConnection(connection);
     const queryToExecute = getQueryToExecute({ processedQuery, dataRequest });
-    dbConnection = await externalDbConnection(savedConnection);
-    const results = await dbConnection.query(queryToExecute, { type: Sequelize.QueryTypes.SELECT });
+    const results = await sourceExecution.runSourceExecution({
+      connection: savedConnection, dataRequest, auditContext, cacheHit: false,
+    }, async () => {
+      dbConnection = await externalDbConnection(savedConnection);
+      return dbConnection.query(queryToExecute, { type: Sequelize.QueryTypes.SELECT });
+    });
 
     const dataToCache = {
       dataRequest,
@@ -201,14 +233,17 @@ async function runChartQuery({ connection, query }) {
   let dbConnection = null;
   try {
     const queryToExecute = getQueryToExecute({ dataRequest: { query } });
-    dbConnection = await externalDbConnection(connection);
-    return await dbConnection.query(queryToExecute, { type: Sequelize.QueryTypes.SELECT });
+    return await sourceExecution.runSourceExecution({ connection, cacheHit: false }, async () => {
+      dbConnection = await externalDbConnection(connection);
+      return dbConnection.query(queryToExecute, { type: Sequelize.QueryTypes.SELECT });
+    });
   } finally {
     await closeSqlConnection(dbConnection);
   }
 }
 
 module.exports = {
+  exploreReadOnly,
   applyVariables({ dataRequest, variables, escapeBackslash }) {
     return applySqlVariables(dataRequest, variables, { escapeBackslash });
   },

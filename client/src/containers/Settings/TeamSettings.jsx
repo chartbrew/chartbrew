@@ -7,7 +7,6 @@ import {
   InputGroup,
   Label,
   Modal,
-  ProgressCircle,
   Separator,
   Switch,
   TextField,
@@ -16,6 +15,7 @@ import {
 import toast from "react-hot-toast";
 import { LuCircleCheck, LuInfo, LuTrash } from "react-icons/lu";
 
+import CupLoader from "../../components/CupLoader";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
 import { deleteTeam, selectTeam, selectTeams, updateTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
@@ -103,49 +103,46 @@ function TeamSettings() {
   if (!team) {
     return (
       <div className="pt-60 flex justify-center items-center">
-        <ProgressCircle aria-label="Loading" size="lg" />
+        <CupLoader label="Loading" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
-      <div className="text-lg font-semibold font-tw">Team settings</div>
-      <div className="text-sm text-gray-500">Manage your team settings and controls</div>
-      <div className="h-4" />
-      <div className="flex flex-col gap-2">
-        <TextField name="team-name" className="w-full gap-2">
-          <Label>Team name</Label>
-          <Input
-            placeholder={team.name}
-            value={teamState.name}
-            onChange={(e) => {
-              setTeamState({ ...teamState, name: e.target.value });
-            }}
-            variant="secondary"
-            isInvalid={!!submitError}
-            errorMessage={submitError ? "Error updating team" : undefined}
-            className="max-w-md"
-          />
-        </TextField>
+    <section className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
+        <div className="flex flex-col gap-2">
+          <TextField name="team-name" className="w-full gap-2">
+            <Label>Team name</Label>
+            <Input
+              placeholder={team.name}
+              value={teamState.name}
+              onChange={(e) => {
+                setTeamState({ ...teamState, name: e.target.value });
+              }}
+              variant="secondary"
+              isInvalid={!!submitError}
+              errorMessage={submitError ? "Error updating team" : undefined}
+              className="max-w-md"
+            />
+          </TextField>
 
-        <div>
-          <Button
-            isPending={loading}
-            onPress={_onTeamUpdate}
-            variant={success ? "secondary" : "primary"}
-          >
-            {loading ? <ButtonSpinner /> : null}
-            {success ? "Saved" : "Save"}
-          </Button>
+          <div>
+            <Button
+              isPending={loading}
+              onPress={_onTeamUpdate}
+              variant={success ? "secondary" : "primary"}
+            >
+              {loading ? <ButtonSpinner /> : null}
+              {success ? "Saved" : "Save"}
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <div className="h-4" />
-      <Separator />
-      <div className="h-4" />
+        <div className="h-4" />
+        <Separator />
+        <div className="h-4" />
 
-      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
         <div className="flex flex-row items-center gap-2">
           <Switch
             id="team-settings-allow-report-export"
@@ -210,9 +207,9 @@ function TeamSettings() {
             <Tooltip.Content>Chartbrew branding is shown in the footer of the dashboard reports</Tooltip.Content>
           </Tooltip>
         </div>
-      </div>
+        </div>
 
-      {canAccess("teamOwner", user.id, team.TeamRoles) && (
+        {canAccess("teamOwner", user.id, team.TeamRoles) && (
         <>
           <div className="h-4" />
           <Separator />
@@ -237,9 +234,9 @@ function TeamSettings() {
             )}
           </div>
         </>
-      )}
+        )}
 
-      <Modal>
+        <Modal>
         <Modal.Backdrop isOpen={deleteConfirm} onOpenChange={setDeleteConfirm} variant="blur">
           <Modal.Container size="lg">
             <Modal.Dialog>
@@ -288,8 +285,8 @@ function TeamSettings() {
             </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>
-      </Modal>
-    </div>
+        </Modal>
+    </section>
   );
 }
 

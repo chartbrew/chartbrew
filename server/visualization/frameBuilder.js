@@ -1,10 +1,13 @@
 const { aggregateRows } = require("./aggregate");
+const { projectMapRows } = require("./geo");
 const { getFieldValue, selectRows } = require("./fieldPath");
 const { getMarkDefinition, getSlotDefinition } = require("./registry");
 const { createSeriesId, getSeriesLabel, serializeTypedValue } = require("./seriesIdentity");
 const { assertVisualizationSpec } = require("./spec");
 const { bucketTime } = require("./time");
 const { applyFrameTransforms, applyRowTransforms } = require("./transforms");
+
+const { projectScatterRows } = require("./scatter");
 
 const FRAME_VERSION = 1;
 const DEFAULT_CARDINALITY_WARNING = 50;
@@ -206,13 +209,17 @@ function buildLayerFrame(layer, data, options = {}) {
     };
   }
 
-  const projection = projectRows(filteredRows, layer, markDefinition, options);
-  let outputRows = aggregateRows(
+  let projection;
+  if (layer.mark === "scatter") projection = projectScatterRows(filteredRows, layer);
+  else if (layer.mark === "map") projection = projectMapRows(filteredRows, layer);
+  else projection = projectRows(filteredRows, layer, markDefinition, options);
+  warnings.push(...(projection.warnings || []));
+  let outputRows = layer.mark === "scatter" ? projection.projected : aggregateRows(
     projection.projected,
     projection.dimensionRoles,
     projection.measureEncodings
   );
-  if (projection.dimensionRoles.includes("time")) {
+  if (projection.dimensionRoles?.includes("time")) {
     outputRows.sort((left, right) => left.time - right.time);
   }
   const seriesResult = applySeriesOptions(layer, outputRows);

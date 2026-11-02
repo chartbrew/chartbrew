@@ -2,7 +2,7 @@ import express from "express";
 import { urlencoded, json } from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import helmet from "helmet";
+import securityHeaders from "../../middlewares/securityHeaders.js";
 import methodOverride from "method-override";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,10 +19,9 @@ export async function createTestApp() {
   const app = express();
 
   // Mimic production behavior: server/index.js sets app.settings = settings
-  // In tests, NODE_ENV is not "production", so settings-dev is used.
-  // settings-dev reads process.env at require-time (set defaults in tests/setup.js).
+  // settings reads process.env at require-time (set defaults in tests/setup.js).
   // eslint-disable-next-line global-require
-  const settings = require("../../settings-dev.js");
+  const settings = require("../../settings.js");
   app.settings = settings;
 
   // Basic middleware setup (mimicking your main app)
@@ -32,10 +31,7 @@ export async function createTestApp() {
   app.set("query parser", "simple");
   app.use(json());
   app.use(methodOverride("X-HTTP-Method-Override"));
-  app.use(helmet({
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: false,
-  }));
+  app.use(securityHeaders);
   app.use(cors());
 
   // Basic health check route
@@ -57,6 +53,25 @@ export async function createTestAppWithUserRoutes() {
   // eslint-disable-next-line global-require
   const userRoute = require("../../api/UserRoute.js");
   userRoute(app);
+
+  return app;
+}
+
+export async function createTestAppWithTeamRoutes() {
+  const app = await createTestApp();
+  const userRoute = require("../../api/UserRoute.js");
+  const teamRoute = require("../../api/TeamRoute.js");
+  userRoute(app);
+  teamRoute(app);
+  return app;
+}
+
+export async function createTestAppWithPlatformSettingsRoutes() {
+  const app = await createTestApp();
+
+  // eslint-disable-next-line global-require
+  const platformSettingsRoute = require("../../api/PlatformSettingsRoute.js");
+  platformSettingsRoute(app);
 
   return app;
 }

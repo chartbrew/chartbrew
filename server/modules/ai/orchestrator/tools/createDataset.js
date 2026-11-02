@@ -5,7 +5,7 @@ const { normalizeTeamId, requireConnectionForTeam, requireProjectForTeam } = req
 
 const datasetController = new DatasetController();
 
-const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
+const clientUrl = process.env.VITE_APP_CLIENT_HOST;
 
 async function createDataset(payload) {
   let {
@@ -96,7 +96,7 @@ async function createDataset(payload) {
       intent_repair: repairedPayload.intentRepair,
     };
   } catch (error) {
-    throw new Error(`Dataset creation failed: ${error.message}`);
+    throw new Error(`Dataset creation failed: ${error.message}`, { cause: error });
   }
 }
 

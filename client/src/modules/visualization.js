@@ -65,7 +65,24 @@ export function getVisualizationTimeField(visualization, bindingId) {
   return layer?.encoding?.time?.field || null;
 }
 
+export function getBindingPresentation(chart, cdc) {
+  const layer = chart?.visualization?.layers?.find((item) => {
+    return `${item.bindingId}` === `${cdc.id}`;
+  });
+  const series = (chart?.render?.metadata?.availableSeries
+    || chart?.render?.metadata?.series || []).find((item) => item.layerId === layer?.id);
+  const override = layer?.style?.series?.[series?.id]
+    || layer?.style?.series?.[series?.key];
+
+  return {
+    label: layer?.name || layer?.style?.label || layer?.encoding?.value?.title || cdc.legend,
+    color: override?.color || layer?.style?.color || series?.color || cdc.datasetColor,
+  };
+}
+
 export function getLayerFieldRequirements(mark) {
+  if (mark === "scatter") return { coordinates: true };
+  if (mark === "map") return { map: true, value: true };
   if (mark === "table") return { collection: true };
   if (mark === "matrix") return { dimension: true, value: true };
   if (METRIC_MARKS.has(mark)) return { value: true };
@@ -78,7 +95,16 @@ export function getLayerFieldRequirements(mark) {
 export function isVisualizationReady(visualization) {
   if (!visualization?.layers?.length) return false;
   return visualization.layers.every((layer) => {
+    if (layer.mark === "map") {
+      if (visualization.layers.length !== 1) return false;
+      if (layer.options?.map?.mode === "points") {
+        return Boolean(layer.encoding?.point?.field
+          || (layer.encoding?.latitude?.field && layer.encoding?.longitude?.field));
+      }
+      return Boolean(layer.encoding?.location?.field);
+    }
     const requirements = getLayerFieldRequirements(layer.mark);
+    if (requirements.coordinates && (!layer.encoding?.x?.field || !layer.encoding?.y?.field)) return false;
     if (requirements.collection) return Boolean(layer.rowPath);
     if (requirements.dimension && !layer.encoding?.time && !layer.encoding?.category) return false;
     if (requirements.value && !layer.encoding?.value?.field) return false;
@@ -110,6 +136,29 @@ export function updateVisualizationLayer(visualization, layerId, updater) {
   return nextVisualization;
 }
 
+export function updateLayerMap(visualization, layerId, changes) {
+  return updateVisualizationLayer(visualization, layerId, (layer) => {
+    const encoding = { ...layer.encoding };
+    if (changes.mode) {
+      delete encoding.location;
+      delete encoding.latitude;
+      delete encoding.longitude;
+      delete encoding.point;
+    }
+    if (changes.coordinates === "geojson") {
+      delete encoding.latitude;
+      delete encoding.longitude;
+    } else if (changes.coordinates === "fields") {
+      delete encoding.point;
+    }
+    return {
+      ...layer,
+      encoding,
+      options: { ...layer.options, map: { ...layer.options?.map, ...changes } },
+    };
+  });
+}
+
 function cloneEncoding(encoding = {}) {
   return Object.entries(encoding).reduce((copy, [role, definition]) => {
     copy[role] = Array.isArray(definition)
@@ -132,6 +181,22 @@ function getEncodingForMark(layer, mark, markState) {
 
   const candidates = getEncodingCandidates(layer, markState);
   if (mark === "table" || mark === "markdown") return {};
+  if (mark === "scatter") {
+    const source = candidates.find((encoding) => encoding.x || encoding.value) || {};
+    const x = source.x || source.category;
+    const y = source.y || source.value;
+    return {
+      ...(x?.type === "quantitative" ? { x: { field: x.field, type: "quantitative" } } : {}),
+      ...(y ? { y: { field: y.field, type: "quantitative" } } : {}),
+    };
+  }
+  if (mark === "map") {
+    const source = candidates.find((encoding) => encoding.location || encoding.category) || candidates[0];
+    return {
+      ...(source.location || source.category ? { location: { ...(source.location || source.category), type: "nominal" } } : {}),
+      ...(source.value ? { value: { ...source.value } } : {}),
+    };
+  }
   if (METRIC_MARKS.has(mark)) {
     const source = candidates.find((encoding) => encoding.value) || {};
     return source.value ? {
@@ -179,14 +244,14 @@ function getStyleForMark(layer, mark, saved = {}) {
   const style = { ...(layer.style || {}) };
   if (Object.prototype.hasOwnProperty.call(saved, "fill")) {
     style.fill = saved.fill;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fill = true;
   } else if (mark === "line" || mark === "radar") {
     style.fill = false;
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
     style.fillOpacity = saved.fillOpacity;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
   } else if (mark === "line") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
@@ -205,7 +270,7 @@ export function updateLayerMark(visualization, layerId, mark) {
     const savedMark = layer.options?.markState?.[mark] || {};
     if (layer.mark === mark) {
       if (
-        !["bar", "line", "radar"].includes(mark)
+        !["bar", "horizontalBar", "line", "radar"].includes(mark)
         || (
           Object.prototype.hasOwnProperty.call(savedMark, "fill")
           && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
@@ -225,6 +290,7 @@ export function updateLayerMark(visualization, layerId, mark) {
       [layer.mark]: {
         ...(options.markState?.[layer.mark] || {}),
         encoding: cloneEncoding(layer.encoding),
+        ...(mark === "scatter" || layer.mark === "scatter" ? { transforms: layer.transforms || [] } : {}),
         ...(layer.style?.fill !== undefined ? { fill: layer.style.fill } : {}),
         ...(layer.style?.fillOpacity !== undefined
           ? { fillOpacity: layer.style.fillOpacity }
@@ -234,11 +300,19 @@ export function updateLayerMark(visualization, layerId, mark) {
     };
     options.markState = markState;
     const saved = markState[mark];
+    let transforms = layer.transforms;
+    if (mark === "scatter") {
+      transforms = (layer.transforms || []).filter((transform) => transform.type === "filter");
+    } else if (layer.mark === "scatter") {
+      transforms = saved?.transforms || [];
+    }
 
     return {
       ...layer,
       encoding: getEncodingForMark(layer, mark, markState),
       mark,
+      transforms,
+      orientation: mark === "horizontalBar" ? "horizontal" : mark === "bar" ? "vertical" : layer.orientation,
       options,
       rowPath: saved?.rowPath || (mark === "table" ? layer.rowPath || "root[]" : layer.rowPath),
       style: getStyleForMark(layer, mark, saved),
@@ -258,7 +332,7 @@ export function updateBindingFill(visualization, bindingId, { fill, fillOpacity 
       fill: Boolean(fill),
       fillOpacity: Number.isFinite(normalizedOpacity)
         ? normalizedOpacity
-        : layer.mark === "bar"
+        : ["bar", "horizontalBar"].includes(layer.mark)
           ? DEFAULT_BAR_FILL_OPACITY
           : layer.mark === "radar"
             ? DEFAULT_RADAR_FILL_OPACITY
@@ -302,7 +376,7 @@ export function updateLayerField(visualization, layerId, role, fieldOption) {
       encoding[role] = {
         ...(encoding[role] || {}),
         field: fieldOption.value,
-        type: role === "value" ? "quantitative" : getFieldSemanticType(fieldOption.type),
+        type: ["value", "x", "y"].includes(role) ? "quantitative" : getFieldSemanticType(fieldOption.type),
       };
     } else {
       delete encoding[role];
@@ -364,6 +438,16 @@ export function updateMissingValuePolicy(visualization, policy) {
   return nextVisualization;
 }
 
+export function updateDataLabels(visualization, visible) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.settings = {
+    ...(nextVisualization.settings || {}),
+    dataLabels: Boolean(visible),
+  };
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}
+
 export function updateDataLabelsFormat(visualization, format) {
   const nextVisualization = makeNativeVisualization(visualization);
   nextVisualization.settings = {
@@ -383,6 +467,22 @@ export function updateLegendVisibility(visualization, visible) {
       visible: Boolean(visible),
     },
   };
+  nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
+  return nextVisualization;
+}
+
+export function updateMarkStyle(visualization, mark, changes) {
+  const nextVisualization = makeNativeVisualization(visualization);
+  nextVisualization.layers = nextVisualization.layers.map((layer) => {
+    if (layer.mark !== mark) return layer;
+    return {
+      ...layer,
+      style: {
+        ...(layer.style || {}),
+        ...changes,
+      },
+    };
+  });
   nextVisualization.status = isVisualizationReady(nextVisualization) ? "ready" : "draft";
   return nextVisualization;
 }

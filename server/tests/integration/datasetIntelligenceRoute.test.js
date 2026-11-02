@@ -216,6 +216,7 @@ describe("Dataset Intelligence routes and persistence", () => {
 
     expect(response.body.datasets).toHaveLength(1);
     expect(response.body.datasets[0].dataset_id).toBe(owner.dataset.id);
+    expect(response.body.datasets[0].connection_ids).toEqual([]);
     expect(response.body.datasets.some((item) => {
       return item.dataset_id === otherOwner.dataset.id;
     })).toBe(false);

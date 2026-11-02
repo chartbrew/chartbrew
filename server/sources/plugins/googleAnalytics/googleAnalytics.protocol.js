@@ -79,8 +79,7 @@ async function runDataRequest({
   }
 
   try {
-    const oauth = await getOAuth(savedConnection);
-    const responseData = await googleAnalyticsConnection.getAnalytics(oauth, dataRequest);
+    const responseData = await fetchAnalytics(savedConnection, dataRequest, auditContext);
     const dataToCache = {
       dataRequest,
       responseData: {
@@ -106,7 +105,13 @@ async function runDataRequest({
   }
 }
 
+async function fetchAnalytics(connection, dataRequest, auditContext) {
+  const oauth = await getOAuth(connection);
+  return googleAnalyticsConnection.getAnalytics(oauth, dataRequest, { connection, auditContext });
+}
+
 module.exports = {
+  fetchAnalytics,
   getBuilderMetadata,
   getOAuth,
   getSavedConnection,

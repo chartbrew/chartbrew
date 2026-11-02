@@ -291,6 +291,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
 
     const result = await createTemporaryChart({
       team_id: 7,
+      user_id: 3,
       connection_id: 42,
       name: "MRR",
       type: "kpi",
@@ -307,7 +308,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
     expect(chartSpy).toHaveBeenCalledWith(expect.objectContaining({
       type: "kpi",
       subType: undefined,
-    }), null);
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,
@@ -416,6 +417,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
 
     const result = await createChart({
       team_id: 7,
+      user_id: 3,
       project_id: 13,
       dataset_id: 99,
       name: "MRR",
@@ -430,7 +432,7 @@ describe("Stripe Official AI anti-hallucination harness", () => {
     expect(chartSpy).toHaveBeenCalledWith(expect.objectContaining({
       type: "kpi",
       subType: undefined,
-    }), null);
+    }), { id: 3 }, { waitForData: true, origin: "ai" });
     expect(result).toMatchObject({
       status: "ok",
       chart_created: true,
@@ -445,24 +447,16 @@ describe("Stripe Official AI anti-hallucination harness", () => {
       id: 55,
       project_id: 77,
     });
-    vi.spyOn(db.Project, "findByPk")
-      .mockResolvedValueOnce({
-        id: 77,
-        team_id: 7,
-        ghost: true,
-      })
-      .mockResolvedValueOnce({
-        id: 13,
-        team_id: 7,
-        ghost: false,
-      });
+    vi.spyOn(db.Project, "findByPk").mockImplementation(async (id) => ({
+      id: Number(id), team_id: 7, ghost: Number(id) === 77, layoutRevision: 0, update: vi.fn(),
+    }));
     vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
     vi.spyOn(db.Chart, "update").mockResolvedValue([1]);
-    vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([{
-      Dataset: {
+    vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([{ dataset_id: 1 }]);
+    vi.spyOn(db.Dataset, "findAll").mockResolvedValue([{
+        id: 1,
         project_ids: [],
         update: datasetUpdate,
-      },
     }]);
     vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue(null);
 
@@ -474,8 +468,8 @@ describe("Stripe Official AI anti-hallucination harness", () => {
 
     expect(db.Chart.update).toHaveBeenCalledWith(expect.objectContaining({
       project_id: 13,
-    }), { where: { id: 55 } });
-    expect(datasetUpdate).toHaveBeenCalledWith({ project_ids: [13] });
+    }), expect.objectContaining({ where: { id: 55 }, transaction: expect.anything() }));
+    expect(datasetUpdate).toHaveBeenCalledWith({ project_ids: [13] }, { transaction: expect.anything() });
     expect(result).toMatchObject({
       chart_id: 55,
       previous_project_id: 77,

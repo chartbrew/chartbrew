@@ -1,4 +1,4 @@
-const { requireSupportedSourceForConnection } = require("../sourceSupport");
+const { requireSupportedSourceForConnection, sourceUsesSourceOwnedConfiguration } = require("../sourceSupport");
 const { requireConnectionForTeam } = require("./teamScope");
 
 async function getSourceInstructions(source, connection) {
@@ -17,6 +17,15 @@ async function getSchema(payload) {
   const connection = await requireConnectionForTeam(connection_id, team_id);
 
   const source = requireSupportedSourceForConnection(connection);
+  if (sourceUsesSourceOwnedConfiguration(source) && !source.backend.ai?.getSchema) {
+    return {
+      source_id: source.id,
+      connection_id: connection.id,
+      status: "source_discovery_required",
+      nextAction: "Use source_list_resources to inspect source tools, or source_plan_dataset with the full request to discover fields and build a dataset. This connection's saved metadata is not its data schema.",
+      capabilities: await source.backend.ai?.getCapabilities?.({ connection }),
+    };
+  }
   let schema;
   if (source.capabilities?.ai?.hasTools && source.backend.ai?.getSchema) {
     schema = await source.backend.ai.getSchema({ connection });

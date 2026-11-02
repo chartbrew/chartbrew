@@ -1,31 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Link as LinkNext, Tooltip, Input, Button, ProgressCircle, Switch, Alert,
+  Link as LinkNext, Tooltip, Input, Button, Switch, Alert,
 } from "@heroui/react";
 import toast from "react-hot-toast";
 import _ from "lodash";
-import { LuArrowLeft, LuCheck, LuPencilLine } from "react-icons/lu";
-import { useNavigate, useParams } from "react-router";
+import { LuCheck, LuPencilLine } from "react-icons/lu";
+import { useLocation, useNavigate, useParams } from "react-router";
 
+import CupLoader from "../../components/CupLoader";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
-import ChartPreview from "./components/ChartPreview";
+import ChartPreview, { ChartPreviewAppearance } from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
 import ChartDescription from "./components/ChartDescription";
+import ChartDataView from "./components/ChartDataView";
+import ChartStudio from "./components/ChartStudio";
+import { useChartHistory, ChartHistoryBanner, ChartHistoryPreview } from "./components/ChartHistory";
+import ChartStudioChat from "./components/ChartStudioChat";
 import {
-  createChart, createCdc, updateChart, runQuery, runQueryWithFilters, selectCharts,
+  createChart, createCdc, updateChart, getChart, runQuery, runQueryWithFilters, selectCharts,
 } from "../../slices/chart";
 import { getChartAlerts, clearAlerts } from "../../slices/alert";
 import ChartDatasets from "./components/ChartDatasets";
-import getDashboardLayout from "../../modules/getDashboardLayout";
 import { selectDatasetsNoDrafts } from "../../slices/dataset";
-import { placeNewWidget } from "../../modules/autoLayout";
 import { chartColors } from "../../config/colors";
 import getDatasetDisplayName from "../../modules/getDatasetDisplayName";
 import getDefaultCdcBindings from "../../modules/getDefaultCdcBindings";
 import { selectTeam } from "../../slices/team";
 import { selectUser } from "../../slices/user";
-import { updateLegendVisibility } from "../../modules/visualization";
+import { updateDataLabels, updateLegendVisibility } from "../../modules/visualization";
 
 const AUTO_NAME_PENDING_STORAGE_KEY = "__cb_pending_chart_dataset_name";
 const AUTO_NAME_PLACEHOLDER = "__cb_auto_name_chart__";
@@ -63,24 +66,15 @@ const _clearPendingChartName = (chartId) => {
 
 const _shouldAutoNameChart = (chartId) => _getStoredPendingChartIds().includes(chartId);
 
-const _getNewChartLayout = (charts) => {
-  const layouts = getDashboardLayout(charts);
-  const chartLayout = {};
-
-  Object.keys(layouts).forEach((bp) => {
-    const w = bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2;
-    const pos = placeNewWidget(layouts[bp] || [], { w, h: 2 }, bp);
-    chartLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
-  });
-
-  return chartLayout;
-};
-
 /*
   Container used for setting up a new chart
 */
 function AddChart() {
   const [newChart, setNewChart] = useState(defaultChart);
+  const [saveError, setSaveError] = useState("");
+  const [settingsRevision, setSettingsRevision] = useState(0);
+  const history = useChartHistory(newChart);
+  const historical = history.selected !== null;
   const [editingTitle, setEditingTitle] = useState(false);
   const [chartName, setChartName] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
@@ -90,6 +84,8 @@ function AddChart() {
   const [useCache, setUseCache] = useState(true);
   const [creatingDatasetId, setCreatingDatasetId] = useState(null);
   const [creatingNewDataset, setCreatingNewDataset] = useState(false);
+  const [startingChat, setStartingChat] = useState(false);
+  const [settingsSection, setSettingsSection] = useState("data");
 
   const charts = useSelector(selectCharts);
   const datasets = useSelector(selectDatasetsNoDrafts);
@@ -98,6 +94,7 @@ function AddChart() {
   const user = useSelector(selectUser);
 
   const params = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const projectId = parseInt(params.projectId, 10);
@@ -144,12 +141,12 @@ function AddChart() {
       if (chart.id === parseInt(params.chartId, 10)) {
         if (!_.isEqual(chart, newChart)) {
           setNewChart(chart);
-          setChartName(chart.name);
+          if (!editingTitle) setChartName(chart.name);
         }
       }
       return chart;
     });
-  }, [charts, newChart, params.chartId]);
+  }, [charts, params.chartId]);
 
   useEffect(() => {
     let found = false;
@@ -170,15 +167,13 @@ function AddChart() {
   };
 
   const _onSubmitNewName = () => {
-    setEditingTitle(false);
-    _onChangeChart({ name: chartName });
+    _onChangeChart({ name: chartName }).then((saved) => { if (saved) setEditingTitle(false); });
   };
 
   const _createChart = async (name) => {
     const chartData = {
       ...defaultChart,
       name,
-      layout: _getNewChartLayout(charts),
     };
 
     return dispatch(createChart({ project_id: params.projectId, data: chartData })).unwrap();
@@ -216,13 +211,28 @@ function AddChart() {
         getCache: true,
       })).unwrap();
 
-      navigate(`${chart.id}/edit`);
+      navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`);
     } catch (error) {
       toast.error(initialDataFetchStarted
         ? "We couldn't fetch data for this chart yet. Please check the dataset and try again."
         : "Oups! Can't create the chart. Please try again.");
     } finally {
       setCreatingDatasetId(null);
+    }
+  };
+
+  const _onStartChat = async (prompt) => {
+    if (!prompt.trim() || startingChat) return;
+    setStartingChat(true);
+    try {
+      const chart = await _createChart("Untitled chart");
+      navigate(`/dashboard/${params.projectId}/chart/${chart.id}/edit`, {
+        state: { chartPrompt: prompt.trim(), openChat: true },
+      });
+    } catch (_error) {
+      toast.error("The chart could not be created. Try again.");
+    } finally {
+      setStartingChat(false);
     }
   };
 
@@ -273,6 +283,9 @@ function AddChart() {
       ...(typeof displayLegend !== "undefined" && newChart.visualization ? {
         visualization: updateLegendVisibility(newChart.visualization, displayLegend),
       } : {}),
+      ...(typeof dataLabels !== "undefined" && newChart.visualization ? {
+        visualization: updateDataLabels(newChart.visualization, dataLabels),
+      } : {}),
     };
 
     let skipParsing = false;
@@ -288,14 +301,15 @@ function AddChart() {
       skipParsing = true;
     }
 
-    _onChangeChart(tempChart, skipParsing, shouldRefreshData);
+    _onChangeChart(Object.fromEntries(Object.entries(tempChart).filter(([key, value]) => !_.isEqual(value, newChart[key]))), skipParsing, shouldRefreshData);
   };
 
   const _onChangeChart = (data, skipParsing, refreshData = false) => {
+    setSaveError("");
     let shouldSkipParsing = skipParsing;
     setNewChart({ ...newChart, ...data });
     setLoading(true);
-    return dispatch(updateChart({ project_id: params.projectId, chart_id: params.chartId, data }))
+    return dispatch(updateChart({ project_id: params.projectId, chart_id: params.chartId, data })).unwrap()
       .then((newData) => {
         if (!toastOpen) {
           toast.success("Updated the chart 📈", {
@@ -309,21 +323,19 @@ function AddChart() {
         }
 
         // run the preview refresh only when it's needed
-        if (!data.name) {
-          if (refreshData || data.subType || data.type) {
-            _onRefreshData();
-          } else {
-            _onRefreshPreview(shouldSkipParsing);
-          }
+        if (refreshData || data.subType || data.type) {
+          _onRefreshData();
+        } else {
+          _onRefreshPreview(shouldSkipParsing);
         }
 
         setLoading(false);
         return Promise.resolve(newData);
       })
       .catch((e) => {
-        toast.error("Oups! Can't save the chart. Please try again.");
+        setSaveError(e.message || "The chart could not be saved. Try again.");
         setLoading(false);
-        return Promise.reject(e);
+        return null;
       });
   };
 
@@ -460,6 +472,8 @@ function AddChart() {
       <div className="pt-2">
         <ChartDescription
           datasets={datasets}
+          startingChat={startingChat}
+          onStartChat={_onStartChat}
           creatingDatasetId={creatingDatasetId}
           creatingNewDataset={creatingNewDataset}
           onCreateFromDataset={_onCreateFromDataset}
@@ -470,41 +484,36 @@ function AddChart() {
     );
   }
 
-  if (params.chartId && !newChart?.id) {
+  if (params.chartId && newChart?.id !== parseInt(params.chartId, 10)) {
     return (
       <div className="flex min-h-[240px] items-center justify-center">
-        <ProgressCircle aria-label="Loading chart" />
+        <CupLoader label="Loading chart" />
       </div>
     );
   }
 
-  if (newChart.ChartDatasetConfigs?.length === 0 || datasets.length === 0) {
-    return (
-      <div className="mt-4 max-w-xl mx-auto border border-divider rounded-3xl p-4 bg-surface">
-        <Button
-          onPress={() => navigate(`/dashboard/${params.projectId}`)}
-          variant="tertiary"
-          size="sm"
-        >
-          <LuArrowLeft size={16} />
-          Back to dashboard
-        </Button>
-        <div className="h-4" />
-        {showMissingDatasetAlert && (
-          <>
-            <Alert status="warning">
-              <Alert.Indicator />
-              <Alert.Content>
-                <Alert.Title>Dataset access required</Alert.Title>
-                <Alert.Description>{missingDatasetDescription}</Alert.Description>
-              </Alert.Content>
-            </Alert>
-            <div className="h-4" />
-          </>
-        )}
+  const datasetSettings = (
+    <section key="datasets" className="chart-studio-settings-group add-dataset-tut">
+      <h2 className={settingsSection === "data" ? "hidden" : "mb-3 text-sm font-semibold"}>
+        Selected dataset
+      </h2>
+      <ChartDatasets chartId={newChart.id} section={settingsSection} />
+    </section>
+  );
+  const chartSettings = params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 ? (
+    <section key="chart" className={`chart-studio-settings-group ${settingsSection === "automation" ? "hidden" : ""}`}>
+      <ChartSettings
+        chart={newChart}
+        onChange={_onChangeGlobalSettings}
+        onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
+        onVisualizationChange={(visualization) => _onChangeChart({ visualization }, false)}
+        section={settingsSection}
+      />
+      <div className={settingsSection === "appearance" ? "" : "hidden"}>
+        <ChartPreviewAppearance chart={newChart} onChange={_onChangeChart} />
       </div>
-    );
-  }
+    </section>
+  ) : null;
 
   return (
     <div className="flex flex-col">
@@ -520,112 +529,147 @@ function AddChart() {
           <div className="h-4" />
         </>
       )}
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12 md:col-span-5 add-dataset-tut">
-          <div className={"bg-surface rounded-3xl mx-auto p-4 w-full border border-divider"}>
-            <ChartDatasets chartId={newChart.id} />
-          </div>
+      {saveError ? (
+        <div className="flex flex-wrap items-center gap-3 bg-warning-soft px-4 py-3" role="alert">
+          <p className="text-sm">{saveError}</p>
+          <Button onPress={async () => {
+            if (!window.confirm("Discard unsaved changes and reload the latest chart?")) return;
+            try {
+              await dispatch(getChart({ project_id: projectId, chart_id: params.chartId })).unwrap();
+              setEditingTitle(false);
+              setSaveError("");
+              setSettingsRevision((value) => value + 1);
+            } catch {
+              setSaveError("The latest chart could not load. Try again.");
+            }
+          }} size="sm" variant="secondary">Reload latest</Button>
         </div>
-        <div className="col-span-12 md:col-span-7">
-          <div className="flex items-center justify-between flex-wrap gap-2 py-4 px-4 border border-divider bg-surface rounded-3xl">
+      ) : null}
+      <ChartStudio
+        initiallyOpenChat={location.state?.openChat === true || new URLSearchParams(location.search).has("conversation")}
+        history={history}
+        historyBanner={historical ? (
+          <ChartHistoryBanner history={history} onRestored={() => {
+            setEditingTitle(false);
+            setSaveError("");
+            setSettingsRevision((value) => value + 1);
+          }} />
+        ) : null}
+        actions={(
+          <div className="flex items-center justify-end gap-4">
             <div className="flex items-center gap-2">
-              {!editingTitle
-                && (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center gap-2 cursor-pointer" color="foreground">
-                        <div className="text-lg font-bold text-foreground">
-                          {newChart.name}
-                        </div>
-                        <LuPencilLine size={18} className="text-foreground-500" />
-                      </LinkNext>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>Edit the chart name</Tooltip.Content>
-                  </Tooltip>
-                )}
-
-              {editingTitle && (
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  _onSubmitNewName();
-                }}>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Enter a title"
-                      value={chartName}
-                      onChange={(e) => _onNameChange(e.target.value)}
-                      labelPlacement="outside"
-                      size="sm"
-                    />
-                    <Button
-                      variant="primary"
-                      type="submit"
-                      onPress={_onSubmitNewName}
-                      size="sm"
-                      isIconOnly
-
-                    >
-                      <LuCheck size={16} />
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </div>
-            <div className="flex items-center justify-end gap-4">
-              <div className="flex items-center gap-2">
-                <div className="text-sm text-foreground">Draft</div>
-                <Switch
-                  id="addchart-draft"
-                  isSelected={newChart.draft}
-                  onChange={(selected) => _onChangeChart({ draft: selected })}
-                  aria-label="Draft mode"
-                >
-                  <Switch.Content>
-                    <Switch.Control>
-                      <Switch.Thumb />
-                    </Switch.Control>
-                  </Switch.Content>
-                </Switch>
-              </div>
-              <Button
-                onPress={() => _onChangeChart({})}
-                isPending={loading}
-                size="sm"
-                variant={saveRequired ? "primary" : "secondary"}
+              <div className="text-sm text-foreground">Draft</div>
+              <Switch
+                aria-label="Draft mode"
+                id="addchart-draft"
+                isDisabled={historical}
+                isSelected={newChart.draft}
+                onChange={(selected) => _onChangeChart({ draft: selected })}
               >
-                {loading ? <ButtonSpinner /> : null}
-                {saveRequired && "Save chart"}
-                {!saveRequired && "Chart saved"}
-              </Button>
+                <Switch.Content>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch.Content>
+              </Switch>
             </div>
+            <Button
+              isDisabled={historical}
+              isPending={loading}
+              onPress={() => _onChangeChart({})}
+              size="sm"
+              variant={saveRequired ? "primary" : "secondary"}
+            >
+              {loading ? <ButtonSpinner /> : null}
+              {saveRequired ? "Save chart" : "Chart saved"}
+            </Button>
           </div>
-          <div className="h-2" />
-          <div className="bg-surface rounded-3xl border border-divider">
-            <ChartPreview
-              chart={newChart}
-              onChange={_onChangeChart}
-              onRefreshData={_onRefreshData}
-              onRefreshPreview={_onRefreshPreview}
-              onAddFilter={_onAddFilter}
-              onClearFilter={_onClearFilter}
-              conditions={conditions}
-              useCache={useCache}
-              changeCache={(use) => setUseCache(use)}
-            />
-          </div>
-          <div className="h-4" />
-          <div className="bg-surface rounded-3xl border border-divider">
-            {params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 && (
-              <ChartSettings
-                chart={newChart}
-                onChange={_onChangeGlobalSettings}
-                onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
-                onVisualizationChange={(visualization) => _onChangeChart({ visualization }, false)}
-              />
+        )}
+        chat={(
+          <ChartStudioChat
+            chartId={newChart.id}
+            disabled={historical}
+            key={`${user?.id}-${team?.id}-${projectId}-${newChart.id}`}
+            projectId={projectId}
+          />
+        )}
+        dataView={<ChartDataView loading={historical ? !history.preview && !history.previewError : loading} tabularData={(historical ? history.preview : newChart)?.render?.tabularData} />}
+        identity={(
+          <div className="chart-studio-title min-w-0">
+            {!editingTitle ? (
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <LinkNext
+                    className="flex min-w-0 cursor-pointer items-center gap-2"
+                    color="foreground"
+                    isDisabled={historical}
+                    onPress={() => { setChartName(newChart.name); setEditingTitle(true); }}
+                  >
+                    <span className="truncate text-lg font-bold text-foreground" title={newChart.name}>
+                      {newChart.name}
+                    </span>
+                    <LuPencilLine className="shrink-0 text-foreground-500" size={18} />
+                  </LinkNext>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Edit the chart name</Tooltip.Content>
+              </Tooltip>
+            ) : (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  _onSubmitNewName();
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Input
+                    aria-label="Chart title"
+                    disabled={historical}
+                    autoFocus
+                    labelPlacement="outside"
+                    onChange={(event) => _onNameChange(event.target.value)}
+                    placeholder="Enter a title"
+                    size="sm"
+                    value={chartName}
+                    variant="secondary"
+                  />
+                  <Button aria-label="Save chart title" isDisabled={historical} isIconOnly size="sm" type="submit" variant="primary">
+                    <LuCheck size={16} />
+                  </Button>
+                </div>
+              </form>
             )}
           </div>
-        </div>
-      </div>
+        )}
+        onBack={() => navigate(`/dashboard/${params.projectId}`)}
+        onSettingsSectionChange={setSettingsSection}
+        renderPreview={(viewControl) => historical ? (
+          <ChartHistoryPreview history={history} viewControl={viewControl} />
+        ) : (
+          <ChartPreview
+            changeCache={(use) => setUseCache(use)}
+            chart={newChart}
+            conditions={conditions}
+            onAddFilter={_onAddFilter}
+            onChange={_onChangeChart}
+            onClearFilter={_onClearFilter}
+            onRefreshData={_onRefreshData}
+            onRefreshPreview={_onRefreshPreview}
+            showAppearanceControls={false}
+            studio
+            transitioning={loading}
+            useCache={useCache}
+            viewControl={viewControl}
+          />
+        )}
+        settings={(
+          <div className="flex flex-col gap-4" key={settingsRevision}>
+            {settingsSection === "appearance"
+              ? [chartSettings, datasetSettings]
+              : [datasetSettings, chartSettings]}
+          </div>
+        )}
+        settingsSection={settingsSection}
+      />
     </div>
   );
 }

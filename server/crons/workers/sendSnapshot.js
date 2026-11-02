@@ -12,9 +12,9 @@ const {
 } = require("../../modules/snapshotChannels");
 const db = require("../../models/models");
 
-const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+const settings = require("../../settings");
 
-const fullApiUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_API_HOST : process.env.VITE_APP_API_HOST_DEV;
+const fullApiUrl = process.env.VITE_APP_API_HOST;
 
 async function sendToWebhook({
   project, snapshotUrl, blocks, integration

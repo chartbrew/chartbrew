@@ -22,7 +22,7 @@ function formatColumnsForOrdering(columns) {
 }
 
 function TableConfiguration(props) {
-  const { dataset, chartData, tableFields, onUpdate, loading } = props;
+  const { dataset, tableData, tableFields, onUpdate, loading } = props;
 
   const [isDragState, setIsDragState] = useState(false);
   const [fieldForFormatting, setFieldForFormatting] = useState("");
@@ -59,7 +59,7 @@ function TableConfiguration(props) {
 
     const columnsForOrdering = [];
     if (!isDragState && (!dataset.columnsOrder || dataset.columnsOrder.length === 0)) {
-      const datasetData = chartData[dataset.legend];
+      const datasetData = tableData[dataset.legend];
       if (datasetData && datasetData.columns) {
         datasetData.columns.forEach((field, index) => {
           if (field && field.Header && field.Header.indexOf("__cb_group") === -1) {
@@ -74,7 +74,7 @@ function TableConfiguration(props) {
       setTableColumns(columnsForOrdering);
     } else {
       const notFoundColumns = [];
-      const datasetData = chartData[dataset.legend];
+      const datasetData = tableData[dataset.legend];
       if (datasetData && datasetData.columns) {
         datasetData.columns.forEach((field) => {
           if (!dataset.columnsOrder.find((column) => column === field.Header)) {
@@ -302,7 +302,7 @@ function TableConfiguration(props) {
 
 TableConfiguration.propTypes = {
   dataset: PropTypes.object.isRequired,
-  chartData: PropTypes.object.isRequired,
+  tableData: PropTypes.object.isRequired,
   tableFields: PropTypes.array.isRequired,
   loading: PropTypes.bool.isRequired,
   onUpdate: PropTypes.func.isRequired,

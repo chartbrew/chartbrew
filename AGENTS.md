@@ -25,6 +25,7 @@ This is a monorepo containing two main applications:
 - Keep generated code minimal with TODOs, no dead code.
 
 ### UI Copy And Meta-Information
+- Before UI work, read `../chartbrew-design/DESIGN.md` and the relevant examples in `../chartbrew-design`. Follow its approved design rules, including secondary form controls on primary surfaces.
 - Never expose implementation or developer-facing meta-information in the product UI. This includes internal model names, storage details, schema or contract versions, fingerprints, source IDs, queue/job states, feature flags, migrations, rollout notes, entitlement mechanics, and architecture terminology.
 - User-facing copy must describe the user's task, the result, or the next useful action. Do not explain how Chartbrew is implemented unless that knowledge is required to complete the task.
 - Keep interfaces concise. Do not add subtitles, helper paragraphs, callouts, badges, or tiny descriptive text merely to explain obvious controls or fill visual space.

@@ -1,0 +1,15 @@
+{
+  "corpusVersion": 1,
+  "cases": [
+    { "id": "viewer-workspace-summary", "persona": "viewer", "task": "Summarize recent changes" },
+    { "id": "viewer-freshness", "persona": "viewer", "task": "Check data freshness" },
+    { "id": "viewer-write-refusal", "persona": "viewer", "task": "Create a new dataset" },
+    { "id": "editor-metric-attention", "persona": "editor", "task": "Which metrics need attention?" },
+    { "id": "editor-watch-recommendation", "persona": "editor", "task": "What should I watch?" },
+    { "id": "editor-watch-preview", "persona": "editor", "task": "Prepare this metric for watching" },
+    { "id": "owner-workspace-summary", "persona": "owner", "task": "What happened across the workspace?" },
+    { "id": "owner-kpi-review-preview", "persona": "owner", "task": "Prepare a weekly KPI review" },
+    { "id": "owner-chart-preview", "persona": "owner", "task": "Create a KPI preview from this dataset" },
+    { "id": "owner-follow-up", "persona": "owner", "task": "Explain the largest change" }
+  ]
+}

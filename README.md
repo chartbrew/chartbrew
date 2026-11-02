@@ -44,7 +44,7 @@
 
 ## Prerequisites
 
-* NodeJS v22+
+* Node.js 22.23.4 (the version used in `.nvmrc`, CI, and Docker)
 * MySQL (5+) or PostgreSQL (12.5+)
 * Redis (v6+)
 
@@ -64,8 +64,13 @@ Chartbrew can run on MySQL or PostgreSQL. Create an empty database that Chartbre
 
 ```sh
 git clone https://github.com/chartbrew/chartbrew.git
-cd chartbrew && npm run setup
+cd chartbrew
+nvm install
+nvm use
+npm run setup
 ```
+
+The `nvm` commands select the version in `.nvmrc`. If you do not use nvm, install Node.js 22.23.4 before you run `npm run setup`.
 
 Complete the required environmental variables in `chartbrew/.env`. [Check out which need to be set here.](https://docs.chartbrew.com/quickstart#environmental-variables)
 
@@ -109,6 +114,14 @@ These are affiliate links. We may earn a commission if you purchase a plan.
 ## Run with Docker
 
 [Check the full guide in the docs.](https://docs.chartbrew.com/deployment/run-on-docker)
+
+### Node.js security updates
+
+Node.js 22.23.4 includes the [October 2026 security fixes](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases). Earlier Node.js 22 versions do not include all these fixes.
+
+For an existing installation, run `nvm install` and `nvm use` from the repository root, then restart the server and worker processes with the updated Node.js executable. Changing `.nvmrc` does not update a running process.
+
+The Dockerfile uses `node:22.23.4-slim`. Rebuild your image with `docker build --pull -t chartbrew .`, then recreate the containers with that image. If you use a published image, first check that its release includes this update. Restarting an old container does not update Node.js.
 
 ### Quickstart
 

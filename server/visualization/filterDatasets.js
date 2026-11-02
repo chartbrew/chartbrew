@@ -3,6 +3,7 @@ const {
   getDatasetDateConditions,
   getDatasetRuntimeFilters,
 } = require("../modules/chartRuntimeFilters");
+const _ = require("lodash");
 const dataFilter = require("../charts/dataFilter");
 const { resolveDatasetDateField } = require("./dateField");
 
@@ -155,7 +156,45 @@ function filterVisualizationDatasets({
   };
 }
 
+function filterDatasetResult(data, filters = [], timezone = "UTC") {
+  return filters.reduce((filteredData, filter) => {
+    const arrayMarker = filter.field.indexOf("[]");
+    if (arrayMarker < 0) return filteredData;
+
+    const collectionPath = filter.field.slice(0, arrayMarker).replace(/^root\.?/, "");
+    const rowField = filter.field.slice(arrayMarker + 3);
+    const collection = collectionPath ? _.get(filteredData, collectionPath) : filteredData;
+    if (!Array.isArray(collection) || !rowField) return filteredData;
+
+    let nextCollection;
+    if (filter.operator === "isNull") {
+      nextCollection = collection.filter((row) => {
+        const value = _.get(row, rowField);
+        return value === null || value === undefined;
+      });
+    } else if (filter.operator === "isNotNull") {
+      nextCollection = collection.filter((row) => {
+        const value = _.get(row, rowField);
+        return value !== null && value !== undefined;
+      });
+    } else {
+      nextCollection = dataFilter(
+        collection,
+        `root[].${rowField}`,
+        [{ ...filter, field: `root[].${rowField}` }],
+        timezone
+      ).data;
+    }
+
+    if (!collectionPath) return nextCollection;
+    const nextData = _.cloneDeep(filteredData);
+    _.set(nextData, collectionPath, nextCollection);
+    return nextData;
+  }, data);
+}
+
 module.exports = {
+  filterDatasetResult,
   filterVisualizationDatasets,
   getBindingSelector,
   getVariableConditions,

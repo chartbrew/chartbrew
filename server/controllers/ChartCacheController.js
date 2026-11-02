@@ -45,7 +45,6 @@ class ChartCacheController {
             if (fs.existsSync(cache.filePath)) {
               const rawData = await fs.promises.readFile(cache.filePath);
               const parsedData = JSON.parse(rawData);
-              // console.log("parsedData", parsedData.chart.chartData.test.data);
               return new Promise((resolve) => resolve({ ...cache, data: parsedData }));
             }
           }

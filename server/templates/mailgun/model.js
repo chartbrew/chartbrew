@@ -1,4 +1,4 @@
-const request = require("request-promise");
+const request = require("../../modules/safeRequest");
 
 const builder = require("./builder");
 const { chartColors } = require("../../charts/colors");

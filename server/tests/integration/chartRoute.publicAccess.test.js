@@ -15,12 +15,12 @@ import { projectFactory } from "../factories/projectFactory.js";
 
 const require = createRequire(import.meta.url);
 const ChartController = require("../../controllers/ChartController.js");
-const settings = require("../../settings-dev.js");
+const settings = require("../../settings.js");
 
 function generateProjectShareToken(projectId, sharePolicyId) {
   return jwt.sign(
     { sub: { type: "Project", id: projectId, sharePolicyId } },
-    process.env.CB_ENCRYPTION_KEY_DEV,
+    process.env.CB_ENCRYPTION_KEY,
     { expiresIn: "1h" }
   );
 }
@@ -46,11 +46,6 @@ async function seedPublicChart(models, {
     name: "Public Revenue",
     type: "line",
     draft: false,
-    chartData: {
-      labels: ["Jan"],
-      datasets: [{ label: "Revenue", data: [42] }],
-    },
-    chartDataUpdated: new Date(),
     onReport: true,
     ...chartOverrides,
   });
@@ -90,6 +85,30 @@ describe("ChartRoute public access", () => {
     vi.restoreAllMocks();
   });
 
+  it("returns not found when an authenticated chart no longer exists", async () => {
+    const seeded = await seedPublicChart(models);
+    const user = await models.User.create(userFactory.build());
+    await models.TeamRole.create({
+      team_id: seeded.team.id,
+      user_id: user.id,
+      role: "teamAdmin",
+      projects: [],
+    });
+    const authToken = generateTestToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
+    await seeded.chart.destroy();
+
+    const response = await request(app)
+      .get(`/project/${seeded.project.id}/chart/${seeded.chart.id}`)
+      .set("Authorization", `Bearer ${authToken}`)
+      .expect(404);
+
+    expect(response.body).toEqual({ message: "Chart not found" });
+  });
+
   it("rejects forged private chart share tokens signed with the legacy secret", async () => {
     const seeded = await seedPublicChart(models, {
       projectOverrides: { public: false },
@@ -103,11 +122,11 @@ describe("ChartRoute public access", () => {
     const tokenPayload = {
       sub: { type: "Chart", id: seeded.chart.id, sharePolicyId: sharePolicy.id },
     };
-    const validToken = jwt.sign(tokenPayload, process.env.CB_ENCRYPTION_KEY_DEV, {
+    const validToken = jwt.sign(tokenPayload, process.env.CB_ENCRYPTION_KEY, {
       algorithm: "HS256",
       expiresIn: "1h",
     });
-    const forgedToken = jwt.sign(tokenPayload, process.env.CB_SECRET_DEV, {
+    const forgedToken = jwt.sign(tokenPayload, process.env.CB_SECRET, {
       algorithm: "HS256",
       expiresIn: "1h",
     });
@@ -117,7 +136,8 @@ describe("ChartRoute public access", () => {
       .query({ token: validToken })
       .expect(200);
 
-    expect(validResponse.body.chartData).toEqual(seeded.chart.chartData);
+    expect(validResponse.body).not.toHaveProperty("chartData");
+    expect(validResponse.body.render).toBeNull();
 
     await request(app)
       .get(`/chart/share/${sharePolicy.share_string}`)
@@ -131,7 +151,7 @@ describe("ChartRoute public access", () => {
       .expect(401);
   });
 
-  it("preserves generated series in embedded and snapshot chart payloads", async () => {
+  it("does not expose legacy chart data in embedded and snapshot payloads", async () => {
     const generatedChartData = {
       data: {
         labels: ["Jan", "Feb"],
@@ -156,9 +176,8 @@ describe("ChartRoute public access", () => {
       .query({ isSnapshot: "true" })
       .expect(200);
 
-    expect(response.body.chartData.data.datasets.map((dataset) => dataset.label))
-      .toEqual(["Professional", "Amateur"]);
-    expect(response.body.chartData.meta.series).toHaveLength(2);
+    expect(response.body).not.toHaveProperty("chartData");
+    expect(response.body.render).toBeNull();
   });
 
   it("marks existing share policies secure when generating a replacement token", async () => {
@@ -175,7 +194,7 @@ describe("ChartRoute public access", () => {
       sharePolicyId: sharePolicy.id,
       exp: new Date(Date.now() + 60 * 60 * 1000),
     });
-    const decodedToken = jwt.verify(result.token, process.env.CB_ENCRYPTION_KEY_DEV, {
+    const decodedToken = jwt.verify(result.token, process.env.CB_ENCRYPTION_KEY, {
       algorithms: ["HS256"],
     });
 
@@ -202,7 +221,7 @@ describe("ChartRoute public access", () => {
         sharePolicyId: sharePolicy.id,
         preserveLegacy: true,
       });
-      const decodedToken = jwt.verify(result.token, process.env.CB_SECRET_DEV, {
+      const decodedToken = jwt.verify(result.token, process.env.CB_SECRET, {
         algorithms: ["HS256"],
       });
 
@@ -215,11 +234,9 @@ describe("ChartRoute public access", () => {
     }
   });
 
-  it("blocks direct public chart retrieval for charts hidden from the report", async () => {
+  it.each([{ onReport: false }, { draft: true }])("blocks direct public chart retrieval for unpublished charts: %j", async (chartOverrides) => {
     const seeded = await seedPublicChart(models, {
-      chartOverrides: {
-        onReport: false,
-      },
+      chartOverrides,
     });
 
     const response = await request(app)
@@ -267,7 +284,7 @@ describe("ChartRoute public access", () => {
     expect(response.body).toEqual(expect.objectContaining({
       id: seeded.chart.id,
       project_id: seeded.project.id,
-      chartData: seeded.chart.chartData,
+      render: null,
     }));
   });
 
@@ -402,10 +419,7 @@ describe("ChartRoute public access", () => {
   it.each([false, true])("allows public chart refresh with report password and valid project share token (allow_params=%s)", async (allowParams) => {
     const refreshedChart = {
       id: 123,
-      chartData: {
-        labels: ["Feb"],
-        datasets: [{ label: "Revenue", data: [84] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: 456,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
@@ -471,10 +485,7 @@ describe("ChartRoute public access", () => {
   it("allows authenticated project members to refresh a password-protected public report without report password", async () => {
     const refreshedChart = {
       id: 123,
-      chartData: {
-        labels: ["Feb"],
-        datasets: [{ label: "Revenue", data: [84] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: 456,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
@@ -530,10 +541,7 @@ describe("ChartRoute public access", () => {
   it("merges share policy and URL parameters when refreshing a public chart", async () => {
     const refreshedChart = {
       id: 123,
-      chartData: {
-        labels: ["Feb"],
-        datasets: [{ label: "Revenue", data: [84] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: 456,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
@@ -600,10 +608,7 @@ describe("ChartRoute public access", () => {
     });
     const refreshedChart = {
       id: seeded.chart.id,
-      chartData: {
-        labels: ["Feb"],
-        datasets: [{ label: "Revenue", data: [84] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: seeded.project.id,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")
@@ -656,10 +661,7 @@ describe("ChartRoute public access", () => {
     });
     const cachedChart = {
       id: seeded.chart.id,
-      chartData: {
-        labels: ["Cached"],
-        datasets: [{ label: "Revenue", data: [42] }],
-      },
+      render: { configuration: {}, renderer: "echarts" },
       project_id: seeded.project.id,
     };
     const refreshSpy = vi.spyOn(ChartController.prototype, "updateChartData")

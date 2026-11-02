@@ -1,5 +1,5 @@
-import lightLogo from "./assets/supabase-connection.webp";
-import darkLogo from "./assets/Supabase-dark.png";
+import lightLogo from "./assets/logo-light.png";
+import darkLogo from "./assets/logo-light.png";
 
 export default {
   id: "supabasedb",
@@ -7,6 +7,7 @@ export default {
   type: "postgres",
   subType: "supabasedb",
   name: "Supabase DB",
+  description: "Query your Supabase database tables with SQL.",
   category: "database",
   capabilities: {
     ai: {

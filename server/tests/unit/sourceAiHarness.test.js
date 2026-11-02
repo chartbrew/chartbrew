@@ -9,6 +9,8 @@ const googleAnalyticsConnection = require("../../sources/plugins/googleAnalytics
 const googleAnalyticsProtocol = require("../../sources/plugins/googleAnalytics/googleAnalytics.protocol");
 const jiraConnection = require("../../sources/plugins/jira/jira.connection");
 const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
+const mcpProtocol = require("../../sources/plugins/mcp/mcp.protocol");
+const { sanitizeTool } = require("../../sources/plugins/mcp/mcp.policy");
 const stripeOfficialProtocol = require("../../sources/plugins/stripeOfficial/stripeOfficial.protocol");
 const apiProtocol = require("../../sources/shared/protocols/api.protocol");
 const db = require("../../models/models");
@@ -48,6 +50,7 @@ const SOURCE_OWNED_IDS = [
   "firestore",
   "googleAnalytics",
   "jira",
+  "mcp",
   "realtimedb",
   "stripeOfficial",
 ];
@@ -99,7 +102,7 @@ function expectDataRequestContract(sourceId, plan) {
   expect(sourceId !== "firestore" || hasQuery).toBe(true);
   expect(!["api", "customerio", "realtimedb"].includes(sourceId) || hasRoute).toBe(true);
   expect(!["api", "customerio"].includes(sourceId) || hasMethod).toBe(true);
-  expect(!["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
+  expect(!["googleAnalytics", "jira", "mcp", "stripeOfficial"].includes(sourceId) || hasConfiguration).toBe(true);
 }
 
 function expectChartPlanContract(plan) {
@@ -142,6 +145,12 @@ async function planFixture(fixture) {
 async function validateFixturePlan({ source, sourceId, payload, plan }) {
   if (["googleAnalytics", "jira", "stripeOfficial"].includes(sourceId)) {
     return source.backend.ai.validateConfiguration(plan.configuration);
+  }
+
+  if (sourceId === "mcp") {
+    return source.backend.ai.validateConfiguration(plan.configuration, {
+      connection: payload.connection,
+    });
   }
 
   const dataRequest = {
@@ -239,6 +248,59 @@ const plannerContractFixtures = [{
   payload: {
     question: "Show open Jira issues by status",
   },
+}, {
+  name: "PostHog MCP approved SQL tool",
+  sourceId: "mcp",
+  payload: (() => {
+    const tool = sanitizeTool({
+      name: "execute-sql",
+      title: "Execute SQL",
+      description: "Run a read-only SQL query in PostHog",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string" },
+          context: { type: "string" },
+        },
+        required: ["query"],
+      },
+      outputSchema: {
+        type: "array",
+        items: { type: "object", properties: { content: { type: "string" } } },
+      },
+      annotations: { readOnlyHint: true },
+    });
+    return {
+      connection: {
+        id: 108,
+        team_id: TOOL_TEAM_ID,
+        type: "mcp",
+        subType: "mcp",
+        schema: {
+          mcp: {
+            tools: [tool],
+            allowedTools: {
+              [tool.name]: {
+                datasets: true,
+                ask: true,
+                confirmedReadOnly: true,
+                contractFingerprint: tool.contractFingerprint,
+                riskFingerprint: tool.riskFingerprint,
+              },
+            },
+          },
+        },
+      },
+      question: "How many visitors used the free tools in the last 30 days?",
+      overrides: {
+        toolName: tool.name,
+        arguments: {
+          query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+          context: "Count visitors to free tools in the last 30 days",
+        },
+      },
+    };
+  })(),
 }];
 
 const toolHarnessConnections = {
@@ -302,6 +364,7 @@ const toolHarnessConnections = {
       },
     },
   },
+  mcp: plannerContractFixtures.find((fixture) => fixture.sourceId === "mcp").payload.connection,
   realtimedb: {
     id: 105,
     team_id: TOOL_TEAM_ID,
@@ -397,7 +460,7 @@ function setupGoogleAnalyticsToolRuntime() {
   vi.spyOn(googleAnalyticsProtocol, "getOAuth").mockResolvedValue({
     refreshToken: "redacted-refresh-token",
   });
-  vi.spyOn(googleAnalyticsConnection, "getAnalytics").mockResolvedValue([{
+  vi.spyOn(googleAnalyticsProtocol, "fetchAnalytics").mockResolvedValue([{
     date: "20260501",
     activeUsers: 12,
   }]);
@@ -440,6 +503,13 @@ function setupJiraToolRuntime() {
 function setupRealtimeDbToolRuntime() {
   vi.spyOn(realtimeDbProtocol, "createRealtimeDatabase").mockReturnValue({
     getData: vi.fn().mockResolvedValue([{ _key: "order_1", total: 25 }]),
+  });
+}
+
+function setupMcpToolRuntime() {
+  vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+    data: [{ visitors: 42 }],
+    tool: { name: "execute-sql" },
   });
 }
 
@@ -527,6 +597,32 @@ const compactToolFixtures = [{
   },
   setup: setupRealtimeDbToolRuntime,
 }, {
+  sourceId: "mcp",
+  question: "How many visitors used the free tools in the last 30 days?",
+  resource: "execute-sql",
+  overrides: {
+    toolName: "execute-sql",
+    arguments: {
+      query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+      context: "Count visitors to free tools in the last 30 days",
+    },
+  },
+  previewConfiguration: {
+    source: "mcp",
+    tool: {
+      name: "execute-sql",
+      contractFingerprint: plannerContractFixtures
+        .find((fixture) => fixture.sourceId === "mcp")
+        .payload.connection.schema.mcp.tools[0].contractFingerprint,
+    },
+    arguments: {
+      query: "SELECT uniqExact(person_id) AS visitors FROM events WHERE timestamp >= now() - INTERVAL 30 DAY",
+      context: "Count visitors to free tools in the last 30 days",
+    },
+    output: { mode: "auto", path: [] },
+  },
+  setup: setupMcpToolRuntime,
+}, {
   sourceId: "stripeOfficial",
   question: "Show latest balance transactions",
   resource: "balance_transactions",
@@ -552,6 +648,12 @@ const toolRoutingReplays = [{
   steps: ["source_get_capabilities", "source_plan_dataset"],
   finalStatus: "needs_more_context",
   forbidden: ["create_temporary_chart", "create_chart"],
+}, {
+  name: "answer-first PostHog MCP query",
+  sourceId: "mcp",
+  steps: ["source_get_capabilities", "source_plan_dataset", "source_preview_configuration"],
+  finalStatus: "ok",
+  forbidden: ["run_query", "source_run_action"],
 }, {
   name: "query-generation database chart",
   sourceId: "postgres",
@@ -629,6 +731,8 @@ function getQueryGenerationConnection(fixture) {
 describe("Source AI harness", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    const execution = require("../../modules/sourceExecution");
+    vi.spyOn(execution, "runSourceExecution").mockImplementation((_options, operation) => operation());
     delete global.openaiClient;
   });
 
@@ -781,9 +885,9 @@ describe("Source AI harness", () => {
     const plan = await sourcePlanDataset({
       ...basePayload,
       question: fixture.question,
-      overrides: fixture.sourceId === "googleAnalytics"
+      overrides: fixture.overrides || (fixture.sourceId === "googleAnalytics"
         ? { propertyId: "properties/123" }
-        : {},
+        : {}),
     });
     const validation = await sourceValidateConfiguration({
       ...basePayload,
@@ -1066,6 +1170,58 @@ describe("Source AI harness", () => {
     expect(replay.finalStatus !== "needs_more_context" || !usedTools.has("create_chart")).toBe(true);
   });
 
+  it.each([
+    { data: [{ content: "visitors: current: 2363; top pages: /, /tools" }], type: "table", error: "response text, not chart-ready values" },
+    { data: [{ column_0: "/", column_1: [899, 0], column_5: 0.23 }], type: "bar", error: "does not select numeric values" },
+  ])("blocks unusable MCP $type charts before writes for new and reused datasets", async ({ data, type, error }) => {
+    const fixture = compactToolFixtures.find((item) => item.sourceId === "mcp");
+    const connection = { ...toolHarnessConnections.mcp, id: 42, team_id: 7 };
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+    vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({
+      data,
+    });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({ id: 77, team_id: 7, ghost: true });
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({
+      id: 99, team_id: 7, project_ids: [], DataRequests: [{ id: 1001, connection_id: 42, configuration: fixture.previewConfiguration }],
+    });
+    const datasetWrite = vi.spyOn(DatasetController.prototype, "createWithDataRequests");
+    const chartWrite = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs");
+    for (const source of [{ connection_id: 42, configuration: fixture.previewConfiguration }, { dataset_id: 99 }]) {
+      await expect(createTemporaryChart({
+        ...source, team_id: 7, name: "Analytics", type,
+        xAxis: "root[].column_0", yAxis: "root[].column_5",
+        ...(type === "bar" ? { encoding: { category: { field: "root[].column_0", type: "nominal" }, value: { field: "root[].column_1", type: "quantitative" } } } : {}),
+      })).rejects.toThrow(error);
+    }
+    expect(datasetWrite).not.toHaveBeenCalled();
+    expect(chartWrite).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { map: { area: "US", mode: "regions" }, encoding: { location: { field: "root[].us_state" }, value: { field: "root[].visits" } } },
+    { map: { area: "world", mode: "points" }, encoding: { latitude: { field: "root[].latitude" }, longitude: { field: "root[].longitude" }, value: { field: "root[].visits" } } },
+  ])("refuses to reuse country totals for $map.mode without the required fields", async ({ map, encoding }) => {
+    const fixture = compactToolFixtures.find((item) => item.sourceId === "mcp");
+    const connection = { ...toolHarnessConnections.mcp, id: 42, team_id: 7 };
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+    vi.spyOn(mcpProtocol._private, "executeTool").mockResolvedValue({ data: [{ country: "US", visits: 25 }] });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({ id: 77, team_id: 7, ghost: true });
+    const update = vi.fn();
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({
+      id: 99, team_id: 7, project_ids: [], update,
+      DataRequests: [{ id: 1001, connection_id: 42, configuration: fixture.previewConfiguration }],
+    });
+    const datasetWrite = vi.spyOn(DatasetController.prototype, "createWithDataRequests");
+    const chartWrite = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs");
+    await expect(createTemporaryChart({
+      team_id: 7, dataset_id: 99, name: "Visits", type: "map",
+      visualization: { version: 2, layers: [{ id: "geo", bindingId: "binding-1", mark: "map", encoding, options: { map } }] },
+    })).rejects.toThrow("no usable values");
+    expect(update).not.toHaveBeenCalled();
+    expect(datasetWrite).not.toHaveBeenCalled();
+    expect(chartWrite).not.toHaveBeenCalled();
+  });
+
   it("persists safe CDC bindings for temporary chart table payloads", async () => {
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue({
       id: 42,
@@ -1119,6 +1275,92 @@ describe("Source AI harness", () => {
       status: "ok",
       chart_created: true,
     });
+  });
+
+  it("reuses an existing dataset for a temporary KPI preview", async () => {
+    const dataset = {
+      id: 99,
+      main_dr_id: 1001,
+      name: "Trial conversions",
+      project_ids: [12],
+      team_id: 7,
+    };
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue(dataset);
+    vi.spyOn(db.DataRequest, "findByPk").mockResolvedValue({
+      configuration: {},
+      id: 1001,
+    });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({
+      ghost: true,
+      id: 77,
+      team_id: 7,
+    });
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({
+      ghost: true,
+      id: 77,
+      team_id: 7,
+    });
+    const createDatasetSpy = vi.spyOn(
+      DatasetController.prototype,
+      "createWithDataRequests"
+    );
+    const createChartSpy = vi.spyOn(
+      ChartController.prototype,
+      "createWithChartDatasetConfigs"
+    ).mockResolvedValue({
+      id: 55,
+      name: "Trial conversion",
+      project_id: 77,
+      type: "kpi",
+    });
+    vi.spyOn(ChartController.prototype, "takeSnapshot").mockResolvedValue(null);
+
+    const result = await createTemporaryChart({
+      allowed_project_ids: [12],
+      dataset_id: 99,
+      name: "Trial conversion",
+      team_id: 7,
+      type: "kpi",
+      yAxis: "root[].conversion_rate",
+      yAxisOperation: "none",
+    });
+
+    expect(createDatasetSpy).not.toHaveBeenCalled();
+    expect(createChartSpy).toHaveBeenCalledWith(expect.objectContaining({
+      project_id: 77,
+      type: "kpi",
+      chartDatasetConfigs: [expect.objectContaining({
+        dataset_id: 99,
+        yAxis: "root[].conversion_rate",
+      })],
+    }), { id: undefined }, { waitForData: true, origin: "ai" });
+    expect(result).toMatchObject({
+      chart_created: true,
+      chart_id: 55,
+      data_request_id: 1001,
+      dataset_id: 99,
+      ghost_project_id: 77,
+      is_temporary: true,
+      visibility: "temporary",
+    });
+  });
+
+  it("does not preview an existing dataset outside the allowed projects", async () => {
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({
+      id: 99,
+      name: "Hidden metric",
+      project_ids: [88],
+      team_id: 7,
+    });
+
+    await expect(createTemporaryChart({
+      allowed_project_ids: [12],
+      dataset_id: 99,
+      name: "Hidden metric",
+      team_id: 7,
+      type: "kpi",
+      yAxis: "root[].value",
+    })).rejects.toThrow("Dataset is not available in your projects");
   });
 
   it("repairs Jira completed story point temporary KPI payloads to sum values", async () => {

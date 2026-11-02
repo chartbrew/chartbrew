@@ -78,14 +78,19 @@ async function sourceGetCapabilities(payload) {
   const { connection, source } = await getScopedSource(payload);
   const tool = requireAiTool(source, "getCapabilities");
 
-  return tool({ connection });
+  return tool({ connection, question: payload.question });
 }
 
 async function sourceListResources(payload) {
   const { connection, source } = await getScopedSource(payload);
   const tool = requireAiTool(source, "listResources");
 
-  return tool({ connection });
+  return tool({
+    connection,
+    query: payload.query,
+    names: payload.names,
+    question: payload.question,
+  });
 }
 
 async function sourceGetSampleData(payload) {

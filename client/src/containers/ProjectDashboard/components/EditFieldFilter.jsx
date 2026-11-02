@@ -90,7 +90,11 @@ function EditFieldFilter({
       newCondition.dataType = selectedField?.type;
     }
     setFieldCondition(newCondition);
-    onChange({ ...filter, ...newCondition });
+    onChange({
+      ...filter,
+      ...newCondition,
+      ...(key === "field" ? { options: undefined, allLabel: undefined } : {}),
+    });
   };
 
   const selectedField = fieldOptions.find(f => f.value === fieldCondition.field);

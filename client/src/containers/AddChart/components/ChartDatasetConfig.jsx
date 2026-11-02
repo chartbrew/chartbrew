@@ -7,6 +7,7 @@ import {
   Checkbox,
   Chip,
   ColorSlider,
+  ColorSwatch,
   Separator,
   Input,
   InputGroup,
@@ -22,13 +23,12 @@ import {
   Label,
   TextField,
 } from "@heroui/react";
-import { commonColors } from "../../../lib/themeTokens";
 import { TbMathFunctionY } from "react-icons/tb";
 import { useNavigate, useParams } from "react-router";
 import {
   LuArrowDown01, LuArrowDown10, LuCircleCheck, LuInfo,
-  LuPlug,
-  LuWandSparkles, LuCircleX,
+  LuPlug, LuSettings,
+  LuLightbulb, LuCircleX,
   LuVariable,
   LuChevronDown,
   LuChevronUp,
@@ -46,7 +46,7 @@ import {
   updateChart,
 } from "../../../slices/chart";
 import DatasetAlerts from "./DatasetAlerts";
-import { chartColors, getChartColorForKey, primary } from "../../../config/colors";
+import { chartColors, getChartColorForKey } from "../../../config/colors";
 import { flatMap } from "lodash";
 import TableConfiguration from "../../../components/TableConfiguration";
 import FormulaTips from "../../../components/FormulaTips";
@@ -60,11 +60,18 @@ import getDatasetDisplayName from "../../../modules/getDatasetDisplayName";
 import ColorPickerControl from "../../../components/ColorPickerControl";
 import { getRgbColorChannels } from "../../../modules/colorPicker";
 import {
+  getBindingPresentation,
   updateBindingFill,
   updateLayerFormula,
   updateLayerSeriesOptions,
   updateSeriesColor,
+  updateMarkStyle,
+  updateLegendVisibility,
 } from "../../../modules/visualization";
+import {
+  hasDatasetEditorTab,
+  hasPresetCapability,
+} from "../../../visualization/presetRegistry";
 
 function getFillSliderColor(color, opacity) {
   const { red, green, blue } = getRgbColorChannels(color, chartColors.blue.hex);
@@ -82,7 +89,7 @@ function FillOpacityControl(props) {
   } = props;
 
   return (
-    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+    <div className="rounded-xl border border-divider bg-surface-secondary/30 p-3">
       <Switch
         id={controlId}
         isSelected={fill}
@@ -175,12 +182,106 @@ DatasetLabelField.propTypes = {
   onSave: PropTypes.func.isRequired,
 };
 
+function FormulaControl({
+  formula,
+  onAdd,
+  onApply,
+  onChange,
+  onExample,
+  onRemove,
+  savedFormula,
+}) {
+  return (
+    <div>
+      {!formula && (
+        <Link onPress={onAdd} className="flex items-center cursor-pointer chart-cdc-formula">
+          <TbMathFunctionY size={24} />
+          <div className="w-2" />
+          <div className="text-sm text-foreground">Apply formula on metrics</div>
+        </Link>
+      )}
+      {formula && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col">
+            <Popover>
+              <Popover.Trigger>
+                <div className="flex flex-row gap-1 items-center cursor-pointer">
+                  <div className="text-sm">Metric formula</div>
+                  <LuInfo size={16} />
+                </div>
+              </Popover.Trigger>
+              <Popover.Content>
+                <Popover.Dialog>
+                  <FormulaTips />
+                </Popover.Dialog>
+              </Popover.Content>
+            </Popover>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex flex-row gap-3 items-center w-full">
+              <Input
+                labelPlacement="outside"
+                placeholder="Enter your formula here: {val}"
+                value={formula}
+                onChange={(event) => onChange(event.target.value)}
+                variant="secondary"
+                fullWidth
+              />
+              {formula !== savedFormula && (
+                <Tooltip>
+                  <Tooltip.Trigger className="flex justify-center">
+                    <Link onPress={onApply}>
+                      <LuCircleCheck className="text-success" />
+                    </Link>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Apply the formula</Tooltip.Content>
+                </Tooltip>
+              )}
+              <Tooltip>
+                <Tooltip.Trigger className="flex justify-center">
+                  <Link onPress={onRemove}>
+                    <LuCircleX className="text-danger" />
+                  </Link>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Remove formula</Tooltip.Content>
+              </Tooltip>
+              <Tooltip>
+                <Tooltip.Trigger className="flex justify-center">
+                  <Link onPress={onExample}>
+                    <LuLightbulb className="text-accent" />
+                  </Link>
+                </Tooltip.Trigger>
+                <Tooltip.Content>Click for an example</Tooltip.Content>
+              </Tooltip>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+FormulaControl.propTypes = {
+  formula: PropTypes.string.isRequired,
+  onAdd: PropTypes.func.isRequired,
+  onApply: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onExample: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+  savedFormula: PropTypes.string,
+};
+
+FormulaControl.defaultProps = {
+  savedFormula: "",
+};
+
 function ChartDatasetConfig(props) {
-  const { chartId, cdcId, dataRequests, onRemove } = props;
+  const {
+    chartId, cdcId, dataRequests, onRemove, section,
+  } = props;
 
   const [formula, setFormula] = useState("");
   const [maxRecords, setMaxRecords] = useState("");
-  const [dataItems, setDataItems] = useState({});
   const [tableFields, setTableFields] = useState([]);
   const [editConfirmation, setEditConfirmation] = useState(false);
   const [variables, setVariables] = useState([]);
@@ -194,22 +295,23 @@ function ChartDatasetConfig(props) {
       ? state.dataset.data.find((d) => d.id === parseInt(cdc.dataset_id, 10))
       : null
   ));
-  const drs = dataset?.DataRequests || [];
+  const drs = dataset?.DataRequests;
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
   const bindingLayers = (chart?.visualization?.layers || []).filter((layer) => {
     return `${layer.bindingId}` === `${cdc?.id}`;
   });
   const bindingLayerIds = new Set(bindingLayers.map((layer) => layer.id));
   const runtimeSeries = (
-    chart?.chartData?.meta?.availableSeries
-    || chart?.chartData?.meta?.series
+    chart?.render?.metadata?.availableSeries
+    || chart?.render?.metadata?.series
     || []
   ).filter((series) => {
     return bindingLayerIds.has(series.layerId);
   });
-  const runtimeCategories = (chart?.chartData?.meta?.categories || []).filter((category) => {
+  const runtimeCategories = (chart?.render?.metadata?.categories || []).filter((category) => {
     return bindingLayerIds.has(category.layerId);
   });
+  const dataItems = { labels: runtimeCategories.map((category) => category.label) };
   const usesCategorySliceColors = ["pie", "doughnut", "polar"].includes(chart?.type)
     && runtimeCategories.length > 0;
   const colorItems = usesCategorySliceColors ? runtimeCategories : runtimeSeries;
@@ -229,6 +331,12 @@ function ChartDatasetConfig(props) {
     setFormula(cdc?.formula || "");
     setMaxRecords(cdc?.maxRecords || "");
   }, [cdc, dataset]);
+
+  useEffect(() => {
+    if (chart?.type === "gauge" && activeTab === "display") {
+      setActiveTab("data-setup");
+    }
+  }, [activeTab, chart?.type]);
 
   useEffect(() => {
     let tempVariables = [];
@@ -263,32 +371,9 @@ function ChartDatasetConfig(props) {
   }, [drs, cdc?.id, cdc?.configuration]);
 
   useEffect(() => {
-    let tempDataItems;
-    if (cdc?.id && chart?.chartData?.data?.datasets) {
-      let foundIndex;
-      for (let i = 0; i < chart.ChartDatasetConfigs.length; i++) {
-        const config = chart.ChartDatasetConfigs[i];
-        if (config.id === cdc.id) {
-          foundIndex = i;
-          break;
-        }
-      }
-
-      if (foundIndex || foundIndex === 0) {
-        tempDataItems = chart.chartData.data.datasets[foundIndex];
-        tempDataItems = {
-          ...tempDataItems,
-          labels: chart.chartData.data.labels,
-        };
-
-        setDataItems(tempDataItems);
-      }
-    }
-  }, [chart, cdc]);
-
-  useEffect(() => {
-    if (cdc?.id && chart?.type === "table" && chart?.chartData && chart.chartData[cdc.legend]) {
-      const datasetData = chart.chartData[cdc.legend];
+    const tableData = chart?.render?.configuration;
+    if (cdc?.id && chart?.type === "table" && tableData?.[cdc.legend]) {
+      const datasetData = tableData[cdc.legend];
       const flatColumns = flatMap(datasetData.columns, (field) => {
         if (field.columns) return [field, ...field.columns];
         return field;
@@ -296,7 +381,7 @@ function ChartDatasetConfig(props) {
 
       setTableFields(flatColumns);
     }
-  }, [chart?.chartData, chart?.type, cdc?.id, cdc?.legend]);
+  }, [chart?.render?.configuration, chart?.type, cdc?.id, cdc?.legend]);
 
   const _onRunQuery = (skipParsing = true) => {
     dispatch(runQuery({
@@ -435,13 +520,11 @@ function ChartDatasetConfig(props) {
     _onUpdateVisualization({ refresh: true, visualization });
   };
 
-  const _getDatasetColor = (datasetColor) => ({
-    cursor: "pointer",
-    backgroundColor: datasetColor === "rgba(0,0,0,0)" ? primary : datasetColor,
-    border: `1px solid ${commonColors.zinc[500]}`,
-  });
-
   const _onChangeDatasetColor = (color) => {
+    if (runtimeSeries.length === 1 && _getSeriesOverrideColor(runtimeSeries[0])) {
+      _onChangeSeriesColor(runtimeSeries[0], color);
+      return;
+    }
     _onUpdateCdc({ datasetColor: color });
   };
 
@@ -615,51 +698,85 @@ function ChartDatasetConfig(props) {
     );
   }
 
-  const seriesLabel = cdc.legend || getDatasetDisplayName(dataset) || "Untitled dataset";
+  const presentation = getBindingPresentation(chart, cdc);
+  const seriesLabel = presentation.label || getDatasetDisplayName(dataset) || "Untitled dataset";
   const fillLayer = bindingLayers[0];
-  const fillEnabled = fillLayer?.style?.fill ?? cdc.fill ?? chart.type === "bar";
+  const fillEnabled = fillLayer?.style?.fill
+    ?? cdc.fill
+    ?? (["bar", "horizontalBar"].includes(chart.type));
   const configuredFillOpacity = fillLayer?.style?.fillOpacity;
   const fillOpacity = Number.isFinite(configuredFillOpacity)
     ? Math.min(1, Math.max(0, configuredFillOpacity))
-    : (chart.type === "bar" ? 0.65 : chart.type === "radar" ? 0.15 : 0.2);
+    : (["bar", "horizontalBar"].includes(chart.type)
+      ? 0.65 : chart.type === "radar" ? 0.15 : 0.2);
   const fillBaseColor = runtimeSeries[0]
     ? _getSeriesColor(runtimeSeries[0])
-    : cdc.datasetColor || chartColors.blue.hex;
+    : presentation.color || chartColors.blue.hex;
   const visibleColorItems = colorItems.filter((item) => {
     return item.label.toLowerCase().includes(seriesSearch.trim().toLowerCase());
   });
+  const hasDisplayTab = hasDatasetEditorTab(chart.type, "display");
+  const studioTabs = {
+    appearance: "display",
+    automation: "automation",
+    data: "data-setup",
+  };
+  const selectedTab = studioTabs[section] || activeTab;
+  const formulaControl = (
+    <FormulaControl
+      formula={formula}
+      onAdd={_onAddFormula}
+      onApply={_onApplyFormula}
+      onChange={setFormula}
+      onExample={_onExampleFormula}
+      onRemove={_onRemoveFormula}
+      savedFormula={cdc.formula}
+    />
+  );
 
   return (
-    <div>
+    <div className={section === "appearance" && !hasDisplayTab ? "hidden" : ""}>
       <Tabs
-        selectedKey={activeTab}
-        onSelectionChange={(key) => setActiveTab(key)}
+        selectedKey={selectedTab}
+        onSelectionChange={(key) => {
+          if (!section) setActiveTab(key);
+        }}
         aria-label="Visualization configuration"
         fullWidth
       >
-        <Tabs.ListContainer>
+        <Tabs.ListContainer className={section ? "hidden" : ""}>
           <Tabs.List className="w-full">
             <Tabs.Tab id="data-setup">
               <Tabs.Indicator />
               Build
             </Tabs.Tab>
-            <Tabs.Tab id="display">
-              <Tabs.Indicator />
-              Display
-            </Tabs.Tab>
+            {hasDisplayTab && (
+              <Tabs.Tab id="display">
+                <Tabs.Indicator />
+                Display
+              </Tabs.Tab>
+            )}
             <Tabs.Tab id="automation">
               <Tabs.Indicator />
               Automation
             </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
-        <Tabs.Panel id="data-setup">
-          <div className="h-2" />
-          <DatasetLabelField
-            key={cdc.id}
-            initialValue={seriesLabel}
-            onSave={(label) => _onUpdateCdc({ legend: label })}
-          />
+        <Tabs.Panel id="data-setup" className={section ? "p-0" : undefined}>
+          {!section && <div className="h-2" />}
+          <div className="chart-settings-dataset-heading flex flex-wrap items-end gap-3">
+            <DatasetLabelField
+              key={`${cdc.id}-${seriesLabel}`}
+              initialValue={seriesLabel}
+              onSave={(label) => _onUpdateCdc({ legend: label })}
+            />
+            {bindingLayers.length > 0 && canAccess("projectAdmin", user.id, team?.TeamRoles) && (
+              <Button size="sm" variant="tertiary" onPress={_onEditDataset}>
+                <LuSettings size={16} />
+                Edit dataset
+              </Button>
+            )}
+          </div>
           <div className="h-4" />
           <ChartDatasetDataSetup
             cdc={cdc}
@@ -667,230 +784,252 @@ function ChartDatasetConfig(props) {
             chart={chart}
             onUpdateCdc={_onUpdateCdc}
             onUpdateVisualization={_onUpdateVisualization}
-            onEditDataset={_onEditDataset}
           />
+          {chart.type === "gauge" && (
+            <>
+              <div className="h-4" />
+              <Separator />
+              <div className="h-4" />
+              {formulaControl}
+            </>
+          )}
         </Tabs.Panel>
 
-        <Tabs.Panel id="display">
-          <div className="h-2" />
+        {chart.type === "map" && (
+          <Tabs.Panel id="display" className={`flex flex-col gap-4 px-0 ${section ? "py-0" : "py-2"}`}>
+            <div className="flex flex-wrap gap-3">
+              {(fillLayer?.options?.map?.mode === "points" ? [
+                { key: "color", label: "Point color", fallback: "#048BDE" },
+              ] : [
+                { key: "fillColor", label: "Low values", fallback: chart.render?.configuration?.visualMap?.inRange?.color?.[0] || (isDark ? "#173b53" : "#d9eefe") },
+                { key: "color", label: "High values", fallback: "#048BDE" },
+              ]).map(({ key, label, fallback }) => (
+                <ColorPickerControl
+                  key={key}
+                  ariaLabel={label}
+                  fallbackColor={fallback}
+                  value={typeof fillLayer?.style?.[key] === "string" ? fillLayer.style[key] : fallback}
+                  valueFormat="hex"
+                  presetColors={Object.values(chartColors).map((color) => color.hex)}
+                  swatchClassName="bg-surface-secondary shadow-none"
+                  onChange={(color) => _onUpdateVisualization({
+                    refresh: true,
+                    visualization: updateMarkStyle(chart.visualization, "map", { [key]: color }),
+                  })}
+                />
+              ))}
+            </div>
+            <Switch
+              isSelected={chart.visualization?.settings?.legend?.visible ?? chart.displayLegend ?? true}
+              onChange={(visible) => _onUpdateVisualization({
+                refresh: true,
+                visualization: updateLegendVisibility(chart.visualization, visible),
+              })}
+            >
+              <Switch.Content>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                Legend
+              </Switch.Content>
+            </Switch>
+            <Separator />
+            {formulaControl}
+          </Tabs.Panel>
+        )}
+
+        {hasDisplayTab && chart.type !== "map" && (
+          <Tabs.Panel id="display" className={section ? "p-0" : undefined}>
+            {!section && <div className="h-2" />}
 
           {chart.type !== "table" && (
             <>
               <div className="chart-cdc-colors">
-                <div className="font-bold">
+                <div className="mb-3 text-sm font-semibold">
                   {usesCategorySliceColors ? "Slice colors" : "Series colors"}
                 </div>
 
-                {usesGeneratedSeriesColors ? (
-                  <>
-                    {colorItems.length > 6 && (
-                      <SearchField
-                        className="mt-2"
-                        name={`series-search-${cdc.id}`}
-                        value={seriesSearch}
-                        variant="secondary"
-                        onChange={setSeriesSearch}
-                      >
-                        <Label>Find a series</Label>
-                        <SearchField.Group>
-                          <SearchField.SearchIcon />
-                          <SearchField.Input placeholder={usesCategorySliceColors ? "Search slices" : "Search generated series"} />
-                          <SearchField.ClearButton />
-                        </SearchField.Group>
-                      </SearchField>
-                    )}
-                    <ScrollShadow className="mt-2 max-h-[240px]">
-                      <div className="flex flex-col gap-1 py-1">
-                        {visibleColorItems.map((series) => {
-                          const seriesColor = _getSeriesColor(series);
-                          const overrideColor = _getSeriesOverrideColor(series);
-                          const seriesOptions = _getLayerSeriesOptions(series);
-                          const isHidden = (seriesOptions.hidden || []).includes(series.id);
-                          const layerSeries = runtimeSeries.filter((item) => item.layerId === series.layerId);
-                          const seriesIndex = layerSeries.findIndex((item) => item.id === series.id);
-                          return (
-                            <div
-                              key={series.id}
-                              className="flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-content2/50"
-                            >
-                              <div className={isHidden ? "min-w-0 flex-1 opacity-50" : "min-w-0 flex-1"}>
-                                <ColorPickerControl
-                                  ariaLabel={`Change ${series.label} series color`}
-                                  clearLabel="Use automatic color"
-                                  fallbackColor={getChartColorForKey(series.id)}
-                                  onChange={(color) => _onChangeSeriesColor(series, color)}
-                                  onClear={() => _onChangeSeriesColor(series, null)}
-                                  presetColors={Object.values(chartColors).map((color) => color.hex)}
-                                  renderTrigger={({ color }) => (
-                                    <Chip size="lg" variant="secondary" className="max-w-full cursor-pointer">
-                                      <span
-                                        aria-hidden
-                                        className="size-3 shrink-0 rounded-full"
-                                        style={{ backgroundColor: color }}
-                                      />
-                                      <Chip.Label className="truncate">{series.label}</Chip.Label>
-                                    </Chip>
+                <div className={usesGeneratedSeriesColors ? "flex flex-col gap-4" : "chart-settings-fields"}>
+                  <div>
+                    {usesGeneratedSeriesColors ? (
+                      <>
+                        {colorItems.length > 6 && (
+                          <SearchField
+                            className="mt-2"
+                            name={`series-search-${cdc.id}`}
+                            value={seriesSearch}
+                            variant="secondary"
+                            onChange={setSeriesSearch}
+                          >
+                            <Label>Find a series</Label>
+                            <SearchField.Group>
+                              <SearchField.SearchIcon />
+                              <SearchField.Input placeholder={usesCategorySliceColors ? "Search slices" : "Search generated series"} />
+                              <SearchField.ClearButton />
+                            </SearchField.Group>
+                          </SearchField>
+                        )}
+                        <ScrollShadow className="mt-2 max-h-[240px]">
+                          <div className="flex flex-col gap-1 py-1">
+                            {visibleColorItems.map((series) => {
+                              const seriesColor = _getSeriesColor(series);
+                              const overrideColor = _getSeriesOverrideColor(series);
+                              const seriesOptions = _getLayerSeriesOptions(series);
+                              const isHidden = (seriesOptions.hidden || []).includes(series.id);
+                              const layerSeries = runtimeSeries.filter((item) => item.layerId === series.layerId);
+                              const seriesIndex = layerSeries.findIndex((item) => item.id === series.id);
+                              return (
+                                <div
+                                  key={series.id}
+                                  className="flex items-center gap-1 rounded-lg px-1 py-1 hover:bg-surface-secondary/50"
+                                >
+                                  <div className={isHidden ? "min-w-0 flex-1 opacity-50" : "min-w-0 flex-1"}>
+                                    <ColorPickerControl
+                                      ariaLabel={`Change ${series.label} series color`}
+                                      clearLabel="Use automatic color"
+                                      fallbackColor={getChartColorForKey(series.id)}
+                                      onChange={(color) => _onChangeSeriesColor(series, color)}
+                                      onClear={() => _onChangeSeriesColor(series, null)}
+                                      presetColors={Object.values(chartColors).map((color) => color.hex)}
+                                      renderTrigger={({ color }) => (
+                                        <Chip size="lg" variant="secondary" className="max-w-full cursor-pointer">
+                                          <span
+                                            aria-hidden
+                                            className="size-3 shrink-0 rounded-full"
+                                            style={{ backgroundColor: color }}
+                                          />
+                                          <Chip.Label className="truncate">{series.label}</Chip.Label>
+                                        </Chip>
+                                      )}
+                                      showClearButton={Boolean(overrideColor)}
+                                      value={seriesColor}
+                                      valueFormat="hex"
+                                    />
+                                  </div>
+                                  {!usesCategorySliceColors && (
+                                    <>
+                                      <Button
+                                        aria-label={`${isHidden ? "Show" : "Hide"} ${series.label}`}
+                                        isIconOnly
+                                        size="sm"
+                                        variant="tertiary"
+                                        onPress={() => _onToggleSeries(series)}
+                                      >
+                                        {isHidden ? <LuEyeOff /> : <LuEye />}
+                                      </Button>
+                                      <Button
+                                        aria-label={`Move ${series.label} up`}
+                                        isDisabled={seriesIndex === 0}
+                                        isIconOnly
+                                        size="sm"
+                                        variant="tertiary"
+                                        onPress={() => _onMoveSeries(series, -1)}
+                                      >
+                                        <LuChevronUp />
+                                      </Button>
+                                      <Button
+                                        aria-label={`Move ${series.label} down`}
+                                        isDisabled={seriesIndex === layerSeries.length - 1}
+                                        isIconOnly
+                                        size="sm"
+                                        variant="tertiary"
+                                        onPress={() => _onMoveSeries(series, 1)}
+                                      >
+                                        <LuChevronDown />
+                                      </Button>
+                                    </>
                                   )}
-                                  showClearButton={Boolean(overrideColor)}
-                                  value={seriesColor}
-                                  valueFormat="hex"
-                                />
-                              </div>
-                              {!usesCategorySliceColors && (
-                                <>
-                                  <Button
-                                    aria-label={`${isHidden ? "Show" : "Hide"} ${series.label}`}
-                                    isIconOnly
-                                    size="sm"
-                                    variant="tertiary"
-                                    onPress={() => _onToggleSeries(series)}
-                                  >
-                                    {isHidden ? <LuEyeOff /> : <LuEye />}
-                                  </Button>
-                                  <Button
-                                    aria-label={`Move ${series.label} up`}
-                                    isDisabled={seriesIndex === 0}
-                                    isIconOnly
-                                    size="sm"
-                                    variant="tertiary"
-                                    onPress={() => _onMoveSeries(series, -1)}
-                                  >
-                                    <LuChevronUp />
-                                  </Button>
-                                  <Button
-                                    aria-label={`Move ${series.label} down`}
-                                    isDisabled={seriesIndex === layerSeries.length - 1}
-                                    isIconOnly
-                                    size="sm"
-                                    variant="tertiary"
-                                    onPress={() => _onMoveSeries(series, 1)}
-                                  >
-                                    <LuChevronDown />
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </ScrollShadow>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-row justify-between items-center">
-                      <div className="text-sm">Primary color</div>
-                      <div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </ScrollShadow>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-start gap-3">
                         <ColorPickerControl
-                          ariaLabel="Primary series color"
+                          ariaLabel="Primary color"
                           fallbackColor={chartColors.blue.hex}
                           onChange={_onChangeDatasetColor}
                           presetColors={Object.values(chartColors).map((color) => color.hex)}
-                          renderTrigger={() => (
-                            <div
-                              style={_getDatasetColor(cdc.datasetColor)}
-                              className="w-full h-8 rounded-3xl pl-[100px]"
-                            />
-                          )}
-                          value={cdc.datasetColor}
+                          swatchClassName="bg-surface-secondary shadow-none"
+                          value={presentation.color}
                           valueFormat="hex"
                         />
-                      </div>
-                    </div>
-                    <div className="h-2" />
 
-                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && (
-                      <Row align={"center"} justify={"space-between"}>
-                        <Row align={"center"}>
-                          <Checkbox
-                            id={`cdc-fill-${cdc.id}`}
-                            isSelected={bindingLayers[0]?.style?.fill ?? cdc.fill}
-                            onChange={(selected) => _onUpdateCdc({ fill: selected, fillColor: ["transparent"] })}
-                            isDisabled={cdc.multiFill}
-                            variant="secondary"
-                          >
-                            <Checkbox.Content>
-                              <Checkbox.Control className="size-4 shrink-0">
-                                <Checkbox.Indicator />
-                              </Checkbox.Control>
-                              Fill Color
-                            </Checkbox.Content>
-                          </Checkbox>
-                        </Row>
-                        {cdc.fill && !cdc.multiFill && (
-                          <div>
-                            <ColorPickerControl
-                              ariaLabel="Fill color"
-                              fallbackColor={chartColors.blue.hex}
-                              onChange={(color) => _onChangeFillColor(color)}
-                              presetColors={Object.values(chartColors).map((color) => color.hex)}
-                              renderTrigger={() => (
-                                <div
-                                  style={_getDatasetColor(Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor)}
-                                  className="w-full h-8 rounded-3xl pl-[100px]"
+                        {!["line", "bar", "matrix", "radar", "scatter", "kpi", "avg"].includes(chart.type) && (
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                id={`cdc-fill-${cdc.id}`}
+                                isSelected={bindingLayers[0]?.style?.fill ?? cdc.fill}
+                                onChange={(selected) => _onUpdateCdc({ fill: selected, fillColor: ["transparent"] })}
+                                isDisabled={cdc.multiFill}
+                                variant="secondary"
+                              >
+                                <Checkbox.Content>
+                                  <Checkbox.Control className="size-4 shrink-0">
+                                    <Checkbox.Indicator />
+                                  </Checkbox.Control>
+                                  Fill color
+                                </Checkbox.Content>
+                              </Checkbox>
+                              {cdc.fill && !cdc.multiFill && (
+                                <ColorPickerControl
+                                  ariaLabel="Fill color"
+                                  className="rounded-lg bg-surface-secondary p-1"
+                                  fallbackColor={chartColors.blue.hex}
+                                  onChange={(color) => _onChangeFillColor(color)}
+                                  presetColors={Object.values(chartColors).map((color) => color.hex)}
+                                  renderTrigger={() => <ColorSwatch size="sm" />}
+                                  value={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
                                 />
                               )}
-                              value={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
-                            />
+                            </div>
+                            <Checkbox
+                              id={`cdc-multifill-${cdc.id}`}
+                              isSelected={cdc.multiFill}
+                              onChange={(selected) => {
+                                if (selected !== cdc.multiFill) _onChangeMultiFill();
+                              }}
+                              variant="secondary"
+                            >
+                              <Checkbox.Content>
+                                <Checkbox.Control className="size-4 shrink-0">
+                                  <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                Multiple colors
+                              </Checkbox.Content>
+                            </Checkbox>
                           </div>
                         )}
-                      </Row>
-                    )}
-                    <div className="h-2" />
 
-                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && (
-                      <Row>
-                        <Checkbox
-                          id={`cdc-multifill-${cdc.id}`}
-                          isSelected={cdc.multiFill}
-                          onChange={(selected) => {
-                            if (selected !== cdc.multiFill) _onChangeMultiFill();
-                          }}
-                          variant="secondary"
-                        >
-                          <Checkbox.Content>
-                            <Checkbox.Control className="size-4 shrink-0">
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
-                            Multiple colors
-                          </Checkbox.Content>
-                        </Checkbox>
-                      </Row>
+                        {!["line", "bar", "matrix", "radar", "scatter", "kpi", "avg"].includes(chart.type) && cdc.multiFill && (
+                          <ScrollShadow className="max-h-[300px] w-full">
+                            <div className="flex flex-col gap-2">
+                              {dataItems?.labels?.map((label, index) => (
+                                <div key={label} className="flex items-center justify-between gap-3">
+                                  <span className="min-w-0 break-words text-sm">{label}</span>
+                                  <ColorPickerControl
+                                    ariaLabel={`${label} fill color`}
+                                    className="shrink-0 rounded-lg bg-surface-secondary p-1"
+                                    fallbackColor={chartColors.blue.hex}
+                                    onChange={(color) => _onChangeFillColor(color, index)}
+                                    presetColors={Object.values(chartColors).map((color) => color.hex)}
+                                    renderTrigger={() => <ColorSwatch size="sm" />}
+                                    value={cdc.fillColor[index]}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollShadow>
+                        )}
+                      </div>
                     )}
 
-                    {!["line", "bar", "matrix", "radar"].includes(chart.type) && cdc.multiFill && (
-                      <>
-                        <div className="h-4" />
-                        <ScrollShadow className="max-h-[300px] border-2 border-solid border-content3 rounded-md p-2">
-                          {dataItems?.labels?.map((label, index) => (
-                            <Row key={label} justify={"space-between"}>
-                              <Text size="sm">{label}</Text>
-                              <div>
-                                <ColorPickerControl
-                                  ariaLabel={`${label} fill color`}
-                                  fallbackColor={chartColors.blue.hex}
-                                  onChange={(color) => _onChangeFillColor(color, index)}
-                                  presetColors={Object.values(chartColors).map((color) => color.hex)}
-                                  renderTrigger={() => (
-                                    <div
-                                      style={_getDatasetColor(cdc.fillColor[index] || "white")}
-                                      className="w-full h-8 rounded-3xl"
-                                    />
-                                  )}
-                                  value={cdc.fillColor[index]}
-                                />
-                              </div>
-                            </Row>
-                          ))}
-                        </ScrollShadow>
-                        <div className="h-4" />
-                      </>
-                    )}
-                  </>
-                )}
+                  </div>
 
-                {["line", "bar", "radar"].includes(chart.type) && (
-                  <>
-                    <div className="h-4" />
+                  {hasPresetCapability(chart.type, "fill") && (
                     <FillOpacityControl
                       key={`${cdc.id}-${fillBaseColor}-${fillOpacity}`}
                       color={fillBaseColor}
@@ -900,8 +1039,8 @@ function ChartDatasetConfig(props) {
                       onFillChange={(selected) => _onChangeFill(selected, fillOpacity)}
                       onOpacityChange={(opacity) => _onChangeFill(fillEnabled, opacity)}
                     />
-                  </>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="h-4" />
@@ -910,107 +1049,114 @@ function ChartDatasetConfig(props) {
             </>
           )}
 
-          {chart.type !== "table" && chart.type !== "matrix" && (
+          {chart.type !== "table" && chart.type !== "matrix" && chart.type !== "scatter" && (
             <>
               <Row>
-                <Text b>{"Series settings"}</Text>
+                <h3 className="text-sm font-semibold">Series settings</h3>
               </Row>
               <div className="h-2" />
-              <div className="flex flex-col gap-2">
-                <div className="text-sm">Sort records</div>
-                <div className="flex flex-row items-center gap-2">
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant={cdc.sort === "asc" ? "secondary" : "tertiary"}
-                        onPress={() => _onUpdateCdc({ sort: cdc.sort === "asc" ? "" : "asc" })}
-                        fullWidth
-                        size="sm"
-                      >
-                        <LuArrowDown01 />
-                        Asc
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>Sort the dataset in ascending order</Tooltip.Content>
-                  </Tooltip>
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant={cdc.sort === "desc" ? "secondary" : "tertiary"}
-                        onPress={() => _onUpdateCdc({ sort: cdc.sort === "desc" ? "" : "desc" })}
-                        fullWidth
-                        size="sm"
-                      >
-                        <LuArrowDown10 />
-                        Desc
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>Sort the dataset in descending order</Tooltip.Content>
-                  </Tooltip>
-                  {cdc.sort && (
-                    <div>
-                      <Tooltip delay={0}>
-                        <Tooltip.Trigger className="flex justify-center">
-                          <Link className="text-danger" onPress={() => _onUpdateCdc({ sort: "" })}>
-                            <LuCircleX className="text-danger" />
-                          </Link>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content>Clear sorting</Tooltip.Content>
-                      </Tooltip>
-                    </div>
-                  )}
+              <div className="chart-settings-fields">
+                <div className="flex flex-col gap-2">
+                  <div className="text-sm">Sort records</div>
+                  <div className="flex flex-row items-center gap-2">
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Button
+                          variant={cdc.sort === "asc" ? "secondary" : "tertiary"}
+                          onPress={() => _onUpdateCdc({ sort: cdc.sort === "asc" ? "" : "asc" })}
+                          fullWidth
+                          size="sm"
+                        >
+                          <LuArrowDown01 />
+                          Asc
+                        </Button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>Sort the dataset in ascending order</Tooltip.Content>
+                    </Tooltip>
+                    <Tooltip>
+                      <Tooltip.Trigger>
+                        <Button
+                          variant={cdc.sort === "desc" ? "secondary" : "tertiary"}
+                          onPress={() => _onUpdateCdc({ sort: cdc.sort === "desc" ? "" : "desc" })}
+                          fullWidth
+                          size="sm"
+                        >
+                          <LuArrowDown10 />
+                          Desc
+                        </Button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>Sort the dataset in descending order</Tooltip.Content>
+                    </Tooltip>
+                    {cdc.sort && (
+                      <div>
+                        <Tooltip delay={0}>
+                          <Tooltip.Trigger className="flex justify-center">
+                            <Link className="text-danger" onPress={() => _onUpdateCdc({ sort: "" })}>
+                              <LuCircleX className="text-danger" />
+                            </Link>
+                          </Tooltip.Trigger>
+                          <Tooltip.Content>Clear sorting</Tooltip.Content>
+                        </Tooltip>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="h-4" />
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-row items-center gap-2">
+                    <TextField className="w-full" name="max-records">
+                      <Label>Max records</Label>
+                      <InputGroup variant="secondary" fullWidth>
+                        <InputGroup.Input
+                          min="1"
+                          placeholder="Max records"
+                          step="1"
+                          type="number"
+                          value={maxRecords}
+                          onChange={(event) => setMaxRecords(event.target.value)}
+                          variant="secondary"
+                          labelPlacement="outside"
+                          description="Limit the number of records shown"
+                        />
+                        <InputGroup.Suffix className="pr-2 border-none">
+                          {maxRecords && (
+                            <div className="flex flex-row gap-1">
+                              {`${maxRecords}` !== `${cdc.maxRecords || ""}` && (
+                                <>
+                                  <Tooltip>
+                                    <Tooltip.Trigger className="flex justify-center">
+                                      <Link
+                                        className="text-success"
+                                        onPress={() => _onUpdateCdc({ maxRecords: Number(maxRecords) })}
+                                      >
+                                        <LuCircleCheck className="text-success" />
+                                      </Link>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content>Save</Tooltip.Content>
+                                  </Tooltip>
+                                </>
+                              )}
+                              <Tooltip>
+                                <Tooltip.Trigger className="flex justify-center">
+                                  <Link
+                                    className="text-danger"
+                                    onPress={() => {
+                                      _onUpdateCdc({ maxRecords: null });
+                                      setMaxRecords("");
+                                    }}
+                                  >
+                                    <LuCircleX className="text-danger" />
+                                  </Link>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Clear limit</Tooltip.Content>
+                              </Tooltip>
+                            </div>
+                          )}
+                        </InputGroup.Suffix>
+                      </InputGroup>
+                    </TextField>
+                  </div>
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-row items-center gap-2">
-                  <TextField className="w-full" name="max-records">
-                    <Label>Max records</Label>
-                    <InputGroup variant="secondary" fullWidth>
-                      <InputGroup.Input
-                        placeholder="Max records"
-                        value={maxRecords}
-                        onChange={(event) => setMaxRecords(event.target.value)}
-                        variant="secondary"
-                        labelPlacement="outside"
-                        description="Limit the number of records shown"
-                      />
-                      <InputGroup.Suffix className="pr-2 border-none">
-                        {maxRecords && (
-                          <div className="flex flex-row gap-1">
-                            {`${maxRecords}` !== `${cdc.maxRecords || ""}` && (
-                              <>
-                                <Tooltip>
-                                  <Tooltip.Trigger className="flex justify-center">
-                                    <Link className="text-success" onPress={() => _onUpdateCdc({ maxRecords })}>
-                                      <LuCircleCheck className="text-success" />
-                                    </Link>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Content>Save</Tooltip.Content>
-                                </Tooltip>
-                              </>
-                            )}
-                            <Tooltip>
-                              <Tooltip.Trigger className="flex justify-center">
-                                <Link
-                                  className="text-danger"
-                                  onPress={() => {
-                                    _onUpdateCdc({ maxRecords: null });
-                                    setMaxRecords("");
-                                  }}
-                                >
-                                  <LuCircleX className="text-danger" />
-                                </Link>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>Clear limit</Tooltip.Content>
-                            </Tooltip>
-                          </div>
-                        )}
-                      </InputGroup.Suffix>
-                    </InputGroup>
-                  </TextField>
-                </div>
               </div>
 
               <div className="h-4" />
@@ -1022,88 +1168,19 @@ function ChartDatasetConfig(props) {
           {chart.type === "table" && (
             <TableConfiguration
               dataset={cdc}
-              chartData={chart.chartData}
+              tableData={chart.render?.configuration || {}}
               tableFields={tableFields}
               onUpdate={_onUpdateTableConfig}
               loading={false}
             />
           )}
 
-          {chart.type !== "table" && (
-            <>
-              <div>
-                {!formula && (
-                  <Link onPress={_onAddFormula} className="flex items-center cursor-pointer chart-cdc-formula">
-                    <TbMathFunctionY size={24} />
-                    <div className="w-2" />
-                    <div className="text-sm text-foreground">Apply formula on metrics</div>
-                  </Link>
-                )}
-                {formula && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-col">
-                      <Popover>
-                        <Popover.Trigger>
-                          <div className="flex flex-row gap-1 items-center cursor-pointer">
-                            <div className="text-sm">{"Metric formula"}</div>
-                            <LuInfo size={16} />
-                          </div>
-                        </Popover.Trigger>
-                        <Popover.Content>
-                          <Popover.Dialog>
-                            <FormulaTips />
-                          </Popover.Dialog>
-                        </Popover.Content>
-                      </Popover>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex flex-row gap-3 items-center w-full">
-                        <Input
-                          labelPlacement="outside"
-                          placeholder="Enter your formula here: {val}"
-                          value={formula}
-                          onChange={(event) => setFormula(event.target.value)}
-                          variant="secondary"
-                          fullWidth
-                        />
-                        {formula !== cdc.formula && (
-                          <Tooltip>
-                            <Tooltip.Trigger className="flex justify-center">
-                              <Link onPress={_onApplyFormula}>
-                                <LuCircleCheck className={"text-success"} />
-                              </Link>
-                            </Tooltip.Trigger>
-                            <Tooltip.Content>Apply the formula</Tooltip.Content>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <Tooltip.Trigger className="flex justify-center">
-                            <Link onPress={_onRemoveFormula}>
-                              <LuCircleX className="text-danger" />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Remove formula</Tooltip.Content>
-                        </Tooltip>
-                        <Tooltip>
-                          <Tooltip.Trigger className="flex justify-center">
-                            <Link onPress={_onExampleFormula}>
-                              <LuWandSparkles className="text-accent" />
-                            </Link>
-                          </Tooltip.Trigger>
-                          <Tooltip.Content>Click for an example</Tooltip.Content>
-                        </Tooltip>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {chart.type !== "table" && formulaControl}
+          </Tabs.Panel>
+        )}
 
-            </>
-          )}
-        </Tabs.Panel>
-
-        <Tabs.Panel id="automation">
-          <div className="h-2" />
+        <Tabs.Panel id="automation" className={section ? "p-0" : undefined}>
+          {!section && <div className="h-2" />}
 
           <Row>
             <DatasetAlerts
@@ -1124,7 +1201,7 @@ function ChartDatasetConfig(props) {
           <div className="h-4" />
 
           <div className="flex flex-col gap-2">
-            <div className="font-bold">{"Variables"}</div>
+            <div className="text-sm font-semibold">{"Variables"}</div>
             {variables.map((variable) => (
               <div key={variable.id} className="flex flex-col gap-1">
                 <TextField className="w-full" name={`chart-var-${variable.name}`}>
@@ -1207,7 +1284,7 @@ function ChartDatasetConfig(props) {
       <Separator />
       <div className="h-4" />
 
-      <div className="flex flex-row justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
           <div className="flex flex-row gap-2 items-center">
             {dataRequests?.map((dr) => (
@@ -1215,6 +1292,7 @@ function ChartDatasetConfig(props) {
                 <Tooltip.Trigger>
                   <Avatar size="sm" className="ring-2 ring-primary shrink-0">
                     <Avatar.Image
+                      className="object-contain p-[15%]"
                       src={getConnectionLogo(dr?.Connection, isDark)}
                       alt=""
                     />
@@ -1229,6 +1307,7 @@ function ChartDatasetConfig(props) {
         )}
 
         <Button
+          className="max-w-full h-auto min-h-8 whitespace-normal text-left"
           variant="danger-soft"
           size="sm"
           onPress={_onRemoveCdc}
@@ -1279,10 +1358,12 @@ ChartDatasetConfig.propTypes = {
   dataRequests: PropTypes.array,
   cdcId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onRemove: PropTypes.func.isRequired,
+  section: PropTypes.oneOf(["data", "appearance", "automation"]),
 };
 
 ChartDatasetConfig.defaultProps = {
   dataRequests: [],
+  section: null,
 };
 
 export default ChartDatasetConfig;

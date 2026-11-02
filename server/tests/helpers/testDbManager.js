@@ -31,7 +31,7 @@ class TestDbManager {
       return;
     }
 
-    const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
+    const dbDialect = process.env.CB_DB_DIALECT || "mysql";
     if (dbDialect !== "mysql" && dbDialect !== "postgres") {
       throw new Error(`Unsupported test database dialect: ${dbDialect}`);
     }
@@ -86,12 +86,12 @@ class TestDbManager {
     this.username = connectionDetails.username;
     this.password = connectionDetails.password;
 
-    process.env.CB_DB_HOST_DEV = connectionDetails.host || "127.0.0.1";
-    process.env.CB_DB_PORT_DEV = connectionDetails.port.toString();
-    process.env.CB_DB_NAME_DEV = connectionDetails.database;
-    process.env.CB_DB_USERNAME_DEV = connectionDetails.username;
-    process.env.CB_DB_PASSWORD_DEV = connectionDetails.password;
-    process.env.CB_DB_DIALECT_DEV = connectionDetails.dialect;
+    process.env.CB_DB_HOST = connectionDetails.host || "127.0.0.1";
+    process.env.CB_DB_PORT = connectionDetails.port.toString();
+    process.env.CB_DB_NAME = connectionDetails.database;
+    process.env.CB_DB_USERNAME = connectionDetails.username;
+    process.env.CB_DB_PASSWORD = connectionDetails.password;
+    process.env.CB_DB_DIALECT = connectionDetails.dialect;
 
     if (connectionDetails.dialect === "postgres") {
       process.env.PGSSLMODE = "disable";
@@ -109,18 +109,22 @@ class TestDbManager {
       return null;
     }
 
-    const port = Number(process.env.CB_DB_PORT_DEV);
+    if (!/(?:^|_)test(?:_|$)/i.test(process.env.CB_DB_NAME || "")) {
+      throw new Error("A reusable test database name must contain a test segment, such as chartbrew_test.");
+    }
+
+    const port = Number(process.env.CB_DB_PORT);
     if (!port) {
       return null;
     }
 
     return {
-      host: process.env.CB_DB_HOST_DEV || "127.0.0.1",
+      host: process.env.CB_DB_HOST || "127.0.0.1",
       port,
-      database: process.env.CB_DB_NAME_DEV,
-      username: process.env.CB_DB_USERNAME_DEV,
-      password: process.env.CB_DB_PASSWORD_DEV,
-      dialect: process.env.CB_DB_DIALECT_DEV || "mysql",
+      database: process.env.CB_DB_NAME,
+      username: process.env.CB_DB_USERNAME,
+      password: process.env.CB_DB_PASSWORD,
+      dialect: process.env.CB_DB_DIALECT || "mysql",
     };
   }
 
@@ -172,14 +176,14 @@ class TestDbManager {
   }
 
   setTestEnvVars() {
-    const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
+    const dbDialect = process.env.CB_DB_DIALECT || "mysql";
 
-    process.env.CB_DB_HOST_DEV = "127.0.0.1";
-    process.env.CB_DB_PORT_DEV = this.port.toString();
-    process.env.CB_DB_NAME_DEV = this.database;
-    process.env.CB_DB_USERNAME_DEV = this.username;
-    process.env.CB_DB_PASSWORD_DEV = this.password;
-    process.env.CB_DB_DIALECT_DEV = dbDialect;
+    process.env.CB_DB_HOST = "127.0.0.1";
+    process.env.CB_DB_PORT = this.port.toString();
+    process.env.CB_DB_NAME = this.database;
+    process.env.CB_DB_USERNAME = this.username;
+    process.env.CB_DB_PASSWORD = this.password;
+    process.env.CB_DB_DIALECT = dbDialect;
 
     // For PostgreSQL, set the standard pg driver environment variables
     if (dbDialect === "postgres") {
@@ -192,7 +196,7 @@ class TestDbManager {
   }
 
   async initializeDatabase({ runMigrations = true } = {}) {
-    const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
+    const dbDialect = process.env.CB_DB_DIALECT || "mysql";
 
     const sequelizeOptions = {
       host: "localhost",
@@ -317,23 +321,30 @@ class TestDbManager {
 
     console.log("🧹 Cleaning up test database...");
 
-    // Get all table names
-    const tables = await this.sequelize.getQueryInterface().showAllTables();
+    const queryInterface = this.sequelize.getQueryInterface();
+    const tables = (await queryInterface.showAllTables())
+      .filter((table) => table !== "SequelizeMeta");
+    if (tables.length === 0) return;
 
-    const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
+    const dbDialect = process.env.CB_DB_DIALECT || "mysql";
+
+    if (dbDialect === "postgres") {
+      const quotedTables = tables
+        .map((table) => queryInterface.queryGenerator.quoteTable(table))
+        .join(", ");
+      await this.sequelize.query(
+        `TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`
+      );
+      console.log("✅ Database cleanup completed");
+      return;
+    }
 
     if (dbDialect === "mysql") {
       await this.sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
     }
 
     for (const table of tables) {
-      if (table !== "SequelizeMeta") {
-        if (dbDialect === "postgres") {
-          await this.sequelize.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE`);
-        } else {
-          await this.sequelize.query(`TRUNCATE TABLE \`${table}\``);
-        }
-      }
+      await this.sequelize.query(`TRUNCATE TABLE ${queryInterface.queryGenerator.quoteTable(table)}`);
     }
 
     if (dbDialect === "mysql") {
@@ -348,7 +359,7 @@ class TestDbManager {
   }
 
   getConnectionDetails() {
-    const dbDialect = process.env.CB_DB_DIALECT_DEV || "mysql";
+    const dbDialect = process.env.CB_DB_DIALECT || "mysql";
 
     return {
       host: "localhost",

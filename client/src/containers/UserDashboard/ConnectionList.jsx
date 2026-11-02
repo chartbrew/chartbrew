@@ -143,7 +143,7 @@ function ConnectionList() {
     <div className="flex flex-col">
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-col gap-1">
-          <div className="text-2xl font-semibold font-tw">
+          <div className="text-2xl font-semibold font-tight">
             Data connections
           </div>
           <div className="text-sm text-foreground-500">
@@ -177,22 +177,25 @@ function ConnectionList() {
       </div>
       <div className="h-4" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
         {_getFilteredConnections()?.map((connection) => (
           <div key={connection.id}>
             <Card
-              className="h-full w-full border border-solid border-content3 p-4 shadow-none transition-colors hover:bg-content2/40"
+              className="h-full w-full border border-solid border-content3 p-4 shadow-none transition-colors hover:bg-surface-secondary/40"
             >
               <Card.Content>
                 <div className="flex flex-row items-center justify-between">
                   <div className="flex flex-row items-center gap-2">
                     <Avatar size="sm" className="rounded-sm">
-                      <Avatar.Image src={getConnectionLogo(connection, isDark)} alt={`${connection.subType} logo`} />
+                      <Avatar.Image className="object-contain p-[15%]" src={getConnectionLogo(connection, isDark)} alt={`${connection.subType} logo`} />
                       <Avatar.Fallback>
                         <LuPlug />
                       </Avatar.Fallback>
                     </Avatar>
-                    <Link to={`/connections/${connection.id}`} className="text-lg font-semibold text-foreground! font-tw cursor-pointer">{connection.name}</Link>
+                    <Link to={`/connections/${connection.id}`} className="text-lg font-semibold text-foreground! font-tight cursor-pointer">{connection.name}</Link>
+                    {connection.type === "mcp" && (
+                      <Chip size="sm" variant="soft" color="accent">MCP</Chip>
+                    )}
                   </div>
                   <div>
                     {_getRelatedDatasets(connection.id).length > 0 && (
@@ -438,7 +441,7 @@ function ConnectionList() {
               ))}
             </div>
                 <div className="h-1" />
-                <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
+                <div className="flex gap-1 bg-surface-secondary p-2 mb-2 rounded-lg text-foreground-500 text-sm">
                   <div>
                     <LuInfo />
                   </div>

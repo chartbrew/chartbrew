@@ -1,7 +1,8 @@
+const { callAiProvider } = require("./usage");
 const OpenAI = require("openai");
 
-const openAiKey = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_API_KEY : process.env.CB_OPENAI_API_KEY_DEV;
-const openAiModel = process.env.NODE_ENV === "production" ? process.env.CB_OPENAI_MODEL : process.env.CB_OPENAI_MODEL_DEV;
+const openAiKey = process.env.CB_OPENAI_API_KEY;
+const openAiModel = process.env.CB_OPENAI_MODEL;
 let openaiClient;
 
 if (openAiKey) {
@@ -55,9 +56,14 @@ async function generateMongoQuery(schema, question, conversationHistory = [], cu
       });
     }
 
-    const response = await openaiClient.chat.completions.create({
-      model: openAiModel || "gpt-4o-mini",
-      messages,
+    const response = await callAiProvider({
+      client: openaiClient,
+      api: "chat",
+      purpose: "generate_mongo",
+      request: {
+        model: openAiModel || "gpt-4o-mini",
+        messages,
+      },
     });
 
     const mongoQuery = response.choices[0].message.content;

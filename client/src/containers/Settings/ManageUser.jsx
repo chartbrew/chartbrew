@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Button, Separator, Input, ProgressCircle, Modal, Chip, Table,
+  Button, Separator, Input, Modal, Chip, Table,
   Alert,
   TextField,
   Label,
@@ -11,6 +11,7 @@ import { LuClipboardCheck, LuClipboardCopy, LuShieldCheck, LuTrash } from "react
 import {
   updateUser, deleteUser, requestEmailUpdate, updateEmail, selectUser, get2faAppCode, verify2faApp, get2faMethods, remove2faMethod
 } from "../../slices/user";
+import CupLoader from "../../components/CupLoader";
 import { useTheme } from "../../modules/ThemeContext";
 import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -118,7 +119,7 @@ function ManageUser() {
         setLoading(false);
         toast.success("Your email has been updated.");
         setUpdateEmailToken("");
-        navigate("/user/profile");
+        navigate("/settings/profile");
         setTimeout(() => {
           window.location.reload();
         }, 1500);
@@ -208,16 +209,13 @@ function ManageUser() {
   if (!user.name) {
     return (
       <div>
-        <ProgressCircle aria-label="Loading" size="lg" />
+        <CupLoader label="Loading" />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col bg-surface p-4 rounded-3xl border border-divider">
-      <div className="text-lg font-semibold font-tw">Profile settings</div>
-      <div className="text-sm text-gray-500">Manage your profile settings</div>
-      <div className="h-4" />
       <TextField name="name" isInvalid={Boolean(submitError)} className="max-w-md">
         <Label>Name</Label>
         <Input
@@ -298,7 +296,7 @@ function ManageUser() {
       <Separator />
       <div className="h-4" />
 
-      <div className="text-lg font-semibold font-tw">Two-factor authentication</div>
+      <div className="text-lg font-semibold font-tight">Two-factor authentication</div>
       <div className="h-2" />
 
       {!qrCode && authMethods?.length === 0 && (
@@ -431,7 +429,7 @@ function ManageUser() {
           <Modal.Container>
             <Modal.Dialog className="sm:max-w-xl">
               <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
+                <Modal.Heading className="text-lg font-semibold">
                   Delete Account
                 </Modal.Heading>
               </Modal.Header>
@@ -477,7 +475,7 @@ function ManageUser() {
           <Modal.Container>
             <Modal.Dialog>
               <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
+                <Modal.Heading className="text-lg font-semibold">
                   Update email
                 </Modal.Heading>
               </Modal.Header>
@@ -520,7 +518,7 @@ function ManageUser() {
           <Modal.Container>
             <Modal.Dialog>
               <Modal.Header>
-                <Modal.Heading className="text-lg font-semibold font-tw">
+                <Modal.Heading className="text-lg font-semibold">
                   Remove 2FA method
                 </Modal.Heading>
               </Modal.Header>

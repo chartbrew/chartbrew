@@ -89,6 +89,34 @@ function validateBackend(plugin) {
     );
   }
 
+  if (plugin.backend.authorizeConnectionWrite !== undefined) {
+    assertFunction(
+      plugin.backend.authorizeConnectionWrite,
+      `Source plugin ${plugin.id} backend.authorizeConnectionWrite must be a function`
+    );
+  }
+
+  if (plugin.backend.redactConnection !== undefined) {
+    assertFunction(
+      plugin.backend.redactConnection,
+      `Source plugin ${plugin.id} backend.redactConnection must be a function`
+    );
+  }
+
+  if (plugin.backend.completeOAuth !== undefined) {
+    assertFunction(
+      plugin.backend.completeOAuth,
+      `Source plugin ${plugin.id} backend.completeOAuth must be a function`
+    );
+  }
+
+  if (plugin.backend.oauthClientMetadata !== undefined) {
+    assertFunction(
+      plugin.backend.oauthClientMetadata,
+      `Source plugin ${plugin.id} backend.oauthClientMetadata must be a function`
+    );
+  }
+
   if (plugin.backend.applyVariables !== undefined) {
     assertFunction(
       plugin.backend.applyVariables,

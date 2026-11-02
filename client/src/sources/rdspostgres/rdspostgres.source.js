@@ -1,5 +1,5 @@
-import lightLogo from "./assets/rds.png";
-import darkLogo from "./assets/rds-dark.png";
+import lightLogo from "./assets/logo-light.png";
+import darkLogo from "./assets/logo-light.png";
 
 export default {
   id: "rdsPostgres",
@@ -7,6 +7,7 @@ export default {
   type: "postgres",
   subType: "rdsPostgres",
   name: "RDS Postgres",
+  description: "Query PostgreSQL data hosted on Amazon RDS.",
   category: "database",
   capabilities: {
     ai: {

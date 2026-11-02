@@ -3,7 +3,7 @@ const ProjectController = require("../../../../controllers/ProjectController");
 const { normalizeTeamId } = require("./teamScope");
 
 const projectController = new ProjectController();
-const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
+const clientUrl = process.env.VITE_APP_CLIENT_HOST;
 
 async function createDashboard(payload) {
   const {
@@ -29,6 +29,14 @@ async function createDashboard(payload) {
 
   if (!teamRole) {
     throw new Error("User does not belong to the specified team");
+  }
+
+  const [connections, datasets] = await Promise.all([
+    db.Connection.count({ where: { team_id: normalizedTeamId, active: true } }),
+    db.Dataset.count({ where: { team_id: normalizedTeamId, draft: false } }),
+  ]);
+  if (!connections && !datasets) {
+    throw new Error("Connect a data source or prepare a dataset before creating a dashboard. Help the user get data first.");
   }
 
   const project = await projectController.create(Number(user_id), {

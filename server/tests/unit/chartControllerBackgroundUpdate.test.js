@@ -1,22 +1,63 @@
 import {
-  afterEach, describe, expect, it, vi
+  afterEach, beforeEach, describe, expect, it, vi
 } from "vitest";
 
 const db = require("../../models/models");
 const ChartController = require("../../controllers/ChartController");
 
 describe("ChartController background updates", () => {
+  beforeEach(() => {
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({ id: 77, layoutRevision: 0, update: vi.fn() });
+    vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([]);
+    vi.spyOn(db.ChartVersion, "create").mockResolvedValue({});
+    vi.spyOn(db.ChartVersion, "destroy").mockResolvedValue(0);
+  });
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
+  it("waits for AI preview data and propagates refresh failures", async () => {
+    const controller = new ChartController();
+    const chart = db.Chart.build({ id: 123, project_id: 77, configurationVersion: 0 });
+    vi.spyOn(chart, "update").mockResolvedValue(chart);
+    vi.spyOn(db.Chart, "findByPk").mockResolvedValue(chart);
+    vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
+    vi.spyOn(db.Chart, "create").mockResolvedValue(chart);
+    vi.spyOn(controller, "syncLegacyVisualization").mockResolvedValue();
+    const findChart = vi.spyOn(controller, "findById").mockResolvedValue(chart);
+    let finishUpdate;
+    const update = vi.spyOn(controller, "updateChartData").mockReturnValue(new Promise((resolve) => {
+      finishUpdate = resolve;
+    }));
+
+    const creation = controller.createWithChartDatasetConfigs({ project_id: 77 }, null, { waitForData: true });
+    await vi.waitFor(() => expect(update).toHaveBeenCalledWith(123, null, { getCache: true }));
+    expect(findChart).toHaveBeenCalledExactlyOnceWith(123, null, { transaction: expect.anything() });
+    expect(db.ChartVersion.create).toHaveBeenCalledWith(expect.objectContaining({
+      chart_id: 123, version: 1, origin: "system",
+    }), { transaction: expect.anything() });
+    finishUpdate();
+    await expect(creation).resolves.toEqual(chart);
+    expect(findChart).toHaveBeenLastCalledWith(123);
+
+    const failure = new Error("Source data is unavailable");
+    update.mockRejectedValue(failure);
+    findChart.mockClear();
+    await expect(controller.createWithChartDatasetConfigs({ project_id: 77 }, null, { waitForData: true }))
+      .rejects.toBe(failure);
+    expect(findChart).toHaveBeenCalledExactlyOnceWith(123, null, { transaction: expect.anything() });
+  });
+
   it("attaches a rejection handler to background chart updates after chart creation", async () => {
     const controller = new ChartController();
-    const chart = {
+    const chart = db.Chart.build({
       id: 123,
       name: "Revenue",
       project_id: 77,
-    };
+      configurationVersion: 0,
+    });
+    vi.spyOn(chart, "update").mockResolvedValue(chart);
+    vi.spyOn(db.Chart, "findByPk").mockResolvedValue(chart);
 
     vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
     vi.spyOn(db.Chart, "create").mockResolvedValue(chart);

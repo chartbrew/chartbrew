@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Strapi.Monogram 2" clip-path="url(#clip0_0_4)">
+<path id="Vector" d="M0 104C0 54.974 0 30.4609 15.2304 15.2304C30.4609 0 54.974 0 104 0H196C245.026 0 269.539 0 284.77 15.2304C300 30.4609 300 54.974 300 104V196C300 245.026 300 269.539 284.77 284.77C269.539 300 245.026 300 196 300H104C54.974 300 30.4609 300 15.2304 284.77C0 269.539 0 245.026 0 196V104Z" fill="#4945FF"/>
+<path id="Vector_2" fill-rule="evenodd" clip-rule="evenodd" d="M207 91H106V142.5H157.5V194H209V93C209 91.8955 208.105 91 207 91Z" fill="white"/>
+<path id="Vector_3" d="M157.5 142.5H155.5V144.5H157.5V142.5Z" fill="white"/>
+<path id="Vector_4" d="M106 142.5H155.5C156.605 142.5 157.5 143.395 157.5 144.5V194H108C106.895 194 106 193.105 106 192V142.5Z" fill="#9593FF"/>
+<path id="Vector_5" d="M157.5 194H209L159.207 243.793C158.577 244.423 157.5 243.976 157.5 243.086V194Z" fill="#9593FF"/>
+<path id="Vector_6" d="M106 142.5H56.914C56.023 142.5 55.577 141.423 56.207 140.793L106 91V142.5Z" fill="#9593FF"/>
+</g>
+<defs>
+<clipPath id="clip0_0_4">
+<rect width="300" height="300" fill="white"/>
+</clipPath>
+</defs>
+</svg>

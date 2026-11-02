@@ -1,40 +1,95 @@
-import React, { useState } from "react"
-import { Avatar, Button, Chip, Dropdown, Input, Label, Modal, Separator, TextField, Tooltip } from "@heroui/react"
-import { Link, useNavigate } from "react-router"
+import React, { useEffect, useMemo, useState } from "react"
+import PropTypes from "prop-types"
+import { Avatar, Badge, Button, Chip, Dropdown, Separator, Tooltip } from "@heroui/react"
+import { useNavigate } from "react-router"
 import { useDispatch, useSelector } from "react-redux"
-import { LuChevronDown, LuGrid2X2Plus, LuLayers, LuLayers2, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUnplug, LuUser, LuUserPlus, LuUsers } from "react-icons/lu"
+import { LuActivity, LuBook, LuBookOpenText, LuFileCode2, LuGithub, LuSmile, LuSquareKanban, LuCheck, LuChevronDown, LuCoffee, LuLayers, LuLayoutGrid, LuLogOut, LuMonitor, LuMoon, LuPlug, LuPlus, LuPuzzle, LuSettings, LuSun, LuUser, LuUserPlus, LuCircleHelp } from "react-icons/lu"
 
+import { TbBrandDiscord } from "react-icons/tb"
+import { VscMcp } from "react-icons/vsc"
+
+import SidebarDashboards from "./SidebarDashboards"
 import { cn } from "../modules/utils"
 import { useTheme } from "../modules/ThemeContext"
-import cbLogoDark from "../assets/cb_logo_dark.svg"
-import cbLogoLight from "../assets/cb_logo_light.svg"
-import cbLogoSmallDark from "../assets/logo_blue.png";
-import cbLogoSmallLight from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess"
-import { createTeam, getTeamMembers, saveActiveTeam, selectTeam, selectTeams } from "../slices/team"
+import { getBusinessProfileLogo, getTeamMembers, saveActiveTeam, selectTeam, selectTeams } from "../slices/team"
 import { clearConnections } from "../slices/connection"
 import { clearDatasets, getDatasets } from "../slices/dataset"
-import { selectSidebarCollapsed } from "../slices/ui"
-import toast from "react-hot-toast"
+import { showFeedbackModal } from "../slices/ui"
 import { logout } from "../slices/user"
+import { getActivityCounts } from "../api/observations"
+import { shouldResumeOnboarding } from "../containers/Onboarding/onboardingState"
+
+const getInitials = (name, fallback = "T") => name
+  ?.split(" ")
+  .map((part) => part[0])
+  .join("")
+  .slice(0, 2)
+  .toUpperCase() || fallback;
 
 
-function Sidebar() {
-  const { isDark, theme, setTheme } = useTheme()
-  const collapsed = useSelector(selectSidebarCollapsed);
+function Sidebar({ collapsed }) {
+  const { theme, setTheme } = useTheme()
 
-  const [createTeamModal, setCreateTeamModal] = useState(false);
-  const [creatingTeam, setCreatingTeam] = useState(false);
-  const [teamName, setTeamName] = useState("");
+  const [activityCount, setActivityCount] = useState(0);
+  const [teamLogos, setTeamLogos] = useState({});
   
   const user = useSelector((state) => state.user);
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
-  const teamInitials = team?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "T";
-  const userInitials = user?.data?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
+  const orderedTeams = useMemo(() => (
+    team?.id ? [team, ...teams.filter((item) => `${item.id}` !== `${team.id}`)] : teams
+  ), [team, teams]);
+  const teamLogoUrl = teamLogos[team?.id] || null;
+  const teamInitials = getInitials(team?.name);
+  const userInitials = getInitials(user?.data?.name, "U");
   
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    let active = true;
+    const loadActivityCount = () => {
+      if (!team?.id) return;
+      getActivityCounts(team.id)
+        .then((counts) => {
+          if (active) setActivityCount(counts.total || 0);
+        })
+        .catch(() => {
+          if (active) setActivityCount(0);
+        });
+    };
+    loadActivityCount();
+    window.addEventListener("cb:activity-updated", loadActivityCount);
+    return () => {
+      active = false;
+      window.removeEventListener("cb:activity-updated", loadActivityCount);
+    };
+  }, [team?.id]);
+
+  useEffect(() => {
+    let active = true;
+    const teamsWithoutLoadedLogos = orderedTeams.filter((item) => (
+      item?.id
+      && item.TeamBusinessProfile?.logoMimeType
+      && !Object.prototype.hasOwnProperty.call(teamLogos, item.id)
+    ));
+
+    if (!teamsWithoutLoadedLogos.length) return () => { active = false; };
+
+    Promise.all(teamsWithoutLoadedLogos.map((item) => (
+      getBusinessProfileLogo(item.id)
+        .then((url) => [item.id, url])
+        .catch(() => [item.id, null])
+    )))
+      .then((entries) => {
+        if (active) {
+          setTeamLogos((current) => ({ ...current, ...Object.fromEntries(entries) }));
+        }
+      })
+
+    return () => { active = false; };
+  }, [orderedTeams, teamLogos]);
 
   const _canAccess = (role, teamRoles) => {
     return canAccess(role, user.data.id, teamRoles);
@@ -45,46 +100,23 @@ function Sidebar() {
   };
 
   const pathMenu = _getActiveMenu();
-  const isDashboardActive = pathMenu === "" || window.location.pathname.indexOf("dashboard") > -1;
+  const isHomeActive = pathMenu === "";
+  const isDashboardActive = pathMenu === "dashboards" || window.location.pathname.indexOf("dashboard") > -1;
+  const isActivityActive = pathMenu === "activity";
   const isConnectionsActive = pathMenu === "connections";
   const isDatasetsActive = pathMenu === "datasets";
   const isIntegrationsActive = pathMenu === "integrations";
-  const isSettingsActive = pathMenu === "settings";
 
   const _getTeamRole = (teamRoles) => {
-    if (!teamRoles) return "";
-    let role = teamRoles.filter((o) => o.user_id === user.data.id)[0];
-    if (role.role === "teamOwner") {
-      return {
-        role: "Team Owner",
-        color: "accent",
-      };
-    } else if (role.role === "teamAdmin") {
-      return {
-        role: "Team Admin",
-        color: "success",
-      };
-    } else if (role.role === "projectAdmin") {
-      return {
-        role: "Project Admin",
-        color: "warning",
-      };
-    } else if (role.role === "projectEditor") {
-      return {
-        role: "Project Editor",
-        color: "default",
-      };
-    } else if (role.role === "projectViewer") {
-      return {
-        role: "Project Viewer",
-        color: "default",
-      };
-    }
-
-    return {
-      role: "Guest",
-      color: "default",
-    };
+    const role = teamRoles?.find((item) => item.user_id === user.data.id)?.role;
+    if (role === "teamOwner") return "Team owner";
+    if (role === "teamEditor") return "Team editor";
+    if (role === "teamViewer") return "Team viewer";
+    if (role === "teamAdmin") return "Team admin";
+    if (role === "projectAdmin") return "Project admin";
+    if (role === "projectEditor") return "Project editor";
+    if (role === "projectViewer") return "Project viewer";
+    return "Guest";
   };
 
   const _onChangeTeam = (teamId) => {
@@ -97,134 +129,163 @@ function Sidebar() {
     dispatch(getTeamMembers({ team_id: team.id }));
     dispatch(getDatasets({ team_id: team.id }));
 
+    if (shouldResumeOnboarding(team, user.data.id)) {
+      navigate(`/start?team=${team.id}`);
+      return;
+    }
     navigate("/");
   };
 
-  const _getTheme = () => {
-    if (theme === "system") {
-      return {
-        name: "System",
-        icon: <LuMonitor size={18} />,
-      };
-    } else if (theme === "light") {
-      return {
-        name: "Light",
-        icon: <LuSun size={18} />,
-      };
-    } else if (theme === "dark") {
-      return {
-        name: "Dark",
-        icon: <LuMoon size={18} />,
-      };
-    }
-  }
-
-  const _onCycleTheme = () => {
-    if (theme === "system") {
-      setTheme("light");
-    } else if (theme === "light") {
-      setTheme("dark");
-    } else if (theme === "dark") {
-      setTheme("system");
+  const onDropdownAction = (key) => {
+    switch (key) {
+      case "discord":
+        window.open("https://discord.gg/KwGEbFk", "_blank");
+        break;
+      case "tutorials":
+        window.open("https://chartbrew.com/blog/tag/tutorial/", "_blank");
+        break;
+      case "documentation":
+        window.open("https://docs.chartbrew.com", "_blank");
+        break;
+      case "github":
+        window.open("https://github.com/chartbrew/chartbrew/discussions", "_blank");
+        break;
+      case "feedback":
+        dispatch(showFeedbackModal());
+        break;
+      case "roadmap":
+        window.open("https://chartbrew.com/roadmap", "_blank");
+        break;
+      case "api":
+        window.open("https://docs.chartbrew.com/api-reference/introduction", "_blank");
+        break;
+      default:
+        break;
     }
   };
-
-  const _onCreateTeam = async () => {
-    setCreatingTeam(true);
-    const teamData = await dispatch(createTeam({ name: teamName }));
-    if (teamData.error) {
-      toast.error(teamData.error);
-    }
-
-    setCreateTeamModal(false);
-    setTeamName("");
-    setCreatingTeam(false);
-  };
-
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-surface border-r border-divider transition-all duration-300",
+        "fixed left-0 top-0 z-40 h-dvh bg-surface border-r border-divider transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex flex-col h-full justify-between">
-        <div className="flex flex-col">
-          <Link to="/" className="flex items-center justify-center h-[calc(36px+1rem)] px-4">
-            {collapsed ? (
-              <img src={isDark ? cbLogoSmallDark : cbLogoSmallLight} alt="Chartbrew Logo" width={25} />
-            ) : (
-              <img src={isDark ? cbLogoDark : cbLogoLight} alt="Chartbrew Logo" width={120} />
-            )}
-          </Link>
+      <div className="flex h-full flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto pb-4">
+          <Dropdown>
+            <Dropdown.Trigger
+              aria-label={`Switch team from ${team?.name || "current team"}`}
+              className={cn(
+                "group flex min-h-12 w-full cursor-pointer items-center text-foreground transition-colors hover:bg-default-50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent",
+                collapsed ? "justify-center px-2" : "justify-between gap-3 px-4",
+              )}
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Avatar key={team?.id} size="sm" className="h-7 w-7 shrink-0 rounded-lg bg-transparent">
+                  {teamLogoUrl ? <Avatar.Image alt="" src={teamLogoUrl} /> : null}
+                  <Avatar.Fallback className="rounded-lg">{teamInitials}</Avatar.Fallback>
+                </Avatar>
+                {collapsed ? null : (
+                  <span className="truncate text-sm font-semibold">{team?.name}</span>
+                )}
+              </div>
+              {collapsed ? null : (
+                <LuChevronDown
+                  aria-hidden
+                  className="shrink-0 text-default-400 transition-colors group-hover:text-default-600"
+                  size={16}
+                />
+              )}
+            </Dropdown.Trigger>
+            <Dropdown.Popover>
+              <Dropdown.Menu
+                aria-label="Switch team"
+                onAction={(key) => {
+                  if (key === "createTeam") {
+                    navigate("/start?new=1");
+                    return;
+                  }
 
-          {collapsed && <Separator className="mb-4" />}
+                  if (`${key}` === `${team?.id}`) return;
+                  _onChangeTeam(key);
+                }}
+              >
+                {orderedTeams.map((t) => {
+                  const isSelected = `${t.id}` === `${team?.id}`;
 
-          <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
-            <div className={cn(collapsed ? "" : "px-2")}>
-              <Dropdown>
-                <Dropdown.Trigger className="w-full">
-                  {collapsed ? (
-                    <Avatar size="sm" className="cursor-pointer rounded-md" color="accent">
-                      <Avatar.Fallback>{teamInitials || <LuUsers size={18} />}</Avatar.Fallback>
-                    </Avatar>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      className="justify-between border"
-                      fullWidth
-                    >
-                      <span>{team?.name}</span>
-                      <LuChevronDown />
-                    </Button>
-                  )}
-                </Dropdown.Trigger>
-                <Dropdown.Popover>
-                  <Dropdown.Menu
-                    onAction={(key) => {
-                      if (key === "createTeam") {
-                        setCreateTeamModal(true);
-                        return;
-                      }
-
-                      _onChangeTeam(key);
-                    }}
-                  >
-                  {teams.map((t) => (
+                  return (
                     <Dropdown.Item
+                      aria-current={isSelected ? "true" : undefined}
                       id={`${t.id}`}
                       key={t.id}
                       textValue={t.name}
                     >
-                      <div className="flex w-full flex-row items-center justify-between gap-2">
-                        <span>{t.name}</span>
-                        <Chip size="sm" variant="secondary" color={_getTeamRole(t.TeamRoles).color}>
-                          {_getTeamRole(t.TeamRoles).role}
-                        </Chip>
+                      <div className="flex w-full items-center gap-3">
+                        <Avatar size="sm" className="h-7 w-7 shrink-0 rounded-lg bg-transparent">
+                          {teamLogos[t.id] ? <Avatar.Image alt="" src={teamLogos[t.id]} /> : null}
+                          <Avatar.Fallback className="rounded-lg">{getInitials(t.name)}</Avatar.Fallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">{t.name}</div>
+                          <div className="text-xs text-default-400">{_getTeamRole(t.TeamRoles)}</div>
+                        </div>
+                        {isSelected ? (
+                          <>
+                            <LuCheck aria-hidden className="shrink-0 text-accent" size={17} />
+                            <span className="sr-only">Selected</span>
+                          </>
+                        ) : null}
                       </div>
                     </Dropdown.Item>
-                  ))}
-                  <Dropdown.Item
-                    id="createTeam"
-                    key="createTeam"
-                    textValue="Add new team"
-                  >
-                    <div className="flex w-full flex-row items-center justify-between gap-2">
-                      <span>Add new team</span>
-                      <LuPlus size={18} />
-                    </div>
-                  </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown.Popover>
-              </Dropdown>
-            </div>
+                  );
+                })}
+                <Dropdown.Item
+                  id="createTeam"
+                  key="createTeam"
+                  textValue="Add new team"
+                >
+                  <div className="flex w-full flex-row items-center justify-between gap-2">
+                    <span>Add new team</span>
+                    <LuPlus size={18} />
+                  </div>
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
 
-            <div className="h-4" />
-            <Separator />
+          <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
             <div className="h-2" />
 
             <div className={cn("flex flex-col gap-1", collapsed && "items-center")}>
+              {collapsed ? (
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant={isHomeActive ? "secondary" : "ghost"}
+                      fullWidth
+                      isIconOnly
+                      size="sm"
+                      className="justify-center"
+                      onPress={() => navigate("/")}
+                    >
+                      <LuCoffee size={20} />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right">Home</Tooltip.Content>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant={isHomeActive ? "secondary" : "ghost"}
+                  fullWidth
+                  size="sm"
+                  className="justify-start"
+                  onPress={() => navigate("/")}
+                >
+                  <LuCoffee size={18} />
+                  Home
+                </Button>
+              )}
               {collapsed ? (
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -234,7 +295,7 @@ function Sidebar() {
                       isIconOnly
                       size="sm"
                       className="justify-center"
-                      onPress={() => navigate("/")}
+                      onPress={() => navigate("/dashboards")}
                     >
                       <LuLayoutGrid size={20} />
                     </Button>
@@ -247,10 +308,63 @@ function Sidebar() {
                   fullWidth
                   size="sm"
                   className="justify-start"
-                  onPress={() => navigate("/")}
+                  onPress={() => navigate("/dashboards")}
                 >
                   <LuLayoutGrid size={18} />
                   Dashboards
+                </Button>
+              )}
+              {collapsed ? (
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Badge.Anchor className="relative inline-flex">
+                      <Button
+                        variant={isActivityActive ? "secondary" : "ghost"}
+                        fullWidth
+                        isIconOnly
+                        size="sm"
+                        className="justify-center"
+                        onPress={() => navigate("/activity")}
+                      >
+                        <LuActivity size={20} />
+                      </Button>
+                      {activityCount > 0 ? (
+                        <Badge
+                          aria-label={`${activityCount} activity items need attention`}
+                          color="accent"
+                          size="sm"
+                          variant="soft"
+                        >
+                          {activityCount > 99 ? "99+" : activityCount}
+                        </Badge>
+                      ) : null}
+                    </Badge.Anchor>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content placement="right">Activity</Tooltip.Content>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant={isActivityActive ? "secondary" : "ghost"}
+                  fullWidth
+                  size="sm"
+                  className="justify-start"
+                  onPress={() => navigate("/activity")}
+                >
+                  <LuActivity size={18} />
+                  Activity
+                  {activityCount > 0 ? (
+                    <Chip
+                      aria-label={`${activityCount} activity items need attention`}
+                      className="ml-auto text-[10px] rounded-full"
+                      color="accent"
+                      size="sm"
+                      variant="soft"
+                    >
+                      <Chip.Label>
+                        {activityCount > 99 ? "99+" : activityCount}
+                      </Chip.Label>
+                    </Chip>
+                  ) : null}
                 </Button>
               )}
               {_canAccess("teamAdmin", team.TeamRoles) && (
@@ -343,198 +457,113 @@ function Sidebar() {
                   </Button>
                 )
               )}
-              {_canAccess("teamAdmin", team.TeamRoles) && (
-                collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant={isSettingsActive ? "secondary" : "ghost"}
-                        fullWidth
-                        isIconOnly
-                        size="sm"
-                        className={cn("justify-center", "team-settings-tutorial")}
-                        onPress={() => navigate("/settings/members")}
-                      >
-                        <LuSettings size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Settings</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant={isSettingsActive ? "secondary" : "ghost"}
-                    fullWidth
-                    size="sm"
-                    className={cn("justify-start", "team-settings-tutorial")}
-                    onPress={() => navigate("/settings/members")}
-                  >
-                    <LuSettings size={18} />
-                    Settings
-                  </Button>
-                )
-              )}
             </div>
           </div>
 
-          <div className="h-4" />
-
-          <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-4 flex flex-col items-start justify-center")}>
-            {_canAccess("teamAdmin", team.TeamRoles) && (
-              <>
-                <div className="text-sm text-gray-500">
-                  {collapsed ? "" : "Quick actions"}
-                </div>
-                <div className="h-2" />
-                {collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        onPress={() => navigate("/?create=dashboard")}
-                        isIconOnly
-                        fullWidth
-                        className="justify-center"
-                      >
-                        <LuGrid2X2Plus size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Create a new dashboard</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate("/?create=dashboard")}
-                    fullWidth
-                    className="justify-start"
-                  >
-                    <LuGrid2X2Plus size={18} />New dashboard
-                  </Button>
-                )}
-                <div className="h-1" />
-                {collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        onPress={() => navigate("/datasets/new")}
-                        isIconOnly
-                        fullWidth
-                        className="justify-center"
-                      >
-                        <LuLayers2 size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Create a new dataset</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate("/datasets/new")}
-                    fullWidth
-                    className="justify-start"
-                  >
-                    <LuLayers2 size={18} />New dataset
-                  </Button>
-                )}
-                <div className="h-1" />
-                {collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        onPress={() => navigate("/connections/new")}
-                        isIconOnly
-                        fullWidth
-                        className="justify-center"
-                      >
-                        <LuUnplug size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Create a new connection</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate("/connections/new")}
-                    fullWidth
-                    className="justify-start"
-                  >
-                    <LuUnplug size={18} />New connection
-                  </Button>
-                )}
-                <div className="h-1" />
-                {collapsed ? (
-                  <Tooltip>
-                    <Tooltip.Trigger>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        onPress={() => navigate("/settings/members")}
-                        isIconOnly
-                        fullWidth
-                        className="justify-center"
-                      >
-                        <LuUserPlus size={20} />
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content placement="right">Add a team member</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={() => navigate("/settings/members")}
-                    fullWidth
-                    className="justify-start"
-                  >
-                    <LuUserPlus size={18} />Add team member
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
+          <SidebarDashboards collapsed={collapsed} key={`${user.data.id}-${team.id}`} />
         </div>
-        
-        <div className="flex flex-col">
-          <div className={cn(collapsed ? "px-0 flex flex-col items-center" : "px-2")}>
-            {collapsed ? (
-              <Tooltip>
-                <Tooltip.Trigger>
-                  <Button
-                    onPress={() => _onCycleTheme()}
-                    variant="tertiary"
-                    size="sm"
-                    isIconOnly
-                    fullWidth
-                    className="justify-center"
-                  >
-                    {_getTheme().icon}
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content placement="right">Change theme</Tooltip.Content>
+
+        <div className="flex shrink-0 flex-col border-t border-divider bg-surface pt-2">
+          <div className={cn("mb-2 flex flex-col gap-1 px-2", collapsed && "items-center")}>
+            {[
+              ...(_canAccess("teamAdmin", team.TeamRoles) ? [{
+                label: "Invite your team",
+                icon: LuUserPlus,
+                path: "/settings/team/members",
+              }] : []),
+              { label: "Connect MCP", icon: VscMcp, path: "/settings/mcp", isNew: true },
+              ...(_canAccess("teamAdmin", team.TeamRoles) ? [{
+                label: "Settings",
+                icon: LuSettings,
+                path: "/settings/team",
+              }] : []),
+            ].map(({ label, icon: Icon, path, isNew }) => (
+              <Tooltip key={path} isDisabled={!collapsed}>
+                <Button
+                  aria-label={isNew ? `${label}, new` : label}
+                  variant="ghost"
+                  size="sm"
+                  isIconOnly={collapsed}
+                  fullWidth={!collapsed}
+                  className={cn(collapsed ? "justify-center" : "justify-start", label === "Settings" && "team-settings-tutorial")}
+                  onPress={() => navigate(path)}
+                >
+                  <Icon aria-hidden size={18} />
+                  {!collapsed && <span>{label}</span>}
+                  {!collapsed && isNew && (
+                    <Chip size="sm" color="accent" variant="soft" className="ml-auto text-[10px]">
+                      <Chip.Label>New</Chip.Label>
+                    </Chip>
+                  )}
+                </Button>
+                <Tooltip.Content placement="right">{isNew ? `${label} · New` : label}</Tooltip.Content>
               </Tooltip>
-            ) : (
+            ))}
+            <Dropdown>
               <Button
-                variant="tertiary"
-                onPress={() => _onCycleTheme()}
-                fullWidth
-                className="justify-start"
+                aria-label="Resources"
+                title={collapsed ? "Resources" : undefined}
+                variant="ghost"
+                size="sm"
+                isIconOnly={collapsed}
+                fullWidth={!collapsed}
+                className={collapsed ? "justify-center" : "justify-start"}
               >
-                {_getTheme().icon}{_getTheme().name}
+                <LuCircleHelp aria-hidden size={18} />
+                {!collapsed && <span>Resources</span>}
               </Button>
-            )}
+              <Dropdown.Popover placement="right bottom">
+                <Dropdown.Menu aria-label="Resources" onAction={(key) => onDropdownAction(key)}>
+                  <Dropdown.Item id="discord" textValue="Join our Discord">
+                    <div className="flex flex-row items-center gap-2">
+                      <TbBrandDiscord />
+                      <span>Join our Discord</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="roadmap" textValue="Roadmap">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuSquareKanban />
+                      <span>Roadmap</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="tutorials" textValue="Blog tutorials">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuBook />
+                      <span>Blog tutorials</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="documentation" textValue="Documentation">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuBookOpenText />
+                      <span>Documentation</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="api" textValue="API Reference">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuFileCode2 />
+                      <span>API Reference</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="github" textValue="GitHub">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuGithub />
+                      <span>GitHub</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="feedback" textValue="Feedback">
+                    <div className="flex flex-row items-center gap-2">
+                      <LuSmile />
+                      <span>Feedback</span>
+                    </div>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
           </div>
-          <div className="h-2" />
           <Separator />
           <div className="h-2" />
           <Dropdown>
-            <Dropdown.Trigger>
+            <Dropdown.Trigger aria-label="User menu">
               <div className={cn("flex flex-row items-center gap-1 justify-start cursor-pointer", collapsed ? "px-0 justify-center" : "px-4")}>
                 <Avatar size="sm">
                   <Avatar.Fallback>{userInitials || <LuUser />}</Avatar.Fallback>
@@ -571,6 +600,34 @@ function Sidebar() {
                   </div>
                 </Dropdown.Item>
 
+                <Dropdown.SubmenuTrigger>
+                  <Dropdown.Item id="appearance" textValue="Appearance">
+                    <LuMonitor aria-hidden size={18} />
+                    <span>Appearance</span>
+                    <Dropdown.SubmenuIndicator />
+                  </Dropdown.Item>
+                  <Dropdown.Popover>
+                    <Dropdown.Menu
+                      aria-label="Appearance"
+                      selectionMode="single"
+                      selectedKeys={[theme]}
+                      onAction={(key) => setTheme(key)}
+                    >
+                      {[
+                        { id: "system", label: "System", icon: LuMonitor },
+                        { id: "light", label: "Light", icon: LuSun },
+                        { id: "dark", label: "Dark", icon: LuMoon },
+                      ].map(({ id, label, icon: Icon }) => (
+                        <Dropdown.Item id={id} key={id} textValue={label}>
+                          <Icon aria-hidden size={18} />
+                          <span>{label}</span>
+                          <Dropdown.ItemIndicator />
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown.Popover>
+                </Dropdown.SubmenuTrigger>
+
                 <Dropdown.Item id="logout" textValue="Sign out" variant="danger">
                   <div className="flex flex-row items-center gap-2">
                     <LuLogOut size={18} />
@@ -583,44 +640,12 @@ function Sidebar() {
           <div className="h-2" />
         </div>
       </div>
-
-      <Modal.Backdrop isOpen={createTeamModal} onOpenChange={setCreateTeamModal}>
-        <Modal.Container>
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>Create a new team</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <div className="flex flex-col gap-2 p-1 pt-4">
-                <TextField name="team-name">
-                  <Label>Team name</Label>
-                  <Input
-                    id="team-name"
-                    placeholder="Enter your new team name"
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
-                    variant="secondary"
-                  />
-                </TextField>
-            </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="outline" onPress={() => setCreateTeamModal(false)}>
-              Close
-            </Button>
-            <Button
-              isPending={creatingTeam}
-              onPress={_onCreateTeam}
-              isDisabled={!teamName}
-            >
-              Create team
-            </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
     </aside>
   );
 }
+
+Sidebar.propTypes = {
+  collapsed: PropTypes.bool.isRequired,
+};
 
 export default Sidebar

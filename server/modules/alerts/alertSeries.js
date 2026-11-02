@@ -1,3 +1,5 @@
+const { projectPreparedSeries } = require("../../visualization/seriesProjection");
+
 function getChartValue(chart, key) {
   if (typeof chart?.getDataValue === "function") return chart.getDataValue(key);
   return chart?.[key];
@@ -14,46 +16,41 @@ function parseVisualization(visualization) {
   }
 }
 
-function getAlertSeries(chart, bindingId, legacyIndex = 0) {
-  const datasets = getChartValue(chart, "chartData")?.data?.datasets || [];
-  const seriesMetadata = getChartValue(chart, "chartData")?.meta?.series || [];
-  const visualization = parseVisualization(getChartValue(chart, "visualization"));
+function getAlertSeries(preparedData, visualizationValue, bindingId, options = {}) {
+  const visualization = parseVisualization(visualizationValue);
+  if (!preparedData || !visualization) return [];
+  const projection = projectPreparedSeries({
+    chart: options.chart || {},
+    preparedData,
+    runtimeContext: options.runtimeContext,
+    timezone: options.timezone || preparedData.timezone,
+    visualization,
+  });
   const bindingLayers = (visualization?.layers || []).filter((layer) => {
     return `${layer.bindingId}` === `${bindingId}`;
   });
-  const layerIds = new Set(bindingLayers.map((layer) => `${layer.id}`));
   const layersById = new Map(bindingLayers.map((layer) => [`${layer.id}`, layer]));
-  const matched = datasets.map((dataset, datasetIndex) => {
-    const metadata = seriesMetadata[datasetIndex] || {};
-    const layer = layersById.get(`${metadata.layerId}`);
-    const seriesLabel = metadata.label || dataset.label || `Series ${datasetIndex + 1}`;
-    const layerLabel = metadata.layerName || layer?.name;
+  return projection.series.filter((series) => {
+    return `${series.bindingId}` === `${bindingId}` && layersById.has(`${series.layerId}`);
+  }).map((series, seriesIndex) => {
+    const layer = layersById.get(`${series.layerId}`);
+    const seriesLabel = series.label || `Series ${seriesIndex + 1}`;
+    const layerLabel = series.layerName || layer?.name;
     const displayLabel = bindingLayers.length > 1 && layerLabel && layerLabel !== seriesLabel
       ? `${layerLabel} — ${seriesLabel}`
       : seriesLabel;
 
     return {
-      dataset,
-      datasetIndex,
-      layerId: metadata.layerId || layer?.id || null,
-      seriesId: metadata.id || `binding-${bindingId}-series-${datasetIndex}`,
+      dateFormat: projection.dateFormat,
+      layerId: series.layerId,
+      points: projection.labels.map((label, index) => ({
+        label,
+        value: series.values[index] ?? null,
+      })),
+      seriesId: series.id,
       seriesLabel: displayLabel,
-      matchesBinding: `${metadata.bindingId}` === `${bindingId}`
-        || layerIds.has(`${metadata.layerId}`),
     };
-  }).filter((series) => series.matchesBinding);
-
-  if (matched.length > 0) return matched;
-
-  const dataset = datasets[legacyIndex];
-  if (!dataset) return [];
-  return [{
-    dataset,
-    datasetIndex: legacyIndex,
-    layerId: null,
-    seriesId: `binding-${bindingId}-series-${legacyIndex}`,
-    seriesLabel: dataset.label || `Series ${legacyIndex + 1}`,
-  }];
+  });
 }
 
 function isNumericAlertValue(value) {
@@ -90,19 +87,19 @@ function makeAlertItem(series, label, value) {
 }
 
 function findThresholdMatches(chart, alert, series) {
-  const labels = getChartValue(chart, "chartData")?.data?.labels || [];
   const onlyLatestPoint = Boolean(getChartValue(chart, "isTimeseries"));
 
   return series.flatMap((item) => {
-    const values = Array.isArray(item.dataset?.data) ? item.dataset.data : [];
-    const indexes = onlyLatestPoint && values.length > 0
-      ? [values.length - 1]
-      : values.map((value, index) => index);
+    const points = Array.isArray(item.points) ? item.points : [];
+    const indexes = onlyLatestPoint && points.length > 0
+      ? [points.length - 1]
+      : points.map((value, index) => index);
 
     return indexes.flatMap((index) => {
-      const value = values[index];
+      const point = points[index];
+      const value = point?.value;
       if (!matchesAlertRule(alert.type, alert.rules, value)) return [];
-      return [makeAlertItem(item, labels[index] ?? `Point ${index + 1}`, value)];
+      return [makeAlertItem(item, point?.label ?? `Point ${index + 1}`, value)];
     });
   });
 }

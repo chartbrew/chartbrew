@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "geometry": {
+    "width": {
+      "narrowMax": 259,
+      "regularMax": 519
+    },
+    "height": {
+      "shallowMax": 149,
+      "regularMax": 319
+    },
+    "shape": {
+      "panoramicMinRatio": 2.2,
+      "portraitMaxRatio": 0.8
+    }
+  },
+  "kpi": {
+    "minimumMetricWidth": 130
+  },
+  "presets": {
+    "line": {
+      "compositions": ["analysis", "limited", "sparkline"],
+      "densePointSpacing": 14,
+      "limitedTickCount": 5
+    },
+    "bar": {
+      "compositions": ["analysis", "limited", "sparkline"],
+      "denseBarSpacing": 14,
+      "limitedTickCount": 5
+    },
+    "horizontalBar": {
+      "compositions": ["comparison", "compact"]
+    },
+    "category": {
+      "compositions": [
+        "centered",
+        "side-summary",
+        "stacked-summary",
+        "micro",
+        "side-breakdown",
+        "stacked-breakdown"
+      ]
+    },
+    "matrix": {
+      "compositions": ["labeled", "bounded", "dense"],
+      "minimumLabeledCellSize": 18
+    },
+    "gauge": {
+      "compositions": ["large", "centered", "side-summary", "compact", "micro"],
+      "sideSummaryMaxHeight": 160
+    },
+    "polar": {
+      "compositions": ["analysis", "limited", "compact"]
+    },
+    "radar": {
+      "compositions": ["analysis", "limited", "compact"]
+    }
+  }
+}

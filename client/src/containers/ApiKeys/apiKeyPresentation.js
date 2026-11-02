@@ -1,0 +1,28 @@
+export function getApiKeyProjects(projects, teamId) {
+  return projects.filter((project) => project.team_id === teamId && !project.ghost);
+}
+
+export function isLegacyApiKey(apiKey) {
+  return apiKey.dataApiAccess === "unavailable";
+}
+
+export function getPermissionLabels(apiKey) {
+  if (isLegacyApiKey(apiKey)) return [];
+
+  const permissions = ["Read data"];
+  if (apiKey.permissions?.includes("data:refresh")) permissions.push("Refresh data");
+  if (apiKey.permissions?.includes("charts:preview")) permissions.push("Create chart previews");
+  if (apiKey.permissions?.includes("datasets:write")) permissions.push("Create datasets");
+  if (apiKey.permissions?.includes("dashboard-filters:write")) permissions.push("Manage dashboard filters");
+  return permissions;
+}
+
+export function getProjectAccessLabel(apiKey, projects = []) {
+  if (!apiKey.projectAccess) return "Existing integrations only";
+  if (apiKey.projectAccess.allProjects) return "All projects in this team";
+
+  const selectedIds = new Set(apiKey.projectAccess.projectIds || []);
+  const selectedProjects = projects.filter((project) => selectedIds.has(project.id));
+  if (selectedProjects.length === 1) return selectedProjects[0].name;
+  return `${selectedProjects.length} projects`;
+}

@@ -148,7 +148,7 @@ async function updateDataset(payload) {
       } : {})
     };
   } catch (error) {
-    throw new Error(`Dataset update failed: ${error.message}`);
+    throw new Error(`Dataset update failed: ${error.message}`, { cause: error });
   }
 }
 

@@ -102,9 +102,80 @@ export const updateTeam = createAsyncThunk(
     const response = await fetch(`${API_HOST}/team/${team_id}`, { method: "PUT", headers, body: JSON.stringify(data) });
     const jsonData = await response.json();
 
+    if (!response.ok) throw new Error(jsonData.message || "Team settings could not be updated");
     return jsonData;
   }
 );
+
+export const saveTeamOnboarding = createAsyncThunk(
+  "team/saveTeamOnboarding",
+  async ({ team_id, data }) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json", "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+    const response = await fetch(`${API_HOST}/team/${team_id}/onboarding`, {
+      method: "PATCH", headers, body: JSON.stringify(data),
+    });
+    const responseJson = await response.json();
+    if (!response.ok) throw new Error(responseJson.error || "Unable to save team setup");
+    return responseJson;
+  }
+);
+
+export const discoverBusinessProfile = createAsyncThunk(
+  "team/discoverBusinessProfile",
+  async ({ team_id, websiteUrl }) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json", "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+    const endpoint = team_id
+      ? `${API_HOST}/team/${team_id}/onboarding/discover`
+      : `${API_HOST}/team/onboarding/discover`;
+    const response = await fetch(endpoint, {
+      method: "POST", headers, body: JSON.stringify({ websiteUrl }),
+    });
+    const responseJson = await response.json();
+    if (!response.ok) throw new Error(responseJson.error || "Unable to read this website");
+    return responseJson;
+  }
+);
+
+export const updateBusinessProfile = createAsyncThunk(
+  "team/updateBusinessProfile",
+  async ({ team_id, data }) => {
+    const token = getAuthToken();
+    const headers = new Headers({
+      "Accept": "application/json", "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+    const response = await fetch(`${API_HOST}/team/${team_id}/business-profile`, {
+      method: "PUT", headers, body: JSON.stringify(data),
+    });
+    const responseJson = await response.json();
+    if (!response.ok) throw new Error(responseJson.error || "Unable to save business profile");
+    return responseJson;
+  }
+);
+
+export async function getBusinessProfileLogo(teamId) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_HOST}/team/${teamId}/business-profile/logo`, {
+    headers: { "authorization": `Bearer ${token}` },
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Unable to load business logo");
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Unable to load business logo"));
+    reader.readAsDataURL(blob);
+  });
+}
 
 export const transferOwnership = createAsyncThunk(
   "team/transferOwnership",
@@ -279,17 +350,21 @@ export const getApiKeys = createAsyncThunk(
 
 export const createApiKey = createAsyncThunk(
   "team/createApiKey",
-  async ({ team_id, keyName }) => {
+  async ({ team_id, key }) => {
     const token = getAuthToken();
     const headers = new Headers({
       "Accept": "application/json",
       "content-type": "application/json",
       "authorization": `Bearer ${token}`,
     });
-    const body = JSON.stringify({ name: keyName });
+    const body = JSON.stringify(key);
 
-    const response = await fetch(`${API_HOST}/team/${team_id}/apikey`, { method: "POST", body, headers })
+    const response = await fetch(`${API_HOST}/team/${team_id}/apikey`, { method: "POST", body, headers });
     const responseJson = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseJson.error || "The API key could not be created.");
+    }
 
     return responseJson;
   }
@@ -377,6 +452,20 @@ export const teamSlice = createSlice({
         });
       })
       .addCase(updateTeam.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+      .addCase(saveTeamOnboarding.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(saveTeamOnboarding.fulfilled, (state, action) => {
+        state.loading = false;
+        state.active = action.payload;
+        state.data = state.data.map((team) => (
+          team.id === action.payload.id ? action.payload : team
+        ));
+      })
+      .addCase(saveTeamOnboarding.rejected, (state) => {
         state.loading = false;
         state.error = true;
       })

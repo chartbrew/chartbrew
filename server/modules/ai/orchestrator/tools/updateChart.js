@@ -1,9 +1,11 @@
+const chartVersions = require("../../../chartVersions");
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
 const { normalizeTeamId, requireDatasetForTeam } = require("./teamScope");
 const { applyCdcCompatibilityUpdate, applyChartCompatibilityUpdate } = require("../../../../visualization/compatibilityUpdates");
 const { legacyChartToVisualization } = require("../../../../visualization/legacyChartToVisualization");
 const { isLegacyOwnedVisualization } = require("../../../../visualization/legacyVisualizationSync");
+const { remapVisualizationBindings } = require("../../../../visualization/remapBindings");
 const { finalizeAiVisualization } = require("../../../../visualization/aiVisualization");
 
 async function updateChart(payload) {
@@ -45,336 +47,369 @@ async function updateChart(payload) {
       await requireDatasetForTeam(dataset_id, normalizedTeamId);
     }
 
-    // Provide default chart spec if not provided
-    const defaultSpec = {
-      displayLegend: true,
-      pointRadius: 0,
-      dataLabels: false,
-      includeZeros: true,
-      stacked: false,
-      horizontal: false,
-      xLabelTicks: "default",
-      showGrowth: false,
-      invertGrowth: false,
-      mode: "chart",
-    };
+    const chartSpec = spec || {};
 
-    const chartSpec = spec || defaultSpec;
-
-    // Update chart fields (only if provided)
     const chartUpdates = {};
-    if (name !== undefined) chartUpdates.name = name;
-    if (type !== undefined) chartUpdates.type = type;
-    if (subType !== undefined) chartUpdates.subType = subType;
-    if (displayLegend !== undefined) chartUpdates.displayLegend = displayLegend;
-    else if (chartSpec.displayLegend !== undefined) {
-      chartUpdates.displayLegend = chartSpec.displayLegend;
-    }
-    if (pointRadius !== undefined) {
-      chartUpdates.pointRadius = pointRadius;
-    } else if (chartSpec.pointRadius !== undefined) {
-      chartUpdates.pointRadius = chartSpec.pointRadius;
-    }
-    if (dataLabels !== undefined) {
-      chartUpdates.dataLabels = dataLabels;
-    } else if (chartSpec.dataLabels !== undefined) {
-      chartUpdates.dataLabels = chartSpec.dataLabels;
-    }
-    if (includeZeros !== undefined) {
-      chartUpdates.includeZeros = includeZeros;
-    } else if (chartSpec.includeZeros !== undefined) {
-      chartUpdates.includeZeros = chartSpec.includeZeros;
-    }
-    if (timeInterval !== undefined) {
-      chartUpdates.timeInterval = timeInterval;
-    } else if (chartSpec.timeInterval !== undefined) {
-      chartUpdates.timeInterval = chartSpec.timeInterval;
-    }
-
-    if (stacked !== undefined) {
-      chartUpdates.stacked = stacked;
-    } else if (chartSpec.stacked !== undefined || chartSpec.options?.stacked !== undefined) {
-      chartUpdates.stacked = chartSpec.stacked ?? chartSpec.options?.stacked ?? false;
-    }
-
-    if (horizontal !== undefined) {
-      chartUpdates.horizontal = horizontal;
-    } else if (chartSpec.horizontal !== undefined || chartSpec.options?.horizontal !== undefined) {
-      chartUpdates.horizontal = horizontal
-        ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false;
-    }
-
-    if (xLabelTicks !== undefined) {
-      chartUpdates.xLabelTicks = xLabelTicks;
-    } else if (chartSpec.xLabelTicks !== undefined) {
-      chartUpdates.xLabelTicks = chartSpec.xLabelTicks;
-    }
-
-    if (showGrowth !== undefined) {
-      chartUpdates.showGrowth = showGrowth;
-    } else if (chartSpec.showGrowth !== undefined) chartUpdates.showGrowth = chartSpec.showGrowth;
-
-    if (invertGrowth !== undefined) {
-      chartUpdates.invertGrowth = invertGrowth;
-    } else if (chartSpec.invertGrowth !== undefined) {
-      chartUpdates.invertGrowth = chartSpec.invertGrowth;
-    }
-
-    if (mode !== undefined) {
-      chartUpdates.mode = mode;
-    } else if (chartSpec.mode !== undefined) {
-      chartUpdates.mode = chartSpec.mode;
-    }
-
-    if (maxValue !== undefined) chartUpdates.maxValue = maxValue;
-    else if (chartSpec.maxValue !== undefined) {
-      chartUpdates.maxValue = chartSpec.maxValue;
-    }
-
-    if (minValue !== undefined) {
-      chartUpdates.minValue = minValue;
-    } else if (chartSpec.minValue !== undefined) {
-      chartUpdates.minValue = chartSpec.minValue;
-    }
-    if (ranges !== undefined) {
-      chartUpdates.ranges = ranges;
-    } else if (chartSpec.ranges !== undefined) {
-      chartUpdates.ranges = chartSpec.ranges;
-    }
-
-    if (Object.keys(chartUpdates).length > 0) {
-      await db.Chart.update(chartUpdates, { where: { id: chart_id } });
-    }
-
-    // Find and update the chart dataset config (if dataset_id is provided)
-    const shouldUpdateCdc = dataset_id !== undefined
-      || legend !== undefined
-      || xAxis !== undefined
-      || xAxisOperation !== undefined
-      || yAxis !== undefined
-      || yAxisOperation !== undefined
-      || dateField !== undefined
-      || dateFormat !== undefined
-      || conditions !== undefined
-      || formula !== undefined
-      || seriesConfiguration !== undefined
-      || datasetColor !== undefined
-      || fillColor !== undefined
-      || fill !== undefined
-      || multiFill !== undefined
-      || excludedFields !== undefined
-      || sort !== undefined
-      || columnsOrder !== undefined
-      || maxRecords !== undefined
-      || goal !== undefined
-      || pointRadius !== undefined
-      || chartSpec.pointRadius !== undefined
-      || chartSpec.legend !== undefined
-      || chartSpec.xAxis !== undefined
-      || chartSpec.xAxisOperation !== undefined
-      || chartSpec.yAxis !== undefined
-      || chartSpec.yAxisOperation !== undefined
-      || chartSpec.dateField !== undefined
-      || chartSpec.dateFormat !== undefined
-      || chartSpec.conditions !== undefined
-      || chartSpec.formula !== undefined
-      || chartSpec.configuration !== undefined;
-
-    let updatedCdcId = null;
-    let appliedConfigUpdates = {};
-    if (shouldUpdateCdc) {
-      const configWhere = { chart_id };
-      if (dataset_id) {
-        configWhere.dataset_id = dataset_id;
+    let shouldUpdateCdc = false;
+    if (!payload.user_id) throw new Error("Sign in to edit this chart.");
+    await chartVersions.saveChartVersion(chart_id, {
+      userId: payload.user_id,
+      teamId: normalizedTeamId,
+      origin: "ai",
+      expectedVersion: payload.expectedVersion,
+      operationId: payload.operationId,
+    }, async ({ transaction }) => {
+      // Update chart fields (only if provided)
+      if (name !== undefined) chartUpdates.name = name;
+      if (type !== undefined) chartUpdates.type = type;
+      if (subType !== undefined) chartUpdates.subType = subType;
+      if (displayLegend !== undefined) chartUpdates.displayLegend = displayLegend;
+      else if (chartSpec.displayLegend !== undefined) {
+        chartUpdates.displayLegend = chartSpec.displayLegend;
+      }
+      if (pointRadius !== undefined) {
+        chartUpdates.pointRadius = pointRadius;
+      } else if (chartSpec.pointRadius !== undefined) {
+        chartUpdates.pointRadius = chartSpec.pointRadius;
+      }
+      if (dataLabels !== undefined) {
+        chartUpdates.dataLabels = dataLabels;
+      } else if (chartSpec.dataLabels !== undefined) {
+        chartUpdates.dataLabels = chartSpec.dataLabels;
+      }
+      if (includeZeros !== undefined) {
+        chartUpdates.includeZeros = includeZeros;
+      } else if (chartSpec.includeZeros !== undefined) {
+        chartUpdates.includeZeros = chartSpec.includeZeros;
+      }
+      if (timeInterval !== undefined) {
+        chartUpdates.timeInterval = timeInterval;
+      } else if (chartSpec.timeInterval !== undefined) {
+        chartUpdates.timeInterval = chartSpec.timeInterval;
       }
 
-      const chartDatasetConfig = await db.ChartDatasetConfig.findOne({
-        where: configWhere
+      if (stacked !== undefined) {
+        chartUpdates.stacked = stacked;
+      } else if (chartSpec.stacked !== undefined || chartSpec.options?.stacked !== undefined) {
+        chartUpdates.stacked = chartSpec.stacked ?? chartSpec.options?.stacked ?? false;
+      }
+
+      if (horizontal !== undefined) {
+        chartUpdates.horizontal = horizontal;
+      } else if (chartSpec.horizontal !== undefined || chartSpec.options?.horizontal !== undefined) {
+        chartUpdates.horizontal = horizontal
+          ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false;
+      }
+
+      if (xLabelTicks !== undefined) {
+        chartUpdates.xLabelTicks = xLabelTicks;
+      } else if (chartSpec.xLabelTicks !== undefined) {
+        chartUpdates.xLabelTicks = chartSpec.xLabelTicks;
+      }
+
+      if (showGrowth !== undefined) {
+        chartUpdates.showGrowth = showGrowth;
+      } else if (chartSpec.showGrowth !== undefined) chartUpdates.showGrowth = chartSpec.showGrowth;
+
+      if (invertGrowth !== undefined) {
+        chartUpdates.invertGrowth = invertGrowth;
+      } else if (chartSpec.invertGrowth !== undefined) {
+        chartUpdates.invertGrowth = chartSpec.invertGrowth;
+      }
+
+      if (mode !== undefined) {
+        chartUpdates.mode = mode;
+      } else if (chartSpec.mode !== undefined) {
+        chartUpdates.mode = chartSpec.mode;
+      }
+
+      if (maxValue !== undefined) chartUpdates.maxValue = maxValue;
+      else if (chartSpec.maxValue !== undefined) {
+        chartUpdates.maxValue = chartSpec.maxValue;
+      }
+
+      if (minValue !== undefined) {
+        chartUpdates.minValue = minValue;
+      } else if (chartSpec.minValue !== undefined) {
+        chartUpdates.minValue = chartSpec.minValue;
+      }
+      if (ranges !== undefined) {
+        chartUpdates.ranges = ranges;
+      } else if (chartSpec.ranges !== undefined) {
+        chartUpdates.ranges = chartSpec.ranges;
+      }
+
+      const effectiveType = chartUpdates.type || chart.type;
+      if (effectiveType === "bar" && chartUpdates.horizontal === true) {
+        chartUpdates.type = "horizontalBar";
+        chartUpdates.horizontal = false;
+      } else if (effectiveType === "horizontalBar") {
+        chartUpdates.horizontal = false;
+      }
+
+      if (Object.keys(chartUpdates).length > 0) {
+        await db.Chart.update(chartUpdates, { where: { id: chart_id }, transaction });
+      }
+
+      // Find and update the chart dataset config (if dataset_id is provided)
+      shouldUpdateCdc = dataset_id !== undefined
+        || legend !== undefined
+        || xAxis !== undefined
+        || xAxisOperation !== undefined
+        || yAxis !== undefined
+        || yAxisOperation !== undefined
+        || dateField !== undefined
+        || dateFormat !== undefined
+        || conditions !== undefined
+        || formula !== undefined
+        || seriesConfiguration !== undefined
+        || datasetColor !== undefined
+        || fillColor !== undefined
+        || fill !== undefined
+        || multiFill !== undefined
+        || excludedFields !== undefined
+        || sort !== undefined
+        || columnsOrder !== undefined
+        || maxRecords !== undefined
+        || goal !== undefined
+        || pointRadius !== undefined
+        || chartSpec.pointRadius !== undefined
+        || chartSpec.legend !== undefined
+        || chartSpec.xAxis !== undefined
+        || chartSpec.xAxisOperation !== undefined
+        || chartSpec.yAxis !== undefined
+        || chartSpec.yAxisOperation !== undefined
+        || chartSpec.dateField !== undefined
+        || chartSpec.dateFormat !== undefined
+        || chartSpec.conditions !== undefined
+        || chartSpec.formula !== undefined
+        || chartSpec.configuration !== undefined;
+
+      let createdBinding = false;
+      let updatedCdcId = null;
+      let appliedConfigUpdates = {};
+      if (shouldUpdateCdc) {
+        const configWhere = { chart_id };
+        if (dataset_id) {
+          configWhere.dataset_id = dataset_id;
+        }
+
+        let chartDatasetConfig = await db.ChartDatasetConfig.findOne({
+          where: configWhere, transaction,
+        });
+
+        if (!chartDatasetConfig && dataset_id
+          && !await db.ChartDatasetConfig.count({ where: { chart_id }, transaction })) {
+          chartDatasetConfig = await db.ChartDatasetConfig.create({
+            chart_id,
+            dataset_id,
+            legend: legend || name || chart.name,
+            datasetColor: "#048BDE",
+            fill: false,
+            order: 0,
+          }, { transaction });
+          createdBinding = true;
+        }
+
+        if (chartDatasetConfig) {
+          updatedCdcId = chartDatasetConfig.id;
+          const configUpdates = {};
+
+          if (legend !== undefined) {
+            configUpdates.legend = legend;
+          } else if (chartSpec.legend !== undefined) {
+            configUpdates.legend = chartSpec.legend;
+          }
+
+          if (xAxis !== undefined) {
+            configUpdates.xAxis = xAxis;
+          } else if (chartSpec.xAxis !== undefined) {
+            configUpdates.xAxis = chartSpec.xAxis;
+          }
+
+          if (xAxisOperation !== undefined) {
+            configUpdates.xAxisOperation = xAxisOperation;
+          } else if (chartSpec.xAxisOperation !== undefined) {
+            configUpdates.xAxisOperation = chartSpec.xAxisOperation;
+          }
+
+          if (yAxis !== undefined) {
+            configUpdates.yAxis = yAxis;
+          } else if (chartSpec.yAxis !== undefined) {
+            configUpdates.yAxis = chartSpec.yAxis;
+          }
+
+          if (yAxisOperation !== undefined) {
+            configUpdates.yAxisOperation = yAxisOperation;
+          } else if (chartSpec.yAxisOperation !== undefined) {
+            configUpdates.yAxisOperation = chartSpec.yAxisOperation;
+          }
+
+          if (dateField !== undefined) {
+            configUpdates.dateField = dateField;
+          } else if (chartSpec.dateField !== undefined) {
+            configUpdates.dateField = chartSpec.dateField;
+          }
+
+          if (dateFormat !== undefined) {
+            configUpdates.dateFormat = dateFormat;
+          } else if (chartSpec.dateFormat !== undefined) {
+            configUpdates.dateFormat = chartSpec.dateFormat;
+          }
+
+          if (conditions !== undefined) {
+            configUpdates.conditions = conditions;
+          } else if (chartSpec.conditions !== undefined) {
+            configUpdates.conditions = chartSpec.conditions;
+          }
+
+          if (datasetColor !== undefined) {
+            configUpdates.datasetColor = datasetColor;
+          } else if (chartSpec.datasetColor !== undefined) {
+            configUpdates.datasetColor = chartSpec.datasetColor;
+          } else if (chartSpec.options?.color !== undefined) {
+            configUpdates.datasetColor = chartSpec.options.color;
+          }
+
+          if (fillColor !== undefined) {
+            configUpdates.fillColor = fillColor;
+          } else if (chartSpec.fillColor !== undefined) {
+            configUpdates.fillColor = chartSpec.fillColor;
+          }
+
+          if (fill !== undefined) {
+            configUpdates.fill = fill;
+          } else if (chartSpec.fill !== undefined) {
+            configUpdates.fill = chartSpec.fill;
+          }
+
+          if (multiFill !== undefined) {
+            configUpdates.multiFill = multiFill;
+          } else if (chartSpec.multiFill !== undefined) {
+            configUpdates.multiFill = chartSpec.multiFill;
+          }
+
+          if (excludedFields !== undefined) {
+            configUpdates.excludedFields = excludedFields;
+          } else if (chartSpec.excludedFields !== undefined) {
+            configUpdates.excludedFields = chartSpec.excludedFields;
+          }
+
+          if (sort !== undefined) {
+            configUpdates.sort = sort;
+          } else if (chartSpec.sort !== undefined) {
+            configUpdates.sort = chartSpec.sort;
+          }
+
+          if (columnsOrder !== undefined) {
+            configUpdates.columnsOrder = columnsOrder;
+          } else if (chartSpec.columnsOrder !== undefined) {
+            configUpdates.columnsOrder = chartSpec.columnsOrder;
+          }
+
+          if (maxRecords !== undefined) {
+            configUpdates.maxRecords = maxRecords;
+          } else if (chartSpec.maxRecords !== undefined) {
+            configUpdates.maxRecords = chartSpec.maxRecords;
+          }
+
+          if (goal !== undefined) {
+            configUpdates.goal = goal;
+          } else if (chartSpec.goal !== undefined) {
+            configUpdates.goal = chartSpec.goal;
+          }
+
+          if (formula !== undefined) {
+            configUpdates.formula = formula;
+          } else if (chartSpec.formula !== undefined) {
+            configUpdates.formula = chartSpec.formula;
+          }
+
+          if (pointRadius !== undefined) {
+            configUpdates.pointRadius = pointRadius;
+          } else if (chartSpec.pointRadius !== undefined) {
+            configUpdates.pointRadius = chartSpec.pointRadius;
+          }
+
+          if (seriesConfiguration !== undefined) {
+            configUpdates.configuration = seriesConfiguration;
+          } else if (chartSpec.configuration !== undefined) {
+            configUpdates.configuration = chartSpec.configuration;
+          }
+
+          if (Object.keys(configUpdates).length > 0) {
+            appliedConfigUpdates = configUpdates;
+            await db.ChartDatasetConfig.update(
+              configUpdates, { where: { id: chartDatasetConfig.id }, transaction }
+            );
+          }
+        }
+      }
+
+      const canonicalController = new ChartController();
+      const refreshedChart = await canonicalController.findById(chart_id, null, {
+        reconcileVisualizationBindings: false,
+        transaction,
       });
-
-      if (chartDatasetConfig) {
-        updatedCdcId = chartDatasetConfig.id;
-        const configUpdates = {};
-
-        if (legend !== undefined) {
-          configUpdates.legend = legend;
-        } else if (chartSpec.legend !== undefined) {
-          configUpdates.legend = chartSpec.legend;
+      let canonicalVisualization;
+      if (visualization || chartSpec.visualization) {
+        canonicalVisualization = visualization || chartSpec.visualization;
+      } else if (createdBinding || !refreshedChart.visualization || isLegacyOwnedVisualization(refreshedChart.visualization)) {
+        canonicalVisualization = legacyChartToVisualization(refreshedChart).visualization;
+      } else {
+        canonicalVisualization = refreshedChart.visualization;
+        if (Object.keys(chartUpdates).length > 0) {
+          canonicalVisualization = applyChartCompatibilityUpdate(
+            canonicalVisualization,
+            chartUpdates
+          );
         }
-
-        if (xAxis !== undefined) {
-          configUpdates.xAxis = xAxis;
-        } else if (chartSpec.xAxis !== undefined) {
-          configUpdates.xAxis = chartSpec.xAxis;
-        }
-
-        if (xAxisOperation !== undefined) {
-          configUpdates.xAxisOperation = xAxisOperation;
-        } else if (chartSpec.xAxisOperation !== undefined) {
-          configUpdates.xAxisOperation = chartSpec.xAxisOperation;
-        }
-
-        if (yAxis !== undefined) {
-          configUpdates.yAxis = yAxis;
-        } else if (chartSpec.yAxis !== undefined) {
-          configUpdates.yAxis = chartSpec.yAxis;
-        }
-
-        if (yAxisOperation !== undefined) {
-          configUpdates.yAxisOperation = yAxisOperation;
-        } else if (chartSpec.yAxisOperation !== undefined) {
-          configUpdates.yAxisOperation = chartSpec.yAxisOperation;
-        }
-
-        if (dateField !== undefined) {
-          configUpdates.dateField = dateField;
-        } else if (chartSpec.dateField !== undefined) {
-          configUpdates.dateField = chartSpec.dateField;
-        }
-
-        if (dateFormat !== undefined) {
-          configUpdates.dateFormat = dateFormat;
-        } else if (chartSpec.dateFormat !== undefined) {
-          configUpdates.dateFormat = chartSpec.dateFormat;
-        }
-
-        if (conditions !== undefined) {
-          configUpdates.conditions = conditions;
-        } else if (chartSpec.conditions !== undefined) {
-          configUpdates.conditions = chartSpec.conditions;
-        }
-
-        if (datasetColor !== undefined) {
-          configUpdates.datasetColor = datasetColor;
-        } else if (chartSpec.datasetColor !== undefined) {
-          configUpdates.datasetColor = chartSpec.datasetColor;
-        } else if (chartSpec.options?.color !== undefined) {
-          configUpdates.datasetColor = chartSpec.options.color;
-        }
-
-        if (fillColor !== undefined) {
-          configUpdates.fillColor = fillColor;
-        } else if (chartSpec.fillColor !== undefined) {
-          configUpdates.fillColor = chartSpec.fillColor;
-        }
-
-        if (fill !== undefined) {
-          configUpdates.fill = fill;
-        } else if (chartSpec.fill !== undefined) {
-          configUpdates.fill = chartSpec.fill;
-        }
-
-        if (multiFill !== undefined) {
-          configUpdates.multiFill = multiFill;
-        } else if (chartSpec.multiFill !== undefined) {
-          configUpdates.multiFill = chartSpec.multiFill;
-        }
-
-        if (excludedFields !== undefined) {
-          configUpdates.excludedFields = excludedFields;
-        } else if (chartSpec.excludedFields !== undefined) {
-          configUpdates.excludedFields = chartSpec.excludedFields;
-        }
-
-        if (sort !== undefined) {
-          configUpdates.sort = sort;
-        } else if (chartSpec.sort !== undefined) {
-          configUpdates.sort = chartSpec.sort;
-        }
-
-        if (columnsOrder !== undefined) {
-          configUpdates.columnsOrder = columnsOrder;
-        } else if (chartSpec.columnsOrder !== undefined) {
-          configUpdates.columnsOrder = chartSpec.columnsOrder;
-        }
-
-        if (maxRecords !== undefined) {
-          configUpdates.maxRecords = maxRecords;
-        } else if (chartSpec.maxRecords !== undefined) {
-          configUpdates.maxRecords = chartSpec.maxRecords;
-        }
-
-        if (goal !== undefined) {
-          configUpdates.goal = goal;
-        } else if (chartSpec.goal !== undefined) {
-          configUpdates.goal = chartSpec.goal;
-        }
-
-        if (formula !== undefined) {
-          configUpdates.formula = formula;
-        } else if (chartSpec.formula !== undefined) {
-          configUpdates.formula = chartSpec.formula;
-        }
-
-        if (pointRadius !== undefined) {
-          configUpdates.pointRadius = pointRadius;
-        } else if (chartSpec.pointRadius !== undefined) {
-          configUpdates.pointRadius = chartSpec.pointRadius;
-        }
-
-        if (seriesConfiguration !== undefined) {
-          configUpdates.configuration = seriesConfiguration;
-        } else if (chartSpec.configuration !== undefined) {
-          configUpdates.configuration = chartSpec.configuration;
-        }
-
-        if (Object.keys(configUpdates).length > 0) {
-          appliedConfigUpdates = configUpdates;
-          await db.ChartDatasetConfig.update(
-            configUpdates, { where: { id: chartDatasetConfig.id } }
+        if (updatedCdcId && Object.keys(appliedConfigUpdates).length > 0) {
+          canonicalVisualization = applyCdcCompatibilityUpdate(
+            canonicalVisualization,
+            updatedCdcId,
+            appliedConfigUpdates
           );
         }
       }
-    }
-
-    const canonicalController = new ChartController();
-    const refreshedChart = await canonicalController.findById(chart_id, null, {
-      reconcileVisualizationBindings: false,
-    });
-    let canonicalVisualization;
-    if (visualization || chartSpec.visualization) {
-      canonicalVisualization = visualization || chartSpec.visualization;
-    } else if (!refreshedChart.visualization || isLegacyOwnedVisualization(refreshedChart.visualization)) {
-      canonicalVisualization = legacyChartToVisualization(refreshedChart).visualization;
-    } else {
-      canonicalVisualization = refreshedChart.visualization;
-      if (Object.keys(chartUpdates).length > 0) {
-        canonicalVisualization = applyChartCompatibilityUpdate(
-          canonicalVisualization,
-          chartUpdates
+      if (createdBinding) {
+        canonicalVisualization = remapVisualizationBindings(
+          canonicalVisualization, [], [{ id: updatedCdcId }]
         );
       }
-      if (updatedCdcId && Object.keys(appliedConfigUpdates).length > 0) {
-        canonicalVisualization = applyCdcCompatibilityUpdate(
-          canonicalVisualization,
-          updatedCdcId,
-          appliedConfigUpdates
-        );
+      const semanticEncoding = encoding || chartSpec.encoding;
+      if (semanticEncoding) {
+        const targetLayer = canonicalVisualization.layers.find((layer) => layer.id === layer_id)
+          || canonicalVisualization.layers.find((layer) => `${layer.bindingId}` === `${updatedCdcId}`)
+          || canonicalVisualization.layers[0];
+        canonicalVisualization = {
+          ...canonicalVisualization,
+          layers: canonicalVisualization.layers.map((layer) => {
+            return layer.id === targetLayer?.id ? { ...layer, encoding: semanticEncoding } : layer;
+          }),
+        };
       }
-    }
-    const semanticEncoding = encoding || chartSpec.encoding;
-    if (semanticEncoding) {
-      const targetLayer = canonicalVisualization.layers.find((layer) => layer.id === layer_id)
-        || canonicalVisualization.layers.find((layer) => `${layer.bindingId}` === `${updatedCdcId}`)
-        || canonicalVisualization.layers[0];
       canonicalVisualization = {
         ...canonicalVisualization,
-        layers: canonicalVisualization.layers.map((layer) => {
-          return layer.id === targetLayer?.id ? { ...layer, encoding: semanticEncoding } : layer;
-        }),
+        metadata: {
+          ...(canonicalVisualization.metadata || {}),
+          createdBy: "ai",
+        },
       };
-    }
-    canonicalVisualization = {
-      ...canonicalVisualization,
-      metadata: {
-        ...(canonicalVisualization.metadata || {}),
-        createdBy: "ai",
-      },
-    };
-    delete canonicalVisualization.metadata.migratedFrom;
-    delete canonicalVisualization.metadata.migrationWarnings;
-    canonicalVisualization = finalizeAiVisualization(canonicalVisualization);
-    await db.Chart.update({ visualization: canonicalVisualization }, { where: { id: chart_id } });
+      delete canonicalVisualization.metadata.migratedFrom;
+      delete canonicalVisualization.metadata.migrationWarnings;
+      if (chartUpdates.timeInterval !== undefined) {
+        canonicalVisualization = applyChartCompatibilityUpdate(canonicalVisualization, {
+          timeInterval: chartUpdates.timeInterval,
+        });
+      }
+      canonicalVisualization = finalizeAiVisualization(canonicalVisualization);
+      await db.Chart.update({
+        visualization: canonicalVisualization,
+        timeInterval: canonicalVisualization.settings.timeInterval,
+      }, { where: { id: chart_id }, transaction });
+
+    });
 
     // Run the chart update in the background
     try {
@@ -406,14 +441,16 @@ async function updateChart(payload) {
 
     return {
       chart_id: updatedChart.id,
+      configurationVersion: updatedChart.configurationVersion,
       name: updatedChart.name,
       type: updatedChart.type,
       project_id: updatedChart.project_id,
       is_temporary: isTemporary,
       visibility: isTemporary ? "temporary" : "dashboard",
       ghost_project_id: isTemporary ? updatedChart.project_id : null,
-      dashboard_url: `${global.clientUrl}/${normalizedTeamId}/${updatedChart.project_id}/dashboard`,
-      chart_url: `${global.clientUrl}/${normalizedTeamId}/${updatedChart.project_id}/chart/${updatedChart.id}/edit`,
+      dashboard_url: isTemporary ? null : `${global.clientUrl}/dashboard/${updatedChart.project_id}`,
+      chart_url: isTemporary ? `${global.clientUrl}/previews/${updatedChart.id}`
+        : `${global.clientUrl}/dashboard/${updatedChart.project_id}/chart/${updatedChart.id}/edit`,
       snapshot,
       updated_fields: {
         chart: Object.keys(chartUpdates),
@@ -421,7 +458,7 @@ async function updateChart(payload) {
       }
     };
   } catch (error) {
-    throw new Error(`Chart update failed: ${error.message}`);
+    throw new Error(`Chart update failed: ${error.message}`, { cause: error });
   }
 }
 

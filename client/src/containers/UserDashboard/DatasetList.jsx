@@ -278,7 +278,7 @@ function DatasetList() {
     <div className="flex flex-col">
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-col gap-1">
-          <div className="text-2xl font-semibold font-tw">
+          <div className="text-2xl font-semibold font-tight">
             Datasets
           </div>
           <div className="text-sm text-foreground-500">
@@ -644,7 +644,7 @@ function DatasetList() {
                               style={{ zIndex: idx }}
                             >
                               {dr.Connection ? (
-                                <Avatar.Image src={getConnectionLogo(dr.Connection, isDark)} alt="" />
+                                <Avatar.Image className="object-contain p-[15%]" src={getConnectionLogo(dr.Connection, isDark)} alt="" />
                               ) : null}
                               <Avatar.Fallback>
                                 {!dr.Connection ? <LuMonitorX /> : <LuPlug />}
@@ -886,7 +886,7 @@ function DatasetList() {
               ))}
             </div>
             <div className="h-1" />
-            <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
+            <div className="flex gap-1 bg-surface-secondary p-2 mb-2 rounded-lg text-foreground-500 text-sm">
               <div>
                 <LuInfo />
               </div>

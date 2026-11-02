@@ -1,10 +1,12 @@
 import React, { useEffect, lazy, Suspense, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { Route, Routes, useLocation, useNavigate } from "react-router";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
 import { semanticColors } from "../lib/themeTokens";
 import { Helmet } from "react-helmet-async";
 
+import { getAiConversation } from "../api/ai";
+import { getStudioConversationPath } from "./Ai/activeConversation";
 import SuspenseLoader from "../components/SuspenseLoader";
 import UserDashboard from "./UserDashboard/UserDashboard";
 
@@ -13,7 +15,7 @@ import {
   selectUser,
 } from "../slices/user";
 import { getTeams, saveActiveTeam, selectTeam, selectTeams } from "../slices/team";
-import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal, toggleAiModal } from "../slices/ui";
+import { selectFeedbackModalOpen, hideFeedbackModal, selectAiModalOpen, hideAiModal, toggleAiModal, setActiveAiConversation, showAiModal } from "../slices/ui";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { useTheme } from "../modules/ThemeContext";
 import { IconContext } from "react-icons";
@@ -25,10 +27,13 @@ import Dataset from "./Dataset/Dataset";
 // import { getProjects } from "../slices/project";
 import ConnectionWizard from "./Connections/ConnectionWizard";
 import ConnectionTemplates from "./Connections/ConnectionTemplates";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import ConnectionList from "./UserDashboard/ConnectionList";
 import DatasetList from "./UserDashboard/DatasetList";
 import DashboardList from "./UserDashboard/DashboardList";
+import Home from "./Home/Home";
+import Activity from "./Activity/Activity";
+import ObservationDetail from "./Observation/ObservationDetail";
 import { getDatasets } from "../slices/dataset";
 import { getTeamConnections } from "../slices/connection";
 import SharedChart from "./SharedChart";
@@ -38,23 +43,33 @@ import { Button, Modal } from "@heroui/react";
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
 const Login = lazy(() => import("./Login"));
+const McpConsent = lazy(() => import("./McpConsent"));
+const ChartPreviewPage = lazy(() => import("./Ai/ChartPreviewPage"));
 const ManageTeam = lazy(() => import("./Settings/ManageTeam"));
 const UserInvite = lazy(() => import("./UserInvite"));
-const ManageUser = lazy(() => import("./Settings/ManageUser"));
 const PublicDashboard = lazy(() => import("./PublicDashboard/PublicDashboard"));
 const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));
 const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
+const Onboarding = lazy(() => import("./Onboarding/Onboarding"));
 import FeedbackForm from "../components/FeedbackForm";
 import canAccess from "../config/canAccess";
 import AiModal from "./Ai/AiModal";
+import ActiveConversationBar from "./Ai/ActiveConversationBar";
 import Auth from "./Integrations/Auth/Auth";
 import SlackCallback from "./Integrations/Auth/SlackCallback";
 import Integration from "./Integrations/Integration/Integration";
 import NoAccessPage from "../components/NoAccessPage";
+import { shouldResumeOnboarding } from "./Onboarding/onboardingState";
 
 function authenticatePage() {
+  const preview = window.location.pathname.match(/^\/previews\/([1-9]\d*)$/);
+  if (preview) {
+    window.location.href = `/login?preview=${preview[1]}`;
+    return false;
+  }
+  if (window.location.pathname === "/oauth/consent") return false;
   if (window.location.pathname === "/login") {
     return false;
   } else if (window.location.pathname === "/signup") {
@@ -91,6 +106,7 @@ function Main(props) {
   const feedbackModal = useSelector(selectFeedbackModalOpen);
   const aiModalOpen = useSelector(selectAiModalOpen);
   const teamsRef = useRef(null);
+  const oauthReturnRef = useRef(null);
 
   const { isDark } = useTheme();
   const location = useLocation();
@@ -167,11 +183,52 @@ function Main(props) {
 
       if (selectedTeam) {
         dispatch(saveActiveTeam(selectedTeam));
+        if (shouldResumeOnboarding(selectedTeam, user.id) && location.pathname !== "/start" && location.pathname !== "/oauth/consent"
+          && !new URLSearchParams(location.search).has("oauthRequest")
+          && !new URLSearchParams(location.search).has("aiConversationId")) {
+          navigate(`/start?team=${selectedTeam.id}`, { replace: true });
+          return;
+        }
         dispatch(getTeamConnections({ team_id: selectedTeam.id }));
         dispatch(getDatasets({ team_id: selectedTeam.id }));
       }
     }
   }, [teams]);
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const conversationId = query.get("aiConversationId");
+    const returnTeam = teams?.find((item) => String(item.id) === query.get("aiTeamId"));
+    if (!conversationId || !returnTeam || !user?.id) return;
+    const returnKey = `${user.id}:${location.pathname}${location.search}`;
+    if (oauthReturnRef.current === returnKey) return;
+    oauthReturnRef.current = returnKey;
+    let cancelled = false;
+    getAiConversation(conversationId, returnTeam.id).then(({ conversation }) => {
+      if (cancelled) return;
+      if (String(team?.id) !== String(returnTeam.id)) dispatch(saveActiveTeam(returnTeam));
+      dispatch(hideAiModal());
+      dispatch(setActiveAiConversation({
+        id: conversationId, key: conversationId, userId: user.id,
+        teamId: returnTeam.id, title: conversation.title, studio_chart_id: conversation.studio_chart_id || null,
+      }));
+      query.delete("aiConversationId");
+      query.delete("aiTeamId");
+      const destination = getStudioConversationPath(conversation);
+      if (destination) {
+        navigate(destination, { replace: true, state: { openChat: true } });
+      } else {
+        navigate({ pathname: location.pathname, search: query.toString() }, { replace: true });
+        dispatch(showAiModal({ conversationId }));
+      }
+    }).catch(() => {
+      if (!cancelled) toast.error("Could not open the conversation. Reload the page to try again.");
+    });
+    return () => {
+      cancelled = true;
+      if (oauthReturnRef.current === returnKey) oauthReturnRef.current = null;
+    };
+  }, [dispatch, location.pathname, location.search, team?.id, teams, user?.id]);
 
   return (
     <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>
@@ -215,7 +272,10 @@ function Main(props) {
           <Suspense fallback={<SuspenseLoader />}>
             <Routes>
               <Route path="/" element={<UserDashboard />}>
-                <Route index element={<DashboardList />} />
+                <Route index element={<Home />} />
+                <Route path="dashboards" element={<DashboardList />} />
+                <Route path="activity" element={<Activity />} />
+                <Route path="activity/:observationId" element={<ObservationDetail />} />
                 <Route path="connections" element={<ConnectionList />} />
                 <Route path="connections/:connectionId" element={<ConnectionWizard />} />
                 <Route path="connections/:connectionId/templates" element={<ConnectionTemplates />} />
@@ -257,11 +317,22 @@ function Main(props) {
                 )}
               />
               <Route exact path="/signup" element={<Signup />} />
+              <Route exact path="/start" element={<Onboarding />} />
               <Route exact path="/google-auth" element={<GoogleAuth />} />
               <Route exact path="/login" element={<Login />} />
+              <Route path="/oauth/consent" element={<McpConsent />} />
+              <Route path="/previews/:chartId" element={<ChartPreviewPage />} />
               <Route exact path="/user" element={<UserDashboard />} />
-              <Route exact path="/user/profile" element={<ManageUser />} />
-              <Route exact path="/edit" element={<ManageUser />} />
+              <Route
+                exact
+                path="/user/profile"
+                element={<Navigate replace to={`/settings/profile${location.search}`} />}
+              />
+              <Route
+                exact
+                path="/edit"
+                element={<Navigate replace to={`/settings/profile${location.search}`} />}
+              />
               <Route exact path="/passwordReset" element={<PasswordReset />} />
               <Route
                 exact
@@ -309,9 +380,10 @@ function Main(props) {
         </Modal.Container>
       </Modal.Backdrop>
 
-      {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
-        <AiModal isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
+      {team?.id && pathname !== "/oauth/consent" && (
+        <AiModal key={`${user?.id}:${team.id}`} isOpen={aiModalOpen} onClose={() => dispatch(hideAiModal())} />
       )}
+      {pathname !== "/oauth/consent" ? <ActiveConversationBar /> : null}
 
       <Toaster
         position="top-center"

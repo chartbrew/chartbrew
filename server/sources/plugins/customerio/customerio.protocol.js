@@ -1,4 +1,4 @@
-const request = require("request-promise");
+const request = require("../../../modules/safeRequest");
 
 const db = require("../../../models/models");
 const drCacheController = require("../../../controllers/DataRequestCacheController");

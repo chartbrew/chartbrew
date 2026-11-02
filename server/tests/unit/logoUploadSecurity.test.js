@@ -46,9 +46,26 @@ describe("logoUploadSecurity", () => {
   it("rejects unsafe svg content", () => {
     const unsafeSvg = Buffer.from("<svg><script>alert(1)</script></svg>", "utf8");
     const unsafeSvgWithHandler = Buffer.from("<svg onload=\"alert(1)\"></svg>", "utf8");
+    const unsafeExternalImage = Buffer.from(
+      "<svg><image href=\"https://example.com/logo.png\"/></svg>",
+      "utf8"
+    );
+    const unsafeDoctype = Buffer.from("<!DOCTYPE svg><svg></svg>", "utf8");
+    const unsafeEncodedReference = Buffer.from(
+      "<svg><use href=\"&#x68;ttps://example.com/logo.svg#mark\"/></svg>",
+      "utf8"
+    );
+    const safeFragmentReference = Buffer.from(
+      "<svg><defs><path id=\"mark\" d=\"M0 0\"/></defs><use href=\"#mark\"/></svg>",
+      "utf8"
+    );
 
     expect(isValidLogoImageBuffer(unsafeSvg, "image/svg+xml")).toBe(false);
     expect(isValidLogoImageBuffer(unsafeSvgWithHandler, "image/svg+xml")).toBe(false);
+    expect(isValidLogoImageBuffer(unsafeExternalImage, "image/svg+xml")).toBe(false);
+    expect(isValidLogoImageBuffer(unsafeDoctype, "image/svg+xml")).toBe(false);
+    expect(isValidLogoImageBuffer(unsafeEncodedReference, "image/svg+xml")).toBe(false);
+    expect(isValidLogoImageBuffer(safeFragmentReference, "image/svg+xml")).toBe(true);
   });
 
   it("builds safe filenames from server-side IDs only", () => {

@@ -19,6 +19,17 @@ const normalizeMimeType = (mimeType = "") => {
   return normalized;
 };
 
+const hasUnsafeSvgReference = (content) => {
+  const attributePattern = /\b(?:href|xlink:href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
+  const cssPattern = /url\(\s*(?:"([^"]*)"|'([^']*)'|([^\s)]+))\s*\)/gi;
+  return [attributePattern, cssPattern].some((pattern) => {
+    return [...content.matchAll(pattern)].some((match) => {
+      const reference = (match[1] || match[2] || match[3] || "").trim();
+      return !reference.startsWith("#");
+    });
+  });
+};
+
 const isSafeSvgBuffer = (buffer) => {
   if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
     return false;
@@ -39,16 +50,20 @@ const isSafeSvgBuffer = (buffer) => {
   }
 
   const unsafePatterns = [
+    /<!doctype/i,
+    /<!entity/i,
     /<script[\s>]/i,
     /\son[a-z]+\s*=/i,
-    /\b(?:href|xlink:href)\s*=\s*["']?\s*javascript:/i,
+    /<image[\s>]/i,
+    /@import/i,
     /<foreignobject[\s>]/i,
     /<iframe[\s>]/i,
     /<object[\s>]/i,
     /<embed[\s>]/i,
   ];
 
-  return !unsafePatterns.some((pattern) => pattern.test(content));
+  return !unsafePatterns.some((pattern) => pattern.test(content))
+    && !hasUnsafeSvgReference(content);
 };
 
 const getImageTypeFromBuffer = (buffer) => {
@@ -135,6 +150,7 @@ module.exports = {
   MAX_LOGO_UPLOAD_SIZE_BYTES,
   buildSafeLogoFilename,
   isAllowedLogoMimeType,
+  isSafeSvgBuffer,
   isValidLogoImageBuffer,
   resolveSafeUploadPath,
 };

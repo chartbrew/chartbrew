@@ -1,0 +1,6 @@
+{
+  "teamRoles": ["teamOwner", "teamAdmin", "teamEditor", "teamViewer"],
+  "adminRoles": ["teamOwner", "teamAdmin"],
+  "editorRoles": ["teamOwner", "teamAdmin", "teamEditor", "projectAdmin", "projectEditor"],
+  "viewerRoles": ["teamViewer", "projectViewer"]
+}

@@ -30,6 +30,22 @@ function getEncodingForMark(layer, mark, markState = layer.options?.markState ||
 
   const candidates = getEncodingCandidates(layer, markState);
   if (mark === "table" || mark === "markdown") return {};
+  if (mark === "scatter") {
+    const source = candidates.find((encoding) => encoding.x || encoding.value) || {};
+    const x = source.x || source.category;
+    const y = source.y || source.value;
+    return {
+      ...(x?.type === "quantitative" ? { x: { field: x.field, type: "quantitative" } } : {}),
+      ...(y ? { y: { field: y.field, type: "quantitative" } } : {}),
+    };
+  }
+  if (mark === "map") {
+    const source = candidates.find((encoding) => encoding.location || encoding.category) || candidates[0];
+    return {
+      ...(source.location || source.category ? { location: { ...(source.location || source.category), type: "nominal" } } : {}),
+      ...(source.value ? { value: { ...source.value } } : {}),
+    };
+  }
   if (["kpi", "avg", "gauge"].includes(mark)) {
     const source = candidates.find((encoding) => encoding.value) || {};
     return source.value ? {
@@ -50,9 +66,9 @@ function getEncodingForMark(layer, mark, markState = layer.options?.markState ||
   }
   if (["pie", "doughnut", "polar", "radar"].includes(mark)) {
     const source = candidates.find((encoding) => {
-      return (encoding.category || encoding.time) && encoding.value;
+      return (encoding.category || encoding.time || encoding.location) && encoding.value;
     }) || {};
-    const category = source.category || source.time;
+    const category = source.category || source.time || source.location;
     return {
       ...(category ? { category: { ...category, type: "nominal" } } : {}),
       ...(source.value ? { value: { ...source.value } } : {}),
@@ -63,11 +79,11 @@ function getEncodingForMark(layer, mark, markState = layer.options?.markState ||
   }
 
   const source = candidates.find((encoding) => {
-    return (encoding.time || encoding.category) && encoding.value;
+    return (encoding.time || encoding.category || encoding.location) && encoding.value;
   }) || candidates.find((encoding) => encoding.value) || {};
   return {
     ...(source.time ? { time: { ...source.time } } : {}),
-    ...(source.category ? { category: { ...source.category } } : {}),
+    ...(source.category || source.location ? { category: { ...(source.category || source.location) } } : {}),
     ...(source.value ? { value: { ...source.value } } : {}),
     ...(source.breakdown ? { breakdown: { ...source.breakdown } } : {}),
   };
@@ -77,14 +93,14 @@ function getStyleForMark(layer, mark, saved = {}) {
   const style = { ...(layer.style || {}) };
   if (Object.prototype.hasOwnProperty.call(saved, "fill")) {
     style.fill = saved.fill;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fill = true;
   } else if (mark === "line" || mark === "radar") {
     style.fill = false;
   }
   if (Object.prototype.hasOwnProperty.call(saved, "fillOpacity")) {
     style.fillOpacity = saved.fillOpacity;
-  } else if (mark === "bar") {
+  } else if (["bar", "horizontalBar"].includes(mark)) {
     style.fillOpacity = DEFAULT_BAR_FILL_OPACITY;
   } else if (mark === "line") {
     style.fillOpacity = DEFAULT_LINE_FILL_OPACITY;
@@ -102,7 +118,7 @@ function updateLayerMark(layer, mark) {
   const savedMark = layer.options?.markState?.[mark] || {};
   if (layer.mark === mark) {
     if (
-      !["bar", "line", "radar"].includes(mark)
+      !["bar", "horizontalBar", "line", "radar"].includes(mark)
       || (
         Object.prototype.hasOwnProperty.call(savedMark, "fill")
         && Object.prototype.hasOwnProperty.call(savedMark, "fillOpacity")
@@ -122,6 +138,7 @@ function updateLayerMark(layer, mark) {
     [layer.mark]: {
       ...(options.markState?.[layer.mark] || {}),
       encoding: cloneEncoding(layer.encoding),
+      ...(mark === "scatter" || layer.mark === "scatter" ? { transforms: layer.transforms || [] } : {}),
       ...(layer.style?.fill !== undefined ? { fill: layer.style.fill } : {}),
       ...(layer.style?.fillOpacity !== undefined
         ? { fillOpacity: layer.style.fillOpacity }
@@ -131,11 +148,18 @@ function updateLayerMark(layer, mark) {
   };
   options.markState = markState;
   const saved = markState[mark];
+  let transforms = layer.transforms;
+  if (mark === "scatter") {
+    transforms = (layer.transforms || []).filter((transform) => transform.type === "filter");
+  } else if (layer.mark === "scatter") {
+    transforms = saved?.transforms || [];
+  }
 
   return {
     ...layer,
     encoding: getEncodingForMark(layer, mark, markState),
     mark,
+    transforms,
     options,
     rowPath: saved?.rowPath || (mark === "table" ? layer.rowPath || "root[]" : layer.rowPath),
     style: getStyleForMark(layer, mark, saved),
@@ -166,11 +190,17 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
   const settings = { ...(next.settings || {}) };
 
   next.layers = next.layers.map((layer) => {
-    const mark = data.type || layer.mark;
-    const markedLayer = data.type ? updateLayerMark(layer, mark) : layer;
+    let mark = data.type || layer.mark;
+    if (data.horizontal === true && mark === "bar") mark = "horizontalBar";
+    if (data.type === undefined && data.horizontal === false && mark === "horizontalBar") mark = "bar";
+    const markedLayer = data.type !== undefined || mark !== layer.mark
+      ? updateLayerMark(layer, mark)
+      : layer;
     let orientation = layer.orientation;
+    if (mark === "horizontalBar") orientation = "horizontal";
+    if (mark === "bar") orientation = "vertical";
     let stack = layer.stack;
-    if (data.horizontal !== undefined) {
+    if (data.horizontal !== undefined && !["bar", "horizontalBar"].includes(mark)) {
       orientation = data.horizontal ? "horizontal" : "vertical";
     }
     if (data.stacked !== undefined) {
@@ -180,7 +210,7 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
       ? setCumulativeTransform(
         markedLayer.transforms,
         `${data.subType}`.includes("AddTimeseries")
-          && !["table", "matrix", "markdown"].includes(mark)
+          && !["table", "matrix", "markdown", "map", "scatter"].includes(mark)
       )
       : markedLayer.transforms;
     return {
@@ -203,6 +233,8 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     "minValue",
     "timeInterval",
     "xLabelTicks",
+    "ranges",
+    "dataLabelsFormat",
   ];
   directSettings.forEach((field) => {
     if (data[field] !== undefined) settings[field] = data[field];
@@ -222,6 +254,10 @@ function applyChartCompatibilityUpdate(visualization, data = {}) {
     };
   }
   next.settings = settings;
+  if (data.type) {
+    const validation = validateVisualizationSpec({ ...next, status: "ready" });
+    next.status = validation.valid ? "ready" : "draft";
+  }
   return next;
 }
 
@@ -229,6 +265,12 @@ function replaceTransform(transforms, type, replacement) {
   const nextTransforms = (transforms || []).filter((transform) => transform.type !== type);
   if (replacement) nextTransforms.push(replacement);
   return nextTransforms;
+}
+
+function normalizeMaxRecords(value) {
+  if (typeof value === "string" && value.trim() === "") return null;
+  const count = typeof value === "string" ? Number(value) : value;
+  return Number.isInteger(count) && count >= 0 ? count : null;
 }
 
 function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
@@ -275,8 +317,9 @@ function applyCdcCompatibilityUpdate(visualization, bindingId, data = {}) {
       } : null);
     }
     if (data.maxRecords !== undefined) {
-      transforms = replaceTransform(transforms, "limit", Number.isInteger(data.maxRecords) ? {
-        count: data.maxRecords,
+      const count = normalizeMaxRecords(data.maxRecords);
+      transforms = replaceTransform(transforms, "limit", count !== null ? {
+        count,
         type: "limit",
       } : null);
     }

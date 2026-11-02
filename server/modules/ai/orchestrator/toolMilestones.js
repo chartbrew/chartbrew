@@ -6,6 +6,14 @@
  */
 
 const TOOL_MILESTONES = {
+  get_workspace_activity: {
+    start: [
+      "Reviewing recent workspace activity...",
+    ],
+    error: [
+      "Couldn't review workspace activity",
+    ]
+  },
   list_connections: {
     start: [
       "🔌 Finding your database connections...",

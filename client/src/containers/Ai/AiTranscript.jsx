@@ -1,0 +1,82 @@
+import React, { useState } from "react";
+import PropTypes from "prop-types";
+import { Button } from "@heroui/react";
+import {
+  LuCheck, LuCopy,
+} from "react-icons/lu";
+
+import PixelLoader from "../../components/PixelLoader";
+import AiMarkdown from "./AiMarkdown";
+
+export function AiUserPrompt({ children }) {
+  return (
+    <div className="flex min-w-0 w-full justify-end">
+      <div className="min-w-0 max-w-[85%] rounded-2xl rounded-br-md bg-foreground/[0.08] px-4 py-3 text-sm leading-6 text-foreground dark:bg-foreground/[0.12]">
+        <p className="break-words whitespace-pre-wrap">{children}</p>
+      </div>
+    </div>
+  );
+}
+
+AiUserPrompt.propTypes = {
+  children: PropTypes.string.isRequired,
+};
+
+export function AiAnswer({ actions, after, before, content, isError = false }) {
+  const [copied, setCopied] = useState(false);
+
+  const copyAnswer = async () => {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <article>
+      {before}
+      <div className={isError
+        ? "rounded-2xl border border-danger/30 bg-danger/5 px-4 py-3"
+        : ""}
+      >
+        <AiMarkdown isError={isError}>{content}</AiMarkdown>
+      </div>
+      {after}
+      {!isError ? (
+        <div className="mt-2 flex flex-row items-center gap-0.5">
+          <Button
+            aria-label="Copy answer"
+            className="size-7 min-w-7 text-muted"
+            isIconOnly
+            onPress={copyAnswer}
+            size="sm"
+            variant="tertiary"
+          >
+            {copied ? <LuCheck size={13} aria-hidden /> : <LuCopy size={13} aria-hidden />}
+          </Button>
+          {actions}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+AiAnswer.propTypes = {
+  actions: PropTypes.node,
+  after: PropTypes.node,
+  before: PropTypes.node,
+  content: PropTypes.string.isRequired,
+  isError: PropTypes.bool,
+};
+
+export function AiLoadingActivity({ children = "Working through the available data…" }) {
+  return (
+    <div className="flex w-full items-center gap-2 text-sm text-muted">
+      <PixelLoader />
+      {children}
+    </div>
+  );
+}
+
+AiLoadingActivity.propTypes = {
+  children: PropTypes.string,
+};

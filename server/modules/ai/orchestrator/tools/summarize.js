@@ -1,3 +1,4 @@
+const { callAiProvider } = require("../../usage");
 async function summarize(payload) {
   const { question, result } = payload;
 
@@ -18,13 +19,18 @@ async function summarize(payload) {
   const prompt = `Based on the question "${question}" and the following query results, provide a concise summary:\n\nResults: ${JSON.stringify(result.rows.slice(0, 5))}\nTotal rows: ${result.rowCount}`;
 
   try {
-    const response = await global.openaiClient.chat.completions.create({
-      model: global.openAiModel || "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a data analyst. Provide concise summaries of query results." },
-        { role: "user", content: prompt },
-      ],
-      max_tokens: 150,
+    const response = await callAiProvider({
+      client: global.openaiClient,
+      api: "chat",
+      purpose: "summarize",
+      request: {
+        model: global.openAiModel || "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are a data analyst. Provide concise summaries of query results." },
+          { role: "user", content: prompt },
+        ],
+        max_tokens: 150,
+      },
     });
 
     return {

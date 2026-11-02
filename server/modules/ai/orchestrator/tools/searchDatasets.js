@@ -5,6 +5,7 @@ async function searchDatasets(payload) {
     team_id: teamId,
     query,
     project_id: projectId,
+    allowed_project_ids: allowedProjectIds,
     limit,
   } = payload;
 
@@ -12,9 +13,9 @@ async function searchDatasets(payload) {
     teamId: Number(teamId),
     query,
     projectId,
+    allowedProjectIds,
     limit,
   });
 }
 
 module.exports = searchDatasets;
-

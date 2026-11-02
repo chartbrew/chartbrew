@@ -5,7 +5,7 @@ import { Sequelize, DataTypes } from "sequelize";
 const db = require("../../models/models");
 const UserController = require("../../controllers/UserController");
 const ChartController = require("../../controllers/ChartController");
-const settings = require("../../settings-dev");
+const settings = require("../../settings");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
@@ -29,7 +29,7 @@ afterEach(() => {
 });
 
 describe("October advisory triage", () => {
-  it("runs beforeValidate on static updates and uses literal login emails", async () => {
+  it("blocks admin changes through user updates and uses literal login emails", async () => {
     const sequelize = new Sequelize({ dialect: "sqlite", storage: ":memory:", logging: false });
     try {
       const User = require("../../models/models/user")(sequelize, DataTypes);
@@ -37,11 +37,14 @@ describe("October advisory triage", () => {
       const password = await bcrypt.hash("test-password", 4);
       await User.create({ name: "Other", email: "johnXdoe@example.com", password });
       const user = await User.create({ name: "User", email: "john_doe@example.com", password });
-      await User.update({ admin: true }, { where: { id: user.id } });
+      const controller = new UserController();
+      vi.spyOn(db.User, "update").mockImplementation((data, options) => User.update(data, options));
+      vi.spyOn(controller, "findById").mockImplementation((id) => User.findByPk(id));
+      await controller.update(user.id, { name: "Updated", admin: true });
       expect((await user.reload()).admin).toBe(false);
+      expect(user.name).toBe("Updated");
       vi.spyOn(db.User, "findOne").mockImplementation((options) => User.findOne(options));
       vi.spyOn(db.User2fa, "findOne").mockResolvedValue(null);
-      const controller = new UserController();
       expect((await controller.login(user.email, "test-password")).id).toBe(user.id);
       await expect(controller.login("%", "test-password")).rejects.toThrow("401");
       await expect(controller.login([user.email], "test-password")).rejects.toThrow("401");
@@ -84,7 +87,12 @@ describe("October advisory triage", () => {
 
   it.each([{}, { autoUpdate: 0 }, { autoUpdate: 60 }])("does not mutate nested resources through chart updates: %j", async (branch) => {
     const controller = new ChartController();
-    vi.spyOn(db.Chart, "update").mockResolvedValue([1]);
+    const chart = db.Chart.build({ id: 1, project_id: 5, configurationVersion: 1 });
+    vi.spyOn(db.Chart, "findByPk").mockResolvedValue(chart);
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({ id: 5, team_id: 2 });
+    vi.spyOn(db.Dataset, "findAll").mockResolvedValue([]);
+    vi.spyOn(db.sequelize, "transaction").mockImplementation((save) => save({ LOCK: { UPDATE: "UPDATE" } }));
+    const update = vi.spyOn(db.Chart, "update").mockResolvedValue([1]);
     vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([]);
     vi.spyOn(controller, "findById").mockResolvedValue({ id: 1 });
     vi.spyOn(controller, "syncLegacyVisualization").mockResolvedValue({ id: 1 });
@@ -100,6 +108,7 @@ describe("October advisory triage", () => {
       dataRequests: [{ id: 101, route: "/changed" }],
       dataRequest: { id: 101, route: "/changed" },
     });
+    expect(update).toHaveBeenCalledWith(branch, expect.objectContaining({ where: { id: 1 } }));
     for (const write of writes) expect(write).not.toHaveBeenCalled();
   });
 
@@ -110,7 +119,7 @@ describe("October advisory triage", () => {
       db.User.findOne = async () => (${failure === "missing" ? "null" : '{ id: 1, email: "user@example.com" }'});
       UserController.prototype.update = async () => ({ id: 1, email: "user@example.com" });
       require("./modules/mail").passwordReset = async () => { throw new Error("Mail unavailable"); };
-      const app = { settings: require("./settings-dev") };
+      const app = { settings: require("./settings") };
       for (const verb of ["get", "post", "put", "delete"]) {
         app[verb] = (path, ...handlers) => {
           if (verb === "post" && path === "/user/password/reset") app.reset = handlers.at(-1);

@@ -1,4 +1,3 @@
-const googleAnalyticsConnection = require("../googleAnalytics.connection");
 const googleAnalyticsProtocol = require("../googleAnalytics.protocol");
 
 const SOURCE_ID = "googleAnalytics";
@@ -609,12 +608,11 @@ async function previewConfiguration({ connection, configuration, rowLimit = 25 }
   }
 
   const savedConnection = await googleAnalyticsProtocol.getSavedConnection(connection);
-  const oauth = await googleAnalyticsProtocol.getOAuth(savedConnection);
   const dataRequest = {
     id: null,
     configuration: validation.configuration,
   };
-  const rows = await googleAnalyticsConnection.getAnalytics(oauth, dataRequest);
+  const rows = await googleAnalyticsProtocol.fetchAnalytics(savedConnection, dataRequest);
   const limitedRows = rows.slice(0, rowLimit);
   const columns = limitedRows[0]
     ? Object.keys(limitedRows[0]).map((name) => ({ name, type: typeof limitedRows[0][name] }))

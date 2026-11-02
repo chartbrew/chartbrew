@@ -1,11 +1,12 @@
-import firestoreLogo from "./assets/firestore-light.webp";
-import firestoreDarkLogo from "./assets/firestore-dark.webp";
+import firestoreLogo from "./assets/logo-light.svg";
+import firestoreDarkLogo from "./assets/logo-light.svg";
 
 const firestoreSource = {
   id: "firestore",
   type: "firestore",
   subType: "firestore",
   name: "Firestore",
+  description: "Explore documents and collections from your app.",
   category: "database",
   capabilities: {
     ai: {

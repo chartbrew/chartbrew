@@ -580,7 +580,7 @@ function ApiBuilder(props) {
   const blockMenuSwitch = saveLoading || requestLoading;
 
   return (
-    <div className="px-4 max-w-(--breakpoint-2xl) mx-auto">
+    <div className="mx-auto max-w-(--breakpoint-2xl) px-4 pt-4">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-7">
           <Row justify="space-between" align="center">
@@ -597,7 +597,7 @@ function ApiBuilder(props) {
                 <Tooltip.Trigger>
                   <Badge.Anchor className="relative inline-flex">
                     <Button
-                      variant="tertiary"
+                      variant="secondary"
                       size="sm"
                       onPress={() => setShowTransform(true)}
                     >
@@ -655,7 +655,7 @@ function ApiBuilder(props) {
             </InputGroup>
           </Row>
           {apiRequest.route && _hasVariables(apiRequest.route) && (
-            <div className="mt-2 bg-content2 rounded-lg p-2">
+            <div className="mt-2 bg-surface-secondary rounded-lg p-2">
               <div className="text-sm font-bold">URL Preview:</div>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-default-600">
@@ -1085,11 +1085,9 @@ function ApiBuilder(props) {
               />
             </div>
           </Row>
-          <div className="h-4" />
-          <div className="flex items-center gap-1 text-sm text-default-500">
-            <div><LuInfo /></div>
-            {"This is a preview and it might not show all data in order to keep things fast in the UI."}
-          </div>
+          <p className="mt-3 pb-6 text-xs leading-5 text-default-500">
+            {"This preview may not show all data."}
+          </p>
         </div>
       </div>
       <DataTransform

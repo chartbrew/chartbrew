@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 // Load initial sidebar state from localStorage
 const getInitialSidebarState = () => {
+  if (typeof window === "undefined") return false;
   try {
     const stored = window.localStorage.getItem("_cb_sidebar_state");
     if (stored !== null) {
@@ -14,7 +15,10 @@ const getInitialSidebarState = () => {
 };
 
 const initialState = {
+  activeAiConversation: null,
+  inlineAiConversationKey: null,
   aiModalOpen: false,
+  aiModalConversationId: null,
   feedbackModalOpen: false,
   sidebarCollapsed: getInitialSidebarState(),
 };
@@ -23,14 +27,42 @@ export const uiSlice = createSlice({
   name: "ui",
   initialState,
   reducers: {
-    showAiModal: (state) => {
+    setActiveAiConversation: (state, action) => {
+      state.activeAiConversation = action.payload;
+    },
+    updateActiveAiConversation: (state, action) => {
+      if (state.activeAiConversation?.key !== action.payload.key) return;
+      Object.assign(state.activeAiConversation, action.payload);
+    },
+    dismissAiConversation: (state, action) => {
+      if (!action.payload || state.activeAiConversation?.key === action.payload) {
+        state.activeAiConversation = null;
+      }
+    },
+    setInlineAiConversationKey: (state, action) => {
+      state.inlineAiConversationKey = action.payload;
+    },
+    clearInlineAiConversationKey: (state, action) => {
+      if (state.inlineAiConversationKey === action.payload) state.inlineAiConversationKey = null;
+    },
+    showAiModal: (state, action) => {
       state.aiModalOpen = true;
+      state.aiModalConversationId = action.payload?.conversationId || (state.activeAiConversation?.studio_chart_id === null ? state.activeAiConversation.id : null) || null;
     },
     hideAiModal: (state) => {
       state.aiModalOpen = false;
+      state.aiModalConversationId = null;
     },
     toggleAiModal: (state) => {
       state.aiModalOpen = !state.aiModalOpen;
+      if (!state.aiModalOpen) {
+        state.aiModalConversationId = null;
+      } else {
+        state.aiModalConversationId = (state.activeAiConversation?.studio_chart_id === null ? state.activeAiConversation.id : null) || null;
+      }
+    },
+    clearAiModalConversationId: (state) => {
+      state.aiModalConversationId = null;
     },
     showFeedbackModal: (state) => {
       state.feedbackModalOpen = true;
@@ -60,9 +92,27 @@ export const uiSlice = createSlice({
   },
 });
 
-export const { showAiModal, hideAiModal, toggleAiModal, showFeedbackModal, hideFeedbackModal, toggleFeedbackModal, setSidebarCollapsed, toggleSidebar } = uiSlice.actions;
+export const {
+  setActiveAiConversation,
+  updateActiveAiConversation,
+  dismissAiConversation,
+  setInlineAiConversationKey,
+  clearInlineAiConversationKey,
+  showAiModal,
+  hideAiModal,
+  toggleAiModal,
+  clearAiModalConversationId,
+  showFeedbackModal,
+  hideFeedbackModal,
+  toggleFeedbackModal,
+  setSidebarCollapsed,
+  toggleSidebar,
+} = uiSlice.actions;
 
 export const selectAiModalOpen = (state) => state.ui.aiModalOpen;
+export const selectActiveAiConversation = (state) => state.ui.activeAiConversation;
+export const selectInlineAiConversationKey = (state) => state.ui.inlineAiConversationKey;
+export const selectAiModalConversationId = (state) => state.ui.aiModalConversationId;
 export const selectFeedbackModalOpen = (state) => state.ui.feedbackModalOpen;
 export const selectSidebarCollapsed = (state) => state.ui.sidebarCollapsed;
 

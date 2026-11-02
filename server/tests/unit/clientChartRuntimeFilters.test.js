@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 describe("client chartRuntimeFilters helper", () => {
+  it("applies dropdown values and removes the restriction for All", async () => {
+    const { buildChartRuntimeRequest } = await import("../../../client/src/modules/chartRuntimeFilters.js");
+    const filter = { type: "field", field: "root[].employer", operator: "is", options: ["Acme", "Bio"], allLabel: "All Employers" };
+    const selected = buildChartRuntimeRequest({ chart: { id: 42 }, dashboardFilters: [{ ...filter, value: "Acme" }] });
+    const all = buildChartRuntimeRequest({ chart: { id: 42 }, dashboardFilters: [{ ...filter, value: "" }] });
+    expect(selected.filters).toEqual([expect.objectContaining({ field: "root[].employer", value: "Acme" })]);
+    expect(all.filters).toEqual([]);
+    expect(all.variables).toEqual({});
+  });
+
   it("builds a stable runtime payload from dashboard and chart-local filters", async () => {
     const { buildChartRuntimeRequest } = await import("../../../client/src/modules/chartRuntimeFilters.js");
 

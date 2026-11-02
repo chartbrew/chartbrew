@@ -8,7 +8,7 @@ function NoAccessPage() {
   return (
     <div className="flex flex-col items-center justify-center gap-2">
       <LuFileLock2 size={48} className="text-foreground-700 mb-4" />
-      <h1 className="text-2xl font-tw font-bold">No Access</h1>
+      <h1 className="text-2xl font-bold">No Access</h1>
       <p className="text-lg">You do not have access to this page. Contact your team admin to get access.</p>
       <Button
         color="primary"

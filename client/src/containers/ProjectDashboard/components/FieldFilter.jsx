@@ -7,12 +7,16 @@ import {
   Dropdown,
   InputGroup,
   Link,
+  ListBox,
+  Select,
 } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
 import { LuArrowRight, LuListFilter } from "react-icons/lu";
 import moment from "moment";
+import { getFieldFilterChoices } from "../../../modules/dashboardFilters";
 import { operators } from "../../../modules/filterOperations";
 import DashboardFilterLabel from "./DashboardFilterLabel";
+import { useTheme } from "../../../modules/ThemeContext";
 
 function FieldFilter({
   filter,
@@ -20,6 +24,7 @@ function FieldFilter({
   onApply = () => {},
 }) {
   const { field, operator, value, dataType } = filter;
+  const { reportThemeProps } = useTheme();
   const [currentOperator, setCurrentOperator] = useState(operator);
   const [currentValue, setCurrentValue] = useState(value);
   const [textValue, setTextValue] = useState(value);
@@ -55,7 +60,7 @@ function FieldFilter({
             </DashboardFilterLabel>
           </div>
         </Dropdown.Trigger>
-        <Dropdown.Popover>
+        <Dropdown.Popover {...reportThemeProps}>
           <Dropdown.Menu
             onSelectionChange={(keys) => _handleOperatorChange(keys.currentKey)}
             selectedKeys={[currentOperator]}
@@ -74,6 +79,40 @@ function FieldFilter({
   };
 
   const renderInput = () => {
+    if (Array.isArray(filter.options) && filter.options.length && currentOperator === "is") {
+      const choices = getFieldFilterChoices(filter);
+      const selected = choices.find((choice) => choice.value === value)?.id || "all";
+      const label = filter.label || field?.split(".").at(-1) || "Filter";
+      return (
+        <Select
+          aria-label={label}
+          className={["min-w-40", className].filter(Boolean).join(" ")}
+          variant="secondary"
+          size="sm"
+          value={selected}
+          onChange={(key) => {
+            const choice = choices.find((item) => item.id === key);
+            if (choice) onApply({ ...filter, operator: "is", value: choice.value });
+          }}
+        >
+          <Select.Trigger>
+            <DashboardFilterLabel icon={LuListFilter}>{label}</DashboardFilterLabel>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover {...reportThemeProps}>
+            <ListBox>
+              {choices.map((choice) => (
+                <ListBox.Item key={choice.id} id={choice.id} textValue={choice.label}>
+                  {choice.label}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+      );
+    }
     if (isNullOperator) {
       return (
         <InputGroup variant="primary">
@@ -123,7 +162,7 @@ function FieldFilter({
                 </DatePicker.Trigger>
               </DateField.Suffix>
             </DateField.Group>
-            <DatePicker.Popover>
+            <DatePicker.Popover {...reportThemeProps}>
               <Calendar aria-label="Filter date value">
                 <Calendar.Header>
                   <Calendar.YearPickerTrigger>

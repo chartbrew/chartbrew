@@ -12,6 +12,7 @@ function toPlainObject(value) {
 
 function getLegacyMark(chart) {
   const requestedMark = chart.type || (chart.mode === "kpichart" ? "kpi" : "line");
+  if (requestedMark === "bar" && chart.horizontal) return "horizontalBar";
   return getMarkDefinition(requestedMark) ? requestedMark : "line";
 }
 
@@ -61,9 +62,19 @@ function buildLegacyEncoding(mark, options) {
     })
   );
 
+  if (mark === "scatter") {
+    return compactObject({
+      x: createFieldEncoding(xAxis, "quantitative"),
+      y: createFieldEncoding(options.yAxis, "quantitative"),
+    });
+  }
+
   if (mark === "avg" && value) value.aggregate = "avg";
 
   if (mark === "table" || mark === "markdown") return {};
+  if (mark === "map") {
+    return compactObject({ location: createFieldEncoding(xAxis, "nominal"), value });
+  }
   if (mark === "kpi" || mark === "avg" || mark === "gauge") {
     return compactObject({ value });
   }
@@ -96,9 +107,10 @@ function buildLegacyEncoding(mark, options) {
 
 function buildLegacyTransforms(options, mark, chart) {
   const transforms = [];
+  if (mark === "scatter") return transforms;
 
   if (chart.subType?.includes("AddTimeseries")
-    && !["table", "matrix", "markdown"].includes(mark)
+    && !["table", "matrix", "markdown", "map"].includes(mark)
   ) {
     transforms.push({
       operation: "cumulativeSum",
@@ -138,7 +150,7 @@ function buildLegacyLayer(chart, cdc, index) {
     id: `legacy-${plainCdc.id || index + 1}`,
     mark,
     name: options.legend || options.name || `Series ${index + 1}`,
-    orientation: chart.horizontal ? "horizontal" : "vertical",
+    orientation: mark === "horizontalBar" ? "horizontal" : "vertical",
     rowPath: mark === "table" ? options.xAxis || "root[]" : undefined,
     stack: chart.stacked ? "normal" : "none",
     style: compactObject({
@@ -176,6 +188,7 @@ function buildLegacySettings(chart) {
     missingValues: { policy: "zero" },
     timeInterval: chart.timeInterval || null,
     xLabelTicks: chart.xLabelTicks || null,
+    ranges: chart.ranges || null,
   });
 }
 

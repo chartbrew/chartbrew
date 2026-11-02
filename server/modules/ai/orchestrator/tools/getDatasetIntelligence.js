@@ -8,8 +8,19 @@ const {
 } = require("../../../datasetIntelligence/observability");
 
 async function getDatasetIntelligence(payload) {
-  const { dataset_id: datasetId, team_id: teamId } = payload;
+  const {
+    allowed_project_ids: allowedProjectIds,
+    dataset_id: datasetId,
+    team_id: teamId,
+  } = payload;
   const dataset = await requireDatasetForTeam(datasetId, teamId);
+  const projectIds = Array.isArray(dataset.project_ids) ? dataset.project_ids : [];
+  if (
+    Array.isArray(allowedProjectIds)
+    && !projectIds.some((projectId) => allowedProjectIds.includes(Number(projectId)))
+  ) {
+    throw new Error("Dataset is not available in your projects");
+  }
   const current = await getDatasetIntelligenceRecord({
     datasetId: dataset.id,
     teamId: Number(teamId),

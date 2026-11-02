@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Chart entrance regression check</title>
+  </head>
+  <body>
+    <h1>Chart entrance regression check</h1>
+    <p>Reload to test a chart while its container changes width.</p>
+    <pre id="result" role="status">Running…</pre>
+    <div id="chart" style="width: 640px; height: 300px; transition: width 200ms ease"></div>
+    <script type="module">
+      import React from "react";
+      import { createRoot } from "react-dom/client";
+      import * as echarts from "echarts/core";
+      import EChartsRenderer from "../src/containers/Chart/components/EChartsRenderer.jsx";
+      import { ReportThemeProvider } from "../src/modules/ThemeContext.jsx";
+      import "../src/input.css";
+
+      const container = document.getElementById("chart");
+      const result = document.getElementById("result");
+      const root = createRoot(container);
+      const option = {
+        animation: true,
+        xAxis: { type: "category", data: ["A", "B", "C"] },
+        yAxis: { type: "value" },
+        series: [{ type: "bar", data: [10, 20, 30] }],
+      };
+      const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+      const render = () => root.render(React.createElement(
+        ReportThemeProvider,
+        { mode: "light" },
+        React.createElement(EChartsRenderer, { option, redrawComplete: () => {} })
+      ));
+      const barHeight = (instance) => Math.abs(instance.getModel()
+        .getSeriesByIndex(0).getData().getItemGraphicEl(0).shape.height);
+
+      try {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          throw new Error("Motion is disabled by the system. Run this check with reduced motion off.");
+        }
+        render();
+        await wait(50);
+        container.style.width = "480px";
+        let instance;
+        for (let attempt = 0; attempt < 200; attempt += 1) {
+          const element = container.querySelector("[role=img]");
+          instance = element && echarts.getInstanceByDom(element);
+          if (instance?.getOption()?.series?.length) break;
+          await wait(10);
+        }
+        if (!instance?.getOption()?.series?.length) throw new Error("Chart did not render.");
+        await wait(100);
+        const early = barHeight(instance);
+        render();
+        await wait(250);
+        const middle = barHeight(instance);
+        await wait(600);
+        const final = barHeight(instance);
+        if (!(early > 0 && early < middle && middle < final)) {
+          throw new Error(`Entrance stopped: bar heights ${early}, ${middle}, ${final}.`);
+        }
+        result.textContent = "PASS: bars grow after the width transition and survive a callback change.";
+      } catch (error) {
+        result.textContent = `FAIL: ${error.message}`;
+        console.error(error);
+      }
+    </script>
+  </body>
+</html>

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { useWindowSize } from "react-use";
 import PropTypes from "prop-types";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import {
   Button,
   Tooltip,
@@ -13,18 +15,20 @@ import {
   Dropdown,
   Kbd,
   ButtonGroup,
-  Tabs,
+  Select,
   Skeleton,
 } from "@heroui/react";
-import { Link, useNavigate, useParams } from "react-router";
+import {
+  Link, useNavigate, useParams, useSearchParams,
+} from "react-router";
 import _, { isEqual } from "lodash";
 import toast from "react-hot-toast";
 import {
   LuCalendarClock,
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
   LuRefreshCw, LuUser, LuUsers,
-  LuEllipsisVertical, LuShare, LuChartPie, LuLetterText,
-  LuMonitorSmartphone,
+  LuEllipsisVertical, LuShare, LuLetterText,
+  LuMonitorSmartphone, LuUndo2,
   LuMonitorUp,
   LuArrowDownRight,
   LuTvMinimal,
@@ -32,23 +36,25 @@ import {
   LuSettings,
   LuPlus,
 } from "react-icons/lu";
-import { WidthProvider, Responsive } from "react-grid-layout";
+import GridLayout, { WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
 
 import Chart from "../Chart/Chart";
+import AddChart from "../AddChart/AddChart";
 import AddFilters from "./components/AddFilters";
 import {
   runQueryWithFilters, runQuery, changeOrder, updateChart, selectCharts,
   clearStagedCharts,
-  createChart,
+  setCharts,
   exportChart,
   stageChart,
-  removeLocalChart,
+  getChart,
   shouldSkipFiltering,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
+import { recordHomeActivity } from "../../api/observations";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
 import { ButtonSpinner } from "../../components/ButtonSpinner";
@@ -58,20 +64,29 @@ import { cols, margin, widthSize } from "../../modules/layoutBreakpoints";
 import { selectUser } from "../../slices/user";
 import UpdateSchedule from "./components/UpdateSchedule";
 import { exportMultipleChartsToExcel, canExportChart } from "../../modules/exportChart";
-import { selectProject } from "../../slices/project";
+import { selectProject, getProject, saveDashboardLayout } from "../../slices/project";
 import SharingSettings from "../PublicDashboard/components/SharingSettings";
 import isMac from "../../modules/isMac";
 import { displayInitials } from "../../modules/utils";
 import TextWidget from "../Chart/TextWidget";
 import SnapshotSchedule from "./components/SnapshotSchedule";
 import DashboardFilters from "./components/DashboardFilters";
-import { tidyLayout, placeNewWidget } from "../../modules/autoLayout";
+import { getLayoutPreviewGeometry, placeNewWidget } from "../../modules/autoLayout";
 import SuspenseLoader from "../../components/SuspenseLoader";
 import { buildChartRuntimeRequest } from "../../modules/chartRuntimeFilters";
 import { mergeDashboardFilters } from "../../modules/dashboardFilters";
-import DashboardStarter from "./components/DashboardStarter";
+import InlineChartCreator from "./components/InlineChartCreator";
 
-const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
+import { getBreakpoint, getLayouts, getReportOrder, deriveLayouts, visualOrder, defaultSize, breakpoints, labels, rowHeight, tidyLayout, autoArrange } from "../../../../shared/dashboard/layout.mjs";
+
+function InlineChartPlacement({ container, children }) {
+  return container ? createPortal(children, container) : children;
+}
+
+InlineChartPlacement.propTypes = { container: PropTypes.object, children: PropTypes.node };
+
+
+const DashboardGridLayout = WidthProvider(GridLayout);
 
 function DashboardChartSkeleton({ height }) {
   const skeletonHeight = Math.max(height || 150, 150);
@@ -123,6 +138,12 @@ const getFiltersFromStorage = () => {
   Dashboard container (for the charts)
 */
 function ProjectDashboard() {
+  const [creationOpen, setCreationOpen] = useState(false);
+  const [creationCount, setCreationCount] = useState(0);
+  const [selectedInlineChart, setSelectedInlineChart] = useState(null);
+  const [inlineChartContainer, setInlineChartContainer] = useState(null);
+  const inlineRefresh = useRef(Promise.resolve());
+  const store = useStore();
   const [filters, setFilters] = useState(getFiltersFromStorage());
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
@@ -133,12 +154,22 @@ function ProjectDashboard() {
   const [templateVisible, setTemplateVisible] = useState(false);
   const [layouts, setLayouts] = useState(null);
   const [editingLayout, setEditingLayout] = useState(false);
+  const [movingLayout, setMovingLayout] = useState(false);
+  const [layoutSaving, setLayoutSaving] = useState(false);
+  const [layoutError, setLayoutError] = useState("");
+  const [layoutOrder, setLayoutOrder] = useState([]);
+  const [layoutCustom, setLayoutCustom] = useState(breakpoints);
+  const [layoutRevision, setLayoutRevision] = useState(0);
+  const [layoutUndo, setLayoutUndo] = useState(null);
   const [scheduleVisible, setScheduleVisible] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [stagedContent, setStagedContent] = useState({});
   const [previewSize, setPreviewSize] = useState({});
+  const [previewGeometry, setPreviewGeometry] = useState({ scale: 1, height: 0 });
   const [snapshotScheduleVisible, setSnapshotScheduleVisible] = useState(false);
-  const [gridBreakpoint, setGridBreakpoint] = useState(null);
+  const { width: windowWidth } = useWindowSize();
+  const gridBreakpoint = getBreakpoint(windowWidth);
+  const activeBreakpoint = (editingLayout && previewSize.breakpoint) || gridBreakpoint;
   const [pendingScrollWidgetId, setPendingScrollWidgetId] = useState(null);
   const [chartFilters, setChartFilters] = useState({});
   const [initialRuntimeHydrationPending, setInitialRuntimeHydrationPending] = useState(false);
@@ -146,18 +177,54 @@ function ProjectDashboard() {
   const params = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const charts = useSelector(selectCharts);
   const project = useSelector(selectProject);
+  useEffect(() => {
+    if (team?.id && Number(project?.id) === Number(params.projectId) && document.visibilityState === "visible") {
+      recordHomeActivity(team.id, project.id).catch(() => {});
+    }
+  }, [team?.id, project?.id, params.projectId]);
   const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
 
-  const initLayoutRef = useRef(null);
   const hasRunInitialFiltering = useRef(null);
   const dashboardRef = useRef(null);
-  const dashboardParentRef = useRef(null);
+  const previewContainerRef = useRef(null);
+  const previewScale = editingLayout ? previewGeometry.scale : 1;
+
+  useLayoutEffect(() => {
+    if (!editingLayout) return undefined;
+    const container = previewContainerRef.current;
+    const dashboard = dashboardRef.current;
+    const updateGeometry = () => {
+      const width = previewSize.size || container.clientWidth + 32;
+      setPreviewGeometry({
+        ...getLayoutPreviewGeometry(container.clientWidth, width, dashboard.offsetHeight),
+        width,
+      });
+    };
+    const observer = new ResizeObserver(updateGeometry);
+    observer.observe(container);
+    observer.observe(dashboard);
+    updateGeometry();
+    return () => observer.disconnect();
+  }, [editingLayout, previewSize.size]);
+
+  useEffect(() => {
+    if (Number(project?.id) !== Number(params.projectId)) return;
+    const setup = searchParams.get("setup");
+    if (setup === "updates") setScheduleVisible(true);
+    if (setup === "sharing") setShowShare(true);
+    if (setup === "updates" || setup === "sharing") {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("setup");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [params.projectId, project?.id, searchParams, setSearchParams]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -182,18 +249,11 @@ function ProjectDashboard() {
   }, [editingLayout]);
 
   useEffect(() => {
-    if (charts && charts.filter((c) => c.project_id === parseInt(params.projectId, 10)).length > 0 && !initLayoutRef.current) {
-      initLayoutRef.current = true;
-      // set the grid layout
-      _prepareLayout();
+    if (!editingLayout) {
+      setLayouts(getLayouts(charts));
+      if (charts.some((chart) => chart.staged)) _onEditLayout();
     }
-
-    charts.forEach((chart) => {
-      if (chart.staged) {
-        _onEditLayout();
-      }
-    });
-  }, [charts]);
+  }, [charts, editingLayout]);
 
   useEffect(() => {
     setChartFilters((currentChartFilters) => {
@@ -229,7 +289,7 @@ function ProjectDashboard() {
         // Only update localStorage if the filters have actually changed
         const currentFiltersStr = window.localStorage.getItem("_cb_filters");
         const newFiltersStr = JSON.stringify(finalFilters);
-        
+
         if (currentFiltersStr !== newFiltersStr) {
           window.localStorage.setItem("_cb_filters", newFiltersStr);
           setFilters(finalFilters);
@@ -259,129 +319,67 @@ function ProjectDashboard() {
   }, [charts, layouts, pendingScrollWidgetId]);
 
   const _onEditLayout = async () => {
-    if (editingLayout) {
-      return;
+    if (editingLayout || layoutSaving || creationOpen || creationCount || selectedInlineChart) return;
+    setLayoutError("");
+    try {
+      const current = await dispatch(getProject({ project_id: params.projectId })).unwrap();
+      const currentCharts = [...current.Charts, ...charts.filter((chart) => chart.staged)];
+      dispatch(setCharts(currentCharts));
+      setLayoutOrder(getReportOrder(currentCharts, current.layoutOrder));
+      setLayoutCustom(current.layoutCustom || breakpoints);
+      setLayoutRevision(current.layoutRevision);
+      setLayouts(getLayouts(currentCharts));
+      setLayoutUndo(null);
+      setPreviewSize({ size: null });
+      setMovingLayout(false);
+      setEditingLayout(true);
+    } catch (error) {
+      toast.error(error.message);
     }
-
-    setEditingLayout(true);
-
-    const dashboardWidth = dashboardRef.current?.offsetWidth;
-
-    let newPreviewSize = {
-      size: dashboardWidth,
-      breakpoint: "auto",
-    };
-
-    // Determine initial breakpoint based on dashboard width
-    if (dashboardWidth > widthSize.lg) {
-      newPreviewSize = {
-        size: dashboardWidth,
-        breakpoint: "xl",
-      };
-    } else if (dashboardWidth > widthSize.md && dashboardWidth <= widthSize.lg) {
-      newPreviewSize = {
-        size: dashboardWidth,
-        breakpoint: "lg",
-      };
-    } else if (dashboardWidth > widthSize.sm && dashboardWidth <= widthSize.md) {
-      newPreviewSize = {
-        size: dashboardWidth,
-        breakpoint: "md",
-      };
-    } else if (dashboardWidth > widthSize.xs && dashboardWidth <= widthSize.sm) {
-      newPreviewSize = {
-        size: dashboardWidth,
-        breakpoint: "sm",
-      };
-    } else if (dashboardWidth <= widthSize.xs) {
-      newPreviewSize = {
-        size: dashboardWidth,
-        breakpoint: "xs",
-      };
-    }
-
-    setPreviewSize(newPreviewSize);
-  };
-
-  const _getUserBreakpoint = () => {
-    const dashboardWidth = dashboardParentRef.current?.offsetWidth;
-    if (dashboardWidth > widthSize.xxxl) return "xxxl";
-    if (dashboardWidth > widthSize.xxl) return "xxl";
-    if (dashboardWidth > widthSize.xl) return "xl";
-    if (dashboardWidth > widthSize.lg) return "lg";
-    if (dashboardWidth > widthSize.md) return "md";
-    if (dashboardWidth > widthSize.sm) return "sm";
-    return "xs";
   };
 
   const _onChangePreviewSize = (key) => {
-    const dashboardWidth = dashboardParentRef.current?.offsetWidth;
-    const breakpointWidth = key === "xxxl" ? 3840 : key === "xxl" ? 2560 : key === "xl" ? 1600 : widthSize[key];
-    let newSize;
-
-    // Case 1: Switching to a smaller breakpoint - use breakpoint width
-    if (breakpointWidth < dashboardWidth) {
-      newSize = breakpointWidth;
+    if (key === "current") {
+      setPreviewSize({ size: null });
+    } else if (breakpoints.includes(key)) {
+      setPreviewSize({ size: widthSize[key] + 1, breakpoint: key });
     }
-    // Case 2: Switching to current screen's breakpoint - use Math.min
-    else if (_getUserBreakpoint() === key) {
-      newSize = Math.min(dashboardWidth, breakpointWidth);
-    }
-    // Case 3: Switching to a larger breakpoint - use breakpoint width (will enable scroll)
-    else {
-      newSize = breakpointWidth;
-    }
-
-    setPreviewSize({
-      size: newSize,
-      breakpoint: key,
-    });
   };
 
-  const _applyAutoLayout = (scope = "current") => {
-    if (!layouts) return;
-
-    const currentBp = gridBreakpoint
-      || ((previewSize?.breakpoint && previewSize.breakpoint !== "auto") ? previewSize.breakpoint : _getUserBreakpoint());
-    const newLayouts = _.cloneDeep(layouts);
-
-    if (scope === "current") {
-      newLayouts[currentBp] = tidyLayout(newLayouts[currentBp] || [], charts, currentBp);
-    } else {
-      Object.keys(newLayouts).forEach((bp) => {
-        newLayouts[bp] = tidyLayout(newLayouts[bp] || [], charts, bp);
-      });
+  const _applyAutoLayout = (action = "arrange") => {
+    if (!layouts || layoutSaving) return;
+    const bp = previewSize.breakpoint || gridBreakpoint;
+    const byId = new Map((layouts[bp] || []).map((item) => [String(item.i), item]));
+    const order = getReportOrder(charts, layoutOrder);
+    const items = order.map((id) => byId.get(id)).filter(Boolean);
+    try {
+      const nextCustom = action === "automatic" ? layoutCustom.filter((key) => key !== bp)
+        : [...new Set([...layoutCustom, bp])];
+      const next = action === "automatic" ? layouts : {
+        ...layouts, [bp]: action === "tidy" ? tidyLayout(items, bp) : autoArrange(items, charts, bp),
+      };
+      setLayoutUndo({ layouts, order: layoutOrder, custom: layoutCustom });
+      const nextOrder = bp === "lg" ? visualOrder(next[bp]).map((item) => String(item.i)) : order;
+      setLayoutOrder(nextOrder);
+      setLayouts(deriveLayouts(next, nextOrder, nextCustom));
+      setLayoutCustom(nextCustom);
+      setLayoutError("");
+    } catch (error) {
+      setLayoutError(error.message);
     }
-
-    setLayouts(newLayouts);
-    _onChangeLayout(null, newLayouts);
   };
 
-  const _prepareLayout = (chartsToProcess = charts) => {
-    const newLayouts = Object.keys(widthSize).reduce((acc, key) => {
-      acc[key] = [];
-      return acc;
-    }, {});
-
-    chartsToProcess.forEach((chart) => {
-      if (chart?.layout) {
-        // First, process all existing breakpoints
-        Object.keys(chart.layout).forEach((key) => {
-          if (newLayouts[key]) {
-            newLayouts[key].push({
-              i: `${chart.id}`,
-              x: chart.layout[key][0] || 0,
-              y: chart.layout[key][1] || 0,
-              w: chart.layout[key][2],
-              h: chart.layout[key][3],
-              minW: 2,
-            });
-          }
-        });
-      }
-    });
-
-    setLayouts(newLayouts);
+  const _onManualLayout = (layout) => {
+    setMovingLayout(false);
+    if (layoutSaving) return;
+    const bp = previewSize.breakpoint || gridBreakpoint;
+    const nextLayout = tidyLayout(layout, bp);
+    const order = bp === "lg" ? visualOrder(nextLayout).map((item) => String(item.i)) : getReportOrder(charts, layoutOrder);
+    const custom = [...new Set([...layoutCustom, bp])];
+    setLayoutUndo({ layouts, order: layoutOrder, custom: layoutCustom });
+    setLayoutOrder(order);
+    setLayoutCustom(custom);
+    setLayouts(deriveLayouts({ ...layouts, [bp]: nextLayout }, order, custom));
   };
 
   const _onAddFilter = (filter) => {
@@ -427,14 +425,14 @@ function ProjectDashboard() {
       const newFilters = _.cloneDeep(filters);
       delete newFilters[projectId];
       setFilters(newFilters);
-      
+
       // Only remove the entire localStorage if no other projects have filters
       if (Object.keys(newFilters).length === 0) {
         window.localStorage.removeItem("_cb_filters");
       } else {
         window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
       }
-      
+
       _runFiltering(newFilters);
       return;
     }
@@ -652,10 +650,10 @@ function ProjectDashboard() {
 
       // Get the selected charts by their IDs
       const selectedCharts = charts.filter(chart => ids.includes(chart.id));
-      
+
       // Filter out charts that cannot be exported
       const exportableCharts = selectedCharts.filter(chart => canExportChart(chart));
-      
+
       if (exportableCharts.length === 0) {
         toast.error("No charts with data available for export");
         setExportLoading(false);
@@ -687,7 +685,7 @@ function ProjectDashboard() {
     team.TeamRoles.forEach((teamRole) => {
       if (teamRole.team_id === team?.id
         && teamRole.user_id === user.id
-        && (teamRole.canExport || teamRole.role === "teamOwner")
+        && (teamRole.canExport || ["teamOwner", "teamAdmin", "teamEditor", "teamViewer"].includes(teamRole.role))
       ) {
         canExport = true;
       }
@@ -706,127 +704,59 @@ function ProjectDashboard() {
     }));
   };
 
-  const _onChangeLayout = (layout, allLayouts, toComplete = false) => {
-    const updatedCharts = charts.map(chart => {
-      const updatedLayout = {};
-
-      Object.keys(allLayouts).forEach(breakpoint => {
-        const layoutItem = allLayouts[breakpoint].find(item => item.i === `${chart.id}`);
-        if (layoutItem || layoutItem === 0) {
-          updatedLayout[breakpoint] = [layoutItem.x, layoutItem.y, layoutItem.w, layoutItem.h];
-        }
-      });
-
-      return { ...chart, layout: updatedLayout };
-    });
-
-    if (toComplete) {
-      updatedCharts.forEach((chart, index) => {
-        // only allow chart updates if the layout has all the breakpoints
-        const chartBreakpoints = Object.keys(chart.layout);
-        const allBreakpoints = Object.keys(widthSize);
-
-        if (chartBreakpoints.length === allBreakpoints.length) {
-          // only update the layout if it has changed
-          if (!isEqual(chart.layout, charts[index].layout)) {
-            dispatch(updateChart({
-              project_id: params.projectId,
-              chart_id: chart.id,
-              data: { layout: chart.layout },
-              justUpdates: true
-            }));
-          }
-        }
-      });
-    }
-
-    setLayouts(allLayouts);    
+  const _onCancelChanges = async () => {
+    if (layoutSaving) return;
+    await dispatch(clearStagedCharts());
+    setLayouts(getLayouts(charts.filter((chart) => !chart.staged)));
+    setLayoutError("");
+    setEditingLayout(false);
+    setLayoutUndo(null);
   };
 
-  const _onCancelChanges = async () => {
-    await dispatch(clearStagedCharts());
-
-    // should set the layouts to the original chart layouts
-    const newLayouts = Object.keys(widthSize).reduce((acc, key) => {
-      acc[key] = [];
-      return acc;
-    }, {});
-
-    charts.forEach((chart) => {
-      if (chart.layout) {
-        Object.keys(chart.layout).forEach((key) => {
-          newLayouts[key].push({
-            i: `${chart.id}`,
-            x: chart.layout[key][0] || 0,
-            y: chart.layout[key][1] || 0,
-            w: chart.layout[key][2],
-            h: chart.layout[key][3],
-            minW: 2,
-          });
-        });
-      }
-    });
-
-    setLayouts(newLayouts);
-    setEditingLayout(false);
-  }
-
   const _onGetChartHeight = (chart) => {
-    const currentBreakpoint = Object.keys(layouts).find(breakpoint => {
-      return layouts[breakpoint].find(item => item.i === `${chart.id}`);
-    });
-
-    if (currentBreakpoint) {
-      const layoutItem = layouts[currentBreakpoint].find(item => item.i === `${chart.id}`);
-      return layoutItem.h * 150;
-    }
-
-    return 150;
+    const bp = (editingLayout && previewSize.breakpoint) || gridBreakpoint || "lg";
+    const item = layouts?.[bp]?.find((entry) => entry.i === String(chart.id));
+    const height = item?.h || defaultSize(chart, bp).h;
+    return height * rowHeight + (height - 1) * margin[bp][1];
   };
 
   const _onSaveChanges = async () => {
-    // create all the staged charts
-    const createPromises = charts.map((chart) => {
-      if (chart.staged) {
-        const newChart = {
-          name: chart.name,
-          type: chart.type,
-          layout: chart.layout,
-          content: stagedContent?.[chart.id] || chart.content,
-          staged: false,
-          onReport: true,
-          draft: false,
-        };
-        
-        dispatch(removeLocalChart({ id: chart.id }));
-        return dispatch(createChart({
-          project_id: params.projectId,
-          data: newChart,
-        }));
-      }
-      return null;
-    }).filter(Boolean);
-
-    if (createPromises.length > 0) {
-      const createdCharts = await Promise.all(createPromises);
-      const tempCharts = createdCharts.map((chart) => chart.payload);
-      _prepareLayout([...charts, ...tempCharts]);
-    } else {
-      _onChangeLayout(null, layouts, true);
+    if (layoutSaving) return;
+    const bp = previewSize.breakpoint || gridBreakpoint;
+    const { null: currentWindowLayout, ...screenLayouts } = layouts;
+    if (currentWindowLayout) screenLayouts[bp] = currentWindowLayout;
+    setLayoutSaving(true);
+    setLayoutError("");
+    try {
+      const result = await dispatch(saveDashboardLayout({
+        projectId: params.projectId,
+        data: {
+          revision: layoutRevision, layouts: screenLayouts, custom: [...new Set(layoutCustom.map((key) => key ?? bp))],
+          order: getReportOrder(charts, layoutOrder),
+          staged: charts.filter((chart) => chart.staged).map((chart) => ({
+            id: chart.id, name: chart.name, type: "markdown",
+            content: stagedContent[chart.id] ?? chart.content ?? "",
+          })),
+        },
+      })).unwrap();
+      setLayouts(getLayouts(result.Charts));
+      setStagedContent({});
+      setLayoutUndo(null);
+      setEditingLayout(false);
+    } catch (error) {
+      setLayoutError(error.message);
+    } finally {
+      setLayoutSaving(false);
     }
-
-    setStagedContent({});
-    setEditingLayout(false);
   };
 
   const _onAddMarkdown = async () => {
-    const defaultW = 3;
-    const defaultH = 2;
+    if (layoutSaving) return;
 
     const computedLayout = {};
     Object.keys(widthSize).forEach((bp) => {
       const bpLayout = layouts?.[bp] || [];
-      const pos = placeNewWidget(bpLayout, { w: defaultW, h: defaultH }, bp);
+      const pos = placeNewWidget(bpLayout, defaultSize({ type: "markdown" }, bp), bp);
       computedLayout[bp] = [pos.x, pos.y, pos.w, pos.h];
     });
 
@@ -846,7 +776,13 @@ function ProjectDashboard() {
       [newChart.id]: newChart.content,
     });
 
-    _prepareLayout([...charts, newChart]);
+    setLayouts(getLayouts([...charts.map((chart) => ({
+      ...chart, layout: Object.fromEntries(breakpoints.map((bp) => {
+        const item = layouts?.[bp]?.find((entry) => entry.i === String(chart.id));
+        return [bp, item ? [item.x, item.y, item.w, item.h] : chart.layout?.[bp]];
+      })),
+    })), newChart]));
+    setLayoutOrder([...getReportOrder(charts, layoutOrder), String(newChart.id)]);
     setPendingScrollWidgetId(newChart.id);
   };
 
@@ -864,17 +800,31 @@ function ProjectDashboard() {
   const projectMemberStackVisible = projectMemberStackOverflow > 0
     ? projectMemberStack.slice(0, projectMemberStackMax - 1)
     : projectMemberStack.slice(0, projectMemberStackMax);
+  const _onInlineChartSaved = (chartId) => {
+    inlineRefresh.current = inlineRefresh.current.catch(() => {}).then(async () => {
+      const current = await dispatch(getProject({ project_id: params.projectId })).unwrap();
+      const saved = await dispatch(getChart({ project_id: params.projectId, chart_id: chartId })).unwrap();
+      const latestCharts = selectCharts(store.getState());
+      dispatch(setCharts(current.Charts.map((item) => {
+        if (item.id === chartId) return saved;
+        return { ...item, ...latestCharts.find((existing) => existing.id === item.id), layout: item.layout };
+      })));
+      await _runChartRequest(saved, filters, chartFilters);
+    });
+    return inlineRefresh.current;
+  };
+
   const currentDashboardCharts = charts.filter((chart) => `${chart.project_id}` === params.projectId);
 
   return (
-    <div className={`w-full ${editingLayout && "bg-background dark:bg-content2 overflow-x-auto"}`}>
-      {charts && currentDashboardCharts.length > 0
+    <div className="w-full bg-background">
+      {charts && (currentDashboardCharts.length > 0 || creationCount > 0)
         && (
-          <div ref={dashboardParentRef}>
+          <div>
             <div
               className={"w-full box-shadow-none radius-0"}
             >
-              <div className="flex flex-row justify-between w-full">
+              <div className="flex min-h-10 flex-row items-center justify-between w-full">
                 <div className="flex flex-row items-center gap-1">
                   {projectMembers?.length > 0 && (
                     <>
@@ -907,7 +857,7 @@ function ProjectDashboard() {
                             <Popover.Dialog>
                               {_canAccess("teamAdmin") && (
                                 <div className="w-full">
-                                  <Link to={"/settings/members"}>
+                                  <Link to={"/settings/team/members"}>
                                     <Button
                                       variant="primary"
                                       size="sm"
@@ -981,37 +931,27 @@ function ProjectDashboard() {
                 {!editingLayout && (
                   <div className="flex flex-row items-center gap-1">
                     <ButtonGroup className="hidden sm:flex bg-surface rounded-full" variant="outline">
-                      <Dropdown aria-label="Add widget">
-                        <Button
-                          variant="outline"
-                          onPress={() => navigate(`/dashboard/${params.projectId}/chart`)}
-                        >
-                          <LuPlus size={18} />
-                          {"Add insight"}
-                        </Button>
-                        <Dropdown.Popover>
-                          <Dropdown.Menu>
-                            <Dropdown.Item
-                              id="add-chart"
-                              onPress={() => {
-                                navigate(`/dashboard/${params.projectId}/chart`);
-                              }}
-                              textValue="Add chart"
-                            >
-                              <LuChartPie />
-                              Add chart
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                              id="add-text"
-                              onPress={() => _onAddMarkdown()}
-                              textValue="Add text"
-                            >
-                              <LuLetterText />
-                              Add text
-                            </Dropdown.Item>
-                          </Dropdown.Menu>
-                        </Dropdown.Popover>
-                      </Dropdown>
+                      {_canAccess("projectEditor") && (
+                        <>
+                          <Button data-add-chart variant="outline" onPress={() => setCreationOpen(true)} isDisabled={creationOpen || Boolean(selectedInlineChart)}>
+                            <LuPlus size={18} />
+                            Add chart
+                          </Button>
+                          <Dropdown aria-label="More items">
+                            <Button isIconOnly variant="outline" aria-label="More items" isDisabled={creationOpen || Boolean(selectedInlineChart)}>
+                              <LuChevronDown size={14} />
+                            </Button>
+                            <Dropdown.Popover>
+                              <Dropdown.Menu>
+                                <Dropdown.Item id="add-text" onPress={() => _onAddMarkdown()} textValue="Add text">
+                                  <LuLetterText />
+                                  Add text
+                                </Dropdown.Item>
+                              </Dropdown.Menu>
+                            </Dropdown.Popover>
+                          </Dropdown>
+                        </>
+                      )}
                       <Tooltip>
                         <Button
                           onPress={() => setShowShare(true)}
@@ -1068,6 +1008,7 @@ function ProjectDashboard() {
                       </Tooltip>
                       <Dropdown aria-label="Dashboard actions">
                         <Button
+                          aria-label="Dashboard actions"
                           variant="outline"
                           isIconOnly
                         >
@@ -1078,6 +1019,7 @@ function ProjectDashboard() {
                           <Dropdown.Menu>
                             <Dropdown.Item
                               id="edit-layout"
+                              isDisabled={creationOpen || creationCount > 0 || Boolean(selectedInlineChart)}
                               onPress={() => _onEditLayout()}
                               textValue="Edit layout"
                             >
@@ -1147,12 +1089,13 @@ function ProjectDashboard() {
                     </ButtonGroup>
                   </div>
                 )}
-                
+
                 {editingLayout && (
                   <div className="flex flex-row items-center gap-1">
                     <Button
                       variant="primary"
                       size="sm"
+                      isPending={layoutSaving}
                       onPress={() => _onSaveChanges()}
                     >
                       Save changes
@@ -1160,6 +1103,7 @@ function ProjectDashboard() {
                     <Button
                       variant="secondary"
                       size="sm"
+                      isDisabled={layoutSaving}
                       onPress={_onCancelChanges}
                     >
                       Cancel
@@ -1170,102 +1114,204 @@ function ProjectDashboard() {
             </div>
           </div>
         )}
+      {layoutError ? (
+        <div role="alert" className="flex items-center gap-3 px-4 py-3 text-danger">
+          <p>{layoutError}</p>
+          <Button variant="secondary" size="sm" onPress={async () => {
+            try {
+              const current = await dispatch(getProject({ project_id: params.projectId })).unwrap();
+              dispatch(setCharts(current.Charts));
+              setLayouts(getLayouts(current.Charts));
+              setLayoutRevision(current.layoutRevision);
+              setLayoutOrder(getReportOrder(current.Charts, current.layoutOrder));
+              setLayoutCustom(current.layoutCustom || breakpoints);
+              setStagedContent({});
+              setLayoutUndo(null);
+              setLayoutError("");
+            } catch (error) {
+              setLayoutError(error.message);
+            }
+          }}>
+            Discard edits and reload
+          </Button>
+        </div>
+      ) : null}
       <div
-        className={`bg-content2 w-full relative p-0 ${editingLayout ? "border-2 border-divider rounded-2xl" : ""}`}
-        style={{
-          ...(editingLayout && previewSize?.breakpoint && {
-            width: previewSize.size,
-            margin: "0 auto",
-            boxSizing: "border-box",
-            marginTop: 5,
-            overflowX: previewSize.size > dashboardRef.current?.offsetWidth ? "auto" : "hidden",
-          }),
-          ...(editingLayout && {
-            paddingBottom: 100,
-          }),
-        }}
-        ref={dashboardRef}
+        className={editingLayout ? "dashboard-preview-window" : undefined}
+        style={editingLayout && previewSize.size ? { width: `min(100%, ${previewSize.size + 32}px)` } : undefined}
       >
-        {currentDashboardCharts.length === 0 && !chartsLoading && (
-          <DashboardStarter
-            projectId={params.projectId}
-          />
+        {editingLayout && (
+          <div className="dashboard-preview-titlebar">
+            <div className="flex min-w-0 items-center gap-2">
+              <LuMonitorSmartphone size={16} aria-hidden="true" />
+              <span className="truncate">Dashboard preview</span>
+            </div>
+            <span className="shrink-0 text-muted">
+              {labels[previewSize.breakpoint || gridBreakpoint]}
+              {previewScale < 1 && ` · ${Math.round(previewScale * 100)}%`}
+            </span>
+          </div>
         )}
-
-        {layouts && currentDashboardCharts.length > 0 && (
-          <ResponsiveGridLayout
-            className="layout dashboard-tutorial"
-            layouts={layouts}
-            margin={margin}
-            breakpoints={widthSize}
-            cols={cols}
-            rowHeight={150}
-            onLayoutChange={_onChangeLayout}
-            onBreakpointChange={(bp) => setGridBreakpoint(bp)}
-            resizeHandle={(
-              <div className="react-resizable-handle react-resizable-handle-se">
-                <LuArrowDownRight className="text-accent" size={20} />
-              </div>
-            )}
-            isDraggable={editingLayout}
-            isResizable={editingLayout}
+        <div
+          ref={previewContainerRef}
+          className="w-full min-w-0"
+          style={previewScale < 1 ? { height: previewGeometry.height, overflowX: "clip" } : undefined}
+        >
+          <div
+            className="bg-background w-full relative p-0"
             style={{
-              marginLeft: -11,
-              paddingLeft: -1,
-              marginRight: -11,
-              paddingRight: -1,
+              ...(editingLayout && {
+                width: previewSize.size || previewGeometry.width,
+                margin: "0 auto",
+                boxSizing: "border-box",
+                transform: `scale(${previewScale})`,
+                transformOrigin: "top left",
+              }),
+              ...(editingLayout && {
+                paddingBottom: "max(24rem, 60vh)",
+              }),
             }}
+            ref={dashboardRef}
           >
-            {charts.map((chart, index) => (
-              <div
-                key={chart.id}
-                id={chart.type === "markdown" ? `dashboard-widget-${chart.id}` : undefined}
-                className={editingLayout ? "border-2 border-dashed border-primary rounded-2xl" : ""}
-              >
-                {chart.type === "markdown" ? (
-                  <TextWidget
-                    chart={chart}
-                    onEditLayout={() => _onEditLayout()}
-                    editingLayout={editingLayout}
-                    onCancelChanges={_onCancelChanges}
-                    onSaveChanges={() => _onSaveChanges()}
-                    onEditContent={(content) => setStagedContent({
-                      ...stagedContent,
-                      [chart.id]: content,
-                    })}
-                  />
-                ) : (
-                  <>
-                    {_shouldRenderChartSkeleton(chart) ? (
-                      <DashboardChartSkeleton height={_onGetChartHeight(chart)} />
-                    ) : (
-                      <Chart
-                        key={chart.id}
-                        chart={chart}
-                        charts={charts}
-                        dashboardFilters={filters?.[params.projectId] || []}
-                        chartFilters={chartFilters?.[chart.id] || []}
-                        onAddChartFilter={_onChartFilterChange}
-                        onClearChartFilter={_onChartFilterChange}
-                        onRefreshRuntimeChart={(chartId, options = {}) => {
-                          const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
-                          if (!selectedChart) return Promise.resolve(null);
-                          return _runChartRequest(selectedChart, filters, chartFilters, options);
-                        }}
-                        onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
-                        height={() => _onGetChartHeight(chart)}
-                        editingLayout={editingLayout}
-                        onEditLayout={() => _onEditLayout()}
-                      />
+            {currentDashboardCharts.length === 0 && !creationCount && (
+              _canAccess("projectEditor") ? (
+                <div hidden={chartsLoading}>
+                  <AddChart />
+                </div>
+              ) : (
+                <div className="flex min-h-64 flex-col items-center justify-center gap-2 text-center">
+                  <h2 className="font-tight text-2xl font-semibold">No charts yet</h2>
+                  <p className="text-sm text-muted">Ask a dashboard editor to add the first chart.</p>
+                </div>
+              )
+            )}
+
+            <InlineChartCreator
+              key={params.projectId}
+              projectId={params.projectId}
+              userId={user.id}
+              open={creationOpen && _canAccess("projectEditor")}
+              onClose={() => setCreationOpen(false)}
+              selectedChartId={selectedInlineChart}
+              onSelectChart={setSelectedInlineChart}
+              onChartContainer={setInlineChartContainer}
+              onSaved={_onInlineChartSaved}
+              onPublish={async (chartId) => {
+                await dispatch(updateChart({ project_id: params.projectId, chart_id: chartId, data: { draft: false } })).unwrap();
+                toast.success("Chart published");
+              }}
+              runtime={_buildRuntimeRequest({ id: selectedInlineChart }).cacheableChartPayload}
+              charts={currentDashboardCharts}
+              onSessionsChange={setCreationCount}
+            >
+              {(sessions, creators) => {
+                // A refresh can include a chart before its creator receives the completion response.
+                const gridCharts = currentDashboardCharts.filter((chart) => !sessions.some((session) => (
+                  session.chartId === chart.id || isEqual(session.layout, chart.layout)
+                )));
+                return layouts && (gridCharts.length > 0 || sessions.length > 0) ? (
+                  <DashboardGridLayout
+                    className="layout dashboard-tutorial"
+                    layout={(editingLayout ? layouts : getLayouts([...gridCharts, ...sessions]))[activeBreakpoint]}
+                    margin={margin[activeBreakpoint]}
+                    cols={cols[activeBreakpoint]}
+                    rowHeight={rowHeight}
+                    compactType={movingLayout ? "vertical" : null}
+                    onDragStart={() => setMovingLayout(true)}
+                    transformScale={previewScale}
+                    onDragStop={_onManualLayout}
+                    onResizeStop={_onManualLayout}
+                    resizeHandle={(
+                      <div className="react-resizable-handle react-resizable-handle-se">
+                        <LuArrowDownRight className="text-accent" size={20} />
+                      </div>
                     )}
-                  </>
-                )}
-              </div>
-            ))}
-          </ResponsiveGridLayout>
-        )}
+                    isDraggable={editingLayout && !layoutSaving}
+                    isResizable={editingLayout && !layoutSaving}
+                    style={{
+                      marginLeft: -11,
+                      paddingLeft: -1,
+                      marginRight: -11,
+                      paddingRight: -1,
+                    }}
+                  >
+                    {getReportOrder(gridCharts, editingLayout ? layoutOrder : project.layoutOrder).map((id) => gridCharts.find((chart) => String(chart.id) === id)).map((chart, index) => (
+                      <div
+                        key={chart.id}
+                        id={`dashboard-widget-${chart.id}`}
+                        className={editingLayout ? "border-2 border-dashed border-primary rounded-3xl" : ""}
+                      >
+                        {chart.type === "markdown" ? (
+                          <TextWidget
+                            chart={chart}
+                            onEditLayout={() => _onEditLayout()}
+                            editingLayout={editingLayout}
+                            onCancelChanges={_onCancelChanges}
+                            onSaveChanges={() => _onSaveChanges()}
+                            onEditContent={(content) => setStagedContent({
+                              ...stagedContent,
+                              [chart.id]: content,
+                            })}
+                          />
+                        ) : (
+                          <>
+                            {_shouldRenderChartSkeleton(chart) ? (
+                              <DashboardChartSkeleton height={_onGetChartHeight(chart)} />
+                            ) : (
+                              <InlineChartPlacement container={selectedInlineChart === chart.id ? inlineChartContainer : null}>
+                                <Chart
+                                  key={chart.id}
+                                  chart={chart}
+                                  charts={charts}
+                                  deferRendering
+                                  dashboardFilters={filters?.[params.projectId] || []}
+                                  chartFilters={chartFilters?.[chart.id] || []}
+                                  onAddChartFilter={_onChartFilterChange}
+                                  onClearChartFilter={_onChartFilterChange}
+                                  onRefreshRuntimeChart={(chartId, options = {}) => {
+                                    const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
+                                    if (!selectedChart) return Promise.resolve(null);
+                                    return _runChartRequest(selectedChart, filters, chartFilters, options);
+                                  }}
+                                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                                  height={() => selectedInlineChart === chart.id && inlineChartContainer ? inlineChartContainer.clientHeight : _onGetChartHeight(chart)}
+                                  onConfigure={_canAccess("projectEditor") && !selectedInlineChart ? () => setSelectedInlineChart(chart.id) : undefined}
+                                  editingLayout={editingLayout}
+                                  onEditLayout={() => _onEditLayout()}
+                                />
+                              </InlineChartPlacement>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                    {creators}
+                  </DashboardGridLayout>
+                ) : null;
+              }}
+            </InlineChartCreator>
+          </div>
+        </div>
       </div>
-      
+
+      {_canAccess("projectEditor") && !editingLayout && (currentDashboardCharts.length > 0 || creationCount > 0) && (
+        <>
+          {!creationOpen && !selectedInlineChart && (
+            <Button
+              data-add-chart
+              variant="outline"
+              className="group my-5 flex h-24 w-full items-center justify-start gap-4 rounded-3xl border-dotted border-divider/80 bg-transparent px-6 text-base text-muted shadow-none transition-colors duration-200 hover:border-accent/60 hover:bg-accent/5 hover:text-foreground focus-visible:border-accent"
+              onPress={() => setCreationOpen(true)}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed border-divider/70 transition-colors duration-200 group-hover:border-accent/50 group-hover:text-accent">
+                <LuPlus size={20} aria-hidden="true" />
+              </span>
+              Add chart
+            </Button>
+          )}
+        </>
+      )}
+
       <AddFilters
         charts={charts}
         projectId={params.projectId}
@@ -1329,102 +1375,90 @@ function ProjectDashboard() {
 
       {editingLayout && (
         <div className="dark fixed bottom-0 left-0 right-0 z-50 border-t border-solid border-content3">
-          <div className="bg-background p-4 flex justify-center items-center animate-appearance-in">
-            <div className="flex gap-4 items-center flex-wrap">
-              <div className="flex gap-2 items-center">
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <span className="text-foreground">
-                      <LuMonitorSmartphone />
-                    </span>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content className="max-w-xs">
-                    See how this dashboard looks on different devices. You can edit the layout on each device from here.
-                  </Tooltip.Content>
-                </Tooltip>
-                <Tabs
-                  size="sm"
-                  variant="primary"
-                  selectedKey={previewSize?.breakpoint}
-                  onSelectionChange={(key) => _onChangePreviewSize(key)}
-                >
-                  <Tabs.ListContainer>
-                    <Tabs.List>
-                      <Tabs.Tab id="xxxl">
-                        <Tabs.Indicator />
-                        4K
-                      </Tabs.Tab>
-                      <Tabs.Tab id="xxl">
-                        <Tabs.Indicator />
-                        2K
-                      </Tabs.Tab>
-                      <Tabs.Tab id="xl">
-                        <Tabs.Indicator />
-                        XL
-                      </Tabs.Tab>
-                      <Tabs.Tab id="lg">
-                        <Tabs.Indicator />
-                        Desktop
-                      </Tabs.Tab>
-                      <Tabs.Tab id="md">
-                        <Tabs.Indicator />
-                        Laptop
-                      </Tabs.Tab>
-                      <Tabs.Tab id="sm">
-                        <Tabs.Indicator />
-                        Tablet
-                      </Tabs.Tab>
-                      <Tabs.Tab id="xs">
-                        <Tabs.Indicator />
-                        Mobile
-                      </Tabs.Tab>
-                    </Tabs.List>
-                  </Tabs.ListContainer>
-                </Tabs>
-              </div>
+          <div className="bg-background flex w-full flex-wrap items-center justify-between gap-4 px-6 py-4 animate-appearance-in">
+            <div className="flex min-w-0 items-center gap-3">
+              <LuMonitorSmartphone className="shrink-0 text-foreground" aria-hidden="true" />
+              <Select
+                aria-label="Screen size"
+                variant="secondary"
+                className="w-60"
+                value={previewSize.size == null ? "current" : previewSize.breakpoint}
+                onChange={_onChangePreviewSize}
+                isDisabled={layoutSaving}
+                disallowEmptySelection
+              >
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover placement="top">
+                  <ListBox aria-label="Screen size">
+                    <ListBox.Item id="current" textValue="Current window">
+                      Current window
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                    {breakpoints.map((bp) => (
+                      <ListBox.Item id={bp} key={bp} textValue={labels[bp]}>
+                        {labels[bp]}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+              {previewSize.size == null && (
+                <span className="text-sm text-muted">{labels[gridBreakpoint]}</span>
+              )}
+            </div>
 
-              <Separator orientation="vertical" className="h-8" />
-
-              <div className="flex gap-2 items-center">
-                <Dropdown>
-                  <Dropdown.Trigger>
-                    <Button size="sm" variant="secondary">
-                      <LuLayoutDashboard />
-                      Auto-layout
-                      <LuChevronDown />
-                    </Button>
-                  </Dropdown.Trigger>
-                  <Dropdown.Popover>
-                    <Dropdown.Menu>
-                      <Dropdown.Item id="autolayout-current" onPress={() => _applyAutoLayout("current")} textValue="Apply to current">
-                        Apply to current
-                      </Dropdown.Item>
-                      <Dropdown.Item id="autolayout-all" onPress={() => _applyAutoLayout("all")} textValue="Apply to all breakpoints">
-                        Apply to all breakpoints
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown.Popover>
-                </Dropdown>
-              </div>
-
-              <Separator orientation="vertical" className="h-8" />
-
-              <div className="flex gap-2">
-                <Button
-                  variant="primary"
-                  onPress={() => _onSaveChanges()}
-                  size="sm"
-                >
-                  Save changes
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" isDisabled={layoutSaving} onPress={() => _applyAutoLayout("arrange")}>
+                <LuLayoutDashboard />
+                Auto-arrange
+              </Button>
+              <Dropdown>
+                <Button size="sm" variant="secondary" isIconOnly aria-label="More layout actions" isDisabled={layoutSaving}>
+                  <LuChevronDown />
                 </Button>
+                <Dropdown.Popover>
+                  <Dropdown.Menu>
+                    <Dropdown.Item id="autolayout-current" onPress={() => _applyAutoLayout("tidy")} textValue="Tidy">
+                      Tidy
+                    </Dropdown.Item>
+                    <Dropdown.Item id="automatic-layout" isDisabled={(previewSize.breakpoint || gridBreakpoint) === "lg"} onPress={() => _applyAutoLayout("automatic")} textValue="Reset to automatic">
+                      Reset to automatic
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown.Popover>
+              </Dropdown>
+              <Tooltip>
                 <Button
-                  variant="secondary"
-                  onPress={_onCancelChanges}
                   size="sm"
+                  variant="ghost"
+                  isIconOnly
+                  aria-label="Undo layout change"
+                  isDisabled={!layoutUndo || layoutSaving}
+                  onPress={() => {
+                    setLayouts(layoutUndo.layouts);
+                    setLayoutOrder(layoutUndo.order);
+                    setLayoutCustom(layoutUndo.custom);
+                    setLayoutUndo(null);
+                    setLayoutError("");
+                  }}
                 >
-                  Cancel
+                  <LuUndo2 />
                 </Button>
-              </div>
+                <Tooltip.Content>Undo</Tooltip.Content>
+              </Tooltip>
+            </div>
+
+            <div className="ml-auto flex items-center gap-2 sm:ml-0">
+              <Button size="sm" variant="secondary" isDisabled={layoutSaving} onPress={_onCancelChanges}>
+                Cancel
+              </Button>
+              <Button size="sm" variant="primary" isPending={layoutSaving} onPress={() => _onSaveChanges()}>
+                Save changes
+              </Button>
             </div>
           </div>
         </div>

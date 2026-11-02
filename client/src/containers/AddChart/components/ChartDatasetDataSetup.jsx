@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import toast from "react-hot-toast";
 import {
@@ -20,16 +20,15 @@ import {
   Separator,
   Switch,
   TextField,
-  Tooltip,
   useFilter,
 } from "@heroui/react";
 import {
   LuPlus,
-  LuSettings,
   LuTrash2,
 } from "react-icons/lu";
 
 import DatasetFilters from "../../../components/DatasetFilters";
+import mapManifest from "../../../../../shared/geo/manifest.json";
 import { getDatasetFieldOptionsFromSchema } from "../../../modules/getDatasetFieldOptions";
 import {
   AGGREGATIONS,
@@ -43,16 +42,14 @@ import {
   updateLayerAggregation,
   updateLayerField,
   updateLayerGoal,
+  updateLayerMap,
   updateLayerNullHandling,
   updateLayerRowPath,
   updateLayerSeriesOptions,
 } from "../../../modules/visualization";
 import { repairChartVisualization } from "../../../slices/chart";
-import canAccess from "../../../config/canAccess";
-import { selectUser } from "../../../slices/user";
-import { selectTeam } from "../../../slices/team";
 
-const MULTI_VALUE_MARKS = new Set(["bar", "line", "radar"]);
+const MULTI_VALUE_MARKS = new Set(["bar", "horizontalBar", "line", "radar"]);
 const NULL_POLICY_OPTIONS = [{
   id: "exclude",
   label: "Ignore empty rows",
@@ -151,13 +148,13 @@ EmptyValueControl.defaultProps = {
   nullLabel: null,
 };
 
-function LayerGoalField({ initialValue, onSave }) {
+function LayerGoalField({ description, initialValue, onSave }) {
   const [value, setValue] = useState(initialValue ?? undefined);
   const hasGoal = Number.isFinite(value);
   const hasChanges = value !== initialValue;
 
   return (
-    <div className="rounded-xl border border-divider bg-content2/30 p-3">
+    <div className="rounded-xl border border-divider bg-surface-secondary/30 p-3">
       <NumberField
         fullWidth
         name="value-goal"
@@ -171,7 +168,7 @@ function LayerGoalField({ initialValue, onSave }) {
           <NumberField.Input placeholder="Enter a target value" />
           <NumberField.IncrementButton />
         </NumberField.Group>
-        <Description>Used by this value’s KPI progress indicator.</Description>
+        <Description>{description}</Description>
       </NumberField>
       <div className="mt-3 flex gap-2">
         <Button
@@ -200,6 +197,7 @@ function LayerGoalField({ initialValue, onSave }) {
 }
 
 LayerGoalField.propTypes = {
+  description: PropTypes.string.isRequired,
   initialValue: PropTypes.number,
   onSave: PropTypes.func.isRequired,
 };
@@ -306,7 +304,7 @@ function FieldPicker({
         {isClearable && <Autocomplete.ClearButton />}
         <Autocomplete.Indicator />
       </Autocomplete.Trigger>
-      <Autocomplete.Popover>
+      <Autocomplete.Popover aria-label={label}>
         <Autocomplete.Filter filter={contains}>
           <SearchField autoFocus name={`${label.toLowerCase().replaceAll(" ", "-")}-search`} variant="secondary">
             <SearchField.Group>
@@ -315,17 +313,19 @@ function FieldPicker({
               <SearchField.ClearButton />
             </SearchField.Group>
           </SearchField>
-          <ListBox renderEmptyState={() => <EmptyState>No matching fields</EmptyState>}>
+          <ListBox renderEmptyState={() => <EmptyState>No matches</EmptyState>}>
             {fieldOptions.map((option) => (
               <ListBox.Item key={option.value} id={option.value} textValue={option.text}>
-                <Chip
-                  size="sm"
-                  className="mr-2 min-w-[70px] justify-center"
-                  variant="soft"
-                  color={option.label.color}
-                >
-                  {option.label.content}
-                </Chip>
+                {option.label && (
+                  <Chip
+                    size="sm"
+                    className="mr-2 min-w-[70px] justify-center"
+                    variant="soft"
+                    color={option.label.color}
+                  >
+                    {option.label.content}
+                  </Chip>
+                )}
                 {option.text}
                 <ListBox.ItemIndicator />
               </ListBox.Item>
@@ -358,14 +358,11 @@ function ChartDatasetDataSetup({
   chart,
   onUpdateCdc,
   onUpdateVisualization,
-  onEditDataset,
 }) {
   const dispatch = useDispatch();
   const params = useParams();
   const [repairingVisualization, setRepairingVisualization] = useState(false);
   const [selectedLayerId, setSelectedLayerId] = useState(null);
-  const user = useSelector(selectUser);
-  const team = useSelector(selectTeam);
   const fieldsSchema = cdc.Dataset?.fieldsSchema || dataset?.fieldsSchema || {};
   const fieldOptions = useMemo(
     () => getDatasetFieldOptionsFromSchema(fieldsSchema),
@@ -378,6 +375,9 @@ function ChartDatasetDataSetup({
   const selectedLayer = bindingLayers.find((layer) => layer.id === selectedLayerId)
     || bindingLayers[0];
   const requirements = getLayerFieldRequirements(selectedLayer?.mark || chart.type);
+  const mapOptions = selectedLayer?.options?.map || {};
+  const mapPoints = mapOptions.mode === "points";
+  const mapCoordinates = mapOptions.coordinates || (selectedLayer?.encoding?.point ? "geojson" : "fields");
   const dimensionRole = getDimensionRole(selectedLayer);
   const dimensionField = selectedLayer?.encoding?.[dimensionRole]?.field || null;
   const dimensionNullPolicy = selectedLayer?.encoding?.[dimensionRole]?.nullPolicy || "exclude";
@@ -387,10 +387,10 @@ function ChartDatasetDataSetup({
   const timeField = getVisualizationTimeField(chart.visualization, cdc.id);
   const dateField = cdc.dateField || timeField || getPreferredDateField(dateFieldOptions);
   const canAddValue = MULTI_VALUE_MARKS.has(selectedLayer?.mark || chart.type);
-  const generatedSeries = (chart.chartData?.meta?.series || []).filter((series) => {
+  const generatedSeries = (chart.render?.metadata?.series || []).filter((series) => {
     return series.layerId === selectedLayer?.id;
   });
-  const layerWarnings = (chart.chartData?.meta?.warnings || []).filter((warning) => {
+  const layerWarnings = (chart.render?.metadata?.warnings || []).filter((warning) => {
     return warning.layerId === selectedLayer?.id;
   });
   const filterDataset = useMemo(() => ({
@@ -476,26 +476,8 @@ function ChartDatasetDataSetup({
       {selectedLayer && (
         <>
           <div>
-            <div className="mb-4 flex items-start">
-              {canAccess("projectAdmin", user.id, team?.TeamRoles) && (
-                <Tooltip>
-                  <Tooltip.Trigger>
-                    <Button
-                      aria-label="Edit dataset"
-                      variant="tertiary"
-                      size="sm"
-                      onPress={onEditDataset}
-                    >
-                      <LuSettings size={16} /> Edit dataset
-                    </Button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>Edit dataset</Tooltip.Content>
-                </Tooltip>
-              )}
-            </div>
-
             {bindingLayers.length > 1 && (
-              <div className="mb-4 rounded-xl bg-content2/40 p-2">
+              <div className="mb-4 rounded-xl bg-surface-secondary/40 p-2">
                 <div className="mb-2 px-1 text-xs font-medium text-foreground-500">
                   Choose a value to edit
                 </div>
@@ -519,7 +501,84 @@ function ChartDatasetDataSetup({
                 <div className="text-sm font-medium">Refresh the chart to discover fields</div>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
+              <div className="chart-settings-fields">
+                {requirements.map && (
+                  <>
+                    <FieldPicker
+                      label="Map display"
+                      placeholder="Select a display"
+                      description="Fill regions or show points at their coordinates."
+                      fieldOptions={[
+                        { value: "regions", text: "Filled regions" },
+                        { value: "points", text: "Points" },
+                      ]}
+                      value={mapOptions.mode || "regions"}
+                      onChange={(mode) => _commitVisualization(updateLayerMap(chart.visualization, selectedLayer.id, { mode }))}
+                    />
+                    <FieldPicker
+                      label="Map area"
+                      placeholder="Select an area"
+                      description="Country maps show the available states, provinces, or local regions."
+                      fieldOptions={mapManifest.maps.map((map) => ({ value: map.id, text: map.name }))}
+                      value={mapOptions.area || "world"}
+                      onChange={(area) => _commitVisualization(updateLayerMap(chart.visualization, selectedLayer.id, { area }))}
+                    />
+                    {mapPoints && (
+                      <FieldPicker
+                        label="Coordinate format"
+                        placeholder="Select a format"
+                        description="Use separate coordinate fields or a GeoJSON Point object."
+                        fieldOptions={[
+                          { value: "fields", text: "Latitude and longitude fields" },
+                          { value: "geojson", text: "GeoJSON Point" },
+                        ]}
+                        value={mapCoordinates}
+                        onChange={(coordinates) => _commitVisualization(updateLayerMap(chart.visualization, selectedLayer.id, { coordinates }))}
+                      />
+                    )}
+                    {mapPoints && mapCoordinates === "geojson" && (
+                      <FieldPicker
+                        label="Point field"
+                        placeholder="Select a GeoJSON Point field"
+                        description="Select the object that contains the Point type and coordinates."
+                        fieldOptions={fieldOptions.filter((field) => ["object", "record"].includes(field.type))}
+                        value={selectedLayer.encoding?.point?.field}
+                        onChange={(value) => _updateField("point", value)}
+                      />
+                    )}
+                    {mapPoints && mapCoordinates === "fields" && ["latitude", "longitude"].map((role) => (
+                      <FieldPicker
+                        key={role}
+                        label={role === "latitude" ? "Latitude" : "Longitude"}
+                        placeholder={`Select ${role}`}
+                        description="Use coordinates in decimal degrees."
+                        fieldOptions={fieldOptions.filter((field) => ["number", "string"].includes(field.type))}
+                        value={selectedLayer.encoding?.[role]?.field}
+                        onChange={(value) => _updateField(role, value)}
+                      />
+                    ))}
+                    <FieldPicker
+                      label={mapPoints ? "Point label" : "Location"}
+                      placeholder={mapPoints ? "Use coordinates as labels" : "Select a country or region field"}
+                      description={mapPoints ? "Optional name for each point." : "Use country or region names or codes."}
+                      fieldOptions={fieldOptions.filter((field) => ["number", "string"].includes(field.type))}
+                      value={selectedLayer.encoding?.location?.field}
+                      isClearable={mapPoints}
+                      onChange={(value) => _updateField("location", value)}
+                    />
+                  </>
+                )}
+                {requirements.coordinates && ["x", "y"].map((role) => (
+                  <FieldPicker
+                    key={role}
+                    label={`${role.toUpperCase()} field`}
+                    placeholder="Select a numeric field"
+                    fieldOptions={fieldOptions.filter((field) => ["number", "string"].includes(field.type))}
+                    value={selectedLayer.encoding?.[role]?.field}
+                    onChange={(value) => _updateField(role, value)}
+                  />
+                ))}
+
                 {requirements.collection && (
                   <FieldPicker
                     label="Rows"
@@ -553,51 +612,57 @@ function ChartDatasetDataSetup({
                   <>
                     <FieldPicker
                       label="Value"
-                      placeholder="Select a value field"
+                      placeholder={requirements.map ? "Count rows" : "Select a value field"}
+                      isClearable={requirements.map}
                       description="The value to measure, count, or aggregate."
                       fieldOptions={fieldOptions.filter((field) => field.type !== "array")}
                       value={valueField}
                       onChange={(value) => _updateField("value", value)}
                     />
-                    <Select
-                      placeholder="Choose an aggregation"
-                      onChange={(aggregate) => {
-                        const nextVisualization = updateLayerAggregation(
-                          chart.visualization,
-                          selectedLayer.id,
-                          aggregate
-                        );
-                        _commitVisualization(nextVisualization);
-                      }}
-                      value={selectedLayer.encoding?.value?.aggregate || "none"}
-                      selectionMode="single"
-                      variant="secondary"
-                      aria-label="Value aggregation"
-                    >
-                      <Label>Summarize by</Label>
-                      <Select.Trigger>
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox>
-                          {AGGREGATIONS.map((aggregate) => (
-                            <ListBox.Item
-                              key={aggregate.id}
-                              id={aggregate.id}
-                              textValue={aggregate.label}
-                            >
-                              {aggregate.label}
-                              <ListBox.ItemIndicator />
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
+                    {(!requirements.map || valueField) && (
+                      <Select
+                        placeholder="Choose an aggregation"
+                        onChange={(aggregate) => {
+                          const nextVisualization = updateLayerAggregation(
+                            chart.visualization,
+                            selectedLayer.id,
+                            aggregate
+                          );
+                          _commitVisualization(nextVisualization);
+                        }}
+                        value={selectedLayer.encoding?.value?.aggregate || "none"}
+                        selectionMode="single"
+                        variant="secondary"
+                        aria-label="Value aggregation"
+                      >
+                        <Label>Summarize by</Label>
+                        <Select.Trigger>
+                          <Select.Value />
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            {AGGREGATIONS.map((aggregate) => (
+                              <ListBox.Item
+                                key={aggregate.id}
+                                id={aggregate.id}
+                                textValue={aggregate.label}
+                              >
+                                {aggregate.label}
+                                <ListBox.ItemIndicator />
+                              </ListBox.Item>
+                            ))}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                    )}
 
-                    {["kpi", "avg", "gauge"].includes(selectedLayer.mark) && (
+                    {["line", "bar", "horizontalBar", "kpi", "avg", "gauge"].includes(selectedLayer.mark) && (
                       <LayerGoalField
                         key={`${selectedLayer.id}-${selectedLayer.goal ?? "none"}`}
+                        description={["line", "bar", "horizontalBar"].includes(selectedLayer.mark)
+                          ? "Draw a reference line at this value."
+                          : "Use this value for the KPI progress indicator."}
                         initialValue={selectedLayer.goal}
                         onSave={(goal) => {
                           const nextVisualization = updateLayerGoal(
@@ -610,17 +675,7 @@ function ChartDatasetDataSetup({
                       />
                     )}
 
-                    {canAddValue && (
-                      <Button
-                        className="self-start"
-                        size="sm"
-                        variant="tertiary"
-                        onPress={_addValue}
-                      >
-                        <LuPlus size={14} />
-                        Add another value
-                      </Button>
-                    )}
+
                   </>
                 )}
 
@@ -637,7 +692,7 @@ function ChartDatasetDataSetup({
                     />
 
                     {breakdownField && generatedSeries.length > 0 && (
-                      <div>
+                      <div className="chart-settings-full">
                         <div className="mb-2 flex items-center gap-2">
                           <div className="text-xs font-medium text-foreground-500">
                             Generated series
@@ -663,10 +718,22 @@ function ChartDatasetDataSetup({
                   </>
                 )}
 
+                {canAddValue && (
+                  <Button
+                    className="chart-settings-full self-start justify-self-start"
+                    size="sm"
+                    variant="tertiary"
+                    onPress={_addValue}
+                  >
+                    <LuPlus size={14} />
+                    Add another value
+                  </Button>
+                )}
+
                 {requirements.dimension && dimensionField && (
                   <Accordion
                     aria-label="Data grouping options"
-                    className="bg-surface-secondary"
+                    className="chart-settings-full bg-surface-secondary"
                     variant="surface"
                   >
                     <Accordion.Item id="empty-values" textValue="Empty values">
@@ -762,7 +829,10 @@ function ChartDatasetDataSetup({
             <Alert status="warning" key={`${warning.code}-${warning.layerId}`}>
               <Alert.Indicator />
               <Alert.Content>
-                <Alert.Title>Large number of generated series</Alert.Title>
+                <Alert.Title>
+                  {selectedLayer.mark === "scatter" ? "Check point values"
+                    : selectedLayer.mark === "map" ? "Check map locations" : "Large number of generated series"}
+                </Alert.Title>
                 <Alert.Description>{warning.message}</Alert.Description>
               </Alert.Content>
             </Alert>
@@ -810,7 +880,7 @@ function ChartDatasetDataSetup({
       <Separator />
 
       <div>
-        <div className="font-semibold text-foreground">Filters</div>
+        <div className="text-sm font-semibold text-foreground">Filters</div>
         <div className="mb-3 text-sm text-foreground-500">
           Filter rows before chart values are calculated.
         </div>
@@ -842,7 +912,6 @@ ChartDatasetDataSetup.propTypes = {
   chart: PropTypes.object.isRequired,
   onUpdateCdc: PropTypes.func.isRequired,
   onUpdateVisualization: PropTypes.func.isRequired,
-  onEditDataset: PropTypes.func.isRequired,
 };
 
 export default ChartDatasetDataSetup;

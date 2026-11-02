@@ -1,3 +1,6 @@
+const { callAiProvider } = require("../../usage");
+const { MAP_CHART_RULES, FORMULA_RULES } = require("../entityCreationRules");
+
 async function suggestChart(payload) {
   const {
     question, result_shape
@@ -16,15 +19,24 @@ async function suggestChart(payload) {
   // Use AI to suggest appropriate chart type
   const prompt = `Based on the question "${question}" and result columns ${JSON.stringify(result_shape.columns)}, suggest the most appropriate Chartbrew chart type and configuration.
 
-Available chart types: line, bar, pie, doughnut, radar, polar, table, kpi, avg, gauge.
+Available chart types: line, bar, horizontalBar, pie, doughnut, radar, polar, table, kpi, avg, gauge, matrix, map.
+
+${MAP_CHART_RULES}
+${FORMULA_RULES}
+For map suggestions, return the geographic roles in encodings and map settings in options.map. Suggest maps only when the result fields contain geographic data.
 
 Respond with JSON only: { "type": "...", "title": "...", "encodings": {}, "options": {} }`;
 
   try {
-    const response = await global.openaiClient.chat.completions.create({
-      model: global.openAiModel || "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 300,
+    const response = await callAiProvider({
+      client: global.openaiClient,
+      api: "chat",
+      purpose: "suggest_chart",
+      request: {
+        model: global.openAiModel || "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 300,
+      },
     });
 
     const suggestion = JSON.parse(response.choices[0].message.content);

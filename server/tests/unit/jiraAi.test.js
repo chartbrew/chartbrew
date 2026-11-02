@@ -1,5 +1,6 @@
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -14,6 +15,11 @@ const jiraResolver = require("../../sources/plugins/jira/ai/jira.resolver");
 const jiraConnection = require("../../sources/plugins/jira/jira.connection");
 
 describe("Jira AI planner", () => {
+  beforeEach(() => {
+    const execution = require("../../modules/sourceExecution");
+    vi.spyOn(execution, "runSourceExecution").mockImplementation((_options, operation) => operation());
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

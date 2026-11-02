@@ -10,7 +10,7 @@ describe("nodemail React Email templates", () => {
   beforeEach(() => {
     vi.resetModules();
     process.env.NODE_ENV = "test";
-    process.env.CB_ADMIN_MAIL_DEV = "support@chartbrew.com";
+    process.env.CB_ADMIN_MAIL = "support@chartbrew.com";
   });
 
   it("renders the forgot password React email template into HTML", async () => {
@@ -35,7 +35,7 @@ describe("nodemail React Email templates", () => {
   });
 
   it("renders the email update template into HTML", async () => {
-    const updateUrl = "https://app.chartbrew.com/user/profile?email=test-token";
+    const updateUrl = "https://app.chartbrew.com/settings/profile?email=test-token";
     const mailModule = await import("../../modules/mail.js");
     const mail = mailModule.default || mailModule;
 
@@ -120,5 +120,102 @@ describe("nodemail React Email templates", () => {
     expect(html).toContain("New snapshot for North Star Metrics");
     expect(html).toContain("View live dashboard");
     expect(html).toContain(snapshotUrl);
+  });
+
+  it("renders a changes-only email with React Email", async () => {
+    const mailModule = await import("../../modules/mail.js");
+    const mail = mailModule.default || mailModule;
+    const result = await mail.sendObservationDigest({
+      attentionItems: [],
+      contentMode: "changes_only",
+      healthItems: [{ message: "A dataset could not refresh" }],
+      kpis: [],
+      observations: [{
+        id: "observation-1",
+        impact: "negative",
+        project: { name: "Acquisition" },
+        summary: "Organic mobile traffic is the main driver.",
+        title: "Trial conversion decreased 18%",
+      }, {
+        id: "observation-2",
+        impact: "positive",
+        project: { name: "Revenue" },
+        summary: "Expansion revenue increased this week.",
+        title: "Revenue increased 30%",
+      }],
+      recipient: "maya@example.com",
+      recipientName: "Maya Chen",
+      scopeName: "All accessible dashboards",
+      teamName: "Acme Inc.",
+      waitingMetrics: [],
+    });
+
+    const message = JSON.parse(result.message);
+    const html = normalizeHtml(message.html);
+    expect(message.to).toEqual([{ address: "maya@example.com", name: "" }]);
+    expect(message.subject).toBe("Chartbrew Changes only — Acme Inc.");
+    expect(html).toContain("Hi Maya, here’s what needs attention");
+    expect(html).toContain("Trial conversion decreased 18%");
+    expect(html).toContain("Revenue increased 30%");
+    expect(html).toContain("color:#15803d");
+    expect(html).toContain("https://cdn2.chartbrew.com/logos/logo-light.png");
+    expect(html).toContain("A dataset could not refresh");
+    expect(html).toContain("Open Activity");
+  });
+
+  it("renders exact KPI periods, stable results, and corrections without waiting metrics", async () => {
+    const mailModule = await import("../../modules/mail.js");
+    const mail = mailModule.default || mailModule;
+    const result = await mail.sendObservationDigest({
+      attentionItems: [],
+      contentMode: "kpi_review",
+      healthItems: [],
+      kpis: [{
+        comparisonLabel: "July 2026 compared with June 2026",
+        comparisonValueLabel: "$100,000",
+        corrected: true,
+        currentValueLabel: "$118,000",
+        impact: "positive",
+        material: true,
+        name: "Revenue",
+        observationId: "observation-1",
+        project: { name: "Revenue" },
+        statusLabel: "Improved",
+      }, {
+        comparisonLabel: "Aug 8 compared with Aug 7, 2026",
+        comparisonValueLabel: "4.1%",
+        corrected: false,
+        currentValueLabel: "4.0%",
+        impact: "positive",
+        material: false,
+        name: "Failed sync rate",
+        observationId: null,
+        project: { name: "Operations" },
+        statusLabel: "No meaningful change",
+      }],
+      observations: [],
+      recipient: "maya@example.com",
+      recipientName: "Maya Chen",
+      scopeName: "All accessible dashboards",
+      teamName: "Acme Inc.",
+      waitingMetrics: [{
+        name: "Trial conversion",
+        project: { name: "Acquisition" },
+        reason: "The completed period has missing data",
+      }],
+    });
+
+    const message = JSON.parse(result.message);
+    const html = normalizeHtml(message.html);
+    expect(message.subject).toBe("Chartbrew KPI review — Acme Inc.");
+    expect(message.text).toContain("July 2026 compared with June 2026");
+    expect(html).toContain("Hi Maya, here’s your latest KPI review");
+    expect(html).toContain("Corrected · Improved");
+    expect(html).toContain("No meaningful change");
+    expect(html).toContain("2 updates from Acme Inc.");
+    expect(html).not.toContain("Waiting for complete data");
+    expect(html).not.toContain("Trial conversion");
+    expect(message.text).not.toContain("Trial conversion");
+    expect(message.text).not.toContain("The completed period has missing data");
   });
 });

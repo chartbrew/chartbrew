@@ -1,7 +1,7 @@
 const Sequelize = require("sequelize");
 const simplecrypt = require("simplecrypt");
 
-const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
+const settings = require("../../settings");
 
 const sc = simplecrypt({
   password: settings.secret,

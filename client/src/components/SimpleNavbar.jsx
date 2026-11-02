@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@heroui/react";
 
 import { useTheme } from "../modules/ThemeContext";
 import cbLogoDark from "../assets/cb_logo_dark.svg";
@@ -12,15 +13,25 @@ function SimpleNavbar() {
     <header className="z-50 border-b border-divider bg-surface">
       <div className="flex items-center justify-between px-4 py-3">
         <a href={`${SITE_HOST}`}>
-          <img alt="Chartbrew Logo" src={isDark ? cbLogoDark : cbLogoLight} width={150} />
+          <img alt="Chartbrew Logo" src={isDark ? cbLogoDark : cbLogoLight} width={132} />
         </a>
-        <nav className="flex items-center gap-4 text-sm">
-          <a className="text-foreground hover:text-accent" href="/login">
+        <nav className="flex items-center gap-2" aria-label="Account">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-foreground!"
+            render={(props) => <a {...props} href="/login" />}
+          >
             Login
-          </a>
-          <a className="text-foreground hover:text-accent" href="/signup">
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="text-foreground!"
+            render={(props) => <a {...props} href="/signup" />}
+          >
             Sign Up
-          </a>
+          </Button>
         </nav>
       </div>
     </header>

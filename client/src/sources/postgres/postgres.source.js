@@ -1,11 +1,12 @@
-import postgresLogo from "./assets/postgres.png";
-import postgresDarkLogo from "./assets/postgres-dark.png";
+import postgresLogo from "./assets/logo-light.svg";
+import postgresDarkLogo from "./assets/logo-dark.svg";
 
 const postgresSource = {
   id: "postgres",
   type: "postgres",
   subType: "postgres",
   name: "PostgreSQL",
+  description: "Query tables and views with SQL.",
   category: "database",
   capabilities: {
     ai: {

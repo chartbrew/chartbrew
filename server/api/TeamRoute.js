@@ -1,3 +1,4 @@
+const { teamRoles } = require("../../shared/roles.json");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
@@ -6,6 +7,14 @@ const TeamController = require("../controllers/TeamController");
 const UserController = require("../controllers/UserController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const { getTeamAnalytics } = require("../modules/platformAnalytics");
+const {
+  discoverBusinessProfile,
+  normalizeWebsiteUrl,
+} = require("../modules/teamOnboarding/businessProfileDiscovery");
+
+const starterSuggestions = require("../modules/ai/homeSuggestions/onboarding");
+const { log: logHomeSuggestions } = require("../modules/ai/homeSuggestions/service");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -14,13 +23,53 @@ const apiLimiter = (max = 10) => {
   });
 };
 
+const onboardingDiscoveryUserLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => `user:${req.user?.id || "unknown"}`,
+  message: { error: "Please wait before reading another website." },
+});
+
+const onboardingDiscoveryDomainLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  keyGenerator: (req) => {
+    try {
+      return `domain:${new URL(normalizeWebsiteUrl(req.body?.websiteUrl)).hostname}`;
+    } catch (error) {
+      return "domain:invalid";
+    }
+  },
+  message: { error: "Please wait before reading this website again." },
+});
+
 function filterProjects(projects, teamRole) {
+  if (teamRoles.includes(teamRole?.role)) return projects;
   return projects.filter((p) => _.indexOf(teamRole.projects, p.id) > -1);
 }
 
 module.exports = (app) => {
   const teamController = new TeamController();
   const userController = new UserController();
+
+  const handleOnboardingDiscovery = (requiresTeamAccess) => {
+    return async (req, res) => {
+      try {
+        if (requiresTeamAccess) {
+          const teamRole = await teamController.getTeamRole(req.params.id, req.user.id);
+          if (!teamRole || !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+            return res.status(403).send({ error: "Access denied" });
+          }
+        }
+        const profile = await discoverBusinessProfile(req.body?.websiteUrl);
+        return res.status(200).send(profile);
+      } catch (error) {
+        return res.status(400).send({
+          error: "We could not read that website. Check the address or add the details yourself.",
+        });
+      }
+    };
+  };
 
   const checkPermissions = (actionType = "readOwn", entity = "team") => {
     return async (req, res, next) => {
@@ -38,6 +87,7 @@ module.exports = (app) => {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      req.user.teamRole = teamRole;
       const { role } = teamRole;
 
       // Handle permissions for teamOwner and teamAdmin
@@ -46,7 +96,7 @@ module.exports = (app) => {
         return next();
       }
 
-      if (role === "projectAdmin" || role === "projectViewer" || role === "projectEditor") {
+      if (["teamEditor", "teamViewer", "projectAdmin", "projectViewer", "projectEditor"].includes(role)) {
         // const connections = await connectionController.findByProjects(projects);
         // if (!connections || connections.length === 0) {
         //   return res.status(404).json({ message: "No connections found" });
@@ -78,7 +128,7 @@ module.exports = (app) => {
     return teamController.findById(req.params.id)
       .then((team) => {
         const modTeam = team;
-        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, req.user));
+        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, req.user.teamRole));
         return res.status(200).send(modTeam);
       })
       .catch((error) => {
@@ -88,6 +138,27 @@ module.exports = (app) => {
       });
   });
   // --------------------------------------
+
+  app.get("/team/:id/analytics", verifyToken, apiLimiter(30), async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const teamId = Number(req.params.id);
+    if (!/^[1-9]\d*$/.test(req.params.id) || !Number.isSafeInteger(teamId)) {
+      return res.status(400).send({ error: "Choose a valid team." });
+    }
+
+    try {
+      const teamRole = await teamController.getTeamRole(teamId, req.user.id);
+      if (!["teamOwner", "teamAdmin"].includes(teamRole?.role)) {
+        return res.status(403).send({ error: "You do not have access to this team's analytics." });
+      }
+      return res.send(await getTeamAnalytics(teamId, req.query.days));
+    } catch (error) {
+      const statusCode = error.statusCode || 500;
+      return res.status(statusCode).send({
+        error: statusCode === 400 ? error.message : "Could not load team analytics. Try again.",
+      });
+    }
+  });
 
   // route to create a team
   app.post("/team", verifyToken, apiLimiter(10), async (req, res) => {
@@ -99,7 +170,69 @@ module.exports = (app) => {
       const team = await teamController.createTeam(req.body, req.user.id);
       return res.status(200).send(team);
     } catch (error) {
-      return res.status(400).send({ error: "Error creating team" });
+      return res.status(400).send({ error: error.message || "Error creating team" });
+    }
+  });
+  // --------------------------------------
+
+  app.post(
+    "/team/onboarding/discover",
+    verifyToken,
+    onboardingDiscoveryUserLimiter,
+    onboardingDiscoveryDomainLimiter,
+    handleOnboardingDiscovery(false)
+  );
+  // --------------------------------------
+
+  app.post(
+    "/team/:id/onboarding/discover",
+    verifyToken,
+    onboardingDiscoveryUserLimiter,
+    onboardingDiscoveryDomainLimiter,
+    handleOnboardingDiscovery(true)
+  );
+  // --------------------------------------
+
+  app.patch("/team/:id/onboarding", verifyToken, apiLimiter(20), async (req, res) => {
+    try {
+      const team = await teamController.saveOnboarding(req.params.id, req.user.id, req.body);
+      await starterSuggestions.queueSuggestions(team.id, app.get("onboardingSuggestionsQueue"))
+        .catch(() => logHomeSuggestions("starter_queue_failed"));
+      return res.status(200).send(team);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: error.message || "Unable to save team setup" });
+    }
+  });
+  // --------------------------------------
+
+  app.put("/team/:id/business-profile", verifyToken, apiLimiter(20), async (req, res) => {
+    try {
+      const profile = await teamController.updateBusinessProfile(req.params.id, req.user.id, req.body);
+      await starterSuggestions.queueSuggestions(profile.team_id, app.get("onboardingSuggestionsQueue"))
+        .catch(() => logHomeSuggestions("starter_queue_failed"));
+      return res.status(200).send(profile);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: error.message || "Unable to save business profile" });
+    }
+  });
+  // --------------------------------------
+
+  app.get("/team/:id/business-profile/logo", verifyToken, async (req, res) => {
+    try {
+      const profile = await teamController.getBusinessProfileLogo(req.params.id, req.user.id);
+      if (!profile?.logoData || !profile?.logoMimeType) {
+        return res.status(404).send({ error: "Business logo not found" });
+      }
+      res.set("Content-Type", profile.logoMimeType);
+      res.set("Cache-Control", "private, max-age=3600");
+      res.set("X-Content-Type-Options", "nosniff");
+      if (profile.updatedAt) res.set("Last-Modified", profile.updatedAt.toUTCString());
+      return res.status(200).send(profile.logoData);
+    } catch (error) {
+      if (error.message === "401") return res.status(403).send({ error: "Access denied" });
+      return res.status(400).send({ error: "Unable to load business logo" });
     }
   });
   // --------------------------------------
@@ -124,6 +257,9 @@ module.exports = (app) => {
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
         gTeamRole = teamRole;
+        if (req.body.aiSuggestionsEnabled !== undefined && !["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+          throw new Error(401);
+        }
         const permission = accessControl.can(teamRole.role).updateOwn("team");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
@@ -271,14 +407,14 @@ module.exports = (app) => {
 
   // route to create a new API key to access the team content
   app.post("/team/:id/apikey", verifyToken, checkPermissions("createAny", "apiKey"), (req, res) => {
-    if (!req.body.name) return res.status(400).send("Missing required fields.");
+    if (!req.body.name) return res.status(400).send({ error: "A key name is required." });
 
     return teamController.createApiKey(req.params.id, req.user, req.body)
       .then((apiKey) => {
         return res.status(200).send(apiKey);
       })
       .catch((err) => {
-        return res.status(400).send(err);
+        return res.status(400).send({ error: err.message || "The key could not be created." });
       });
   });
   // --------------------------------------

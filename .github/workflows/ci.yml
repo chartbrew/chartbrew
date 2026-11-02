@@ -1,12 +1,13 @@
 name: CI Tests
 
 on:
-  push: # Run on all branches for early issue detection
+  push:
+    branches: [ main, develop, v6 ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, v6 ]
 
 env:
-  NODE_VERSION: '22.22.1'
+  NODE_VERSION: '22.23.4'
   NPM_VERSION: '11.11.0'
   CB_SKIP_PLAYWRIGHT_INSTALL: '1'
 
@@ -49,7 +50,7 @@ jobs:
 
   # Code quality checks
   lint:
-    name: Code Quality
+    name: Code Quality & Unit Tests
     runs-on: ubuntu-latest
     
     steps:
@@ -68,6 +69,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        npm run prepareSettings
         cd server
         npm ci
 
@@ -75,6 +77,14 @@ jobs:
       run: |
         cd server
         npm run lint
+
+    - name: Run fast unit tests
+      run: |
+        cd server
+        npm run test:pure
+      env:
+        CI: true
+        NODE_ENV: test
 
     - name: Check for backend lint warnings
       run: |
@@ -84,9 +94,12 @@ jobs:
 
   # Backend tests with MySQL
   test-backend-mysql:
-    name: Backend Tests (MySQL)
+    name: Backend Tests (MySQL ${{ matrix.shard }})
     runs-on: ubuntu-latest
-    needs: [security, lint]
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(github.event_name == 'pull_request' && '["1/2", "2/2"]' || '["full"]') }}
     
     steps:
     - name: Checkout code
@@ -104,13 +117,26 @@ jobs:
 
     - name: Install dependencies
       run: |
+        npm run prepareSettings
         cd server
         npm ci
 
-    - name: Run tests with coverage (MySQL)
+    - name: Run database tests (MySQL)
+      if: github.event_name == 'pull_request'
       run: |
         cd server
-        export CB_DB_DIALECT_DEV=mysql
+        export CB_DB_DIALECT=mysql
+        export FORCE_CONTAINERS=true
+        npm run test:database -- --shard=${{ matrix.shard }}
+      env:
+        CI: true
+        NODE_ENV: test
+
+    - name: Run tests with coverage (MySQL)
+      if: github.event_name == 'push'
+      run: |
+        cd server
+        export CB_DB_DIALECT=mysql
         export FORCE_CONTAINERS=true
         npm run test:coverage
       env:
@@ -118,6 +144,7 @@ jobs:
         NODE_ENV: test
 
     - name: Upload coverage reports
+      if: github.event_name == 'push'
       uses: codecov/codecov-action@v5
       with:
         directory: ./server/coverage
@@ -128,11 +155,10 @@ jobs:
         slug: chartbrew/chartbrew
       continue-on-error: true
 
-  # Backend tests with PostgreSQL (migration testing)
+  # Backend integration tests with PostgreSQL
   test-backend-postgres:
-    name: Backend Tests (PostgreSQL)
+    name: Backend Integration Tests (PostgreSQL)
     runs-on: ubuntu-latest
-    needs: [security, lint]
     
     steps:
     - name: Checkout code
@@ -153,13 +179,49 @@ jobs:
         cd server
         npm ci
 
-    - name: Run tests (PostgreSQL)
+    - name: Run integration tests (PostgreSQL)
       run: |
         cd server
-        export CB_DB_DIALECT_DEV=postgres
+        export CB_DB_DIALECT=postgres
         export FORCE_CONTAINERS=true
         export PGSSLMODE=disable
-        npm run test:run
+        npm run test:integration
+      env:
+        CI: true
+        NODE_ENV: test
+
+  test-echarts-browser:
+    name: ECharts Browser Rendering
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Pin npm
+      run: npm install -g npm@${{ env.NPM_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Install Chromium
+      run: |
+        cd server
+        npm run install:playwright
+
+    - name: Run fixed-size browser tests
+      run: |
+        cd server
+        npm run test:echarts-browser
       env:
         CI: true
         NODE_ENV: test
@@ -193,13 +255,11 @@ jobs:
       run: |
         cd client
         npm run lint
-      continue-on-error: true
 
     - name: Run frontend tests
       run: |
         cd client
         npm test
-      continue-on-error: true
       env:
         CI: true
 
@@ -207,7 +267,6 @@ jobs:
   build:
     name: Build Verification
     runs-on: ubuntu-latest
-    needs: [test-backend-mysql, test-backend-postgres]
     
     steps:
     - name: Checkout code

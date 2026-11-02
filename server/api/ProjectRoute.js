@@ -1,3 +1,4 @@
+const { teamRoles, viewerRoles } = require("../../shared/roles.json");
 const path = require("path");
 const fs = require("fs");
 const rateLimit = require("express-rate-limit");
@@ -5,12 +6,14 @@ const { nanoid } = require("nanoid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
+const { saveDashboardLayout } = require("../modules/dashboardLayout");
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const SharePolicyController = require("../controllers/SharePolicyController");
 const verifyToken = require("../modules/verifyToken");
+const { saveReportAppearance } = require("../modules/reportAppearance");
 const accessControl = require("../modules/accessControl");
 const getUserFromToken = require("../modules/getUserFromToken");
 const db = require("../models/models");
@@ -63,8 +66,9 @@ module.exports = (app) => {
       if (!teamRole?.role) {
         return res.status(403).json({ message: "Access denied" });
       }
+      req.user.teamRole = teamRole;
 
-      if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+      if (teamRoles.includes(teamRole.role)) {
         const permission = accessControl.can(teamRole.role)[actionType]("project");
         if (!permission.granted) {
           return res.status(403).json({ message: "Access denied" });
@@ -94,6 +98,23 @@ module.exports = (app) => {
       return res.status(403).json({ message: "Access denied" });
     };
   };
+
+  app.put("/project/:id/report-appearance", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      return res.json(await saveReportAppearance(req.params.id, req.body));
+    } catch (error) {
+      return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "The appearance could not be saved. Try again." });
+    }
+  });
+
+  app.put("/project/:id/layout", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      await saveDashboardLayout(req.params.id, req.body);
+      return res.json(await projectController.findById(req.params.id));
+    } catch (error) {
+      return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "Could not save the layout. Try again." });
+    }
+  });
 
   /*
   ** [MASTER] Route to get all the projects
@@ -134,7 +155,10 @@ module.exports = (app) => {
   ** Route to get a project by ID
   */
   app.get("/project/:id", verifyToken, checkPermissions("readOwn"), (req, res) => {
-    return projectController.findById(req.params.id)
+    return projectController.findById(req.params.id, {
+      refreshPreparedData: true,
+      includeDrafts: !viewerRoles.includes(req.user.teamRole.role),
+    })
       .then((project) => {
         return res.status(200).send(project);
       })
@@ -346,8 +370,7 @@ module.exports = (app) => {
         if (
           teamRole
           && (
-            teamRole.role === "teamOwner"
-            || teamRole.role === "teamAdmin"
+            teamRoles.includes(teamRole.role)
             || hasProjectAccess
           )
         ) {

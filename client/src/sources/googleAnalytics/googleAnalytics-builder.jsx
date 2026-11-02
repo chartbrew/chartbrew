@@ -469,7 +469,7 @@ function GaBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <div className="grid grid-cols-12 gap-4 pl-1 pr-1 md:pl-4 md:pr-4">
+      <div className="grid grid-cols-12 gap-4 px-1 pt-4 md:px-4">
         <div className="col-span-12 sm:col-span-7">
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-12 flex justify-between">
@@ -486,7 +486,7 @@ function GaBuilder(props) {
                   <Tooltip.Trigger>
                     <Badge.Anchor className="relative inline-flex">
                       <Button
-                        variant="tertiary"
+                        variant="secondary"
                         size="sm"
                         onPress={() => setShowTransform(true)}
                       >
@@ -767,7 +767,7 @@ function GaBuilder(props) {
             {dateHelp && (
               <div className="col-span-12">
                 <div
-                  className={"bg-content2 rounded-md p-4 pl-5 pr-5"}
+                  className={"bg-surface-secondary rounded-md p-4 pl-5 pr-5"}
                 >
                   <Row className={"gap-1"}>
                     <Text>{"You can use relative dates such as "}</Text>
@@ -838,14 +838,9 @@ function GaBuilder(props) {
               />
             </div>
           </Row>
-          <div className="h-4" />
-          <Row align="center">
-            <LuInfo />
-            <div className="w-2" />
-            <Text size="sm">
-              {"This is a preview and it might not show all data in order to keep things fast in the UI."}
-            </Text>
-          </Row>
+          <p className="mt-3 pb-6 text-xs leading-5 text-default-500">
+            {"This preview may not show all data."}
+          </p>
         </div>
       </div>
 

@@ -309,7 +309,7 @@ function RealtimeDbBuilder(props) {
   };
 
   return (
-    <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
+    <div style={styles.container} className="px-1 pt-4 md:px-4">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 sm:col-span-7">
           <Row justify="space-between" align="center">
@@ -326,7 +326,7 @@ function RealtimeDbBuilder(props) {
                 <Tooltip.Trigger>
                   <Badge.Anchor className="relative inline-flex">
                     <Button
-                      variant="tertiary"
+                      variant="secondary"
                       size="sm"
                       onPress={() => setShowTransform(true)}
                     >
@@ -671,14 +671,9 @@ function RealtimeDbBuilder(props) {
               />
             </div>
           </Row>
-          <div className="h-4" />
-          <Row align="center">
-            <LuInfo />
-            <div className="w-2" />
-            <Text size="sm">
-              {"This is a preview and it might not show all data in order to keep things fast in the UI."}
-            </Text>
-          </Row>
+          <p className="mt-3 pb-6 text-xs leading-5 text-default-500">
+            {"This preview may not show all data."}
+          </p>
         </div>
       </div>
 

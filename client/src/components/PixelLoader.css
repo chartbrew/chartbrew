@@ -1,0 +1,90 @@
+.pixel-loader {
+  --loader-cycle: 1.2s;
+  --pixel-color: #048bde;
+  --pixel-highlight: color-mix(in srgb, var(--pixel-color) 65%, white);
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.pixel-loader[data-palette="warm"] { --pixel-color: #eea267; }
+.pixel-loader[data-palette="orange"] { --pixel-color: #f17041; }
+
+.pixel-loader rect {
+  fill: var(--pixel-color);
+  animation: pixel-loader-trail var(--loader-cycle) linear infinite;
+  animation-delay: calc(var(--loader-cycle) * var(--phase) / -8);
+}
+
+.pixel-loader-orbit rect:nth-child(5),
+.pixel-loader-comet rect:nth-child(5),
+.pixel-loader-twin rect:nth-child(5) {
+  animation: none;
+  opacity: 0.08;
+}
+
+.pixel-loader-comet rect { animation-name: pixel-loader-comet; }
+.pixel-loader-twin rect,
+.pixel-loader-ripple rect { animation-name: pixel-loader-beacon; }
+.pixel-loader-columns rect,
+.pixel-loader-bars rect { animation-duration: calc(var(--loader-cycle) * (1 + var(--column) * 0.23)); }
+.pixel-loader-columns rect,
+.pixel-loader-diagonal rect { animation-name: pixel-loader-column; }
+.pixel-loader-bars rect { animation-name: pixel-loader-fill; }
+.pixel-loader-heat rect {
+  animation-name: pixel-loader-heat;
+  animation-duration: calc(var(--loader-cycle) * (0.85 + var(--column) * 0.17 + var(--row) * 0.11));
+}
+
+@keyframes pixel-loader-trail {
+  0%, 100% { opacity: 1; fill: var(--pixel-highlight); }
+  12.5% { opacity: 0.82; }
+  25% { opacity: 0.6; }
+  37.5% { opacity: 0.35; fill: var(--pixel-color); }
+  50% { opacity: 0.18; }
+  62.5%, 87.5% { opacity: 0.06; }
+}
+
+@keyframes pixel-loader-comet {
+  0%, 100% { opacity: 1; fill: var(--pixel-highlight); }
+  15% { opacity: 0.85; }
+  35% { opacity: 0.6; }
+  55% { opacity: 0.35; fill: var(--pixel-color); }
+  75%, 90% { opacity: 0.08; }
+}
+
+@keyframes pixel-loader-beacon {
+  0%, 100% { opacity: 1; fill: var(--pixel-highlight); }
+  20% { opacity: 0.5; }
+  40% { opacity: 0.2; fill: var(--pixel-color); }
+  60%, 85% { opacity: 0.06; }
+}
+
+@keyframes pixel-loader-column {
+  0%, 100% { opacity: 0.08; fill: var(--pixel-color); }
+  18% { opacity: 0.35; }
+  35% { opacity: 1; fill: var(--pixel-highlight); }
+  55% { opacity: 0.65; }
+  72% { opacity: 0.2; }
+}
+
+@keyframes pixel-loader-fill {
+  0%, 100% { opacity: 0.08; fill: var(--pixel-color); }
+  18% { opacity: 0.4; }
+  28%, 60% { opacity: 1; fill: var(--pixel-highlight); }
+  78% { opacity: 0.35; }
+}
+
+@keyframes pixel-loader-heat {
+  0%, 100% { opacity: 0.12; fill: var(--pixel-color); }
+  20% { opacity: 0.55; }
+  40% { opacity: 0.25; }
+  60% { opacity: 1; fill: var(--pixel-highlight); }
+  80% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-loader rect {
+    animation: none;
+    opacity: 0.75;
+  }
+}

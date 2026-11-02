@@ -1,7 +1,11 @@
+const { teamRoles, viewerRoles } = require("../../shared/roles.json");
 const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
 
+const chartVersions = require("../controllers/ChartVersionController");
+const { mutationContext } = require("../modules/chartVersions");
 const ChartController = require("../controllers/ChartController");
+const { getPreview, placePreview } = require("../controllers/ChartPreviewController");
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const SharePolicyController = require("../controllers/SharePolicyController");
@@ -13,13 +17,14 @@ const alertController = require("../controllers/AlertController");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 const db = require("../models/models");
 const { startRun } = require("../modules/updateAudit");
+const { getDataRecovery } = require("../modules/dataRecovery");
 const {
   isOutboundPolicyError,
   serializeOutboundPolicyError,
 } = require("../modules/outboundTargetPolicy");
 const { verifyProjectPassword } = require("../modules/projectPassword");
 const { validateShareTokenPolicy, verifyShareToken } = require("../modules/shareToken");
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -32,6 +37,26 @@ module.exports = (app) => {
   const chartController = new ChartController();
   const projectController = new ProjectController();
   const teamController = new TeamController();
+
+  app.route("/chart-previews/:chart_id")
+    .all(apiLimiter(30), verifyToken, (_req, res, next) => {
+      res.set("Cache-Control", "private, no-store");
+      next();
+    })
+    .get(async (req, res) => {
+      try {
+        return res.json(await getPreview(req.params.chart_id, req.user.id));
+      } catch (error) {
+        return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "The preview could not load. Try again." });
+      }
+    })
+    .post(async (req, res) => {
+      try {
+        return res.json(await placePreview(req.params.chart_id, req.body.targetProjectId, req.user.id));
+      } catch (error) {
+        return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "The chart could not be placed. Try again." });
+      }
+    });
 
   const sendPolicyError = (res, error) => {
     if (!isOutboundPolicyError(error)) return false;
@@ -86,7 +111,7 @@ module.exports = (app) => {
 
     user.teamRole = teamRole;
 
-    if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+    if (teamRoles.includes(teamRole.role)) {
       return true;
     }
 
@@ -113,7 +138,7 @@ module.exports = (app) => {
       return Promise.reject(401);
     }
 
-    if (!chart.onReport) {
+    if (!chart.onReport || chart.draft) {
       return Promise.reject(401);
     }
 
@@ -148,7 +173,11 @@ module.exports = (app) => {
       }
     }
 
-    return { chart, project, hasAuthenticatedProjectAccess };
+    const hydratedChart = await chartController.hydratePreparedChart(chart, {
+      refresh: true,
+      timezone: project.timezone,
+    });
+    return { chart: hydratedChart, project, hasAuthenticatedProjectAccess };
   };
 
   const resolveRuntimeVariables = async (req, project, providedVariables = {}) => {
@@ -195,6 +224,12 @@ module.exports = (app) => {
       // check if the chart is part of the right project
       if (chartId && projectId) {
         const chart = await chartController.findById(req.params.chart_id);
+        if (!chart) {
+          return res.status(404).json({ message: "Chart not found" });
+        }
+        if (chart.draft && viewerRoles.includes(teamRole.role)) {
+          return res.status(404).json({ message: "Chart not found" });
+        }
         if (chart.project_id.toString() !== projectId.toString()) {
           return res.status(403).json({ message: "Access denied" });
         }
@@ -216,7 +251,7 @@ module.exports = (app) => {
         }
       }
 
-      if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+      if (teamRoles.includes(teamRole.role)) {
         const permission = accessControl.can(teamRole.role)[actionType](entity);
         if (!permission.granted) {
           return res.status(403).json({ message: "Access denied" });
@@ -302,7 +337,7 @@ module.exports = (app) => {
 
           const permission = accessControl.can(teamRole.role).readOwn("chart");
           if (permission.granted) {
-            if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+            if (teamRoles.includes(teamRole.role)) {
               return next();
             }
 
@@ -432,7 +467,7 @@ module.exports = (app) => {
     return chartController.findByProject(req.params.project_id)
       .then((charts) => {
         let filteredCharts = charts;
-        if (req.user?.teamRole?.role === "projectViewer") {
+        if (viewerRoles.includes(req.user?.teamRole?.role)) {
           filteredCharts = charts.filter((c) => !c.draft);
         }
         return res.status(200).send(filteredCharts);
@@ -447,7 +482,9 @@ module.exports = (app) => {
   ** Route to get a chart by id
   */
   app.get("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("readAny"), (req, res) => {
-    return chartController.findById(req.params.chart_id)
+    return chartController.findById(req.params.chart_id, null, {
+      refreshPreparedData: true,
+    })
       .then((chart) => {
         return res.status(200).send(chart);
       })
@@ -501,20 +538,37 @@ module.exports = (app) => {
   });
   // --------------------------------------------------------
 
+  const historyPath = "/project/:project_id/chart/:chart_id/versions";
+  const historyHandler = (action) => async (req, res) => {
+    res.set("Cache-Control", "private, no-store");
+    try {
+      const context = { userId: req.user.id, projectId: req.params.project_id };
+      const args = [req.params.chart_id, req.params.version, context];
+      if (action === "list") args[1] = req.query.before;
+      if (action === "restore") args[2] = mutationContext(req);
+      return res.json(await chartVersions[action](...args));
+    } catch (error) {
+      return res.status(error.statusCode || 500).json({
+        message: error.statusCode ? error.message : "Chart history could not load. Try again.",
+      });
+    }
+  };
+  app.get(historyPath, verifyToken, checkPermissions("updateOwn"), historyHandler("list"));
+  app.get(`${historyPath}/:version`, verifyToken, checkPermissions("updateOwn"), historyHandler("detail"));
+  app.post(`${historyPath}/:version/preview`, verifyToken, checkPermissions("updateOwn"), historyHandler("preview"));
+  app.post(`${historyPath}/:version/restore`, verifyToken, checkPermissions("updateOwn"), historyHandler("restore"));
+
   /*
   ** Route to update a chart
   */
-  app.put("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
-    return chartController.update(req.params.chart_id, req.body, req.user, req.query.justUpdates)
-      .then((chart) => {
-        return res.status(200).send(chart);
-      })
-      .catch((error) => {
-        if (error.message.indexOf("406") > -1) {
-          return res.status(406).send(error);
-        }
-        return res.status(400).send(error);
-      });
+  app.put("/project/:project_id/chart/:chart_id", verifyToken, checkPermissions("updateOwn"), async (req, res) => {
+    try {
+      const chart = await chartController.update(req.params.chart_id, req.body, req.user, req.query.justUpdates, mutationContext(req));
+      return res.status(200).send(chart);
+    } catch (error) {
+      return res.status(error.statusCode || 400).send({ message: error.message });
+    }
+
   });
   // --------------------------------------------------------
 
@@ -526,12 +580,14 @@ module.exports = (app) => {
     verifyToken,
     checkPermissions("updateOwn"),
     (req, res) => {
-      return chartController.repairVisualization(req.params.chart_id, req.body.bindingId)
+      return Promise.resolve().then(() => chartController.repairVisualization(
+        req.params.chart_id, req.body.bindingId, mutationContext(req)
+      ))
         .then((chart) => {
           return res.status(200).send(chart);
         })
         .catch((error) => {
-          return res.status(400).send({ message: error.message });
+          return res.status(error.statusCode || 400).send({ message: error.message });
         });
     }
   );
@@ -661,7 +717,8 @@ module.exports = (app) => {
       if (`${error}` === "413" && error.message === "413") {
         return res.status(413).send(`${error}`);
       }
-      return res.status(400).send(`${(error && error.message) || error}`);
+      const recovery = getDataRecovery(error);
+      return res.status(400).json({ message: recovery?.message || "The chart could not be updated. Try again.", ...(recovery ? { recovery } : {}) });
     }
   });
   // --------------------------------------------------------
@@ -740,7 +797,7 @@ module.exports = (app) => {
     if (req.params.share_string.length < 16) {
       return chartController.findById(req.params.share_string)
         .then(async (chart) => {
-          if (!chart.public) {
+          if (!chart.public || chart.draft) {
             return new Promise((resolve, reject) => reject(new Error("401")));
           }
 
@@ -833,8 +890,8 @@ module.exports = (app) => {
           name: chart.name,
           type: chart.type,
           subType: chart.subType,
-          chartDataUpdated: chart.chartDataUpdated,
-          chartData: chart.chartData,
+          preparedDataUpdatedAt: chart.preparedDataUpdatedAt,
+          render: chart.render,
           ChartDatasetConfigs: chart.ChartDatasetConfigs,
           mode: chart.mode,
           chartSize: chart.chartSize,
@@ -914,7 +971,7 @@ module.exports = (app) => {
   ** Route used to export data in spreadsheet format
   */
   app.post("/project/:project_id/chart/export", verifyToken, checkPermissions("readAny"), (req, res) => {
-    if (!req.user?.teamRole?.canExport && req.user?.teamRole?.role !== "teamOwner" && req.user.role !== "teamAdmin") {
+    if (!req.user?.teamRole?.canExport && !teamRoles.includes(req.user?.teamRole?.role)) {
       return new Promise((resolve, reject) => reject(new Error(401)));
     }
 
@@ -1179,11 +1236,11 @@ module.exports = (app) => {
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        const cdc = await chartController.createChartDatasetConfig(req.params.chart_id, req.body);
+        const cdc = await chartController.createChartDatasetConfig(req.params.chart_id, req.body, mutationContext(req));
 
         return res.status(200).send(cdc);
       } catch (error) {
-        return res.status(400).send({ error: (error && error.message) || error });
+        return res.status(error.statusCode || 400).send({ message: error.message || "The chart could not be saved. Try again." });
       }
     });
   // --------------------------------------------------------
@@ -1196,11 +1253,11 @@ module.exports = (app) => {
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        const cdc = await chartController.updateChartDatasetConfig(req.params.cdc_id, req.body);
+        const cdc = await chartController.updateChartDatasetConfig(req.params.cdc_id, req.body, mutationContext(req));
 
         return res.status(200).send(cdc);
       } catch (error) {
-        return res.status(400).send({ error: (error && error.message) || error });
+        return res.status(error.statusCode || 400).send({ message: error.message || "The chart could not be saved. Try again." });
       }
     });
   // --------------------------------------------------------
@@ -1213,11 +1270,11 @@ module.exports = (app) => {
     checkPermissions("updateOwn"),
     async (req, res) => {
       try {
-        await chartController.deleteChartDatasetConfig(req.params.cdc_id);
+        const saved = await chartController.deleteChartDatasetConfig(req.params.cdc_id, mutationContext(req));
 
-        return res.status(200).send({ removed: true });
+        return res.status(200).send({ removed: true, configurationVersion: saved.configurationVersion });
       } catch (error) {
-        return res.status(400).send({ error: (error && error.message) || error });
+        return res.status(error.statusCode || 400).send({ message: error.message || "The chart could not be saved. Try again." });
       }
     });
   // --------------------------------------------------------

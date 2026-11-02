@@ -1,13 +1,14 @@
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
-const { removeCompiledMetricAccumulation } = require("./sourceIntentRepair");
-const { normalizeTeamId, requireDatasetForTeam, requireProjectForTeam } = require("./teamScope");
+const { alignSourceChartBindings, removeCompiledMetricAccumulation } = require("./sourceIntentRepair");
+const { normalizeTeamId, requireConnectionForTeam, requireDatasetForTeam, requireProjectForTeam } = require("./teamScope");
+const { findSourceForConnection } = require("../../../../sources");
 const { buildAiVisualization } = require("../../../../visualization/aiVisualization");
 
 const chartController = new ChartController();
 
-const clientUrl = process.env.NODE_ENV === "production" ? process.env.VITE_APP_CLIENT_HOST : process.env.VITE_APP_CLIENT_HOST_DEV;
+const clientUrl = process.env.VITE_APP_CLIENT_HOST;
 
 function resolveXAxis({
   chartType, xAxis, yAxis, chartSpec = {}
@@ -23,7 +24,7 @@ function resolveXAxis({
   return xAxis ?? chartSpec.xAxis;
 }
 
-async function createChart(payload) {
+async function createChart(payload, options = {}) {
   let {
     project_id, dataset_id, spec, team_id,
     name, legend, type, subType, displayLegend, pointRadius,
@@ -87,10 +88,39 @@ async function createChart(payload) {
     subType = chartSanitization.subType;
     chartSpec = chartSanitization.spec;
     const chartType = type || chartSpec.type || "line";
-    const resolvedXAxis = resolveXAxis({
+    let resolvedXAxis = resolveXAxis({
       chartType, xAxis, yAxis, chartSpec
     });
+    if (dataRequest?.connection_id) {
+      const connection = await requireConnectionForTeam(dataRequest.connection_id, normalizedTeamId);
+      const source = findSourceForConnection(connection);
+      if (source?.backend?.ai?.alignChartBindings) {
+        const aligned = await alignSourceChartBindings(source, {
+          rows: options.rows,
+          connection,
+          configuration: dataRequest.configuration,
+          type: chartType,
+          xAxis: resolvedXAxis,
+          yAxis: yAxis ?? chartSpec.yAxis,
+          yAxisOperation: yAxisOperation ?? chartSpec.yAxisOperation,
+          dateField: dateField ?? chartSpec.dateField,
+          transform: options.rows ? null : dataRequest.transform,
+          encoding: encoding || chartSpec.encoding,
+          visualization: visualization || chartSpec.visualization,
+          chartSpec,
+          formula: formula ?? chartSpec.formula,
+        }).catch((error) => {
+          error.datasetId = dataset.id;
+          error.connectionId = connection.id;
+          throw error;
+        });
+        resolvedXAxis = aligned.xAxis;
+        yAxis = aligned.yAxis ?? yAxis;
+        dateField = aligned.dateField ?? dateField;
+      }
+    }
     const canonicalVisualization = buildAiVisualization({
+      timeInterval,
       bindingId: "binding-1",
       chart: {
         ...chartSpec,
@@ -113,6 +143,11 @@ async function createChart(payload) {
         fill: chartSpec.fill || false,
         multiFill: chartSpec.multiFill || false,
         pointRadius: pointRadius || chartSpec.pointRadius || 0,
+        sort: chartSpec.sort,
+        maxRecords: chartSpec.maxRecords,
+        excludedFields: chartSpec.excludedFields,
+        columnsOrder: chartSpec.columnsOrder,
+        configuration: seriesConfiguration ?? chartSpec.configuration,
       },
       encoding: encoding || chartSpec.encoding,
       goal: chartSpec.goal,
@@ -123,7 +158,7 @@ async function createChart(payload) {
     const project = await requireProjectForTeam(project_id, normalizedTeamId);
 
     // Update dataset's project_ids to include this project (if not ghost and not already included)
-    if (!project.ghost) {
+    if (!project.ghost && !options.prepareOnly) {
       const currentProjectIds = dataset.project_ids || [];
       if (!currentProjectIds.includes(project_id)) {
         await dataset.update({
@@ -134,7 +169,7 @@ async function createChart(payload) {
 
     // Use the quick-create function to create chart with chart dataset config in one go
     // Layout will be auto-calculated by the controller
-    const chart = await chartController.createWithChartDatasetConfigs({
+    const chartData = {
       project_id,
       name: name || chartSpec.title || "AI Generated Chart",
       type: chartType,
@@ -154,7 +189,7 @@ async function createChart(payload) {
         : chartSpec.includeZeros !== undefined
           ? chartSpec.includeZeros
           : true,
-      timeInterval: timeInterval || chartSpec.timeInterval || "day",
+      timeInterval: canonicalVisualization.settings.timeInterval,
       stacked: stacked ?? chartSpec.stacked ?? chartSpec.options?.stacked ?? false,
       horizontal: horizontal ?? chartSpec.horizontal ?? chartSpec.options?.horizontal ?? false,
       xLabelTicks: xLabelTicks || chartSpec.xLabelTicks || "default",
@@ -191,12 +226,14 @@ async function createChart(payload) {
         goal: chartSpec.goal,
         configuration: seriesConfiguration ?? chartSpec.configuration ?? {}
       }]
-    }, null); // No user for AI-created charts
+    };
+    if (options.prepareOnly) return { chartData };
+    const chart = await chartController.createWithChartDatasetConfigs(chartData, { id: payload.user_id }, { waitForData: true, origin: "ai" });
 
     // Take a snapshot of the chart for visualization
     let snapshot = null;
     try {
-      snapshot = await chartController.takeSnapshot(chart.id);
+      if (!payload.skipSnapshot) snapshot = await chartController.takeSnapshot(chart.id);
     } catch (snapshotError) {
       // Ignore snapshot errors - chart creation was successful
     }
@@ -205,11 +242,21 @@ async function createChart(payload) {
       status: "ok",
       chart_created: true,
       chart_id: chart.id,
+      configurationVersion: chart.configurationVersion,
       dataset_id,
+      datasets: [{
+        id: dataset.id,
+        name: dataset.name || dataset.legend || "Dataset",
+        projectId: project.id,
+      }],
       name: chart.name,
       type: chart.type,
       project_id: chart.project_id,
       visibility: "dashboard",
+      dashboard: {
+        id: project.id,
+        name: project.name,
+      },
       dashboard_url: `${clientUrl}/dashboard/${project_id}`,
       chart_url: `${clientUrl}/dashboard/${project_id}/chart/${chart.id}/edit`,
       snapshot,
@@ -222,7 +269,7 @@ async function createChart(payload) {
         : null,
     };
   } catch (error) {
-    throw new Error(`Chart creation failed: ${error.message}`);
+    throw new Error(`Chart creation failed: ${error.message}`, { cause: error });
   }
 }
 

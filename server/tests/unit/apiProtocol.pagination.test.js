@@ -1,5 +1,6 @@
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -42,6 +43,11 @@ function loadApiProtocolWithSafeRequest(safeRequestMock) {
 }
 
 describe("API protocol pagination", () => {
+  beforeEach(() => {
+    const execution = require("../../modules/sourceExecution");
+    vi.spyOn(execution, "runSourceExecution").mockImplementation((_options, operation) => operation());
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();

@@ -1,19 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { Outlet, useNavigate } from "react-router";
-import { useWindowSize } from "react-use";
-import {
-  ProgressCircle, Spinner,
-} from "@heroui/react";
+import { Outlet, useLocation, useNavigate } from "react-router";
 
+import LoadingScreen from "../../components/LoadingScreen";
 import { relog } from "../../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getProjects } from "../../slices/project";
 import { getTeamConnections } from "../../slices/connection";
-import Container from "../../components/Container";
-import Row from "../../components/Row";
-import Text from "../../components/Text";
 import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers,
 } from "../../slices/team";
@@ -24,7 +18,8 @@ import { cn } from "../../modules/utils";
 import TopNav from "../../components/TopNav";
 import { selectSidebarCollapsed } from "../../slices/ui";
 import { getDatasets } from "../../slices/dataset";
-import ChartbrewV5WelcomeModal from "./components/ChartbrewV5WelcomeModal";
+import ChartbrewV6WelcomeModal from "./components/ChartbrewV6WelcomeModal";
+import SettingsSidebar from "../Settings/SettingsSidebar";
 
 /*
   The user dashboard with all the teams and projects
@@ -40,9 +35,11 @@ function UserDashboard(props) {
 
   const teamsRef = useRef(null);
   const initRef = useRef(null);
-  const { height } = useWindowSize();
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const isSettings = location.pathname.startsWith("/settings");
+  const isChartEditor = /^\/dashboard\/[^/]+\/chart\/[^/]+\/edit\/?$/.test(location.pathname);
 
   useEffect(() => {
     cleanErrors();
@@ -111,32 +108,28 @@ function UserDashboard(props) {
     }
   };
 
-  if (!user.data.id) {
-    return (
-      <div style={styles.container(height)}>
-        <Container sm>
-          <Row justify="center" align="center">
-            <ProgressCircle aria-label="Loading" size="xl" />
-          </Row>
-        </Container>
-      </div>
-    );
+  if (!user.data.id || !team?.id) {
+    return <LoadingScreen label="Loading your workspace" />;
   }
 
   return (
-    <div className="dashboard bg-content2">
+    <div className="dashboard bg-background" data-sidebar-collapsed={isChartEditor || collapsed}>
       {team?.id && (
         <div>
-          <Sidebar />
+          {isSettings ? <SettingsSidebar /> : <Sidebar collapsed={isChartEditor || collapsed} />}
 
           <div
             className={cn(
-              "min-h-[calc(100vh-64px)] transition-all duration-300",
-              collapsed ? "ml-16" : "ml-64"
+              "min-h-screen transition-all duration-300",
+              isSettings ? "md:ml-64" : (isChartEditor || collapsed ? "ml-16" : "ml-64")
             )}
           >
-            <TopNav />
-            <div className="px-6 py-4">
+            {isSettings || isChartEditor ? null : <TopNav />}
+            <div className={cn({
+              "px-4 py-6 sm:px-8 md:px-10 md:py-10": isSettings,
+              "p-0": !isSettings && isChartEditor,
+              "px-6 py-4": !isSettings && !isChartEditor,
+            })}>
               <Outlet />
 
               {window.location.pathname === "/user" && (
@@ -147,32 +140,12 @@ function UserDashboard(props) {
         </div>
       )}
 
-      <div className="h-4" />
+      {!isChartEditor && <div className="h-4" />}
 
-      {(teams && teams.length === 0) && (
-        <div className="bg-content2 pt-10 mt-[-20px]">
-          <div className="flex justify-center items-center">
-            <Spinner variant="simple" aria-label="Loading" />
-          </div>
-          <div className="h-1" />
-          <div className="flex justify-center items-center">
-            <Text size="lg" className={"text-gray-400"}>Loading your space...</Text>
-          </div>
-        </div>
-      )}
-
-      <ChartbrewV5WelcomeModal />
+      <ChartbrewV6WelcomeModal key={user.data.id} />
     </div>
   );
 }
-
-const styles = {
-  container: (height) => ({
-    flex: 1,
-    // backgroundColor: "#103751",
-    minHeight: height,
-  }),
-};
 
 UserDashboard.propTypes = {
   cleanErrors: PropTypes.func.isRequired,

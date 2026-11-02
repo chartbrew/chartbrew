@@ -83,7 +83,7 @@ describe("User Management API", () => {
       const testUser = await models.User.create(userFactory.build());
       const forgedToken = jwt.sign(
         { id: testUser.id },
-        process.env.CB_SECRET_DEV,
+        process.env.CB_SECRET,
         { algorithm: "HS256" }
       );
 
@@ -178,7 +178,7 @@ describe("User Management API", () => {
         .expect(200);
 
       expect(response.body.name).toBe("Updated Name");
-      // API response doesn't include admin; ensure DB value is still false.
+      expect(response.body.admin).toBe(false);
       const refreshedUser = await models.User.findByPk(testUser.id);
       expect(refreshedUser.admin).toBe(false);
     });

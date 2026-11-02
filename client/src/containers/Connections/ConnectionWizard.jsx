@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuArrowLeft, LuBrainCircuit, LuClipboard, LuClipboardCheck, LuCompass, LuSearch } from "react-icons/lu";
-import { Button, Card, Chip, Input, InputGroup, Surface, TextField, Tooltip } from "@heroui/react";
+import { LuArrowLeft, LuCircleHelp, LuClipboard, LuClipboardCheck, LuCompass, LuPanelRightClose, LuSearch } from "react-icons/lu";
+import { Button, Card, Chip, Input, InputGroup, Surface, TextField, ToggleButton, ToggleButtonGroup, Tooltip } from "@heroui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
@@ -10,28 +10,41 @@ import {
   getSourceLogo,
   getSourcePickerItems,
   getSourcePlugin,
-  isSourceAiPowered,
 } from "../../sources";
 import { canCreateSourceConnections } from "../../sources/sourceAvailability";
 import { useTheme } from "../../modules/ThemeContext";
 import { addConnection, addFilesToConnection, getConnection, getTeamConnections, saveConnection } from "../../slices/connection";
+import { filterConnectionCatalogue, getConnectionCatalogue } from "./connectionCatalogue";
 import HelpBanner from "../../components/HelpBanner";
 import { generateInviteUrl, selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 
+const HELP_PANEL_STORAGE_KEY = "__cb_connection_help_panel_collapsed";
+
+const getInitialHelpPanelState = () => {
+  try {
+    return window.localStorage.getItem(HELP_PANEL_STORAGE_KEY) === "true";
+  } catch (error) {
+    return false;
+  }
+};
+
 function ConnectionWizard() {
   const [connectionSearch, setConnectionSearch] = useState("");
+  const [connectionCategory, setConnectionCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("");
+  const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [newConnection, setNewConnection] = useState(null);
   const [inviteUrl, setInviteUrl] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
   const [connectionToEdit, setConnectionToEdit] = useState(null);
+  const [helpPanelCollapsed, setHelpPanelCollapsed] = useState(getInitialHelpPanelState);
 
   const { isDark } = useTheme();
   const initRef = useRef(null);
-  const bottomRef = useRef(null);
-  const asideRef = useRef(null);
+  const selectionRef = useRef(null);
+  const searchRef = useRef(null);
   const paramsInitRef = useRef(null);
   const fetchConnectionRef = useRef(null);
   const dispatch = useDispatch();
@@ -59,22 +72,13 @@ function ConnectionWizard() {
   }, [team]);
 
   useEffect(() => {
-    if (selectedType) {
-      bottomRef?.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-        inline: "nearest",
-      });
-
-      setTimeout(() => {
-        asideRef?.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "end",
-          inline: "nearest",
-        });
-      }, 500);
+    if (params.connectionId !== "new") return;
+    if (catalogueOpen) {
+      searchRef.current?.focus();
+    } else if (selectedType) {
+      selectionRef.current?.focus();
     }
-  }, [selectedType]);
+  }, [selectedType, catalogueOpen, params.connectionId]);
 
   useEffect(() => {
     if (params.connectionId && params.connectionId !== "new" && team?.id && !paramsInitRef.current) {
@@ -102,33 +106,32 @@ function ConnectionWizard() {
     }
   }, [connectionToEdit]);
 
-  const availableSources = getSourcePickerItems();
+  const availableSources = getConnectionCatalogue(getSourcePickerItems());
+  const selectedEntry = availableSources.find((source) => source.id === selectedType);
   let selectedSource = null;
   try {
-    selectedSource = selectedType ? getSourcePlugin(selectedType) : null;
+    selectedSource = selectedType ? getSourcePlugin(selectedEntry?.sourceId || selectedType) : null;
   } catch {
     selectedSource = null;
   }
   const canRenderSelectedForm = Boolean(newConnection || canCreateSourceConnections(selectedSource));
   const SelectedConnectionForm = canRenderSelectedForm ? selectedSource?.frontend?.ConnectionForm : null;
 
-  const _filteredConnections = availableSources.filter((conn) => {
-    if (connectionSearch) {
-      return conn.name.toLowerCase().includes(connectionSearch.toLowerCase());
-    }
-    return true;
-  });
+  const showCatalogue = !SelectedConnectionForm || catalogueOpen;
+
+  const _filteredConnections = filterConnectionCatalogue(availableSources, connectionCategory, connectionSearch);
 
   const _onAddNewConnection = (data, files) => {
     if (params.connectionId !== "new") {
       return dispatch(saveConnection({ team_id: team.id, connection: data }))
-        .then(async () => {
+        .then(async (savedConnection) => {
+          if (savedConnection.error || !savedConnection.payload?.id) return false;
           if (files) {
             await dispatch(addFilesToConnection({ team_id: team.id, connection_id: params.connectionId, files }));
           }
 
           toast.success("Connection saved successfully");
-          return true;
+          return savedConnection.payload;
         })
         .catch(() => {
           return false;
@@ -140,7 +143,7 @@ function ConnectionWizard() {
         connection: { ...data, team_id: team.id }
       }))
       .then(async (createdConnection) => {
-        if (createdConnection.error) {
+        if (createdConnection.error || !createdConnection.payload?.id) {
           return false;
         }
 
@@ -148,9 +151,11 @@ function ConnectionWizard() {
           dispatch(addFilesToConnection({ team_id: team.id, connection_id: createdConnection.payload.id, files }));
         }
 
-        if (data.type === "googleAnalytics") {
+        const createdSource = getSourcePlugin(data.subType || data.type);
+        if (data.type === "googleAnalytics" || createdSource?.capabilities?.nextSteps?.connectionAfterCreate) {
+          setNewConnection(createdConnection.payload);
           navigate(`/connections/${createdConnection.payload.id}`);
-          return true;
+          return createdConnection.payload;
         }
 
         setSelectedType("");
@@ -159,7 +164,7 @@ function ConnectionWizard() {
         const resp = await dispatch(getConnection({ team_id: team.id, connection_id: createdConnection.payload.id }));
         setConnectionToEdit(resp.payload);
 
-        return true;
+        return createdConnection.payload;
       })
       .catch(() => {
         return false;
@@ -172,6 +177,18 @@ function ConnectionWizard() {
     setTimeout(() => {
       setInviteCopied(false);
     }, 2000);
+  };
+
+  const _toggleHelpPanel = () => {
+    setHelpPanelCollapsed((currentValue) => {
+      const nextValue = !currentValue;
+      try {
+        window.localStorage.setItem(HELP_PANEL_STORAGE_KEY, String(nextValue));
+      } catch (error) {
+        // Keep the UI responsive even if storage is unavailable.
+      }
+      return nextValue;
+    });
   };
 
   const _canAccess = (role, teamRoles) => {
@@ -198,93 +215,114 @@ function ConnectionWizard() {
   return (
     <div>
       <div className="flex flex-col">
-        <div className="sm:mr-96">          
-          <div className="h-2" />
+        <div className={`flex min-w-0 flex-col gap-6 pt-2 ${!newConnection && !showCatalogue ? "max-w-5xl" : ""} ${helpPanelCollapsed ? "" : "lg:mr-96"}`}>
 
           {!newConnection && (
             <>
-              <div className="flex flex-row items-center gap-2">
-                <span className="text-xl text-secondary font-semibold">Step 1:</span>
-                <span className="text-xl font-semibold">Select your datasource type</span>
+              <div className="flex items-center justify-between gap-4">
+                <h1 className="text-2xl font-semibold">{showCatalogue ? "Choose a connection" : "New connection"}</h1>
+                {catalogueOpen && SelectedConnectionForm && (
+                  <Button variant="tertiary" onPress={() => setCatalogueOpen(false)}>
+                    Cancel
+                  </Button>
+                )}
               </div>
-              <div className="h-4" />
-              <Surface className="rounded-3xl bg-surface border border-divider p-4">
-                <div className="flex flex-row justify-between items-center flex-wrap gap-2">
-                  <TextField aria-label="Search connections" className="sm:min-w-md" name="connection-search">
-                    <InputGroup fullWidth variant="secondary">
-                      <InputGroup.Input
-                        placeholder="Search connections..."
-                        onChange={(e) => setConnectionSearch(e.target.value)}
-                      />
-                      <InputGroup.Suffix className="pr-2">
-                        <LuSearch className="size-4 text-muted" aria-hidden />
-                      </InputGroup.Suffix>
-                    </InputGroup>
-                  </TextField>
-                </div>
-                <div className="h-4" />
-                <div className="grid grid-cols-12 gap-4">
-                  {_filteredConnections.map((conn) => (
-                    <div key={conn.name} className="col-span-12 sm:col-span-6 lg:col-span-6 xl:col-span-3">
-                      <Card
-                        role="button"
-                        tabIndex={0}
-                        className={`w-full h-full cursor-pointer shadow-none transition-colors hover:bg-content2/40 ${selectedType === conn.id ? "border border-primary" : "border border-content3"}`}
-                        onClick={() => setSelectedType(conn.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setSelectedType(conn.id);
-                          }
+              {showCatalogue ? (
+                <div>
+                  <div className="flex flex-row justify-between items-center flex-wrap gap-2">
+                    <TextField aria-label="Search connections" className="w-full sm:max-w-md" name="connection-search">
+                      <InputGroup fullWidth variant="secondary">
+                        <InputGroup.Input
+                          ref={searchRef}
+                          value={connectionSearch}
+                          placeholder="Search connections..."
+                          onChange={(e) => setConnectionSearch(e.target.value)}
+                        />
+                        <InputGroup.Suffix className="pr-2">
+                          <LuSearch className="size-4 text-muted" aria-hidden />
+                        </InputGroup.Suffix>
+                      </InputGroup>
+                    </TextField>
+                  </div>
+                  <ToggleButtonGroup
+                    aria-label="Connection category"
+                    className="my-4 flex-wrap justify-start"
+                    disallowEmptySelection
+                    isDetached
+                    selectedKeys={[connectionCategory]}
+                    selectionMode="single"
+                    size="sm"
+                    onSelectionChange={(keys) => setConnectionCategory([...keys][0])}
+                  >
+                    <ToggleButton id="all">All</ToggleButton>
+                    <ToggleButton id="database">Databases</ToggleButton>
+                    <ToggleButton id="services">Services</ToggleButton>
+                    <ToggleButton id="mcp">MCP</ToggleButton>
+                  </ToggleButtonGroup>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {_filteredConnections.map((conn) => (
+                      <Button
+                        key={conn.id}
+                        aria-pressed={selectedType === conn.id}
+                        className={`h-auto min-h-28 w-full items-start justify-start whitespace-normal rounded-xl p-4 text-left ${selectedType === conn.id ? "border-accent bg-accent-soft" : "border-divider bg-surface"}`}
+                        variant="outline"
+                        onPress={() => {
+                          setSelectedType(conn.id);
+                          setCatalogueOpen(false);
                         }}
                       >
-                        <Card.Content className="overflow-visible p-4 max-w-sm flex flex-row items-center justify-center">
-                          <img
-                            alt={conn.name}
-                            className="h-[80px] rounded-lg object-contain"
-                            src={getSourceLogo(conn, isDark)}
-                          />
-                        </Card.Content>
-                        <Card.Content className="flex flex-row items-center justify-center flex-wrap gap-1">
-                          {isSourceAiPowered(conn) && (
-                            <Tooltip>
-                              <Tooltip.Trigger>
-                                <Chip variant="secondary">
-                                  <LuBrainCircuit size={14} />
-                                  {"AI-powered"}
-                                </Chip>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content>
-                                You can use AI to ask questions about your data
-                              </Tooltip.Content>
-                            </Tooltip>
+                        <img
+                          alt=""
+                          className="h-10 w-10 shrink-0 object-contain"
+                          src={getSourceLogo(conn, isDark)}
+                        />
+                        <span className="flex min-w-0 flex-1 flex-col gap-2">
+                          <span className="font-semibold">{conn.name}</span>
+                          <Chip className="w-fit" size="sm" variant="soft" color={conn.method === "MCP" ? "accent" : "default"}>
+                            <Chip.Label>{conn.method}</Chip.Label>
+                          </Chip>
+                          {conn.description && (
+                            <span className="text-sm font-normal text-muted">{conn.description}</span>
                           )}
-                          {conn.showNewBadge && (
-                            <Chip variant="soft" color="accent">
-                              <Chip.Label>{"New!"}</Chip.Label>
-                            </Chip>
-                          )}
-                        </Card.Content>
-                        <Card.Footer className="justify-center flex flex-col gap-1">
-                          <span className="text-sm font-semibold">{conn.name}</span>
-                        </Card.Footer>
-                      </Card>
-                    </div>
-                  ))}
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
                   {_filteredConnections.length === 0 && (
-                    <div className="col-span-12">
-                      <p className="text-center text-gray-500">No connections found</p>
+                    <div className="flex flex-col items-center gap-3 py-8">
+                      <p className="text-muted">No connections match your search.</p>
+                      <Button variant="secondary" onPress={() => {
+                        setConnectionSearch("");
+                        setConnectionCategory("all");
+                      }}>
+                        Clear filters
+                      </Button>
                     </div>
                   )}
                 </div>
-              </Surface>
-
-              <div className="h-4" />
-              {selectedType && (
-                <div className="flex flex-row items-center gap-2">
-                  <span className="text-xl text-secondary font-semibold">Step 2:</span>
-                  <span className="text-xl font-semibold">Connect to your data source</span>
-                </div>
+              ) : (
+                <Surface className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-divider p-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <img
+                      alt=""
+                      className="size-10 shrink-0 object-contain"
+                      src={getSourceLogo(selectedEntry || selectedSource, isDark)}
+                    />
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <h2 ref={selectionRef} tabIndex={-1} className="font-semibold outline-none">
+                        {selectedEntry?.name || selectedSource.name}
+                      </h2>
+                      {selectedEntry?.method && (
+                        <Chip className="w-fit" size="sm" variant="soft" color={selectedEntry.method === "MCP" ? "accent" : "default"}>
+                          <Chip.Label>{selectedEntry.method}</Chip.Label>
+                        </Chip>
+                      )}
+                    </div>
+                  </div>
+                  <Button variant="secondary" onPress={() => setCatalogueOpen(true)}>
+                    Change connection
+                  </Button>
+                </Surface>
               )}
             </>
           )}
@@ -297,91 +335,120 @@ function ConnectionWizard() {
               <span className="text-foreground font-semibold">Back to connections</span>
             </Link>
           )}
-          <div className="h-4" />
 
           {SelectedConnectionForm && (
-            <SelectedConnectionForm
-              onComplete={_onAddNewConnection}
-              editConnection={newConnection}
-              subType={selectedSource.subType || selectedSource.type}
-            />
+            <div hidden={!newConnection && showCatalogue}>
+              <SelectedConnectionForm
+                key={newConnection?.id || selectedType}
+                catalogueEntry={selectedEntry}
+                onComplete={_onAddNewConnection}
+                editConnection={newConnection}
+                subType={selectedSource.subType || selectedSource.type}
+              />
+            </div>
           )}
 
-          <div ref={bottomRef} />
         </div>
-        <aside className="hidden sm:block fixed top-0 right-0 z-40 w-96 h-screen" aria-label="Sidebar">
-          <div className="h-full px-3 py-4 overflow-y-auto bg-surface dark:bg-gray-800">
-            <div className="flex flex-col gap-2 p-2">
-              <div className="h-10" />
-
-              <Card className="border border-divider shadow-none">
-                <Card.Header className="flex flex-col items-start">
-                  <p className="font-semibold">Missing the data source credentials?</p>
-                </Card.Header>
-                <Card.Content>
-                  <p className="text-sm text-gray-500">
-                    {"Someone from your engineering team can help you with this."}
-                  </p>
-                  <div className="h-4" />
-                  <p className="text-sm text-gray-500">
-                    Ask them to join your team with this link
-                  </p>
-                  <div className="h-2" />
-                  <Input
-                    readOnly
-                    labelPlacement="outside"
-                    value={inviteUrl}
-                  />
-                </Card.Content>
-                <Card.Footer>
-                  <Button
-                    size="sm"
-                    variant={inviteCopied ? "tertiary" : "primary"}
-                    fullWidth
-                    onPress={() => _onCopyInviteUrl()}
-                  >
-                    {inviteCopied ? "Copied to clipboard" : "Copy invite link"}
-                    {inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
-                  </Button>
-                </Card.Footer>
-              </Card>
-
-              <div className="h-2" />
-
-              <Card className="border border-divider shadow-none">
-                <Card.Header className="flex flex-col items-start">
-                  <p className="font-semibold">Check out our tutorials</p>
-                </Card.Header>
-                <Card.Content>
-                  <p className="text-sm text-gray-500">
-                    {"We have a number of tutorials that can help you get started with Chartbrew and learn more about the platform."}
-                  </p>
-                </Card.Content>
-                <Card.Footer>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    fullWidth
-                    onPress={() => window.open("https://chartbrew.com/blog?tag=tutorial", "_blank")}
-                  >
-                    Open the tutorials
-                    <LuCompass />
-                  </Button>
-                </Card.Footer>
-              </Card>
-
-              <div className="h-2" />
-
-              {selectedType && (
-                <HelpBanner
-                  type={selectedType}
-                  imageUrl={getSourceLogo(selectedSource, isDark)}
-                />
-              )}
-            </div>
-
-            <div ref={asideRef} />
+        <aside
+          className={`hidden overflow-visible lg:block fixed top-0 right-0 z-40 h-screen ${helpPanelCollapsed ? "w-0" : "w-96"}`}
+          aria-label="Help"
+        >
+          <div
+            className={`absolute top-16 z-50 ${
+              helpPanelCollapsed ? "right-3" : "left-0 -translate-x-1/2"
+            }`}
+          >
+            <Tooltip delay={0}>
+              <Tooltip.Trigger>
+                <Button
+                  aria-label={helpPanelCollapsed ? "Show help" : "Hide help"}
+                  className="border border-divider bg-surface rounded-xl"
+                  isIconOnly
+                  onPress={_toggleHelpPanel}
+                  variant="outline"
+                  size="sm"
+                >
+                  {helpPanelCollapsed ? <LuCircleHelp size={18} /> : <LuPanelRightClose size={18} />}
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content>
+                {helpPanelCollapsed ? "Show help" : "Hide help"}
+              </Tooltip.Content>
+            </Tooltip>
           </div>
+          {!helpPanelCollapsed && (
+            <div className="h-full overflow-y-auto bg-surface px-3 py-4 dark:bg-gray-800">
+              <div className="flex flex-col gap-2 p-2">
+                <div className="h-10" />
+
+                <Card className="border border-divider shadow-none">
+                  <Card.Header className="flex flex-col items-start">
+                    <p className="font-semibold">Missing the data source credentials?</p>
+                  </Card.Header>
+                  <Card.Content>
+                    <p className="text-sm text-gray-500">
+                      {"Someone from your engineering team can help you with this."}
+                    </p>
+                    <div className="h-4" />
+                    <p className="text-sm text-gray-500">
+                      Ask them to join your team with this link
+                    </p>
+                    <div className="h-2" />
+                    <Input
+                      readOnly
+                      labelPlacement="outside"
+                      value={inviteUrl}
+                    />
+                  </Card.Content>
+                  <Card.Footer>
+                    <Button
+                      size="sm"
+                      variant={inviteCopied ? "tertiary" : "primary"}
+                      fullWidth
+                      onPress={() => _onCopyInviteUrl()}
+                    >
+                      {inviteCopied ? "Copied to clipboard" : "Copy invite link"}
+                      {inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
+                    </Button>
+                  </Card.Footer>
+                </Card>
+
+                <div className="h-2" />
+
+                <Card className="border border-divider shadow-none">
+                  <Card.Header className="flex flex-col items-start">
+                    <p className="font-semibold">Check out our tutorials</p>
+                  </Card.Header>
+                  <Card.Content>
+                    <p className="text-sm text-gray-500">
+                      {"We have a number of tutorials that can help you get started with Chartbrew and learn more about the platform."}
+                    </p>
+                  </Card.Content>
+                  <Card.Footer>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      fullWidth
+                      onPress={() => window.open("https://chartbrew.com/blog?tag=tutorial", "_blank")}
+                    >
+                      Open the tutorials
+                      <LuCompass />
+                    </Button>
+                  </Card.Footer>
+                </Card>
+
+                <div className="h-2" />
+
+                {selectedType && (
+                  <HelpBanner
+                    type={selectedSource?.id}
+                    imageUrl={getSourceLogo(selectedSource, isDark)}
+                  />
+                )}
+              </div>
+
+            </div>
+          )}
         </aside>
       </div>
     </div>

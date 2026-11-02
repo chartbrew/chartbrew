@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "material-revenue-drop",
+      "expectedPublish": true,
+      "monitor": {
+        "importance": 2,
+        "metric_spec": {
+          "unit": "currency_usd",
+          "valueFormat": { "type": "currency", "currency": "USD", "scale": 1 }
+        }
+      },
+      "baseline": {
+        "eligible": true,
+        "baseline": 100,
+        "current": { "value": 70, "completeness": 1 },
+        "comparison": { "value": 100, "completeness": 1 },
+        "historyValues": [98, 100, 102, 99, 101, 100, 100],
+        "sampleCount": 8
+      }
+    },
+    {
+      "id": "small-rate-movement",
+      "expectedPublish": false,
+      "monitor": {
+        "importance": 2,
+        "metric_spec": {
+          "unit": "percentage",
+          "valueFormat": { "type": "percentage", "scale": 100 }
+        }
+      },
+      "baseline": {
+        "eligible": true,
+        "baseline": 0.01,
+        "current": { "value": 0.019, "completeness": 1 },
+        "comparison": { "value": 0.01, "completeness": 1 },
+        "historyValues": [0.009, 0.01, 0.011, 0.01, 0.01, 0.01, 0.01],
+        "sampleCount": 8
+      }
+    },
+    {
+      "id": "material-record-count-drop",
+      "expectedPublish": true,
+      "monitor": {
+        "importance": 1,
+        "metric_spec": { "unit": "number" }
+      },
+      "baseline": {
+        "eligible": true,
+        "baseline": 100,
+        "current": { "value": 70, "completeness": 1 },
+        "comparison": { "value": 100, "completeness": 1 },
+        "historyValues": [98, 100, 102, 99, 101, 100, 100],
+        "sampleCount": 8
+      }
+    },
+    {
+      "id": "incomplete-current-data",
+      "expectedPublish": false,
+      "monitor": {
+        "importance": 3,
+        "metric_spec": { "unit": "number" }
+      },
+      "baseline": {
+        "eligible": true,
+        "baseline": 100,
+        "current": { "value": 60, "completeness": 0.7 },
+        "comparison": { "value": 100, "completeness": 1 },
+        "historyValues": [98, 100, 102, 99, 101, 100, 100],
+        "sampleCount": 8
+      }
+    },
+    {
+      "id": "borderline-ten-percent-drop",
+      "expectedPublish": false,
+      "monitor": {
+        "importance": 1,
+        "metric_spec": { "unit": "number" }
+      },
+      "baseline": {
+        "eligible": true,
+        "baseline": 100,
+        "current": { "value": 90, "completeness": 1 },
+        "comparison": { "value": 100, "completeness": 1 },
+        "historyValues": [100, 100, 100, 100, 100, 100, 100],
+        "sampleCount": 8
+      }
+    }
+  ]
+}

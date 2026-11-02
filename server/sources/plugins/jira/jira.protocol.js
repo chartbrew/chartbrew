@@ -1,3 +1,4 @@
+const sourceExecution = require("../../../modules/sourceExecution");
 const moment = require("moment-timezone");
 
 const db = require("../../../models/models");
@@ -709,7 +710,11 @@ function getCreatedResolvedTrendConfigs(config = {}) {
   }];
 }
 
-async function fetchIssueRows(connection, config, fieldMappings = {}) {
+function fetchIssueRows(connection, config, fieldMappings = {}) {
+  return sourceExecution.runSourceExecution({ connection, cacheHit: false }, () => fetchIssueData(connection, config, fieldMappings));
+}
+
+async function fetchIssueData(connection, config, fieldMappings) {
   const rows = [];
   const maxRecords = Math.min(Number(config.pagination?.maxRecords || 5000), 10000);
   let nextPageToken = null;
@@ -721,7 +726,8 @@ async function fetchIssueRows(connection, config, fieldMappings = {}) {
       method: "POST",
       body: buildIssueSearchBody(config, nextPageToken, fieldMappings),
     });
-    const pageRows = Array.isArray(response?.issues) ? response.issues : [];
+    if (!Array.isArray(response?.issues)) throw new Error("Jira did not return a valid issues page.");
+    const pageRows = response.issues;
     rows.push(...pageRows);
     nextPageToken = response?.nextPageToken || null;
     hasMore = pageRows.length > 0 && Boolean(nextPageToken) && rows.length < maxRecords;
@@ -770,7 +776,21 @@ function buildSprintIssueSearchParams(config, startAt, fieldMappings = {}) {
   return params;
 }
 
-async function fetchJiraRows(connection, config, fieldMappings = getFieldMappings(connection)) {
+function fetchJiraRows(connection, config, fieldMappings = getFieldMappings(connection)) {
+  if (config.resource === "issues") {
+    if (config.transform?.type === "created_resolved_trend") {
+      return fetchCreatedResolvedTrendIssueRows(connection, config, fieldMappings);
+    }
+
+    return fetchIssueRows(connection, config, fieldMappings);
+  }
+
+  return sourceExecution.runSourceExecution({ connection, cacheHit: false }, () => {
+    return fetchJiraData(connection, config, fieldMappings);
+  });
+}
+
+async function fetchJiraData(connection, config, fieldMappings) {
   if (config.resource === "boards") {
     const boards = await jiraConnection.listBoards(connection, {
       maxResults: Math.min(Number(config.pagination?.maxRecords || 50), 50),
@@ -796,14 +816,6 @@ async function fetchJiraRows(connection, config, fieldMappings = getFieldMapping
     return versions.slice(0, Number(config.pagination?.maxRecords || 100));
   }
 
-  if (config.resource === "issues") {
-    if (config.transform?.type === "created_resolved_trend") {
-      return fetchCreatedResolvedTrendIssueRows(connection, config, fieldMappings);
-    }
-
-    return fetchIssueRows(connection, config, fieldMappings);
-  }
-
   const rows = [];
   const maxResults = Math.min(Number(config.pagination?.maxResults || 100), 100);
   const maxRecords = Math.min(Number(config.pagination?.maxRecords || 5000), 10000);
@@ -815,7 +827,8 @@ async function fetchJiraRows(connection, config, fieldMappings = getFieldMapping
     const response = await jiraConnection.jiraRequest(connection, getSearchRoute(config), {
       qs: buildSprintIssueSearchParams(config, startAt, fieldMappings),
     });
-    const pageRows = Array.isArray(response?.issues) ? response.issues : [];
+    if (!Array.isArray(response?.issues)) throw new Error("Jira did not return a valid issues page.");
+    const pageRows = response.issues;
     rows.push(...pageRows);
 
     const nextStart = startAt + maxResults;
@@ -902,7 +915,20 @@ async function prepareConnectionData({ connection }) {
   };
 }
 
-async function runDataRequest({
+function runDataRequest(options) {
+  const trace = options.auditContext?.traceContext || {};
+  return sourceExecution.withSourceExecutionContext({
+    dataRequestId: options.dataRequest?.id,
+    datasetId: options.dataRequest?.dataset_id,
+    teamId: trace.teamId,
+    triggerType: trace.triggerType,
+    projectId: trace.projectId,
+    chartId: trace.chartId,
+    runId: trace.runId,
+  }, () => executeDataRequest(options));
+}
+
+async function executeDataRequest({
   connection,
   dataRequest,
   getCache,
@@ -986,7 +1012,7 @@ const actions = {
     return jiraConnection.validateJql(connection, params);
   },
   previewJql({ connection, params }) {
-    return jiraConnection.previewJql(connection, params);
+    return sourceExecution.runSourceExecution({ connection, cacheHit: false }, () => jiraConnection.previewJql(connection, params));
   },
   detectFieldMappings({ connection }) {
     return jiraConnection.detectFieldMappings(connection);

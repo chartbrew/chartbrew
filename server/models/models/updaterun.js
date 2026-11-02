@@ -49,6 +49,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    apiKeyId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
     queueName: {
       type: DataTypes.STRING,
       allowNull: true,

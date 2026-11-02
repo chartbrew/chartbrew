@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 function signShareToken(payload, options = {}) {
   return jwt.sign(payload, settings.encryptionKey, { ...options, algorithm: "HS256" });

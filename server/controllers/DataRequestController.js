@@ -1,3 +1,4 @@
+const { withAiUsageContext } = require("../modules/ai/usage");
 const Sequelize = require("sequelize");
 
 const ConnectionController = require("./ConnectionController");
@@ -204,6 +205,7 @@ class RequestController {
 
         const sourceResponse = runSourceDataRequest({
           connection,
+          teamId: gDataset.team_id,
           dataRequest: originalDataRequest,
           chartId,
           getCache,
@@ -284,27 +286,48 @@ class RequestController {
           return Promise.reject(new Error("No schema found. Please test your connection first."));
         }
 
-        let aiResponse;
-        if (source?.backend?.ai?.generateQuery) {
-          assertSourceServerEnabled(source);
-          aiResponse = await source.backend.ai.generateQuery({
-            schema,
-            question,
-            conversationHistory,
-            currentQuery,
-            connection,
-            dataRequest,
-          });
-        } else {
-          aiResponse = await generateSqlQuery(
-            schema, question, conversationHistory, currentQuery
-          );
-        }
+        return withAiUsageContext({ teamId: connection.team_id }, async () => {
+          let aiResponse;
+          if (source?.backend?.ai?.generateQuery) {
+            assertSourceServerEnabled(source);
+            aiResponse = await source.backend.ai.generateQuery({
+              schema,
+              question,
+              conversationHistory,
+              currentQuery,
+              connection,
+              dataRequest,
+            });
+          } else {
+            aiResponse = await generateSqlQuery(
+              schema, question, conversationHistory, currentQuery
+            );
+          }
 
-        return aiResponse;
+          return aiResponse;
+        });
       })
       .catch((error) => {
         return Promise.reject(error);
+      });
+  }
+
+  proposeAiConfiguration(id, question, currentConfiguration) {
+    return this.findById(id)
+      .then(async (dataRequest) => {
+        const connection = await db.Connection.findByPk(dataRequest.Connection.id);
+        const source = findSourceForConnection(connection);
+        if (!source?.backend?.ai?.generateConfiguration) {
+          throw new Error("AI setup is not available for this source.");
+        }
+
+        assertSourceServerEnabled(source);
+        return source.backend.ai.generateConfiguration({
+          connection,
+          currentConfiguration,
+          dataRequest,
+          question,
+        });
       });
   }
 

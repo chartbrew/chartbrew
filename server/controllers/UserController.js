@@ -2,16 +2,17 @@ const simplecrypt = require("simplecrypt");
 const { v4: uuid } = require("uuid");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { nanoid } = require("nanoid");
 const { TOTP } = require("otpauth");
 const QRCode = require("qrcode");
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
+const runtimeCache = require("../modules/runtimeCache");
+const createOwnedTeam = require("../modules/teamOnboarding/createOwnedTeam");
 const socketManager = require("../modules/socketManager");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = require("../settings");
 
 const PASSWORD_RESET_TOKEN_TTL = 30 * 60 * 1000;
 
@@ -21,74 +22,45 @@ const sc = simplecrypt({
 });
 
 class UserController {
-  createUser(user) {
-    let gNewUser;
-    return db.User.findOne({ where: { email: user.email } })
-      .then(async (foundUser) => {
-        if (foundUser) return new Promise((resolve, reject) => reject(new Error(409)));
-
-        const bcryptHash = await bcrypt.hash(user.password, 10);
-
-        return db.User.create({
+  async createUser(user, options = {}) {
+    const foundUser = await db.User.findOne({ where: { email: user.email } });
+    if (foundUser) throw new Error(409);
+    const bcryptHash = await bcrypt.hash(user.password, 10);
+    const transaction = await db.sequelize.transaction();
+    try {
+      const newUser = await db.User.create({
           name: user.name,
           email: user.email,
           password: bcryptHash,
           icon: user.icon,
           active: true,
-        });
-      })
-      .then((newUser) => {
-        gNewUser = newUser;
-
-        if (settings.teamRestricted === "1") {
-          return newUser;
-        }
-
-        const newTeam = {
-          name: `${newUser.name}'s team`
-        };
-        return db.Team.create(newTeam);
-      })
-      .then((data) => {
-        if (settings.teamRestricted === "1") {
-          return data;
-        }
-
-        // create a default first project
-        const newProject = {
-          name: "My first dashboard",
-          team_id: data.id,
-          brewName: `my-first-dashboard-${nanoid(8)}`,
-          dashboardTitle: "My first dashboard",
-        };
-
-        // create a ghost project
-        const ghostProject = {
-          team_id: data.id,
-          name: "Ghost Project",
-          brewName: `ghost-project-${nanoid(8)}`,
-          dashboardTitle: "Ghost Project",
-          ghost: true,
-        };
-
-        // create async
-        db.Project.create(newProject);
-        db.Project.create(ghostProject);
-
-        const teamRole = {
-          team_id: data.id,
-          user_id: gNewUser.id,
-          role: "teamOwner",
+      }, { transaction });
+      const shouldCreateOwnedTeam = options.createOwnedTeam !== false
+        && settings.teamRestricted !== "1";
+      if (shouldCreateOwnedTeam) {
+        await createOwnedTeam({
           canExport: true,
-        };
-        return db.TeamRole.create(teamRole);
-      })
-      .then(() => {
-        return gNewUser;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(new Error(error.message)));
+          dashboardName: "My first dashboard",
+          name: `${newUser.name}'s team`,
+          transaction,
+          userId: newUser.id,
+        });
+      }
+      const firstUser = await db.User.findOne({
+          attributes: ["id", "admin"],
+          order: [["id", "ASC"]],
+          transaction,
       });
+      if (shouldCreateOwnedTeam && firstUser?.id === newUser.id && !firstUser.admin) {
+        await db.User.update({ admin: true }, { where: { id: firstUser.id }, transaction });
+      }
+      await transaction.commit();
+      await newUser.reload();
+      return newUser;
+    } catch (error) {
+      await transaction.rollback();
+      throw new Error(error.message);
+    }
   }
 
   async deleteUser(id) {
@@ -160,6 +132,7 @@ class UserController {
         where: { "user_id": id },
         transaction
       });
+      const allTeamIds = [...new Set(teamRoles.map((teamRole) => teamRole.team_id))];
       const ownedTeamIds = [...new Set(
         teamRoles
           .filter((teamRole) => teamRole.role === "teamOwner")
@@ -247,6 +220,10 @@ class UserController {
           db.AiUsage.destroy({
             where: { "team_id": teamId },
             transaction
+          }),
+          db.SourceExecution.destroy({
+            where: { teamId },
+            transaction
           })
         ]);
 
@@ -266,6 +243,11 @@ class UserController {
         where: { id },
         transaction
       });
+
+      await Promise.all(allTeamIds.map((teamId) => runtimeCache.clearPendingAiActions({
+        teamId,
+        userId: id,
+      })));
 
       // Commit the transaction
       await transaction.commit();
@@ -408,7 +390,9 @@ class UserController {
   }
 
   update(id, data) {
-    return db.User.update(data, { where: { "id": id } })
+    const userUpdate = { ...data };
+    delete userUpdate.admin;
+    return db.User.update(userUpdate, { where: { "id": id } })
       .then(() => {
         return this.findById(id);
       })
@@ -545,7 +529,7 @@ class UserController {
 
         return mail.emailUpdate({
           email,
-          updateUrl: `${settings.client}/user/profile?email=${token}`,
+          updateUrl: `${settings.client}/settings/profile?email=${token}`,
         });
       })
       .catch((error) => {

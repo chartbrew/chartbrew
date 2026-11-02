@@ -12,14 +12,25 @@ const { runSourceDataRequest } = require("../../sources/runSourceDataRequest");
 const { getSourceById } = require("../../sources");
 const webhook = require("../../modules/alerts/webhookAlerts");
 const jwt = require("jsonwebtoken");
-const settings = require("../../settings-dev");
+const settings = require("../../settings");
 
 function routeHandler(routeModule, method, route) {
   const routes = new Map();
   const app = { settings };
-  ["get", "post", "put", "delete"].forEach((verb) => {
+  const methods = ["get", "post", "put", "patch", "delete", "all"];
+  methods.forEach((verb) => {
     app[verb] = (path, ...handlers) => routes.set(`${verb} ${path}`, handlers);
   });
+  app.route = (path) => {
+    const chain = {};
+    methods.forEach((verb) => {
+      chain[verb] = (...handlers) => {
+        app[verb](path, ...handlers);
+        return chain;
+      };
+    });
+    return chain;
+  };
   routeModule(app);
   return routes.get(`${method} ${route}`).at(-1);
 }
@@ -120,20 +131,62 @@ describe("security advisory regressions", () => {
     vi.spyOn(db.Dataset, "findOne").mockResolvedValue(source);
     vi.spyOn(db.Connection, "count").mockResolvedValue(1);
     vi.spyOn(db.Dataset, "create").mockResolvedValue({ id: 10 });
+    vi.spyOn(db.sequelize, "transaction").mockImplementation((operation) => operation({ LOCK: { UPDATE: "UPDATE" } }));
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({ id: 1 });
+    vi.spyOn(db.Chart, "findAll").mockResolvedValue([]);
     const requests = vi.spyOn(db.DataRequest, "bulkCreate").mockResolvedValue([]);
     await buildTemplate(7, 1, { template_id: 2, newDatasets: true, connections: { 4: 8 } });
     expect(requests).toHaveBeenCalledWith([{ connection_id: 8, dataset_id: 10 }]);
   });
 
-  it("blocks previously stored foreign connections at execution time", async () => {
+  it.each([false, true])("blocks stored foreign connections before execution, getCache=%s", async (getCache) => {
     vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({ team_id: 7 });
     const connection = vi.spyOn(db.Connection, "findByPk").mockResolvedValue({ team_id: 8 });
     const run = vi.spyOn(getSourceById("postgres").backend, "runDataRequest").mockResolvedValue({ success: true });
-    const options = { connection: { id: 4, type: "postgres" }, dataRequest: { dataset_id: 3 } };
+    const options = { connection: { id: 4, type: "postgres" }, dataRequest: { dataset_id: 3 }, getCache };
     await expect(runSourceDataRequest(options)).rejects.toThrow("403");
     expect(run).not.toHaveBeenCalled();
     connection.mockResolvedValue({ team_id: 7 });
     await expect(runSourceDataRequest(options)).resolves.toEqual({ success: true });
+  });
+
+  it.each(["dataset", "connection"])("rejects a missing %s before source execution", async (missing) => {
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue(missing === "dataset" ? null : { team_id: 7 });
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(missing === "connection" ? null : { team_id: 7 });
+    const run = vi.spyOn(getSourceById("postgres").backend, "runDataRequest");
+    await expect(runSourceDataRequest({
+      connection: { id: 4, type: "postgres" }, dataRequest: { dataset_id: 3 }, getCache: true,
+    })).rejects.toThrow("403");
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("keeps v6 source attribution after the team ownership check", async () => {
+    const execution = require("../../modules/sourceExecution");
+    const connection = { id: 4, team_id: 7, type: "postgres" };
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({ team_id: 7 });
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
+    let record;
+    const model = {
+      create: vi.fn(async (value) => { record = { ...value }; }),
+      findByPk: vi.fn(async () => record),
+      update: vi.fn(async (values) => { Object.assign(record, values); }),
+    };
+    vi.spyOn(getSourceById("postgres").backend, "runDataRequest").mockImplementation((options) => (
+      execution.runSourceExecution({ ...options, cacheHit: false }, async () => [], { model })
+    ));
+
+    await runSourceDataRequest({
+      connection,
+      teamId: 7,
+      projectId: 8,
+      chartId: 9,
+      dataRequest: { id: 2, dataset_id: 3 },
+      auditContext: { traceContext: { triggerType: "dashboard_auto", runId: 10 } },
+    });
+    expect(record).toMatchObject({
+      teamId: 7, projectId: 8, chartId: 9, datasetId: 3, dataRequestId: 2,
+      runId: 10, activity: "schedule", status: "success",
+    });
   });
 
   it("prevents generic integration writes from claiming a Slack workspace", async () => {

@@ -134,12 +134,11 @@
       "name": "Payment status",
       "description": "Count of payment intents by status.",
       "icon": "ChartBar",
-      "type": "bar",
+      "type": "horizontalBar",
       "requiredDatasetIds": ["payment_intents"],
       "chart": {
         "displayLegend": false,
-        "includeZeros": true,
-        "horizontal": true
+        "includeZeros": true
       },
       "cdc": {
         "datasetTemplateId": "payment_intents",

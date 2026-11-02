@@ -18,12 +18,8 @@ const {
 } = require("../utils/slackClient");
 const { formatResponse, formatError } = require("../utils/formatResponse");
 
-const settings = process.env.NODE_ENV === "production"
-  ? require("../../../settings")
-  : require("../../../settings-dev"); // eslint-disable-line
-const clientUrl = process.env.NODE_ENV === "production"
-  ? process.env.VITE_APP_CLIENT_HOST
-  : process.env.VITE_APP_CLIENT_HOST_DEV;
+const settings = require("../../../settings"); // eslint-disable-line
+const clientUrl = process.env.VITE_APP_CLIENT_HOST;
 
 class SlackController {
   constructor() {
@@ -466,7 +462,7 @@ class SlackController {
         conversationHistory,
         conversation,
         null, // No project context - let agent decide
-        { toolProgressCallback }
+        { toolProgressCallback, usageConversationId: conversationId }
       );
 
       // Save new messages to database
@@ -491,20 +487,6 @@ class SlackController {
       });
 
       await Promise.all(messagePromises);
-
-      // Save usage records
-      const usagePromises = (result.usageRecords || []).map((usage) => db.AiUsage.create({
-        conversation_id: conversationId,
-        team_id: integration.team_id,
-        model: usage.model,
-        prompt_tokens: usage.prompt_tokens,
-        completion_tokens: usage.completion_tokens,
-        total_tokens: usage.total_tokens,
-        elapsed_ms: usage.elapsed_ms,
-        cost_micros: 0,
-      }));
-
-      await Promise.all(usagePromises);
 
       // Update conversation metadata
       await conversation.update({

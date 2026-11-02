@@ -1,8 +1,10 @@
 const team = require("./TeamRoute");
 const user = require("./UserRoute");
 const project = require("./ProjectRoute");
+const reportTheme = require("./ReportThemeRoute");
 const connection = require("./ConnectionRoute");
 const chart = require("./ChartRoute");
+const chartCreation = require("./ChartCreationRoute");
 const savedQuery = require("./SavedQueryRoute");
 const dataRequest = require("./DataRequestRoute");
 const dataset = require("./DatasetRoute");
@@ -13,13 +15,21 @@ const update = require("./UpdateRoute");
 const integration = require("./IntegrationRoute");
 const ai = require("./AiRoute");
 const updateRun = require("./UpdateRunRoute");
+const observation = require("./ObservationRoute");
+const platform = require("./PlatformSettingsRoute");
+const dataApi = require("./DataApiRoute");
+const chartImage = require("./ChartImageRoute");
+const mcp = require("./McpRoute");
+const mcpOAuth = require("./McpOAuthRoute");
 
 module.exports = {
   team,
   user,
   project,
+  reportTheme,
   connection,
   chart,
+  chartCreation,
   savedQuery,
   dataRequest,
   dataset,
@@ -30,4 +40,10 @@ module.exports = {
   updateRun,
   integration,
   ai,
+  observation,
+  platform,
+  dataApi,
+  chartImage,
+  mcp,
+  mcpOAuth,
 };

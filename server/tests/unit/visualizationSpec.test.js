@@ -63,6 +63,29 @@ describe("visualization specification", () => {
     expect(ready.errors).toContain("layers[0].encoding.value is required for line");
   });
 
+  it("requires a persisted layer ID before a visualization becomes ready", () => {
+    const ready = validateVisualizationSpec({
+      version: 2,
+      layers: [{
+        bindingId: "cdc-1",
+        mark: "line",
+        encoding: {
+          category: { field: "root[].month", type: "nominal" },
+          value: { field: "root[].revenue", type: "quantitative" },
+        },
+      }],
+    });
+    const draft = validateVisualizationSpec({
+      version: 2,
+      status: "draft",
+      layers: [{ mark: "line", encoding: {} }],
+    });
+
+    expect(ready.valid).toBe(false);
+    expect(ready.errors).toContain("layers[0].id is required for a ready visualization");
+    expect(draft.valid).toBe(true);
+  });
+
   it("declares semantic slots per mark instead of a universal X/Y contract", () => {
     expect(getMarkDefinition("kpi").slots).toEqual({
       value: { kind: "measure", required: true, types: ["quantitative"] },

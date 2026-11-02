@@ -1,3 +1,4 @@
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
 const rateLimit = require("express-rate-limit");
 
 const DataRequestController = require("../controllers/DataRequestController");
@@ -5,6 +6,7 @@ const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const DatasetController = require("../controllers/DatasetController");
 const ConnectionController = require("../controllers/ConnectionController");
+const { getDataRecovery } = require("../modules/dataRecovery");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -214,7 +216,9 @@ module.exports = (app) => {
   /*
   ** Route to run a request
   */
-  app.post(`${root}/:id/request`, verifyToken, checkPermissions, (req, res) => {
+  app.post(`${root}/:id/request`, verifyToken, checkPermissions, (req, _res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.params.team_id }, next);
+  }, (req, res) => {
     return dataRequestController.runRequest({
       id: req.params.id,
       chart_id: req.params.chart_id,
@@ -253,7 +257,8 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
 
-        return res.status(400).json({ error: error.message });
+        const recovery = getDataRecovery(error);
+        return res.status(400).json({ error: recovery?.message || error.message, ...(recovery ? { recovery } : {}) });
       });
   });
   // -------------------------------------------------
@@ -273,6 +278,24 @@ module.exports = (app) => {
       })
       .catch((error) => {
         return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to propose a source-owned DataRequest configuration
+  */
+  app.post(`${root}/:id/ai-configuration`, verifyToken, checkPermissions, apiLimiter(10), (req, res) => {
+    return dataRequestController.proposeAiConfiguration(
+      req.params.id,
+      req.body.question,
+      req.body.currentConfiguration,
+    )
+      .then((proposal) => {
+        return res.status(200).send(proposal);
+      })
+      .catch((error) => {
+        return res.status(error.statusCode || 400).json({ error: error.message });
       });
   });
   // -------------------------------------------------

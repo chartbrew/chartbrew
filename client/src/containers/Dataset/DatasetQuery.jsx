@@ -11,7 +11,7 @@ import {
   TextField,
   Tooltip,
 } from "@heroui/react";
-import { LuArrowLeft, LuBrainCircuit, LuGitMerge, LuInfo, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuGitMerge, LuInfo, LuLayers, LuPlus, LuSearch, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -33,6 +33,7 @@ import { selectTeam } from "../../slices/team";
 import canAccess from "../../config/canAccess";
 import { selectUser } from "../../slices/user";
 import { findSourceForConnection, isSourceAiPowered } from "../../sources";
+import ChartbrewAiIcon from "../../components/ChartbrewAiIcon";
 
 function DatasetQuery(props) {
   const { onUpdateDataset } = props;
@@ -336,7 +337,7 @@ function DatasetQuery(props) {
 
   return (
     <>
-      <div className="h-full py-2 overflow-y-auto flex flex-col gap-2">
+      <div className="flex h-full flex-col gap-3 overflow-y-auto py-3">
         <div className="flex flex-row items-center">
           <Tabs
             variant="primary"
@@ -345,21 +346,27 @@ function DatasetQuery(props) {
               setSelectedTab(key);
               setCreateMode(false);
             }}
-            className="w-full max-w-md border border-divider rounded-3xl"
+            className="max-w-full"
           >
-            <Tabs.ListContainer>
-              <Tabs.List>
-                <Tabs.Tab id="queryBuilder">
+            <Tabs.ListContainer className="w-fit max-w-full rounded-full border border-divider bg-background">
+              <Tabs.List className="w-fit min-w-0 gap-1">
+                <Tabs.Tab
+                  className="group h-10 w-fit shrink-0 px-5 font-semibold data-[selected=true]:text-foreground"
+                  id="queryBuilder"
+                >
                   <Tabs.Indicator />
                   <div className="flex flex-row items-center gap-2">
-                    <LuLayers size={16} />
+                    <LuLayers className="text-muted group-data-[selected=true]:text-accent" size={16} />
                     <span>Query builder</span>
                   </div>
                 </Tabs.Tab>
-                <Tabs.Tab id="joinSettings">
+                <Tabs.Tab
+                  className="group h-10 w-fit shrink-0 px-5 font-semibold data-[selected=true]:text-foreground"
+                  id="joinSettings"
+                >
                   <Tabs.Indicator />
                   <div className="flex flex-row items-center gap-2">
-                    <LuGitMerge size={16} />
+                    <LuGitMerge className="text-muted group-data-[selected=true]:text-accent" size={16} />
                     <span>Join settings</span>
                     {_hasJoinConfiguration() && (
                       <Chip size="sm" variant="soft" className="rounded-sm">
@@ -384,40 +391,50 @@ function DatasetQuery(props) {
           </div>
         )}
         {!createMode && selectedTab === "queryBuilder" && (
-          <div className="col-span-12 bg-surface rounded-3xl border border-divider pb-4">
+          <div className="col-span-12 overflow-hidden rounded-3xl border border-divider bg-surface">
             {dataRequests && dataRequests.length > 0 && (
-              <div className="bg-surface-secondary rounded-t-3xl p-4">
-                <div className="flex w-full flex-row flex-wrap items-center gap-2">
-                  {dataRequests.map((dr) => {
-                    const isActive = !createMode && `${selectedRequest?.id}` === `${dr.id}`;
-                    return (
-                      <Button
-                        key={dr.id}
-                        size="sm"
-                        variant={isActive ? "primary" : "ghost"}
-                        onPress={() => _onSelectDataRequest(dr)}
-                        className="shrink-0"
-                      >
-                        <div className="flex flex-row items-center gap-2">
-                          <div className="h-6 w-6 shrink-0">
-                            <img
-                              src={getConnectionLogo(dr?.Connection, theme === "dark")}
-                              alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
-                              className="h-full w-full rounded-sm border border-divider object-contain"
-                            />
-                          </div>
-                          <span className="max-w-md truncate">{dr?.Connection?.name}</span>
-                          {_renderDataRequestTabChip(dr)}
-                        </div>
-                      </Button>
-                    );
-                  })}
+              <div className="border-b border-divider bg-surface-secondary px-5 pt-3">
+                <div className="flex w-full flex-row items-end gap-3">
+                  <Tabs
+                    className="min-w-0 flex-1"
+                    onSelectionChange={(key) => {
+                      const nextRequest = dataRequests.find((dr) => `${dr.id}` === `${key}`);
+                      if (nextRequest) _onSelectDataRequest(nextRequest);
+                    }}
+                    selectedKey={`${selectedRequest?.id || dataRequests[0]?.id}`}
+                    variant="secondary"
+                  >
+                    <Tabs.ListContainer className="max-w-full border-b-0 bg-transparent">
+                      <Tabs.List aria-label="Data requests" className="w-fit min-w-0 p-0">
+                        {dataRequests.map((dr) => (
+                          <Tabs.Tab
+                            className="h-11 w-fit shrink-0 px-2 font-semibold"
+                            id={`${dr.id}`}
+                            key={dr.id}
+                          >
+                            <Tabs.Indicator />
+                            <div className="flex min-w-0 flex-row items-center gap-2">
+                              <div className="h-6 w-6 shrink-0">
+                                <img
+                                  src={getConnectionLogo(dr?.Connection, theme === "dark")}
+                                  alt={`${dr?.Connection?.subType || dr?.Connection?.type} logo`}
+                                  className="h-full w-full rounded-sm border border-divider object-contain p-0.5"
+                                />
+                              </div>
+                              <span className="max-w-md truncate">{dr?.Connection?.name}</span>
+                              {_renderDataRequestTabChip(dr)}
+                            </div>
+                          </Tabs.Tab>
+                        ))}
+                      </Tabs.List>
+                    </Tabs.ListContainer>
+                  </Tabs>
                   {_canAccess("teamAdmin") && (
                     <Button
                       size="sm"
-                      variant={createMode ? "primary" : "outline"}
+                      variant="ghost"
                       onPress={() => setCreateMode(true)}
-                      className="shrink-0"
+                      className="mb-2 shrink-0 font-semibold text-muted hover:text-foreground"
                     >
                       <div className="flex flex-row items-center gap-2">
                         <LuPlus size={16} />
@@ -429,43 +446,47 @@ function DatasetQuery(props) {
                     <Tooltip
                       delay={0}
                     >
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        isIconOnly
-                        className="shrink-0"
-                      >
-                        <LuInfo size={16} />
-                      </Button>
+                      <Tooltip.Trigger>
+                        <Button
+                          aria-label="About data requests"
+                          size="sm"
+                          variant="ghost"
+                          isIconOnly
+                          className="mb-2 ml-auto shrink-0 text-muted"
+                        >
+                          <LuInfo size={16} />
+                        </Button>
+                      </Tooltip.Trigger>
                       <Tooltip.Content placement="bottom">
-                        You can add additional data requests to any other source to join them together via the "Join settings" tab.
+                        Add another data request, then use Join settings to combine the results.
                       </Tooltip.Content>
                     </Tooltip>
                   )}
                 </div>
               </div>
             )}
-            <div className="h-8" />
-            {dataRequests.map((dr) => (
-              <Fragment key={dr.id}>
-                {_renderDataRequestBuilder(dr)}
+            <div className="">
+              {dataRequests.map((dr) => (
+                <Fragment key={dr.id}>
+                  {_renderDataRequestBuilder(dr)}
 
-                {!selectedRequest?.Connection && selectedRequest?.id === dr.id && (
-                  <div className="p-4">
-                    <p className="font-semibold">This data request does not have a connection.</p>
-                    <p className="text-sm text-default-500">{"You can safely delete this and create a new data request by clicking the '+' button."}</p>
-                    <div className="h-4" />
-                    <Button
-                      onPress={() => _onDeleteRequest(selectedRequest.id)}
-                      color="danger"
-                      size="sm"
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                )}
-              </Fragment>
-            ))}
+                  {!selectedRequest?.Connection && selectedRequest?.id === dr.id && (
+                    <div className="p-4">
+                      <p className="font-semibold">This data request does not have a connection.</p>
+                      <p className="text-sm text-default-500">{"Delete this request, then add a new data request."}</p>
+                      <div className="h-4" />
+                      <Button
+                        onPress={() => _onDeleteRequest(selectedRequest.id)}
+                        color="danger"
+                        size="sm"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  )}
+                </Fragment>
+              ))}
+            </div>
           </div>
         )}
         {createMode && (
@@ -477,7 +498,7 @@ function DatasetQuery(props) {
                   <LuArrowLeft size={16} />
                 </Button>
               )}
-              <div className="text-lg font-tw font-semibold">Select a connection</div>
+              <div className="text-lg font-tight font-semibold">Select a connection</div>
             </div>
             <div className="h-4" />
             {connections.length > 0 && (
@@ -555,7 +576,7 @@ function DatasetQuery(props) {
                           _onCreateNewRequest(c);
                         }
                       }}
-                      className="h-full w-full cursor-pointer border border-content3 shadow-none transition-colors hover:bg-content2/40"
+                      className="h-full w-full cursor-pointer border border-content3 shadow-none transition-colors hover:bg-surface-secondary/40"
                     >
                       <Card.Content className="p-4 pl-unit-8">
                         <div className="flex flex-row items-center justify-between">
@@ -563,13 +584,13 @@ function DatasetQuery(props) {
                             <div className="text-lg font-semibold">{c.name}</div>
                             {isSourceAiPowered(findSourceForConnection(c)) && (
                               <Chip variant="soft" color="accent" size="sm" className="max-w-fit">
-                                <LuBrainCircuit size={14} />
+                                <ChartbrewAiIcon size={14} />
                                 <Chip.Label>{"AI-powered"}</Chip.Label>
                               </Chip>
                             )}
                           </div>
                           <Avatar className="rounded-sm">
-                            <Avatar.Image src={getConnectionLogo(c, theme === "dark")} alt={`${c.type} logo`} />
+                            <Avatar.Image className="object-contain p-[15%]" src={getConnectionLogo(c, theme === "dark")} alt={`${c.type} logo`} />
                             <Avatar.Fallback />
                           </Avatar>
                         </div>

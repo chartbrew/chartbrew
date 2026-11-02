@@ -10,48 +10,27 @@ const {
 
 function buildChart(overrides = {}) {
   return {
-    chartData: {
-      data: {
-        labels: ["January", "February"],
-        datasets: [{
-          data: [120, 140],
-          label: "Enterprise",
-        }, {
-          data: [null, 90],
-          label: "Self-serve",
-        }, {
-          data: [500, 600],
-          label: "Other dataset",
-        }],
-      },
-      meta: {
-        series: [{
-          bindingId: "cdc-revenue",
-          id: "series-enterprise",
-          label: "Enterprise",
-          layerId: "revenue",
-        }, {
-          bindingId: "cdc-revenue",
-          id: "series-self-serve",
-          label: "Self-serve",
-          layerId: "revenue",
-        }, {
-          bindingId: "cdc-other",
-          id: "series-other",
-          label: "Other dataset",
-          layerId: "other",
-        }],
-      },
-    },
     isTimeseries: false,
     visualization: {
+      settings: {},
       layers: [{
         bindingId: "cdc-revenue",
+        encoding: {
+          breakdown: { field: "segment" },
+          category: { field: "month" },
+          value: { field: "value" },
+        },
         id: "revenue",
+        mark: "bar",
         name: "Revenue",
       }, {
         bindingId: "cdc-other",
+        encoding: {
+          category: { field: "month" },
+          value: { field: "value" },
+        },
         id: "other",
+        mark: "bar",
         name: "Other",
       }],
     },
@@ -59,9 +38,76 @@ function buildChart(overrides = {}) {
   };
 }
 
+function buildPreparedData() {
+  return {
+    frameVersion: 1,
+    generatedAt: "2026-08-19T00:00:00.000Z",
+    results: [{
+      bindingId: "cdc-revenue",
+      fields: [
+        { key: "category", role: "dimension", type: "nominal" },
+        { key: "value", role: "measure", type: "quantitative" },
+        { key: "breakdown", role: "dimension", type: "nominal" },
+      ],
+      id: "revenue",
+      mark: "bar",
+      rows: [{
+        breakdown: "Enterprise",
+        category: "January",
+        seriesId: "series-enterprise",
+        value: 120,
+      }, {
+        breakdown: "Enterprise",
+        category: "February",
+        seriesId: "series-enterprise",
+        value: 140,
+      }, {
+        breakdown: "Self-serve",
+        category: "January",
+        seriesId: "series-self-serve",
+        value: null,
+      }, {
+        breakdown: "Self-serve",
+        category: "February",
+        seriesId: "series-self-serve",
+        value: 90,
+      }],
+      series: [{ id: "series-enterprise", label: "Enterprise" }, {
+        id: "series-self-serve",
+        label: "Self-serve",
+      }],
+    }, {
+      bindingId: "cdc-other",
+      fields: [
+        { key: "category", role: "dimension", type: "nominal" },
+        { key: "value", role: "measure", type: "quantitative" },
+      ],
+      id: "other",
+      mark: "bar",
+      rows: [{ category: "January", seriesId: "series-other", value: 500 }, {
+        category: "February", seriesId: "series-other", value: 600,
+      }],
+      series: [{ id: "series-other", label: "Other dataset" }],
+    }],
+    timezone: "UTC",
+    version: 1,
+    warnings: [],
+  };
+}
+
+function getSeries(chart, bindingId) {
+  return getAlertSeries(
+    buildPreparedData(),
+    chart.visualization,
+    bindingId,
+    { chart }
+  );
+}
+
 describe("generated-series alerts", () => {
   it("finds every rendered series produced by one dataset binding", () => {
-    const series = getAlertSeries(buildChart(), "cdc-revenue", 0);
+    const chart = buildChart();
+    const series = getSeries(chart, "cdc-revenue");
 
     expect(series.map((item) => item.seriesId)).toEqual([
       "series-enterprise",
@@ -71,7 +117,7 @@ describe("generated-series alerts", () => {
 
   it("collects matching values from every series and ignores sparse nulls", () => {
     const chart = buildChart();
-    const series = getAlertSeries(chart, "cdc-revenue", 0);
+    const series = getSeries(chart, "cdc-revenue");
     const matches = findThresholdMatches(chart, {
       events: [],
       rules: { value: 100 },
@@ -95,7 +141,7 @@ describe("generated-series alerts", () => {
 
   it("does not treat a sparse null as a value below the threshold", () => {
     const chart = buildChart();
-    const series = getAlertSeries(chart, "cdc-revenue", 0);
+    const series = getSeries(chart, "cdc-revenue");
     const matches = findThresholdMatches(chart, {
       events: [],
       rules: { value: 100 },
@@ -109,7 +155,7 @@ describe("generated-series alerts", () => {
 
   it("checks only the latest domain point for a time-series alert", () => {
     const chart = buildChart({ isTimeseries: true });
-    const series = getAlertSeries(chart, "cdc-revenue", 0);
+    const series = getSeries(chart, "cdc-revenue");
     const matches = findThresholdMatches(chart, {
       events: [{ trigger: [{ label: "January", seriesId: "series-enterprise" }] }],
       rules: { value: 80 },
@@ -146,7 +192,7 @@ describe("generated-series alerts", () => {
     }]);
   });
 
-  it("falls back to the legacy CDC dataset position when metadata is unavailable", () => {
+  it("does not use a renderer payload when PreparedData is unavailable", () => {
     const chart = buildChart({
       chartData: {
         data: {
@@ -154,12 +200,8 @@ describe("generated-series alerts", () => {
           datasets: [{ label: "Revenue", data: [120] }],
         },
       },
-      visualization: null,
     });
 
-    expect(getAlertSeries(chart, "cdc-revenue", 0)[0]).toMatchObject({
-      datasetIndex: 0,
-      seriesLabel: "Revenue",
-    });
+    expect(getAlertSeries(null, chart.visualization, "cdc-revenue", { chart })).toEqual([]);
   });
 });

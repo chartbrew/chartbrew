@@ -1,3 +1,6 @@
+const { teamRoles } = require("../../shared/roles.json");
+const { withSourceExecutionContext } = require("../modules/sourceExecution");
+const homeSuggestions = require("../modules/ai/homeSuggestions/service");
 const DatasetController = require("../controllers/DatasetController");
 const DatasetIntelligenceController = require("../controllers/DatasetIntelligenceController");
 const TeamController = require("../controllers/TeamController");
@@ -26,7 +29,7 @@ module.exports = (app) => {
       }
 
       let permission;
-      if ((teamRole.role === "projectAdmin" || teamRole.role === "projectEditor") && actionType.indexOf("Any") > -1) {
+      if (["teamEditor", "projectAdmin", "projectEditor"].includes(teamRole.role) && actionType.indexOf("Any") > -1) {
         permission = accessControl.can(teamRole.role)[actionType.replace("Any", "Own")]("dataset");
       } else {
         permission = accessControl.can(teamRole.role)[actionType]("dataset");
@@ -39,7 +42,7 @@ module.exports = (app) => {
       const { role, projects } = teamRole;
 
       // Handle permissions for teamOwner and teamAdmin
-      if (["teamOwner", "teamAdmin"].includes(role)) {
+      if (teamRoles.includes(role)) {
         return next();
       }
 
@@ -192,6 +195,7 @@ module.exports = (app) => {
 
     return datasetController.create(req.body)
       .then((dataset) => {
+        homeSuggestions.recordUserActivity(Number(req.params.team_id), req.user.id, [{ entityType: "dataset", entityId: dataset.id }]);
         return res.status(200).send(dataset);
       })
       .catch((err) => {
@@ -220,6 +224,7 @@ module.exports = (app) => {
 
     return datasetController.createWithDataRequests(req.body)
       .then((dataset) => {
+        homeSuggestions.recordUserActivity(Number(req.params.team_id), req.user.id, [{ entityType: "dataset", entityId: dataset.id }]);
         return res.status(200).send(dataset);
       })
       .catch((err) => {
@@ -276,6 +281,7 @@ module.exports = (app) => {
 
     return datasetController.updateByTeam(req.params.dataset_id, req.params.team_id, req.body)
       .then((dataset) => {
+        homeSuggestions.recordUserActivity(Number(req.params.team_id), req.user.id, [{ entityType: "dataset", entityId: req.params.dataset_id }]);
         return res.status(200).send(dataset);
       })
       .catch((err) => {
@@ -319,7 +325,9 @@ module.exports = (app) => {
   /*
   ** [DEPRECATED] Route to run the request attached to the dataset
   */
-  app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res) => {
+  app.get(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.params.team_id }, next);
+  }, (req, res) => {
     return datasetController.runRequest(
       {
         dataset_id: req.params.dataset_id,
@@ -366,7 +374,9 @@ module.exports = (app) => {
   /*
   ** [NEW] Route to run the request attached to the dataset
   */
-  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res) => {
+  app.post(`${root}/:dataset_id/request`, verifyToken, checkPermissions("readAny"), ensureDatasetBelongsToTeam, (req, res, next) => {
+    return withSourceExecutionContext({ activity: "preview", teamId: req.params.team_id }, next);
+  }, (req, res) => {
     return datasetController.runRequest({
       dataset_id: req.params.dataset_id,
       chart_id: req.body.chart_id,

@@ -34,4 +34,11 @@ describe("scheduleWeekdays", () => {
   it("does not run when a configured daily schedule has no selected days", () => {
     expect(shouldRunOnWeekday([], { weekday: 3 })).toBe(false);
   });
+
+  it("supports delivery days stored as JSON text", () => {
+    const daysOfWeek = JSON.stringify(["monday", "wednesday", "friday"]);
+
+    expect(shouldRunOnWeekday(daysOfWeek, { weekday: 3 })).toBe(true);
+    expect(shouldRunOnWeekday(daysOfWeek, { weekday: 4 })).toBe(false);
+  });
 });

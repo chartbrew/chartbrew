@@ -322,6 +322,7 @@ function DatarequestModal(props) {
                         >
                           {dr.Connection ? (
                             <Avatar.Image
+                              className="object-contain p-[15%]"
                               src={_getConnectionLogo(dr.Connection)}
                               alt=""
                             />
@@ -403,7 +404,7 @@ function DatarequestModal(props) {
                               _onCreateNewRequest(c);
                             }
                           }}
-                          className="w-full cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-content2/40"
+                          className="w-full cursor-pointer border-1 border-solid border-content3 shadow-none transition-colors hover:bg-surface-secondary/40"
                         >
                           <Card.Content className="p-4 pl-unit-8">
                             <Row align="center" justify="space-between">
@@ -411,6 +412,7 @@ function DatarequestModal(props) {
                               <div className="w-1" />
                               <Avatar className="rounded-sm">
                                 <Avatar.Image
+                                  className="object-contain p-[15%]"
                                   src={_getConnectionLogo(c)}
                                   alt={`${c.type} logo`}
                                 />

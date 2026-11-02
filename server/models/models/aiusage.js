@@ -29,6 +29,33 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       comment: "OpenAI model used (e.g. gpt-4o-mini)"
     },
+    request_id: { type: DataTypes.UUID, allowNull: true },
+    provider: { type: DataTypes.STRING, allowNull: true },
+    provider_response_id: { type: DataTypes.STRING, allowNull: true },
+    activity: { type: DataTypes.STRING, allowNull: false, defaultValue: "legacy" },
+    usage_status: { type: DataTypes.STRING, allowNull: false, defaultValue: "legacy" },
+    cached_tokens: { type: DataTypes.INTEGER, allowNull: true },
+    reasoning_tokens: { type: DataTypes.INTEGER, allowNull: true },
+    provider_usage: { type: DataTypes.JSON, allowNull: true },
+    purpose: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    context_manifest: {
+      type: DataTypes.TEXT("long"),
+      get() {
+        const value = this.getDataValue("context_manifest");
+        if (!value) return null;
+        try {
+          return JSON.parse(value);
+        } catch (error) {
+          return null;
+        }
+      },
+      set(value) {
+        this.setDataValue("context_manifest", value ? JSON.stringify(value) : null);
+      },
+    },
     prompt_tokens: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -53,9 +80,11 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     freezeTableName: true,
     indexes: [
+      { fields: ["request_id"] },
       { fields: ["conversation_id"] },
       { fields: ["team_id", "createdAt"] }, // Most important for billing queries
       { fields: ["team_id", "model", "createdAt"] }, // For model-specific billing
+      { fields: ["team_id", "purpose", "createdAt"] },
     ]
   });
 
