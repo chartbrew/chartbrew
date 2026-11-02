@@ -838,14 +838,9 @@ function GaBuilder(props) {
               />
             </div>
           </Row>
-          <div className="h-4" />
-          <Row align="center">
-            <LuInfo />
-            <div className="w-2" />
-            <Text size="sm">
-              {"This is a preview and it might not show all data in order to keep things fast in the UI."}
-            </Text>
-          </Row>
+          <p className="mt-3 pb-6 text-xs leading-5 text-default-500">
+            {"This preview may not show all data."}
+          </p>
         </div>
       </div>
 

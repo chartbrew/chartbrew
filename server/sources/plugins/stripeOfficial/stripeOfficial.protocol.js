@@ -1,6 +1,6 @@
 const sourceExecution = require("../../../modules/sourceExecution");
 const moment = require("moment-timezone");
-const request = require("request-promise");
+const request = require("../../../modules/safeRequest");
 
 const db = require("../../../models/models");
 const drCacheController = require("../../../controllers/DataRequestCacheController");
@@ -89,7 +89,7 @@ function stripeRequest(connection, endpoint, qs = {}) {
 
   return request({
     method: "GET",
-    uri: `${STRIPE_API_BASE_URL}${endpoint}`,
+    url: `${STRIPE_API_BASE_URL}${endpoint}`,
     auth: {
       bearer: apiKey,
     },

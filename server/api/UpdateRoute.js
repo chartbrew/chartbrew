@@ -1,5 +1,5 @@
 const { compareVersions } = require("compare-versions");
-const request = require("request-promise");
+const request = require("../modules/safeRequest");
 
 const db = require("../models/models");
 const packageJson = require("../package.json");

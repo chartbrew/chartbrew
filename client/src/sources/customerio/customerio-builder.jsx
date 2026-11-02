@@ -432,14 +432,9 @@ function CustomerioBuilder(props) {
                 />
               </div>
             </Row>
-            <div className="h-1" />
-            <Row align="center">
-              <LuInfo />
-              <div className="w-1" />
-              <Text size="sm">
-                {"To keep the interface fast, not all the data might show up here."}
-              </Text>
-            </Row>
+            <p className="mt-3 pb-6 text-xs leading-5 text-default-500">
+              {"This preview may not show all data."}
+            </p>
           </Container>
         </div>
       </div>

@@ -1,4 +1,4 @@
-const request = require("request-promise");
+const request = require("../../../modules/safeRequest");
 
 const { FIELD_MAPPING_NAMES } = require("./jira.resources");
 
@@ -80,7 +80,7 @@ function jiraRequest(connection, route, options = {}) {
   const { siteUrl, email, apiToken } = getCredentials(connection);
   return request({
     method: options.method || "GET",
-    uri: `${siteUrl}${route}`,
+    url: `${siteUrl}${route}`,
     auth: {
       user: email,
       pass: apiToken,

@@ -7,7 +7,7 @@ on:
     branches: [ main, develop, v6 ]
 
 env:
-  NODE_VERSION: '22.22.1'
+  NODE_VERSION: '22.23.4'
   NPM_VERSION: '11.11.0'
   CB_SKIP_PLAYWRIGHT_INSTALL: '1'
 

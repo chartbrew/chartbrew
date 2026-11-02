@@ -1,9 +1,9 @@
-const request = require("request-promise");
+const request = require("./safeRequest");
 
 const settings = require("../settings");
 
 module.exports = (projectId, charts, authorization) => {
-  charts.forEach((chart) => {
+  return Promise.all(charts.map((chart) => {
     const updateOpt = {
       url: `http://${settings.api}:${settings.port}/project/${projectId}/chart/${chart.id}/query`,
       method: "POST",
@@ -15,8 +15,9 @@ module.exports = (projectId, charts, authorization) => {
         getCache: true,
       },
       json: true,
+      followRedirect: false,
     };
 
-    request(updateOpt);
-  });
+    return request(updateOpt, { allowPrivateHost: true, source: "chart_refresh" });
+  }));
 };

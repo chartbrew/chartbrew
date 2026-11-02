@@ -18,7 +18,7 @@ Getting sued is not fun, so we ask everyone to sign a [Contributor License Agree
 
 2. Clone from your repository and make sure you stay on the `master` branch
 
-3. [Follow the setup guide](https://docs.chartbrew.com/quickstart)
+3. Run `nvm install` and `nvm use` from the repository root to select Node.js 22.23.4, then [follow the setup guide](https://docs.chartbrew.com/quickstart). Without nvm, install the version specified in `.nvmrc` before installing dependencies.
 
 4. Run the project in development using the guide above and make sure everything works
 

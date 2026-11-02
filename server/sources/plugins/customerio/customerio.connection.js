@@ -1,5 +1,5 @@
 const sourceExecution = require("../../../modules/sourceExecution");
-const request = require("request-promise");
+const request = require("../../../modules/safeRequest");
 const moment = require("moment");
 
 const paginateRequests = require("../../../modules/paginateRequests");

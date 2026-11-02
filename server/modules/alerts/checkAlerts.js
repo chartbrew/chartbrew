@@ -1,5 +1,5 @@
 const { add, isPast } = require("date-fns");
-const request = require("request-promise");
+const request = require("../safeRequest");
 const moment = require("moment");
 const ChartController = require("../../controllers/ChartController");
 

@@ -1,4 +1,5 @@
-const request = require("request-promise");
+const { Agent, request } = require("undici");
+const qs = require("qs");
 const net = require("net");
 
 const { validateOutboundUrl } = require("./outboundTargetPolicy");
@@ -93,45 +94,62 @@ function createPinnedLookup(expectedHostname, resolvedAddresses = []) {
   };
 }
 
-function requestWithResponseLimit(options, maximumResponseBytes) {
-  const pending = request(options);
-  if (!Number.isInteger(maximumResponseBytes) || maximumResponseBytes < 1) return pending;
-  return new Promise((resolve, reject) => {
-    let receivedBytes = 0;
-    let settled = false;
-    const rejectLargeResponse = () => {
-      if (settled) return;
-      settled = true;
+async function requestWithResponseLimit(options, validation, signal) {
+  const dispatcher = new Agent({
+    connect: {
+      lookup: createPinnedLookup(validation.hostname, validation.resolvedAddresses),
+      timeout: options.timeout > 0 ? options.timeout : 10000,
+    },
+  });
+  const limit = options.maximumResponseBytes;
+  const hasLimit = Number.isInteger(limit) && limit > 0;
+
+  try {
+    const response = await request(options.url, {
+      dispatcher,
+      method: normalizeMethod(options.method),
+      headers: options.headers,
+      body: options.body,
+      signal,
+      maxRedirections: 0,
+    });
+    if (hasLimit && Number(response.headers["content-length"]) > limit) {
       const error = new Error("Outbound response exceeded the allowed size.");
       error.code = "RESPONSE_TOO_LARGE";
-      pending.abort();
-      reject(error);
+      throw error;
+    }
+
+    const chunks = [];
+    let receivedBytes = 0;
+    for await (const chunk of response.body) {
+      receivedBytes += chunk.length;
+      if (hasLimit && receivedBytes > limit) {
+        const error = new Error("Outbound response exceeded the allowed size.");
+        error.code = "RESPONSE_TOO_LARGE";
+        throw error;
+      }
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks, receivedBytes);
+    return {
+      statusCode: response.statusCode,
+      headers: response.headers,
+      body: options.encoding === null ? buffer : buffer.toString(options.encoding || "utf8"),
     };
-    pending.on("response", (response) => {
-      const contentLength = Number(response.headers?.["content-length"] || 0);
-      if (contentLength > maximumResponseBytes) rejectLargeResponse();
-    });
-    pending.on("data", (chunk) => {
-      receivedBytes += Buffer.byteLength(chunk);
-      if (receivedBytes > maximumResponseBytes) rejectLargeResponse();
-    });
-    pending.then((response) => {
-      if (settled) return;
-      settled = true;
-      resolve(response);
-    }).catch((error) => {
-      if (settled) return;
-      settled = true;
-      reject(error);
-    });
-  });
+  } catch (error) {
+    if (signal?.aborted && signal.reason?.name === "TimeoutError") {
+      const timeoutError = new Error("Outbound request timed out.");
+      timeoutError.code = "ETIMEDOUT";
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    await dispatcher.destroy();
+  }
 }
 
 async function safeRequest(requestOptions, policyContext = {}) {
   const baseOptions = { ...requestOptions };
-  const maximumResponseBytes = Number.isInteger(baseOptions.maximumResponseBytes)
-    ? baseOptions.maximumResponseBytes : null;
-  delete baseOptions.maximumResponseBytes;
   const followRedirect = baseOptions.followRedirect !== false;
   const followAllRedirects = baseOptions.followAllRedirects === true;
   const maxRedirects = Number.isInteger(baseOptions.maxRedirects)
@@ -139,11 +157,39 @@ async function safeRequest(requestOptions, policyContext = {}) {
     : DEFAULT_MAX_REDIRECTS;
 
   let redirectCount = 0;
-  let currentUrl = baseOptions.url;
-  let currentMethod = baseOptions.method || "GET";
+  const initialOptions = sanitizeOutboundRequestOptions(baseOptions);
+  const url = new URL(initialOptions.url);
+  if (baseOptions.qs) {
+    url.search = qs.stringify({ ...qs.parse(url.search.slice(1)), ...baseOptions.qs });
+  }
+  const headers = Object.fromEntries(Object.entries(initialOptions.headers || {})
+    .map(([name, value]) => [name.toLowerCase(), value]));
+  if ((url.username || url.password) && !headers.authorization) {
+    const credentials = `${decodeURIComponent(url.username)}:${decodeURIComponent(url.password)}`;
+    headers.authorization = `Basic ${Buffer.from(credentials).toString("base64")}`;
+  }
+  url.username = "";
+  url.password = "";
+  if (baseOptions.auth?.bearer) {
+    headers.authorization = `Bearer ${baseOptions.auth.bearer}`;
+  } else if (baseOptions.auth) {
+    const credentials = `${baseOptions.auth.user || ""}:${baseOptions.auth.pass || ""}`;
+    headers.authorization = `Basic ${Buffer.from(credentials).toString("base64")}`;
+  }
+  if (baseOptions.json && !headers.accept) headers.accept = "application/json";
   let currentBody = baseOptions.body;
-  let currentForm = baseOptions.form;
-  let currentFormData = baseOptions.formData;
+  if (baseOptions.form) {
+    currentBody = qs.stringify(baseOptions.form).replace(/%20/g, "+");
+    headers["content-type"] ||= "application/x-www-form-urlencoded";
+  } else if (baseOptions.json && currentBody !== undefined) {
+    if (!Buffer.isBuffer(currentBody) && typeof currentBody !== "string") {
+      currentBody = JSON.stringify(currentBody);
+    }
+    headers["content-type"] ||= "application/json";
+  }
+  const signal = baseOptions.timeout > 0 ? AbortSignal.timeout(baseOptions.timeout) : undefined;
+  let currentUrl = url.toString();
+  let currentMethod = normalizeMethod(baseOptions.method);
 
   while (true) { // oxlint-disable-line no-constant-condition
     const optionsForRequest = sanitizeOutboundRequestOptions(
@@ -152,9 +198,7 @@ async function safeRequest(requestOptions, policyContext = {}) {
         url: currentUrl,
         method: currentMethod,
         body: currentBody,
-        form: currentForm,
-        formData: currentFormData,
-        followRedirect: false,
+        headers,
       },
       currentUrl
     );
@@ -167,13 +211,7 @@ async function safeRequest(requestOptions, policyContext = {}) {
     });
 
     // oxlint-disable-next-line no-await-in-loop
-    const response = await requestWithResponseLimit({
-      ...optionsForRequest,
-      lookup: createPinnedLookup(
-        validationResult.hostname,
-        validationResult.resolvedAddresses
-      ),
-    }, maximumResponseBytes);
+    const response = await requestWithResponseLimit(optionsForRequest, validationResult, signal);
     const statusCode = response && response.statusCode;
     const location = response && response.headers && response.headers.location;
 
@@ -183,7 +221,21 @@ async function safeRequest(requestOptions, policyContext = {}) {
       followRedirect,
       followAllRedirects,
     })) {
-      return response;
+      if (baseOptions.json && typeof response.body === "string") {
+        try {
+          response.body = JSON.parse(response.body);
+        } catch {
+          // Some sources return plain text even when JSON was requested.
+        }
+      }
+      if (baseOptions.simple !== false && (statusCode < 200 || statusCode >= 300)) {
+        const error = new Error(`Outbound request returned HTTP ${statusCode}.`);
+        error.statusCode = statusCode;
+        error.error = response.body;
+        error.response = response;
+        throw error;
+      }
+      return baseOptions.resolveWithFullResponse ? response : response.body;
     }
 
     if (redirectCount >= maxRedirects) {
@@ -193,13 +245,19 @@ async function safeRequest(requestOptions, policyContext = {}) {
     }
 
     redirectCount += 1;
-    currentUrl = new URL(location, optionsForRequest.url).toString();
+    const nextUrl = new URL(location, optionsForRequest.url);
+    if (nextUrl.origin !== new URL(currentUrl).origin) {
+      delete headers.authorization;
+      delete headers.cookie;
+      delete headers["proxy-authorization"];
+    }
+    currentUrl = nextUrl.toString();
 
     if (shouldRewriteMethodForRedirect(statusCode, currentMethod)) {
       currentMethod = "GET";
       currentBody = undefined;
-      currentForm = undefined;
-      currentFormData = undefined;
+      delete headers["content-type"];
+      delete headers["content-length"];
     }
   }
 }

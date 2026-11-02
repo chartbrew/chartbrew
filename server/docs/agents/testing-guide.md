@@ -2,6 +2,19 @@
 
 This document covers how to write and run tests in the Chartbrew backend.
 
+## Node.js version
+
+Use Node.js 22.23.4, as specified in the root `.nvmrc` and both CI workflows. From the repository root:
+
+```sh
+nvm install
+nvm use
+cd server
+npm run test:pure
+```
+
+Database tests also require the isolated database setup described below.
+
 ## Test Framework
 
 - **Framework**: Vitest + Supertest

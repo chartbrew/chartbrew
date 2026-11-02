@@ -5,7 +5,7 @@ const auditMigration = require("../../models/migrations/20260825091000-add-data-
 
 describe("Data API migrations", () => {
   it("adds, backfills, indexes, and removes the fields on SQLite", async () => {
-    const sequelize = new Sequelize("sqlite::memory:", { logging: false });
+    const sequelize = new Sequelize({ dialect: "sqlite", storage: ":memory:", logging: false });
     const queryInterface = sequelize.getQueryInterface();
     try {
       await queryInterface.createTable("Apikey", {

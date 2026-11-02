@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const request = require("request");
+const request = require("../modules/safeRequest");
 const rateLimit = require("express-rate-limit");
 
 const UserController = require("../controllers/UserController");
@@ -279,10 +279,9 @@ module.exports = (app) => {
       }
     };
 
-    return request(options, (err) => {
-      if (err) return res.status(400).send(err);
-      return res.status(200).send({});
-    });
+    return request(options)
+      .then(() => res.status(200).send({}))
+      .catch(() => res.status(400).send({ error: "Feedback could not be sent. Try again." }));
   });
   // --------------------------------------
 

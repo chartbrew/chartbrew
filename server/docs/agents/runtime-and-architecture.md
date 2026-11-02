@@ -2,6 +2,10 @@
 
 This document covers the foundational architecture of the Chartbrew backend: how the application starts, how settings work, how routes are registered, and how controllers access data.
 
+## Node.js version
+
+The project uses Node.js 22.23.4 for local development, CI, and Docker. Keep the root `.nvmrc`, `NODE_VERSION` in both GitHub Actions workflows, and the Dockerfile base image in sync when updating Node.js. See the [security update steps](../../../README.md#nodejs-security-updates) for existing installations.
+
 ## Runtime Entrypoint
 
 - **Main entry**: [`server/index.js`](../index.js)

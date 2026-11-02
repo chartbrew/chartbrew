@@ -7,13 +7,10 @@ const originalRequest = require.cache[requestPath];
 const request = vi.fn();
 require.cache[requestPath] = { id: requestPath, filename: requestPath, loaded: true, exports: request };
 const sqlPath = require.resolve("../../sources/shared/sql/externalDbConnection");
-const requestPromisePath = require.resolve("request-promise");
 const originalSql = require.cache[sqlPath];
-const originalRequestPromise = require.cache[requestPromisePath];
 const sqlConnect = vi.fn();
-const sourceRequest = vi.fn();
+const sourceRequest = request;
 require.cache[sqlPath] = { id: sqlPath, filename: sqlPath, loaded: true, exports: sqlConnect };
-require.cache[requestPromisePath] = { id: requestPromisePath, filename: requestPromisePath, loaded: true, exports: sourceRequest };
 const execution = require("../../modules/sourceExecution");
 const api = require("../../sources/shared/protocols/api.protocol");
 const paginate = require("../../modules/paginateRequests");
@@ -47,7 +44,6 @@ describe("source execution boundaries", () => {
   beforeEach(() => {
     records.clear();
     request.mockReset();
-    sourceRequest.mockReset();
     sqlConnect.mockReset();
     vi.spyOn(db.Connection, "findByPk").mockResolvedValue(connection);
     vi.spyOn(cache, "create").mockResolvedValue(true);
@@ -58,8 +54,6 @@ describe("source execution boundaries", () => {
   afterAll(() => {
     if (originalSql) require.cache[sqlPath] = originalSql;
     else delete require.cache[sqlPath];
-    if (originalRequestPromise) require.cache[requestPromisePath] = originalRequestPromise;
-    else delete require.cache[requestPromisePath];
     if (originalRequest) require.cache[requestPath] = originalRequest;
     else delete require.cache[requestPath];
   });
