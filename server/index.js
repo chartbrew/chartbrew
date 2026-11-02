@@ -13,7 +13,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const _ = require("lodash");
 const morgan = require("morgan");
-const helmet = require("helmet");
+const securityHeaders = require("./middlewares/securityHeaders");
 const fs = require("fs");
 const busboy = require("connect-busboy");
 
@@ -107,11 +107,7 @@ app.use((req, res, next) => {
 app.use(chartImageBodyError);
 app.use(dataApiBodyError);
 app.use(methodOverride("X-HTTP-Method-Override"));
-app.use(helmet({
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: false,
-}));
-// app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
+app.use(securityHeaders);
 app.use(cors());
 //---------------------------------------
 

@@ -16,6 +16,9 @@ const jiraProtocol = require("../../sources/plugins/jira/jira.protocol");
 describe("Jira protocol", () => {
   beforeEach(() => {
     const execution = require("../../modules/sourceExecution");
+    const db = require("../../models/models");
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue(null);
+    vi.spyOn(jiraConnection, "detectFieldMappings").mockResolvedValue({ fieldMappings: {} });
     vi.spyOn(execution, "runSourceExecution").mockImplementation((_options, operation) => operation());
   });
 

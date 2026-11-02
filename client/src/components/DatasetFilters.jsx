@@ -16,7 +16,7 @@ import {
 import { find } from "lodash";
 import { nanoid } from "@reduxjs/toolkit";
 import { parseDate } from "@internationalized/date";
-import { I18nProvider } from "@react-aria/i18n";
+import { I18nProvider } from "react-aria";
 import toast from "react-hot-toast";
 
 import Row from "./Row";

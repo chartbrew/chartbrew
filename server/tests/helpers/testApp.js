@@ -2,7 +2,7 @@ import express from "express";
 import { urlencoded, json } from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import helmet from "helmet";
+import securityHeaders from "../../middlewares/securityHeaders.js";
 import methodOverride from "method-override";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -31,10 +31,7 @@ export async function createTestApp() {
   app.set("query parser", "simple");
   app.use(json());
   app.use(methodOverride("X-HTTP-Method-Override"));
-  app.use(helmet({
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: false,
-  }));
+  app.use(securityHeaders);
   app.use(cors());
 
   // Basic health check route
