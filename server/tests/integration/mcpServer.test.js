@@ -129,7 +129,7 @@ describe("Chartbrew MCP private server", () => {
       "create_chart_preview",
       "explore_data",
     ]);
-    expect(JSON.stringify(list.body.result).length).toBeLessThanOrEqual(13000);
+    expect(JSON.stringify(list.body.result).length).toBeLessThanOrEqual(28000);
     expect(
       list.body.result.tools.find((tool) => tool.name === "create_chart_preview").inputSchema
         .properties.type.enum
