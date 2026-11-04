@@ -37,6 +37,14 @@ module.exports = (app) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    let dataset;
+    try {
+      dataset = await datasetController.findByIdAndTeam(req.params.dataset_id, team_id);
+    } catch (error) {
+      if (error.message === "404") return res.status(403).json({ message: "Access denied" });
+      throw error;
+    }
+
     const { role, projects } = teamRole;
     let currentDataRequest;
 
@@ -71,7 +79,6 @@ module.exports = (app) => {
     if (role === "projectAdmin") {
       req.user.canAccessSensitiveConnectionMetadata = false;
 
-      const dataset = await datasetController.findByIdAndTeam(req.params.dataset_id, team_id);
       if (!hasProjectAccess(dataset?.project_ids, projects)) {
         return res.status(403).json({ message: "Access denied" });
       }

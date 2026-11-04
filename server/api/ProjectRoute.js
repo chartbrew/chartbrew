@@ -399,7 +399,7 @@ module.exports = (app) => {
             if (Object.keys(urlVariables).length > 0) {
               try {
                 const updatedProject = await projectController
-                  .applyVariablesToCharts(project, urlVariables);
+                  .applyVariablesToCharts(processedProject, urlVariables);
                 return res.status(200).send(updatedProject);
               } catch (error) {
                 // If variable application fails, return the project without variables
@@ -470,7 +470,7 @@ module.exports = (app) => {
             if (Object.keys(finalVariables).length > 0) {
               try {
                 const updatedProject = await projectController
-                  .applyVariablesToCharts(project, finalVariables);
+                  .applyVariablesToCharts(processedProject, finalVariables);
                 return res.status(200).send(updatedProject);
               } catch (error) {
                 // If variable application fails, return the project without variables
@@ -502,7 +502,7 @@ module.exports = (app) => {
 
           try {
             const updatedProject = await projectController
-              .applyVariablesToCharts(project, urlVariables);
+              .applyVariablesToCharts(processedProject, urlVariables);
             return res.status(200).send(updatedProject);
           } catch (error) {
             // If variable application fails, return the project without variables

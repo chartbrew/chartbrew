@@ -22,6 +22,7 @@ const {
   isOutboundPolicyError,
   serializeOutboundPolicyError,
 } = require("../modules/outboundTargetPolicy");
+const checkChartShareAccess = require("../modules/chartShareAccess");
 const { verifyProjectPassword } = require("../modules/projectPassword");
 const { validateShareTokenPolicy, verifyShareToken } = require("../modules/shareToken");
 const settings = require("../settings");
@@ -397,6 +398,7 @@ module.exports = (app) => {
       if (decodedToken.sub.type === "Chart") {
         try {
           validateShareTokenPolicy(decodedToken, sharePolicy, "Chart", chart.id);
+          await checkChartShareAccess(chart, project, getPublicPasswordInput(req));
         } catch (error) {
           return res.status(401).json({ message: "Not authorized" });
         }
@@ -803,11 +805,15 @@ module.exports = (app) => {
 
           // get the team's branding status
           const project = await projectController.findById(chart.project_id);
+          await checkChartShareAccess(chart, project, getPublicPasswordInput(req));
           const team = await teamController.findById(project.team_id);
 
           return res.status(200).send(getEmbeddedChartData(chart, team));
         })
         .catch((error) => {
+          if (error?.code === "PASSWORD_REQUIRED") {
+            return res.status(403).send({ code: error.code, error: error.message });
+          }
           if (error.message === "401") {
             return res.status(401).send({ error: "Not authorized" });
           }
@@ -819,11 +825,14 @@ module.exports = (app) => {
     }
 
     // New! taking advantage of the share strings
-    return chartController.findByShareString(req.params.share_string, req.query)
+    return chartController.findByShareString(req.params.share_string, req.query, getPublicPasswordInput(req))
       .then(async (chart) => {
         return res.status(200).send(chart);
       })
       .catch((error) => {
+        if (error?.code === "PASSWORD_REQUIRED") {
+          return res.status(403).send({ code: error.code, error: error.message });
+        }
         if (error?.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
@@ -839,11 +848,14 @@ module.exports = (app) => {
   ** Route to share a chart with a share policy
   */
   app.get("/chart/share/:share_string", apiLimiter(50), (req, res) => {
-    return chartController.findBySharePolicy(req.params.share_string, req.query)
+    return chartController.findBySharePolicy(req.params.share_string, req.query, getPublicPasswordInput(req))
       .then((chart) => {
         return res.status(200).send(chart);
       })
       .catch((error) => {
+        if (error?.code === "PASSWORD_REQUIRED") {
+          return res.status(403).send({ code: error.code, error: error.message });
+        }
         if (
           error?.message === "401"
           || error?.message === "Invalid share token"

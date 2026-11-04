@@ -8,8 +8,8 @@ const { validate: isUuid } = require("uuid");
 
 const settings = require("../settings");
 
-module.exports.snapChart = async (shareString) => {
-  if (!isUuid(shareString)) return null;
+module.exports.snapChart = async (shareString, chartId) => {
+  if (!isUuid(shareString) || !Number.isInteger(chartId) || chartId <= 0) return null;
 
   let browser = null;
   try {
@@ -17,19 +17,22 @@ module.exports.snapChart = async (shareString) => {
     const page = await browser.newPage();
     await page.setViewportSize({ width: 1024, height: 768 });
 
-    await page.goto(`${settings.client}/chart/${shareString}/embedded?isSnapshot=true`);
+    const token = jwt.sign({ snapshotToken: shareString, chartId }, settings.encryptionKey, {
+      algorithm: "HS256", audience: "chart-snapshot", expiresIn: 300,
+    });
+    await page.goto(`${settings.client}/chart/${shareString}/embedded?isSnapshot=true&token=${token}`);
     await page.waitForSelector("div#chart-container");
     await page.waitForTimeout(500);
 
-    const snapshotId = nanoid(8);
+    const snapshotId = nanoid(20);
     const snapshotsDirectory = path.resolve(__dirname, "../uploads/snapshots");
-    const snapshotPath = path.join(snapshotsDirectory, `snap-${shareString}-${snapshotId}.png`);
+    const snapshotPath = path.join(snapshotsDirectory, `snap-${snapshotId}.png`);
     await fs.promises.mkdir(snapshotsDirectory, { recursive: true });
     await page.screenshot({ path: snapshotPath, omitBackground: false });
 
     await browser.close();
 
-    return `uploads/snapshots/snap-${shareString}-${snapshotId}.png`;
+    return `uploads/snapshots/snap-${snapshotId}.png`;
   } catch (err) {
     console.log("Could not take snapshot", err); // oxlint-disable-line no-console
     return null;

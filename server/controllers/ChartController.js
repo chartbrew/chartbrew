@@ -1,5 +1,6 @@
 const { getReportOrder, getLayouts, arrangeRows, deriveLayouts, breakpoints } = require("../../shared/dashboard/layout.mjs");
 const { nanoid } = require("nanoid");
+const jwt = require("jsonwebtoken");
 const { v4: uuid, v5: uuidFromName } = require("uuid");
 const { Op } = require("sequelize");
 
@@ -66,6 +67,7 @@ const {
   startEvent,
 } = require("../modules/updateAudit");
 
+const checkChartShareAccess = require("../modules/chartShareAccess");
 const getEmbeddedChartData = require("../modules/getEmbeddedChartData");
 
 const settings = require("../settings");
@@ -1354,14 +1356,19 @@ class ChartController {
    * @param {Object} queryParams - The query parameters
    * @returns {Promise<Object>} - The embedded chart data
    */
-  async findByShareString(shareString, queryParams) {
+  async findByShareString(shareString, queryParams, password) {
     if (queryParams.snapshot) {
-      const chart = await db.Chart.findOne({ where: { snapshotToken: shareString } });
+      const credential = jwt.verify(queryParams.token, settings.encryptionKey, {
+        algorithms: ["HS256"], audience: "chart-snapshot", maxAge: "5m",
+      });
+      if (credential.snapshotToken !== shareString || !Number.isInteger(credential.chartId)) throw new Error("401");
+
+      const chart = await db.Chart.findOne({ where: { id: credential.chartId, snapshotToken: shareString } });
       if (!chart) {
         return Promise.reject("Chart not found");
       }
 
-      return this.findById(chart.id);
+      return getEmbeddedChartData(await this.findById(chart.id));
     }
 
     const chartShare = await db.Chartshare.findOne({ where: { shareString } });
@@ -1372,11 +1379,9 @@ class ChartController {
     // get the team's branding status
     let chart = await this.findById(chartShare.chart_id);
     const project = await db.Project.findByPk(chart.project_id);
+    await checkChartShareAccess(chart, project, password || queryParams.password || queryParams.pass);
     const team = await db.Team.findByPk(project.team_id);
 
-    if (chart.draft || (!chart.public && !chart.shareable)) {
-      return Promise.reject("401");
-    }
     chart = await this.hydratePreparedChart(chart, {
       refresh: true,
       timezone: project.timezone,
@@ -1420,7 +1425,7 @@ class ChartController {
    * @param {Object} queryParams - The query parameters
    * @returns {Promise<Object>} - The embedded chart data
    */
-  async findBySharePolicy(shareString, queryParams) {
+  async findBySharePolicy(shareString, queryParams, password) {
     if (!queryParams.token) {
       return Promise.reject("Token is missing");
     }
@@ -1437,6 +1442,7 @@ class ChartController {
     let chart = await this.findById(sharePolicy.entity_id);
     if (chart.draft) throw new Error("401");
     const project = await db.Project.findByPk(chart.project_id);
+    await checkChartShareAccess(chart, project, password || queryParams.password || queryParams.pass);
     const team = await db.Team.findByPk(project.team_id);
     chart = await this.hydratePreparedChart(chart, {
       refresh: true,
@@ -1483,7 +1489,7 @@ class ChartController {
    */
   _extractVariablesFromQuery(queryParams) {
     const variables = {};
-    const specialParams = ["token", "theme", "isSnapshot", "snapshot"];
+    const specialParams = ["token", "theme", "isSnapshot", "snapshot", "password", "pass", "accessToken"];
 
     if (queryParams && typeof queryParams === "object") {
       Object.keys(queryParams).forEach((key) => {
@@ -1693,7 +1699,7 @@ class ChartController {
       return Promise.reject("Chart does not have a snapshot token");
     }
 
-    return snapChart(chart.snapshotToken);
+    return snapChart(chart.snapshotToken, chart.id);
   }
 
   /**

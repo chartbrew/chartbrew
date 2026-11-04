@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import {
   getEmbeddedChart, runQueryWithFilters,
 } from "../slices/chart";
+import ChartPasswordForm from "../components/ChartPasswordForm";
 import CupLoader from "../components/CupLoader";
 import ChartRenderer from "./Chart/components/ChartRenderer";
 import ChartFilters from "./Chart/components/ChartFilters";
@@ -33,6 +34,7 @@ function EmbeddedChart() {
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState({});
   const [error, setError] = useState(false);
+  const [chartPassword, setChartPassword] = useState("");
   const [conditions, setConditions] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [redraw, setRedraw] = useState(true);
@@ -46,83 +48,45 @@ function EmbeddedChart() {
   const filterRef = useRef(null);
   const chartSize = useChartSize(chart?.layout);
   
-  useInterval(() => {
+  const loadChart = async (password = chartPassword) => {
     setDataLoading(true);
-    
-    // Extract all query parameters to pass to the backend
-    const allQueryParams = {};
-    searchParams.forEach((value, key) => {
-      allQueryParams[key] = value;
-    });
-    
-    // We pass all query parameters so the backend can process variables based on the share policy
-    return dispatch(getEmbeddedChart({
-      embed_id: params.chartId, 
-      token: searchParams.get("token"),
-      queryParams: allQueryParams
-    }))
-      .then((chart) => {
-        if (chart?.error) {
-          setError(true);
-          setChart({ error: "no chart" });
-        } else {
-          setChart(chart.payload);
-        }
+    try {
+      const result = await dispatch(getEmbeddedChart({
+        embed_id: params.chartId,
+        snapshot: searchParams.has("isSnapshot"),
+        token: searchParams.get("token"),
+        queryParams: Object.fromEntries(searchParams),
+        password,
+      }));
+      if (result.error) {
+        setError(result.error.message === "PASSWORD_REQUIRED" ? "password" : true);
+        setChart({});
+      } else {
+        setError(false);
+        setChartPassword(password);
+        setChart(result.payload);
+      }
+    } catch (error) {
+      setError(true);
+      setChart({});
+    } finally {
+      setDataLoading(false);
+      setLoading(false);
+    }
+  };
 
-        setDataLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setChart({ error: "no chart" });
-        setDataLoading(false);
-      });
-  }, chart?.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000);
+  useInterval(() => loadChart(), error ? null : (
+    chart?.autoUpdate > 0 && chart.autoUpdate < 600 ? chart.autoUpdate * 1000 : 600000
+  ));
 
   useEffect(() => {
-    // change the background color to transparent
     document.body.style.backgroundColor = "transparent";
-
-    const urlParams = new URLSearchParams(document.location.search);
-
-    setIsSnapshot(urlParams.has("isSnapshot"));
-
+    setIsSnapshot(searchParams.has("isSnapshot"));
     setLoading(true);
-    setTimeout(() => {
-      // Extract all query parameters to pass to the backend
-      const allQueryParams = {};
-      searchParams.forEach((value, key) => {
-        allQueryParams[key] = value;
-      });
-      
-      // The backend now handles all variable filtering based on the share policy
-      dispatch(getEmbeddedChart({ 
-        embed_id: params.chartId, 
-        snapshot: urlParams.has("isSnapshot"), 
-        token: searchParams.get("token"),
-        queryParams: allQueryParams
-      }))
-        .then((chart) => {
-          if (chart?.error) {
-            setError(true);
-            setChart({ error: "no chart" });
-          } else {
-            setChart(chart.payload);
-          }
-          setLoading(false);
-        })
-        .catch(() => {
-          setError(true);
-          setLoading(false);
-          setChart({ error: "no chart" });
-        });
-    }, 1000);
-
-    if (searchParams.get("theme") === "light" || searchParams.get("theme") === "dark") {
-      setTheme(searchParams.get("theme"));
-    } else {
-      setTheme("system");
-    }
-  }, []);
+    loadChart();
+    const theme = searchParams.get("theme");
+    setTheme(theme === "light" || theme === "dark" ? theme : "system");
+  }, [params.chartId, searchParams]);
 
   useEffect(() => {
     // With the new share policy implementation, we just need to show the chart
@@ -161,6 +125,7 @@ function EmbeddedChart() {
       chart_id: chart.id, 
       filters: newConditions,
       shareToken: searchParams.get("token"),
+      password: chartPassword,
     }))
       .then((data) => {
         if (data.payload) {
@@ -193,6 +158,7 @@ function EmbeddedChart() {
       chart_id: chart.id, 
       filters: newConditions,
       shareToken: searchParams.get("token"),
+      password: chartPassword,
     }))
       .then((data) => {
         if (data.payload) {
@@ -229,6 +195,10 @@ function EmbeddedChart() {
         </div>
       </>
     );
+  }
+
+  if (error === "password") {
+    return <ChartPasswordForm onSubmit={loadChart} loading={dataLoading} />;
   }
 
   if (error) {

@@ -304,7 +304,7 @@ export const testQuery = createAsyncThunk(
 
 export const getEmbeddedChart = createAsyncThunk(
   "chart/getEmbeddedChart",
-  async ({ embed_id, snapshot, token, queryParams }) => {
+  async ({ embed_id, snapshot, token, queryParams, password }) => {
     let url = `${API_HOST}/chart/${embed_id}/embedded`;
     
     const urlParams = new URLSearchParams();
@@ -333,11 +333,13 @@ export const getEmbeddedChart = createAsyncThunk(
       "Accept": "application/json",
     });
 
+    if (password) headers.set("pass", password);
+
     const response = await fetch(url, { method, headers });
     const data = await response.json();
 
     if (response.status >= 400) {
-      throw new Error(data.message);
+      throw new Error(data.code || data.error || data.message);
     }
 
     return data;
@@ -346,7 +348,7 @@ export const getEmbeddedChart = createAsyncThunk(
 
 export const getSharedChart = createAsyncThunk(
   "chart/getSharedChart",
-  async ({ share_string, snapshot, token, queryParams }) => {
+  async ({ share_string, snapshot, token, queryParams, password }) => {
     let url = `${API_HOST}/chart/share/${share_string}`;
 
     const urlParams = new URLSearchParams();
@@ -375,11 +377,13 @@ export const getSharedChart = createAsyncThunk(
       "Accept": "application/json",
     });
 
+    if (password) headers.set("pass", password);
+
     const response = await fetch(url, { method, headers });
     const data = await response.json();
 
     if (response.status >= 400) {
-      throw new Error(data.message);
+      throw new Error(data.code || data.error || data.message);
     }
 
     return data;

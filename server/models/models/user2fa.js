@@ -1,12 +1,11 @@
 const CryptoJS = require("crypto-js");
+const { encrypt, decrypt: decryptCurrent } = require("../../modules/cbCrypto");
 
 const settings = require("../../settings");
 
-function encrypt(text, secretKey) {
-  return CryptoJS.AES.encrypt(text, secretKey).toString();
-}
-
 function decrypt(ciphertext, secretKey) {
+  if (!ciphertext) return ciphertext;
+  if (ciphertext.includes(":")) return decryptCurrent(ciphertext);
   const bytes = CryptoJS.AES.decrypt(ciphertext, secretKey);
   return bytes.toString(CryptoJS.enc.Utf8);
 }
@@ -35,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       set(val) {
-        return this.setDataValue("secret", encrypt(val, settings.secret));
+        return this.setDataValue("secret", encrypt(val));
       },
       get() {
         return decrypt(this.getDataValue("secret"), settings.secret);
@@ -50,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
       set(val) {
-        return this.setDataValue("backup", encrypt(val, settings.secret));
+        return this.setDataValue("backup", encrypt(val));
       },
       get() {
         return decrypt(this.getDataValue("backup"), settings.secret);

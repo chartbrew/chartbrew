@@ -28,6 +28,14 @@ module.exports = (app) => {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      let connection;
+      try {
+        connection = await connectionController.findByIdAndTeam(req.params.connection_id, team_id);
+      } catch (error) {
+        if (error.message === "404") return res.status(403).json({ message: "Access denied" });
+        throw error;
+      }
+
       const { role, projects } = teamRole;
 
       // Handle permissions for teamOwner and teamAdmin
@@ -37,10 +45,6 @@ module.exports = (app) => {
       }
 
       if (role === "projectAdmin" || role === "projectEditor" || role === "projectViewer") {
-        const connection = await connectionController.findByIdAndTeam(
-          req.params.connection_id,
-          team_id
-        );
         const hasProjectAccess = Array.isArray(connection?.project_ids)
           && connection.project_ids.some((projectId) => projects.includes(projectId));
 
