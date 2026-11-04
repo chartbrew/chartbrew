@@ -2,6 +2,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vitest";
 import { createRequire } from "module";
 
@@ -43,6 +44,40 @@ function requireSqlProtocolWithConnection(fakeConnection) {
 }
 
 describe("shared SQL protocol", () => {
+  it("describes PostgreSQL tables in their resolved search-path schemas", async () => {
+    const describeTable = vi.fn().mockResolvedValue({ id: {}, total: {} });
+    const query = vi.fn().mockResolvedValue([
+      { table_name: "orders", table_schema: "tenant-data" },
+      { table_name: "users", table_schema: "public" },
+    ]);
+
+    const schema = await sqlProtocol.getSchemaFromDbConnection({
+      getDialect: () => "postgres",
+      query,
+      getQueryInterface: () => ({ describeTable }),
+    });
+
+    expect(query.mock.calls[0][0]).toContain("pg_catalog.current_schemas(false)");
+    expect(query.mock.calls[0][0]).toContain("pg_catalog.pg_table_is_visible(c.oid)");
+    expect(describeTable.mock.calls).toEqual([
+      ["orders", { schema: "tenant-data" }],
+      ["users", { schema: "public" }],
+    ]);
+    expect(schema).toEqual({
+      tables: ["orders", "users"],
+      description: { orders: ["id", "total"], users: ["id", "total"] },
+    });
+  });
+
+  it("returns an empty PostgreSQL schema when no tables are visible", async () => {
+    const schema = await sqlProtocol.getSchemaFromDbConnection({
+      getDialect: () => "postgres",
+      query: async () => [],
+    });
+
+    expect(schema).toEqual({ tables: [], description: {} });
+  });
+
   it("loads table descriptions sequentially before the connection can be closed", async () => {
     let activeDescriptions = 0;
     let maxConcurrentDescriptions = 0;

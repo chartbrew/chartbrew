@@ -189,6 +189,17 @@ module.exports = async (connection) => {
 
     newConnectionString = `${protocol}${username}:${password}${hostAndOpt}`;
 
+    if (dialect === "postgres") {
+      const searchPath = new URL(newConnectionString).searchParams.get("search_path");
+      if (searchPath !== null) {
+        connectionConfig.hooks = {
+          afterConnect: async (client) => {
+            await client.query("SELECT pg_catalog.set_config('search_path', $1, false)", [searchPath]);
+          },
+        };
+      }
+    }
+
     connectionConfig.dialectOptions = {
       ssl: sslOptions,
     };

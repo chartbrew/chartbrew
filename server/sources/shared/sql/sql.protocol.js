@@ -64,6 +64,32 @@ async function closeSqlConnection(sqlDb) {
 }
 
 async function getSchemaFromDbConnection(dbConnection) {
+  if (dbConnection.getDialect?.() === "postgres") {
+    const tables = await dbConnection.query(`
+      SELECT t.table_name, t.table_schema
+      FROM information_schema.tables AS t
+      JOIN pg_catalog.pg_namespace AS n ON n.nspname = t.table_schema
+      JOIN pg_catalog.pg_class AS c ON c.relnamespace = n.oid AND c.relname = t.table_name
+      WHERE t.table_type LIKE '%TABLE'
+        AND t.table_name != 'spatial_ref_sys'
+        AND t.table_schema = ANY(pg_catalog.current_schemas(false))
+        AND pg_catalog.pg_table_is_visible(c.oid)
+      ORDER BY t.table_name
+    `, { type: Sequelize.QueryTypes.SELECT });
+    const description = {};
+
+    await tables.reduce((promise, table) => {
+      return promise.then(async () => {
+        const columns = await dbConnection.getQueryInterface().describeTable(table.table_name, {
+          schema: table.table_schema,
+        });
+        description[table.table_name] = Object.keys(columns);
+      });
+    }, Promise.resolve());
+
+    return { tables: tables.map((table) => table.table_name), description };
+  }
+
   const tables = await dbConnection.getQueryInterface().showAllTables();
   const schemas = [];
 
