@@ -22,25 +22,40 @@ module.exports = {
     const generator = queryInterface.queryGenerator;
     await queryInterface.sequelize.transaction(async (transaction) => {
       for (const [table, columns] of Object.entries(fields)) {
-        const selected = ["id", ...columns].map((column) => generator.quoteIdentifier(column)).join(", ");
+        const selectedColumns = table === "User2fa" ? ["id", "isEnabled", ...columns] : ["id", ...columns];
+        const selected = selectedColumns.map((column) => generator.quoteIdentifier(column)).join(", ");
         // oxlint-disable-next-line no-await-in-loop
         const rows = await queryInterface.sequelize.query(`SELECT ${selected} FROM ${generator.quoteTable(table)}`, {
           type: QueryTypes.SELECT, transaction,
         });
         for (const row of rows) {
           const updates = {};
+          let discardSetup = false;
           columns.forEach((column) => {
+            if (discardSetup) return;
             const value = row[column];
             if (!value) return;
-            if (/^[a-f0-9]{32}:[a-f0-9]+$/i.test(value)) {
-              decrypt(value);
-              return;
-            }
+            const isCurrent = /^[a-f0-9]{32}:[a-f0-9]+$/i.test(value);
             let plaintext;
             if (table === "User2fa") {
-              plaintext = CryptoJS.AES.decrypt(value, process.env.CB_SECRET).toString(CryptoJS.enc.Utf8);
-              if (!plaintext) throw new Error("Cannot decrypt existing two-factor data. Keep the original CB_SECRET for migration.");
+              try {
+                plaintext = isCurrent
+                  ? decrypt(value)
+                  : CryptoJS.AES.decrypt(value, process.env.CB_SECRET).toString(CryptoJS.enc.Utf8);
+                if (!plaintext) throw new Error("Empty two-factor data");
+              } catch {
+                if (row.isEnabled === false || row.isEnabled === 0) {
+                  discardSetup = true;
+                  return;
+                }
+                throw new Error("Cannot decrypt existing two-factor data. Check the original encryption keys and stored data before retrying.");
+              }
+              if (isCurrent) return;
             } else {
+              if (isCurrent) {
+                decrypt(value);
+                return;
+              }
               try {
                 plaintext = sc.decrypt(value);
               } catch (error) {
@@ -51,7 +66,11 @@ module.exports = {
             }
             updates[column] = encrypt(plaintext);
           });
-          if (Object.keys(updates).length) {
+          if (discardSetup) {
+            // Remove only incomplete setups; never disable an active authentication method.
+            // oxlint-disable-next-line no-await-in-loop
+            await queryInterface.bulkDelete(table, { id: row.id, isEnabled: false }, { transaction });
+          } else if (Object.keys(updates).length) {
             // oxlint-disable-next-line no-await-in-loop
             await queryInterface.bulkUpdate(table, updates, { id: row.id }, { transaction });
           }

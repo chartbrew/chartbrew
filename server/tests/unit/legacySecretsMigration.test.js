@@ -70,23 +70,38 @@ describe("legacy secret migration", () => {
     try {
       for (const name of ["connection", "datarequest", "dataset", "datasetintelligence", "oauth", "apikey", "teaminvitation", "template", "user2fa"]) {
         const model = require(`../../models/models/${name}`)(sequelize, DataTypes);
-        const columns = Object.fromEntries(Object.keys(model.rawAttributes).map((field) => [field, { type: DataTypes.TEXT }]));
+        const columns = Object.fromEntries(Object.keys(model.rawAttributes).map((field) => [field, {
+          type: field === "isEnabled" ? DataTypes.BOOLEAN : DataTypes.TEXT,
+        }]));
         await qi.createTable(model.tableName, columns);
       }
       const legacy = CryptoJS.AES.encrypt("old-seed", process.env.CB_SECRET).toString();
       const sc = simplecrypt({ password: process.env.CB_SECRET, salt: "10" });
       const password = sc.encrypt("old-password");
       await qi.bulkInsert("Connection", [{ id: "1", password }]);
-      await qi.bulkInsert("User2fa", [{ id: "2", secret: "unreadable" }]);
+      await qi.bulkInsert("User2fa", [
+        { id: "0", secret: "unreadable", isEnabled: false },
+        { id: "2", secret: "unreadable", isEnabled: true },
+        { id: "3", secret: legacy, isEnabled: false },
+        { id: "4", secret: legacy, backup: "unreadable", isEnabled: false },
+        { id: "5", secret: `${"0".repeat(32)}:00`, isEnabled: false },
+      ]);
       await expect(migration.up(qi)).rejects.toThrow("Cannot decrypt");
       let [rows] = await sequelize.query("SELECT password FROM Connection");
       expect(rows[0].password).toBe(password);
+      [rows] = await sequelize.query("SELECT id FROM User2fa");
+      expect(rows).toHaveLength(5);
       await qi.bulkUpdate("User2fa", { secret: legacy }, { id: "2" });
       await migration.up(qi);
       [rows] = await sequelize.query("SELECT password FROM Connection");
       expect(decrypt(rows[0].password)).toBe("old-password");
-      [rows] = await sequelize.query("SELECT secret FROM User2fa");
-      expect(decrypt(rows[0].secret)).toBe("old-seed");
+      [rows] = await sequelize.query("SELECT id, secret, isEnabled FROM User2fa ORDER BY id");
+      expect(rows.map((row) => row.id)).toEqual(["2", "3"]);
+      expect(rows.map((row) => decrypt(row.secret))).toEqual(["old-seed", "old-seed"]);
+      expect(rows.map((row) => row.isEnabled)).toEqual([1, 0]);
+      await migration.up(qi);
+      const [repeatedRows] = await sequelize.query("SELECT id, secret, isEnabled FROM User2fa ORDER BY id");
+      expect(repeatedRows).toEqual(rows);
     } finally {
       await sequelize.close();
     }
