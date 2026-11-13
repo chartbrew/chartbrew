@@ -26,7 +26,7 @@ const {
 const { processChartResult } = require("../modules/observations/processChartResult");
 
 const db = require("../models/models");
-const { CHART_FIELDS, BINDING_FIELDS, pickFields, saveChartVersion, initializeHistory } = require("../modules/chartVersions");
+const { CHART_FIELDS, BINDING_FIELDS, pickFields, saveChartVersion, initializeHistory, chartAccess, checkDatasets } = require("../modules/chartVersions");
 const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
@@ -1751,6 +1751,12 @@ class ChartController {
       }
     });
 
+    let datasets = [];
+    if (chartDatasetConfigs?.length) {
+      const { access } = await chartAccess(cleanChartData, { userId: user?.id, internal: !user }, transaction);
+      datasets = await checkDatasets(chartDatasetConfigs, access, transaction);
+    }
+
     const chart = await createPlacedChart(cleanChartData, {
       transaction, preserveLayout: options.preserveLayout === true,
     });
@@ -1763,12 +1769,6 @@ class ChartController {
     // Create all chart dataset configs
     let createdChartDatasetConfigs = [];
     if (chartDatasetConfigs && chartDatasetConfigs.length > 0) {
-      // Fetch datasets to get their legend for default values
-      const datasetIds = chartDatasetConfigs.map((cdc) => cdc.dataset_id).filter(Boolean);
-      const datasets = await db.Dataset.findAll({
-        where: { id: datasetIds },
-        transaction,
-      });
       const datasetMap = {};
       datasets.forEach((ds) => {
         datasetMap[ds.id] = ds;

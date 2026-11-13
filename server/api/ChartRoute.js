@@ -532,6 +532,9 @@ module.exports = (app) => {
         return res.status(200).send(chart);
       })
       .catch((error) => {
+        if (error.statusCode === 403) {
+          return res.status(403).send({ message: error.message });
+        }
         if (error.message && error.message.indexOf("406") > -1) {
           return res.status(406).send(error);
         }

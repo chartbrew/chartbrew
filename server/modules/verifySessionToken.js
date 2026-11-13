@@ -7,6 +7,9 @@ module.exports = (token) => {
   if (Object.hasOwn(decoded, "newEmail")) {
     throw new Error("Email-change tokens cannot authenticate a session");
   }
+  if (Object.hasOwn(decoded, "tokenType")) {
+    throw new Error("Purpose-specific tokens cannot authenticate a session");
+  }
 
   return decoded;
 };

@@ -345,7 +345,10 @@ class RequestController {
   }
 
   updateVariableBinding(id, variable_id, data) {
-    return db.VariableBinding.update(data, { where: { id: variable_id } })
+    return db.VariableBinding.update(data, {
+      where: { id: variable_id, entity_id: `${id}`, entity_type: "DataRequest" },
+      fields: ["name", "type", "default_value", "required"],
+    })
       .then(() => {
         return this.findById(id);
       });

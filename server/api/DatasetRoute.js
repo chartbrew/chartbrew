@@ -189,6 +189,7 @@ module.exports = (app) => {
   ** Route to create a new dataset
   */
   app.post(root, verifyToken, checkPermissions("createAny"), (req, res) => {
+    req.body.team_id = req.params.team_id;
     if (req.user.projects) {
       req.body.project_ids = req.user.projects;
     }

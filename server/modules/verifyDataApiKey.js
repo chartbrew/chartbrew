@@ -1,12 +1,13 @@
 const { createHash, timingSafeEqual } = require("crypto");
 const { Op } = require("sequelize");
+const jwt = require("jsonwebtoken");
 
 const db = require("../models/models");
 const TeamController = require("../controllers/TeamController");
 const { buildDataApiAccess, normalizeScopes } = require("./dataApiAccess");
 const { incrementDataApiMetric } = require("./dataApiMetrics");
 const { DataApiError, sendDataApiError } = require("./dataApiResponse");
-const verifySessionToken = require("./verifySessionToken");
+const settings = require("../settings");
 
 const LAST_USED_WRITE_INTERVAL_MS = 5 * 60 * 1000;
 const teamController = new TeamController();
@@ -86,12 +87,12 @@ function verifyDataApiKey(requiredScope = "data:read") {
 
     let decoded;
     try {
-      decoded = verifySessionToken(token);
+      decoded = jwt.verify(token, settings.encryptionKey, { algorithms: ["HS256"] });
     } catch (error) {
       return dataApiError(req, res, "API_KEY_INVALID");
     }
 
-    if (!hasRequiredClaims(decoded)) {
+    if (!hasRequiredClaims(decoded) || Object.hasOwn(decoded, "newEmail")) {
       return dataApiError(req, res, "API_KEY_INVALID");
     }
 

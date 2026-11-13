@@ -7,7 +7,7 @@ const ChartController = require("../../controllers/ChartController");
 
 describe("ChartController background updates", () => {
   beforeEach(() => {
-    vi.spyOn(db.Project, "findByPk").mockResolvedValue({ id: 77, layoutRevision: 0, update: vi.fn() });
+    vi.spyOn(db.Project, "findByPk").mockResolvedValue({ id: 77, team_id: 7, layoutRevision: 0, update: vi.fn() });
     vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([]);
     vi.spyOn(db.ChartVersion, "create").mockResolvedValue({});
     vi.spyOn(db.ChartVersion, "destroy").mockResolvedValue(0);
@@ -63,6 +63,7 @@ describe("ChartController background updates", () => {
     vi.spyOn(db.Chart, "create").mockResolvedValue(chart);
     vi.spyOn(db.Dataset, "findAll").mockResolvedValue([{
       id: 456,
+      team_id: 7,
       name: "Revenue dataset",
     }]);
     vi.spyOn(db.ChartDatasetConfig, "create").mockResolvedValue({});

@@ -19,10 +19,8 @@ services:
     image: redis:alpine
     restart: unless-stopped
     environment:
-      CB_REDIS_HOST: redis
-      REDIS_PASSWORD: ${CB_REDIS_PASSWORD}
-    ports:
-      - 6379:6379
+      REDIS_PASSWORD: ${CB_REDIS_PASSWORD:-}
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\""]
 
   chartbrew:
     build: .

@@ -29,6 +29,11 @@ describe("verifySessionToken", () => {
     expect(() => verifySessionToken(token)).toThrow("invalid signature");
   });
 
+  it.each(["api_key", "share", "mcp_oauth"])("rejects %s tokens as user sessions", (tokenType) => {
+    const token = jwt.sign({ id: 42, tokenType }, process.env.CB_ENCRYPTION_KEY);
+    expect(() => verifySessionToken(token)).toThrow("Purpose-specific tokens cannot authenticate a session");
+  });
+
   it("rejects session tokens using an unexpected algorithm", () => {
     const token = jwt.sign({ id: 42 }, process.env.CB_ENCRYPTION_KEY, { algorithm: "HS384" });
 

@@ -930,7 +930,10 @@ class DatasetController {
   }
 
   async updateVariableBinding(id, variable_id, data) {
-    await db.VariableBinding.update(data, { where: { id: variable_id, entity_id: id, entity_type: "Dataset" } });
+    await db.VariableBinding.update(data, {
+      where: { id: variable_id, entity_id: id, entity_type: "Dataset" },
+      fields: ["name", "type", "default_value", "required"],
+    });
     return this.findById(id);
   }
 
