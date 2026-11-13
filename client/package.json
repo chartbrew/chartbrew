@@ -11,7 +11,7 @@
     "test": "npm run test:settings && npm run test:visualization && npm run test:dataset && npm run test:loading && npm run test:welcome && npm run test:sharing",
     "test:sharing": "node --experimental-vm-modules --test src/components/ChartPasswordForm.test.js",
     "test:settings": "node --test ../scripts/prepareClientSettings.test.js",
-    "test:loading": "node --experimental-vm-modules --test src/containers/ProjectBoard/ProjectBoard.test.js",
+    "test:loading": "node --experimental-vm-modules --test src/containers/ProjectBoard/ProjectBoard.test.js src/slices/chart.loading.test.js src/slices/publicDashboard.loading.test.js src/modules/chartBatchQueue.test.js src/api/dashboardChartBatch.test.js src/containers/ProjectDashboard/hooks/useDashboardChartData.test.js",
     "test:dataset": "node --test src/containers/Dataset/querySuggestion.test.js",
     "test:ai": "node --experimental-vm-modules --test src/containers/Ai/AiComposer.test.js src/containers/Ai/activeConversation.test.js src/containers/Ai/aiAvailability.test.js src/containers/Ai/aiMessageUtils.test.js src/containers/Ai/chartPreviewState.test.js src/containers/Ai/chatScroll.test.js src/modules/workspaceAuditFormat.test.js",
     "test:welcome": "node --experimental-vm-modules --test src/containers/UserDashboard/components/chartbrewV6Welcome.test.js src/containers/UserDashboard/components/ChartbrewV6WelcomeModal.test.js",

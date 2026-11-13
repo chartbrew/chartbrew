@@ -59,6 +59,7 @@ test("the password form submits through the keyboard and shows a failed attempt"
 test("shared and legacy chart requests send passwords in headers and preserve the prompt error", async () => {
   const requests = [];
   const module = await loadModule("../slices/chart.js", {
+    "../api/dashboardChartBatch": { requestDashboardChartBatch: () => {} },
     "../api/chartHistory": { saveChartChange: () => {} },
     "@reduxjs/toolkit": { createAsyncThunk, createSlice },
     "../modules/auth": { getAuthToken: () => null },

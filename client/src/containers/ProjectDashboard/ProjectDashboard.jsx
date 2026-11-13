@@ -16,7 +16,6 @@ import {
   Kbd,
   ButtonGroup,
   Select,
-  Skeleton,
 } from "@heroui/react";
 import {
   Link, useNavigate, useParams, useSearchParams,
@@ -42,6 +41,8 @@ import "react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
 
 import Chart from "../Chart/Chart";
+import useDashboardChartData from "./hooks/useDashboardChartData";
+import DashboardChartSkeleton from "../../components/DashboardChartSkeleton";
 import AddChart from "../AddChart/AddChart";
 import AddFilters from "./components/AddFilters";
 import {
@@ -88,43 +89,6 @@ InlineChartPlacement.propTypes = { container: PropTypes.object, children: PropTy
 
 const DashboardGridLayout = WidthProvider(GridLayout);
 
-function DashboardChartSkeleton({ height }) {
-  const skeletonHeight = Math.max(height || 150, 150);
-
-  return (
-    <div
-      className="h-full rounded-2xl border border-solid border-divider bg-surface shadow-none"
-      style={{ minHeight: skeletonHeight }}
-    >
-      <div className="flex flex-col gap-4 p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-3">
-            <Skeleton className="h-4 w-40 rounded-lg" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-3 w-24 rounded-lg" />
-              <Skeleton className="h-3 w-3 rounded-full" />
-              <Skeleton className="h-3 w-16 rounded-lg" />
-            </div>
-          </div>
-          <Skeleton className="h-8 w-8 rounded-full" />
-        </div>
-        <Skeleton
-          className="w-full rounded-xl"
-          style={{ height: Math.max(skeletonHeight - 88, 96) }}
-        />
-      </div>
-    </div>
-  );
-}
-
-DashboardChartSkeleton.propTypes = {
-  height: PropTypes.number,
-};
-
-DashboardChartSkeleton.defaultProps = {
-  height: 150,
-};
-
 const getFiltersFromStorage = () => {
   try {
     const filters = JSON.parse(window.localStorage.getItem("_cb_filters"));
@@ -138,15 +102,19 @@ const getFiltersFromStorage = () => {
   Dashboard container (for the charts)
 */
 function ProjectDashboard() {
+  const params = useParams();
+  const project = useSelector(selectProject);
   const [creationOpen, setCreationOpen] = useState(false);
   const [creationCount, setCreationCount] = useState(0);
   const [selectedInlineChart, setSelectedInlineChart] = useState(null);
   const [inlineChartContainer, setInlineChartContainer] = useState(null);
   const inlineRefresh = useRef(Promise.resolve());
   const store = useStore();
-  const [filters, setFilters] = useState(getFiltersFromStorage());
+  const [filters, setFilters] = useState(() => {
+    const stored = getFiltersFromStorage() || {};
+    return { ...stored, [params.projectId]: mergeDashboardFilters(project?.DashboardFilters || [], stored[params.projectId] || []) };
+  });
   const [showFilters, setShowFilters] = useState(false);
-  const [filterLoading, setFilterLoading] = useState(false);
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [viewExport, setViewExport] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
@@ -172,9 +140,7 @@ function ProjectDashboard() {
   const activeBreakpoint = (editingLayout && previewSize.breakpoint) || gridBreakpoint;
   const [pendingScrollWidgetId, setPendingScrollWidgetId] = useState(null);
   const [chartFilters, setChartFilters] = useState({});
-  const [initialRuntimeHydrationPending, setInitialRuntimeHydrationPending] = useState(false);
 
-  const params = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -182,7 +148,13 @@ function ProjectDashboard() {
   const team = useSelector(selectTeam);
   const user = useSelector(selectUser);
   const charts = useSelector(selectCharts);
-  const project = useSelector(selectProject);
+  const effectiveDashboardFilters = filters?.[params.projectId] || [];
+  const { observeChart, retryChart } = useDashboardChartData({
+    projectId: params.projectId,
+    charts,
+    dashboardFilters: effectiveDashboardFilters,
+    chartFilters,
+  });
   useEffect(() => {
     if (team?.id && Number(project?.id) === Number(params.projectId) && document.visibilityState === "visible") {
       recordHomeActivity(team.id, project.id).catch(() => {});
@@ -191,7 +163,6 @@ function ProjectDashboard() {
   const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
 
-  const hasRunInitialFiltering = useRef(null);
   const dashboardRef = useRef(null);
   const previewContainerRef = useRef(null);
   const previewScale = editingLayout ? previewGeometry.scale : 1;
@@ -394,7 +365,6 @@ function ProjectDashboard() {
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
 
     setShowFilters(false);
-    _runFiltering(newFilters);
   };
 
   const _onAddVariableFilter = (variableFilter) => {
@@ -415,7 +385,6 @@ function ProjectDashboard() {
 
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
 
-    _runFiltering(newFilters);
     setShowFilters(false);
   };
 
@@ -433,7 +402,6 @@ function ProjectDashboard() {
         window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
       }
 
-      _runFiltering(newFilters);
       return;
     }
 
@@ -445,7 +413,6 @@ function ProjectDashboard() {
 
     setFilters(newFilters);
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
-    _runFiltering(newFilters);
   };
 
   const _onReorderFilters = (projectFilters) => {
@@ -466,29 +433,6 @@ function ProjectDashboard() {
       chartFilters: currentChartFilters?.[chart.id] || [],
     });
   };
-
-  useEffect(() => {
-    if (filterLoading || !filters || charts.length === 0 || hasRunInitialFiltering.current) {
-      return;
-    }
-
-    const runtimeChartIds = charts
-      .filter((chart) => chart.type !== "markdown")
-      .filter((chart) => _buildRuntimeRequest(chart, filters, chartFilters).hasRuntimeFilters)
-      .map((chart) => chart.id);
-
-    hasRunInitialFiltering.current = true;
-
-    if (runtimeChartIds.length === 0) {
-      return;
-    }
-
-    setInitialRuntimeHydrationPending(true);
-    _runFiltering(filters, runtimeChartIds, chartFilters)
-      .finally(() => {
-        setInitialRuntimeHydrationPending(false);
-      });
-  }, [filters, charts, chartFilters, filterLoading]);
 
   const _runChartRequest = (chart, currentFilters = filters, currentChartFilters = chartFilters, { refresh = false } = {}) => {
     if (!chart || chart.type === "markdown") return Promise.resolve(null);
@@ -524,15 +468,12 @@ function ProjectDashboard() {
   };
 
   const _shouldRenderChartSkeleton = (chart) => {
-    if (!chart || chart.type === "markdown" || editingLayout) return false;
+    if (!chart || chart.type === "markdown") return false;
+    if (chart.initialDataPending) return true;
+    if (editingLayout) return false;
 
     const runtimeRequest = _buildRuntimeRequest(chart, filters, chartFilters);
-    const waitingForRuntimeFilters = runtimeRequest.hasRuntimeFilters
-      && !shouldSkipFiltering(chart, runtimeRequest.filters, runtimeRequest.variables);
-    const waitingToClearStaleRuntimeState = !runtimeRequest.hasRuntimeFilters && Boolean(chart.filterMetadata);
-
-    return (waitingForRuntimeFilters || waitingToClearStaleRuntimeState)
-      && (chart.loading || filterLoading || initialRuntimeHydrationPending);
+    return !shouldSkipFiltering(chart, runtimeRequest.filters, runtimeRequest.variables);
   };
 
   const _processChartBatches = (chartsToProcess, currentFilters = filters, currentChartFilters = chartFilters, options = {}, index = 0, batchSize = 5) => {
@@ -541,23 +482,6 @@ function ProjectDashboard() {
     const batch = chartsToProcess.slice(index, index + batchSize);
     return Promise.all(batch.map((chart) => _runChartRequest(chart, currentFilters, currentChartFilters, options)))
       .then(() => _processChartBatches(chartsToProcess, currentFilters, currentChartFilters, options, index + batchSize, batchSize));
-  };
-
-  const _runFiltering = (currentFilters = filters, chartIds = null, currentChartFilters = chartFilters) => {
-    if (charts.length === 0) return Promise.resolve("done");
-
-    const chartsToProcess = (chartIds ? charts.filter((chart) => chartIds.includes(chart.id)) : charts)
-      .filter((chart) => chart.type !== "markdown");
-
-    setFilterLoading(true);
-    return _processChartBatches(chartsToProcess, currentFilters, currentChartFilters)
-      .then(() => {
-        setFilters(currentFilters);
-        setFilterLoading(false);
-      })
-      .catch(() => {
-        setFilterLoading(false);
-      });
   };
 
   const _onRefreshData = () => {
@@ -591,7 +515,6 @@ function ProjectDashboard() {
     }
 
     setChartFilters(updatedChartFilters);
-    _runFiltering(filters, [chartId], updatedChartFilters);
   };
 
   const _onShowFilters = () => {
@@ -909,11 +832,10 @@ function ProjectDashboard() {
                         variant="outline"
                         className="bg-surface"
                         isIconOnly
-                        isPending={filterLoading}
                         onPress={_onShowFilters}
                         size="sm"
                       >
-                        {filterLoading ? <ButtonSpinner /> : <LuListFilter size={18} />}
+                        <LuListFilter size={18} />
                       </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Content placement="bottom">Add dashboard filters</Tooltip.Content>
@@ -923,7 +845,7 @@ function ProjectDashboard() {
                       filters={filters}
                       projectId={params.projectId}
                       onRemoveFilter={_onRemoveFilter}
-                      onApplyFilterValue={_runFiltering}
+                      onApplyFilterValue={setFilters}
                       onReorderFilters={_onReorderFilters}
                     />
                   </div>
@@ -1241,48 +1163,61 @@ function ProjectDashboard() {
                         id={`dashboard-widget-${chart.id}`}
                         className={editingLayout ? "border-2 border-dashed border-primary rounded-3xl" : ""}
                       >
-                        {chart.type === "markdown" ? (
-                          <TextWidget
-                            chart={chart}
-                            onEditLayout={() => _onEditLayout()}
-                            editingLayout={editingLayout}
-                            onCancelChanges={_onCancelChanges}
-                            onSaveChanges={() => _onSaveChanges()}
-                            onEditContent={(content) => setStagedContent({
-                              ...stagedContent,
-                              [chart.id]: content,
-                            })}
-                          />
-                        ) : (
-                          <>
-                            {_shouldRenderChartSkeleton(chart) ? (
-                              <DashboardChartSkeleton height={_onGetChartHeight(chart)} />
-                            ) : (
-                              <InlineChartPlacement container={selectedInlineChart === chart.id ? inlineChartContainer : null}>
-                                <Chart
-                                  key={chart.id}
-                                  chart={chart}
-                                  charts={charts}
-                                  deferRendering
-                                  dashboardFilters={filters?.[params.projectId] || []}
-                                  chartFilters={chartFilters?.[chart.id] || []}
-                                  onAddChartFilter={_onChartFilterChange}
-                                  onClearChartFilter={_onChartFilterChange}
-                                  onRefreshRuntimeChart={(chartId, options = {}) => {
-                                    const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
-                                    if (!selectedChart) return Promise.resolve(null);
-                                    return _runChartRequest(selectedChart, filters, chartFilters, options);
-                                  }}
-                                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
-                                  height={() => selectedInlineChart === chart.id && inlineChartContainer ? inlineChartContainer.clientHeight : _onGetChartHeight(chart)}
-                                  onConfigure={_canAccess("projectEditor") && !selectedInlineChart ? () => setSelectedInlineChart(chart.id) : undefined}
-                                  editingLayout={editingLayout}
-                                  onEditLayout={() => _onEditLayout()}
-                                />
-                              </InlineChartPlacement>
-                            )}
-                          </>
-                        )}
+                        <div className="h-full" data-chart-id={chart.id} ref={observeChart}>
+                          {chart.type === "markdown" ? (
+                            <TextWidget
+                              chart={chart}
+                              onEditLayout={() => _onEditLayout()}
+                              editingLayout={editingLayout}
+                              onCancelChanges={_onCancelChanges}
+                              onSaveChanges={() => _onSaveChanges()}
+                              onEditContent={(content) => setStagedContent({
+                                ...stagedContent,
+                                [chart.id]: content,
+                              })}
+                            />
+                          ) : (
+                            <>
+                              {chart.initialDataError ? (
+                                <div className="flex h-full flex-col items-center justify-center gap-3 rounded-2xl border border-divider bg-surface p-5" role="alert">
+                                  <p className="font-medium">{chart.name}</p>
+                                  <p>Could not load this chart.</p>
+                                  <Button
+                                    variant="secondary"
+                                    onPress={() => retryChart(chart.id)}
+                                  >
+                                    Try again
+                                  </Button>
+                                </div>
+                              ) : _shouldRenderChartSkeleton(chart) ? (
+                                <DashboardChartSkeleton height={_onGetChartHeight(chart)} />
+                              ) : (
+                                <InlineChartPlacement container={selectedInlineChart === chart.id ? inlineChartContainer : null}>
+                                  <Chart
+                                    key={chart.id}
+                                    chart={chart}
+                                    charts={charts}
+                                    deferRendering
+                                    dashboardFilters={effectiveDashboardFilters}
+                                    chartFilters={chartFilters?.[chart.id] || []}
+                                    onAddChartFilter={_onChartFilterChange}
+                                    onClearChartFilter={_onChartFilterChange}
+                                    onRefreshRuntimeChart={(chartId, options = {}) => {
+                                      const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
+                                      if (!selectedChart) return Promise.resolve(null);
+                                      return _runChartRequest(selectedChart, filters, chartFilters, options);
+                                    }}
+                                    onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                                    height={() => selectedInlineChart === chart.id && inlineChartContainer ? inlineChartContainer.clientHeight : _onGetChartHeight(chart)}
+                                    onConfigure={_canAccess("projectEditor") && !selectedInlineChart ? () => setSelectedInlineChart(chart.id) : undefined}
+                                    editingLayout={editingLayout}
+                                    onEditLayout={() => _onEditLayout()}
+                                  />
+                                </InlineChartPlacement>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))}
                     {creators}

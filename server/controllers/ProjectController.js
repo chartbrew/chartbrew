@@ -1,6 +1,5 @@
-const { teamRoles } = require("../../shared/roles.json");
+const { resolvePublicDashboardAccess } = require("../modules/publicDashboardAccess");
 const { getReportOrder } = require("../../shared/dashboard/layout.mjs");
-const { cloneDeep } = require("lodash");
 const { validate: validateUuid, version: uuidVersion } = require("uuid");
 
 const db = require("../models/models");
@@ -9,13 +8,11 @@ const templateModels = require("../templates");
 const { snapDashboard } = require("../modules/snapshots");
 const runtimeCache = require("../modules/runtimeCache");
 const { normalizeProjectScheduleTimezones } = require("../modules/projectSnapshotTimezone");
-const { hashProjectPassword, verifyProjectPassword } = require("../modules/projectPassword");
+const { hashProjectPassword } = require("../modules/projectPassword");
 const { applyTeamBrandDefaults } = require("../modules/teamOnboarding/projectBrandDefaults");
 const {
   signLegacyShareToken,
   signShareToken,
-  validateShareTokenPolicy,
-  verifyShareToken,
 } = require("../modules/shareToken");
 
 const settings = require("../settings");
@@ -55,6 +52,7 @@ class ProjectController {
     if (!project?.Charts?.length) return project;
     const order = getReportOrder(project.Charts, project.layoutOrder);
     project.Charts.sort((a, b) => order.indexOf(String(a.id)) - order.indexOf(String(b.id)));
+    if (options.hydratePreparedData === false) return project;
     const ChartController = require("./ChartController"); // eslint-disable-line
     const chartController = new ChartController();
     const charts = await chartController.hydratePreparedCharts(project.Charts, {
@@ -619,7 +617,7 @@ class ProjectController {
    */
   _extractVariablesFromQuery(queryParams) {
     const variables = {};
-    const specialParams = ["token", "accessToken", "theme", "pass", "removeStyling", "removeHeader"];
+    const specialParams = ["token", "accessToken", "theme", "pass", "removeStyling", "removeHeader", "view", "password"];
 
     if (queryParams && typeof queryParams === "object") {
       Object.keys(queryParams).forEach((key) => {
@@ -647,95 +645,12 @@ class ProjectController {
    * @returns {Promise<Object>} - The processed project data
    */
   async findBySharePolicy(brewName, password, queryParams, user) {
-    if (!queryParams.token && !user?.id) {
-      return Promise.reject("Token is missing");
-    }
-
-    const project = await db.Project.findOne({ where: { brewName } });
-    if (!project) {
-      return Promise.reject("Project not found");
-    }
-
-    let overridePolicy = false;
-    // check if we get a team member from the token
-    if (user?.id) {
-      // now determine whether to show the dashboard or not
-      const teamRole = await db.TeamRole.findOne({
-        where: {
-          team_id: project.team_id,
-          user_id: user?.id,
-        }
-      });
-
-      const hasProjectAccess = teamRole?.projects?.includes(project.id);
-
-      if (
-        teamRole
-      && (
-        teamRoles.includes(teamRole.role)
-        || hasProjectAccess
-      )
-      ) {
-        overridePolicy = true;
-      }
-    }
-
-    // Handle variable filtering based on share policy
-    const urlVariables = this._extractVariablesFromQuery(queryParams);
-    let finalVariables = {};
-
-    if (!overridePolicy) {
-      // Check if the token from the query parameters is valid
-      const decodedToken = verifyShareToken(queryParams.token);
-      if (!decodedToken?.sub?.sharePolicyId) {
-        return Promise.reject("Invalid token");
-      }
-
-      const sharePolicy = await db.SharePolicy.findByPk(decodedToken.sub.sharePolicyId);
-      if (!sharePolicy) {
-        return Promise.reject("Share policy not found");
-      }
-
-      validateShareTokenPolicy(decodedToken, sharePolicy, "Project", project.id);
-
-      // Check if the project is public (required for SharePolicy access)
-      if (!project.public) {
-        return Promise.reject("Project is not public");
-      }
-
-      // Handle password protection
-      if (project.passwordProtected) {
-        const isPasswordCorrect = await verifyProjectPassword(password, project.password);
-        if (!isPasswordCorrect) {
-          return Promise.reject("403");
-        }
-      }
-
-      finalVariables = this._mergeVariablesWithPolicy(urlVariables, sharePolicy);
-    }
-
-    const report = await this.getPublicDashboard(project.brewName, {
-      refreshPreparedData: true,
-    });
-
-    // Process the project for public access
-    const processedProject = cloneDeep(report);
-    processedProject.setDataValue("password", "");
-
-    // Apply variables to the charts if needed
-    if (Object.keys(finalVariables).length > 0) {
-      try {
-        const updatedProject = await this.applyVariablesToCharts(processedProject, finalVariables);
-        return updatedProject;
-      } catch (error) {
-        // If variable application fails, return the project without variables
-        // oxlint-disable-next-line no-console
-        console.error("Failed to apply variables to dashboard:", error);
-        return processedProject;
-      }
-    }
-
-    return processedProject;
+    const access = await resolvePublicDashboardAccess({ brewName, password, queryParams, user, report: true });
+    const report = await this.getPublicDashboard(access.project.brewName, { refreshPreparedData: true });
+    report.setDataValue("password", "");
+    const requestedVariables = this._extractVariablesFromQuery(queryParams);
+    const variables = access.policy ? this._mergeVariablesWithPolicy(requestedVariables, access.policy) : requestedVariables;
+    return this.applyVariablesToCharts(report, variables);
   }
 
   /**

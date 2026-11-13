@@ -1,3 +1,5 @@
+import useDashboardChartData from "../ProjectDashboard/hooks/useDashboardChartData";
+import { DashboardChartContent } from "../../components/DashboardChartSkeleton";
 import {
   getLayouts, getReportOrder, rowHeight, getBreakpoint, breakpoints,
   labels, tidyLayout, autoArrange, deriveLayouts, visualOrder,
@@ -39,7 +41,7 @@ import {
 } from "../../slices/project";
 import { selectTeams } from "../../slices/team";
 import {
-  runQueryOnPublic, runQueryWithFilters, selectCharts, shouldSkipFiltering
+  runQueryOnPublic, runQueryWithFilters, selectCharts, shouldSkipFiltering, setCharts
 } from "../../slices/chart";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
@@ -111,9 +113,10 @@ function Report({ editMode = false }) {
 
   const [logoAspectRatio, setLogoAspectRatio] = useState(1);
   const [dashboardFilters, setDashboardFilters] = useState([]);
-  const [filterLoading, setFilterLoading] = useState(false);
   const [chartFilters, setChartFilters] = useState({});
-  const [initialRuntimeHydrationPending, setInitialRuntimeHydrationPending] = useState(false);
+  const [acceptedPassword, setAcceptedPassword] = useState("");
+  const [acceptedAccessKey, setAcceptedAccessKey] = useState("");
+  const loadRequest = useRef(null);
 
   const teams = useSelector(selectTeams);
   const charts = useSelector(selectCharts);
@@ -124,8 +127,31 @@ function Report({ editMode = false }) {
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const hasRunInitialFiltering = useRef(false);
   const cacheRefreshRef = useRef(false);
+
+  const { observeChart, retryChart } = useDashboardChartData({
+    projectId: project.id,
+    charts,
+    dashboardFilters: dashboardFilters?.[project.id] || [],
+    chartFilters,
+    publicAccess: {
+      brewName: params.brewName,
+      report: true,
+      password: acceptedPassword,
+      queryParams: Object.fromEntries(searchParams),
+    },
+    enabled: !loading && Boolean(project.id) && !passwordRequired && !notAuthorized
+      && acceptedAccessKey === `${params.brewName}?${searchParams}`,
+    onAccessError: (status) => {
+      setProject({});
+      dispatch(setCharts([]));
+      setPasswordRequired(status === "403");
+      setNotAuthorized(status === "401");
+      if (status === "401") window.location.pathname = "/login";
+    },
+    loadAll: searchParams.has("accessToken"),
+  });
+  const filterLoading = charts.some((chart) => chart.initialDataPending && chart.initialDataRequestId && !chart.draft && chart.onReport);
 
   const removeStyling = searchParams.get("removeStyling") === "true";
   const removeHeader = searchParams.get("removeHeader") === "true";
@@ -213,7 +239,11 @@ function Report({ editMode = false }) {
     setLoading(true);
     _fetchProject(window.localStorage.getItem("reportPassword"));
 
-  }, []);
+    return () => {
+      loadRequest.current?.abort();
+      loadRequest.current = null;
+    };
+  }, [params.brewName, searchParams.toString()]);
 
   useEffect(() => {
     if (project?.id) {
@@ -271,18 +301,24 @@ function Report({ editMode = false }) {
     });
   }, [charts]);
 
-  const _fetchProject = (password) => {
+  const _fetchProject = (providedPassword) => {
+    const password = providedPassword || searchParams.get("pass") || searchParams.get("password");
     if (password) window.localStorage.setItem("reportPassword", password);
 
+    loadRequest.current?.abort();
     setLoading(true);
-    
-    dispatch(getReport({ 
-      brewName: params.brewName, 
+    setProject({});
+    dispatch(setCharts([]));
+    const request = dispatch(getReport({
+      brewName: params.brewName,
+      configurationOnly: true,
       password, 
       token: searchParams.get("token"),
       queryParams: _getReportQueryParams()
-    }))
-      .then((data) => {
+    }));
+    loadRequest.current = request;
+    request.then((data) => {
+        if (request !== loadRequest.current || data.meta.aborted) return;
         if (data.error) {
           if (data.error.message === "403") {
             if (passwordRequired) {
@@ -298,14 +334,21 @@ function Report({ editMode = false }) {
 
           setLoading(false);
         } else {
+          setAcceptedPassword(password || "");
+          setAcceptedAccessKey(`${params.brewName}?${searchParams}`);
+          setNoCharts(false);
+          setDashboardFilters({ [data.payload.id]: (data.payload.DashboardFilters || []).filter((filter) => filter.onReport).map((filter) => ({
+            ...filter.configuration, id: filter.id, onReport: filter.onReport,
+          })) });
           setProject(data.payload);
           setLoading(false);
           setNotAuthorized(false);
           setPasswordRequired(false);
 
           // now get the project (mainly to check if the user can edit)
-          dispatch(getProject({ project_id: data.payload?.id }))
+          dispatch(getProject({ project_id: data.payload?.id, configurationOnly: true }))
             .then((projectData) => {
+              if (request !== loadRequest.current) return;
               if (!projectData.payload) throw new Error(projectData.error.status);
 
               setProject({ ...projectData.payload });
@@ -388,7 +431,7 @@ function Report({ editMode = false }) {
     cacheOnly = false,
     showLoading = true,
   } = {}) => {
-    const runtimeCharts = charts.filter((chart) => chart.type !== "markdown");
+    const runtimeCharts = charts.filter((chart) => chart.type !== "markdown" && !chart.initialDataPending && chart.onReport && !chart.draft);
 
     if (runtimeCharts.length === 0) {
       if (showLoading) setRefreshLoading(false);
@@ -423,29 +466,6 @@ function Report({ editMode = false }) {
       chartFilters: currentChartFilters?.[chart.id] || [],
     });
   };
-
-  useEffect(() => {
-    if (filterLoading || !project?.id || charts.length === 0 || hasRunInitialFiltering.current) {
-      return;
-    }
-
-    const runtimeChartIds = charts
-      .filter((chart) => chart.type !== "markdown")
-      .filter((chart) => _buildRuntimeRequest(chart, dashboardFilters, chartFilters).hasRuntimeFilters)
-      .map((chart) => chart.id);
-
-    hasRunInitialFiltering.current = true;
-
-    if (runtimeChartIds.length === 0) {
-      return;
-    }
-
-    setInitialRuntimeHydrationPending(true);
-    _runFiltering(dashboardFilters, runtimeChartIds, chartFilters)
-      .finally(() => {
-        setInitialRuntimeHydrationPending(false);
-      });
-  }, [project?.id, dashboardFilters, charts, chartFilters, filterLoading]);
 
   const _runChartRequest = (
     chart,
@@ -499,23 +519,6 @@ function Report({ editMode = false }) {
       .then(() => _processChartBatches(chartsToProcess, currentFilters, currentChartFilters, options, index + batchSize, batchSize));
   };
 
-  const _runFiltering = (currentFilters = dashboardFilters, chartIds = null, currentChartFilters = chartFilters) => {
-    if (charts.length === 0) return Promise.resolve("done");
-
-    const chartsToProcess = (chartIds ? charts.filter((chart) => chartIds.includes(chart.id)) : charts)
-      .filter((chart) => chart.type !== "markdown");
-
-    setFilterLoading(true);
-    return _processChartBatches(chartsToProcess, currentFilters, currentChartFilters)
-      .then(() => {
-        setDashboardFilters(currentFilters);
-        setFilterLoading(false);
-      })
-      .catch(() => {
-        setFilterLoading(false);
-      });
-  };
-
   const _onChartFilterChange = (chartId, nextFilters) => {
     const updatedChartFilters = {
       ...chartFilters,
@@ -527,13 +530,11 @@ function Report({ editMode = false }) {
     }
 
     setChartFilters(updatedChartFilters);
-    _runFiltering(dashboardFilters, [chartId], updatedChartFilters);
   };
 
   const _onApplyFilterValue = (filters) => {
     // URL variables are now handled by the backend, just apply dashboard filters
     setDashboardFilters(filters);
-    _runFiltering(filters);
   };
 
   const _onRemoveFilter = () => {
@@ -601,7 +602,7 @@ function Report({ editMode = false }) {
     }
   };
 
-  const displayedCharts = layoutDraft?.charts || charts;
+  const displayedCharts = layoutDraft?.charts.map((chart) => charts.find((item) => item.id === chart.id) || chart) || charts;
   const displayedOrder = layoutDraft?.order || savedLayoutOrder || project.layoutOrder;
 
   // Keep text edits from rebuilding chart elements and their runtime callbacks.
@@ -614,42 +615,50 @@ function Report({ editMode = false }) {
           key={chart.id}
           className={layoutDraft ? "rounded-3xl outline-2 outline-dashed outline-accent" : undefined}
         >
-          {layoutDraft && (chart.draft || !chart.onReport) ? (
-            <div className="flex h-full flex-col items-center justify-center gap-2 rounded-3xl border border-border bg-surface p-4 text-center">
-              <span className="text-sm font-medium">{chart.name}</span>
-              <span className="text-xs text-muted">Not in report</span>
-            </div>
-          ) : chart.type === "markdown" ? (
-            <TextWidget
-              isPublic
-              chart={chart}
-              onEditLayout={() => {}}
-              editingLayout={false}
-              onCancelChanges={() => {}}
-              onSaveChanges={() => {}}
-              onEditContent={() => {}}
-            />
-          ) : (
-            <Chart
-              editingLayout={Boolean(layoutDraft)}
-              isPublic
-              chart={chart}
-              charts={charts}
-              deferRendering
-              dashboardFilters={dashboardFilters?.[project.id] || []}
-              chartFilters={chartFilters?.[chart.id] || []}
-              onAddChartFilter={_onChartFilterChange}
-              onClearChartFilter={_onChartFilterChange}
-              onRefreshRuntimeChart={(chartId, options = {}) => {
-                const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
-                if (!selectedChart) return Promise.resolve(null);
-                return _runChartRequest(selectedChart, dashboardFilters, chartFilters, options);
-              }}
-              className="chart-card"
-              showExport={project.Team?.allowReportExport}
-              password={project.password || window.localStorage.getItem("reportPassword")}
-            />
-          )}
+          <div className="h-full" data-chart-id={chart.id} ref={observeChart}>
+            {layoutDraft && (chart.draft || !chart.onReport) ? (
+              <div className="flex h-full flex-col items-center justify-center gap-2 rounded-3xl border border-border bg-surface p-4 text-center">
+                <span className="text-sm font-medium">{chart.name}</span>
+                <span className="text-xs text-muted">Not in report</span>
+              </div>
+            ) : chart.type === "markdown" ? (
+              <TextWidget
+                isPublic
+                chart={chart}
+                onEditLayout={() => {}}
+                editingLayout={false}
+                onCancelChanges={() => {}}
+                onSaveChanges={() => {}}
+                onEditContent={() => {}}
+              />
+            ) : (
+              <DashboardChartContent
+                chart={chart}
+                loading={Boolean(chart.initialDataPending || !shouldSkipFiltering(chart, _buildRuntimeRequest(chart).filters, _buildRuntimeRequest(chart).variables))}
+                onRetry={() => retryChart(chart.id)}
+              >
+                <Chart
+                  editingLayout={Boolean(layoutDraft)}
+                  isPublic
+                  chart={chart}
+                  charts={charts}
+                  deferRendering={!searchParams.has("accessToken")}
+                  dashboardFilters={dashboardFilters?.[project.id] || []}
+                  chartFilters={chartFilters?.[chart.id] || []}
+                  onAddChartFilter={_onChartFilterChange}
+                  onClearChartFilter={_onChartFilterChange}
+                  onRefreshRuntimeChart={(chartId, options = {}) => {
+                    const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
+                    if (!selectedChart) return Promise.resolve(null);
+                    return _runChartRequest(selectedChart, dashboardFilters, chartFilters, options);
+                  }}
+                  className="chart-card"
+                  showExport={project.Team?.allowReportExport}
+                  password={project.password || window.localStorage.getItem("reportPassword")}
+                />
+              </DashboardChartContent>
+            )}
+          </div>
         </div>
       ))
   ), [charts, project, dashboardFilters, chartFilters, searchParams, dispatch, layoutDraft, savedLayoutOrder]);
@@ -796,7 +805,7 @@ function Report({ editMode = false }) {
   }
 
   return (
-    <div className="dashboard-container min-h-screen bg-background text-foreground">
+    <div className="dashboard-container min-h-screen bg-background text-foreground" data-dashboard-loading={loading || !project.id || charts.some((chart) => chart.onReport && !chart.draft && chart.initialDataPending)}>
       <Helmet>
         <title>
           {newChanges.dashboardTitle || project.dashboardTitle || project.name || "Chartbrew dashboard"}
@@ -1204,13 +1213,7 @@ function Report({ editMode = false }) {
                   </div>
                 )}
 
-                {initialRuntimeHydrationPending && charts?.length > 0 && (
-                  <div className="flex min-h-[320px] items-center justify-center">
-                    <Spinner size="lg" aria-label="Loading dashboard filters" />
-                  </div>
-                )}
-
-                {!initialRuntimeHydrationPending && layouts && charts?.length > 0 && (
+                {layouts && charts?.length > 0 && (
                   <div className="w-full">
                     <ReportGridLayout
                       key={editMode && editorVisible && !preview ? "editor" : "report"}

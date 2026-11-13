@@ -1,3 +1,4 @@
+import { requestDashboardChartBatch } from "../api/dashboardChartBatch";
 import { saveChartChange } from "../api/chartHistory";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getAuthToken } from "../modules/auth";
@@ -11,7 +12,7 @@ const initialState = {
 
 export const getChart = createAsyncThunk(
   "chart/getChart",
-  async ({ project_id, chart_id, password }) => {
+  async ({ project_id, chart_id, password }, { signal }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/project/${project_id}/chart/${chart_id}`;
     const method = "GET";
@@ -24,7 +25,7 @@ export const getChart = createAsyncThunk(
       url = `${API_HOST}/chart/${chart_id}?password=${password}`;
     }
 
-    const response = await fetch(url, { method, headers });
+    const response = await fetch(url, { method, headers, signal });
     const data = await response.json();
 
     if (response.status >= 400) {
@@ -32,6 +33,25 @@ export const getChart = createAsyncThunk(
     }
 
     return data;
+  }
+);
+
+export const getDashboardChartBatch = createAsyncThunk(
+  "chart/getDashboardChartBatch",
+  async ({ project_id, charts, publicAccess }, { signal }) => {
+    let url = `${API_HOST}/project/${project_id}/chart/batch`;
+    const headers = { "Content-Type": "application/json", authorization: `Bearer ${getAuthToken()}` };
+    if (publicAccess) {
+      const { brewName, report, password, queryParams } = publicAccess;
+      const query = new URLSearchParams(queryParams);
+      query.delete("pass");
+      query.delete("password");
+      query.delete("view");
+      const path = report && !query.has("accessToken") ? `${encodeURIComponent(brewName)}/report` : `dashboard/${encodeURIComponent(brewName)}`;
+      url = `${API_HOST}/project/${path}/charts?${query}`;
+      if (password) headers.pass = password;
+    }
+    return requestDashboardChartBatch(url, { method: "POST", signal, headers, body: JSON.stringify({ charts }) });
   }
 );
 
@@ -684,6 +704,8 @@ export const chartSlice = createSlice({
               ...chart,
               ...action.payload,
               loading: false,
+              initialDataPending: false,
+              initialDataError: false,
             };
           }
           return chart;
@@ -701,6 +723,45 @@ export const chartSlice = createSlice({
           }
           return chart;
         });
+      })
+
+      .addCase(getDashboardChartBatch.pending, (state, action) => {
+        for (const item of action.meta.arg.charts) {
+          const chart = state.data.find((entry) => entry.id === item.chart_id);
+          if (!chart) continue;
+          chart.initialDataRequestId = action.meta.requestId;
+          chart.initialDataPending = true;
+          chart.initialDataError = false;
+        }
+      })
+      .addCase(getDashboardChartBatch.fulfilled, (state, action) => {
+        for (const item of action.meta.arg.charts) {
+          const chart = state.data.find((entry) => entry.id === item.chart_id);
+          if (!chart || chart.initialDataRequestId !== action.meta.requestId) continue;
+          const result = action.payload.find((entry) => entry.id === item.chart_id);
+          chart.initialDataPending = false;
+          chart.loading = false;
+          chart.initialDataError = !result?.chart || Boolean(result.error);
+          if (chart.initialDataError) continue;
+          if (result.chart.configurationVersion < chart.configurationVersion) continue;
+          Object.assign(chart, result.chart);
+          chart.filterMetadata = {
+            appliedFilters: item.filters,
+            appliedVariables: item.variables,
+            lastFilterHash: JSON.stringify({ filters: item.filters, variables: item.variables }),
+            configurationVersion: result.chart.configurationVersion,
+            lastUpdated: Date.now(),
+          };
+        }
+      })
+      .addCase(getDashboardChartBatch.rejected, (state, action) => {
+        for (const item of action.meta.arg.charts) {
+          const chart = state.data.find((entry) => entry.id === item.chart_id);
+          if (!chart || chart.initialDataRequestId !== action.meta.requestId) continue;
+          chart.initialDataPending = false;
+          chart.loading = false;
+          chart.initialDataError = !action.meta.aborted;
+        }
       })
 
       // getProjectCharts
@@ -804,10 +865,13 @@ export const chartSlice = createSlice({
       .addCase(runQuery.pending, (state, action) => {
         state.loading = true;
         state.data = state.data.map((chart) => {
-          if (chart.id === action.meta.arg.chart_id) {
+          if (String(chart.id) === String(action.meta.arg.chart_id)) {
             return {
               ...chart,
               loading: true,
+              initialDataRequestId: action.meta.requestId,
+              initialDataPending: false,
+              initialDataError: false,
             };
           }
           return chart;
@@ -818,12 +882,17 @@ export const chartSlice = createSlice({
         if (!action.meta.arg.skipStateUpdate) {
           state.data = state.data.map((chart) => {
             if (chart.id === action.payload.id) {
+              if (chart.initialDataRequestId !== action.meta.requestId) return chart;
               if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
               return {
                 ...chart,
                 ...action.payload,
                 refreshError: null,
                 loading: false,
+                filterMetadata: {
+                  lastFilterHash: JSON.stringify({ filters: action.meta.arg.filters || [], variables: action.meta.arg.variables || {} }),
+                  configurationVersion: action.payload.configurationVersion,
+                },
               };
             }
             return chart;
@@ -834,11 +903,13 @@ export const chartSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
         state.data = state.data.map((chart) => {
-          if (chart.id === action.meta.arg.chart_id) {
+          if (String(chart.id) === String(action.meta.arg.chart_id)) {
+            if (chart.initialDataRequestId !== action.meta.requestId) return chart;
             return {
               ...chart,
               refreshError: action.payload?.recovery || { message: action.payload?.message || "The chart could not be updated. Try again." },
               loading: false,
+              initialDataError: true,
             };
           }
           return chart;
@@ -849,10 +920,13 @@ export const chartSlice = createSlice({
       .addCase(runQueryWithFilters.pending, (state, action) => {
         state.loading = true;
         state.data = state.data.map((chart) => {
-          if (chart.id === action.meta.arg.chart_id) {
+          if (String(chart.id) === String(action.meta.arg.chart_id)) {
             return {
               ...chart,
               loading: true,
+              initialDataRequestId: action.meta.requestId,
+              initialDataPending: false,
+              initialDataError: false,
             };
           }
           return chart;
@@ -865,6 +939,7 @@ export const chartSlice = createSlice({
         
         state.data = state.data.map((chart) => {
           if (chart.id === action.payload.id) {
+            if (chart.initialDataRequestId !== action.meta.requestId) return chart;
             if (action.payload.configurationVersion < chart.configurationVersion) return { ...chart, loading: false };
             if (action.payload.cacheMiss) {
               return {
@@ -878,6 +953,7 @@ export const chartSlice = createSlice({
               ...action.payload,
               loading: false,
               filterMetadata: {
+                configurationVersion: action.payload.configurationVersion,
                 appliedFilters: filters || [],
                 appliedVariables: variables || {},
                 lastFilterHash: filterHash,
@@ -892,10 +968,12 @@ export const chartSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
         state.data = state.data.map((chart) => {
-          if (chart.id === action.meta.arg.chart_id) {
+          if (String(chart.id) === String(action.meta.arg.chart_id)) {
+            if (chart.initialDataRequestId !== action.meta.requestId) return chart;
             return {
               ...chart,
               loading: false,
+              initialDataError: true,
             };
           }
           return chart;

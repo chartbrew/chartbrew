@@ -1,3 +1,5 @@
+import useDashboardChartData from "../ProjectDashboard/hooks/useDashboardChartData";
+import { DashboardChartContent } from "../../components/DashboardChartSkeleton";
 import CupLoader from "../../components/CupLoader";
 import { getLayouts, getReportOrder, rowHeight } from "../../../../shared/dashboard/layout.mjs";
 import React, { useState, useEffect, useCallback, useRef } from "react";
@@ -30,7 +32,7 @@ import {
 } from "../../slices/project";
 import { selectTeams } from "../../slices/team";
 import {
-  runQueryOnPublic, runQueryWithFilters, selectCharts, shouldSkipFiltering
+  runQueryOnPublic, runQueryWithFilters, selectCharts, shouldSkipFiltering, setCharts
 } from "../../slices/chart";
 import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
@@ -83,9 +85,10 @@ function PublicDashboard() {
   const [layouts, setLayouts] = useState(null);
   const [logoAspectRatio, setLogoAspectRatio] = useState(1);
   const [dashboardFilters, setDashboardFilters] = useState([]);
-  const [filterLoading, setFilterLoading] = useState(false);
   const [chartFilters, setChartFilters] = useState({});
-  const [initialRuntimeHydrationPending, setInitialRuntimeHydrationPending] = useState(false);
+  const [acceptedPassword, setAcceptedPassword] = useState("");
+  const [acceptedAccessKey, setAcceptedAccessKey] = useState("");
+  const loadRequest = useRef(null);
 
   const teams = useSelector(selectTeams);
   const charts = useSelector(selectCharts);
@@ -95,8 +98,31 @@ function PublicDashboard() {
   const { setTheme, isDark } = useTheme();
   const params = useParams();
   const dispatch = useDispatch();
-  const hasRunInitialFiltering = useRef(false);
   const cacheRefreshRef = useRef(false);
+
+  const { observeChart, retryChart } = useDashboardChartData({
+    projectId: project.id,
+    charts,
+    dashboardFilters: dashboardFilters?.[project.id] || [],
+    chartFilters,
+    publicAccess: {
+      brewName: params.brewName,
+      report: false,
+      password: acceptedPassword,
+      queryParams: Object.fromEntries(searchParams),
+    },
+    enabled: !loading && Boolean(project.id) && !passwordRequired && !notAuthorized
+      && acceptedAccessKey === `${params.brewName}?${searchParams}`,
+    onAccessError: (status) => {
+      setProject({});
+      dispatch(setCharts([]));
+      setPasswordRequired(status === "403");
+      setNotAuthorized(status === "401");
+      if (status === "401") window.location.pathname = "/login";
+    },
+    loadAll: searchParams.has("accessToken"),
+  });
+  const filterLoading = charts.some((chart) => chart.initialDataPending && chart.initialDataRequestId && !chart.draft && chart.onReport);
 
   const removeStyling = searchParams.get("removeStyling") === "true";
   const removeHeader = searchParams.get("removeHeader") === "true";
@@ -153,7 +179,11 @@ function PublicDashboard() {
     } else {
       setTheme("system");
     }
-  }, []);
+    return () => {
+      loadRequest.current?.abort();
+      loadRequest.current = null;
+    };
+  }, [params.brewName, searchParams.toString()]);
 
   useEffect(() => {
     if (project?.id) {
@@ -217,25 +247,31 @@ function PublicDashboard() {
     });
   }, [charts]);
 
-  const _fetchProject = (password) => {
+  const _fetchProject = (providedPassword) => {
+    const password = providedPassword || searchParams.get("pass") || searchParams.get("password");
     if (password) window.localStorage.setItem("reportPassword", password);
 
+    loadRequest.current?.abort();
     setLoading(true);
-    
-    dispatch(getPublicDashboard({ 
-      brewName: params.brewName, 
+    setProject({});
+    dispatch(setCharts([]));
+    const request = dispatch(getPublicDashboard({
+      brewName: params.brewName,
+      configurationOnly: true,
       password, 
       token: searchParams.get("token"),
       queryParams: _getReportQueryParams()
-    }))
-      .then((data) => {
+    }));
+    loadRequest.current = request;
+    request.then((data) => {
+        if (request !== loadRequest.current || data.meta.aborted) return;
         if (data.error) {
           if (data.error.message === "403") {
             if (passwordRequired) {
               toast.error("The password you entered is incorrect.");
             }
             setPasswordRequired(true);
-          } else if (data.error.message === 401) {
+          } else if (data.error.message === "401") {
             setNotAuthorized(true);
             window.location.pathname = "/login";
           } else {
@@ -244,14 +280,21 @@ function PublicDashboard() {
 
           setLoading(false);
         } else {
+          setAcceptedPassword(password || "");
+          setAcceptedAccessKey(`${params.brewName}?${searchParams}`);
+          setNoCharts(false);
+          setDashboardFilters({ [data.payload.id]: (data.payload.DashboardFilters || []).filter((filter) => filter.onReport).map((filter) => ({
+            ...filter.configuration, id: filter.id, onReport: filter.onReport,
+          })) });
           setProject(data.payload);
           setLoading(false);
           setNotAuthorized(false);
           setPasswordRequired(false);
 
           // now get the project (mainly to check if the user can edit)
-          dispatch(getProject({ project_id: data.payload?.id }))
+          dispatch(getProject({ project_id: data.payload?.id, configurationOnly: true }))
             .then((projectData) => {
+              if (request !== loadRequest.current) return;
               if (!projectData.payload) throw new Error(404);
 
               setProject({ ...projectData.payload });
@@ -307,7 +350,7 @@ function PublicDashboard() {
     cacheOnly = false,
     showLoading = true,
   } = {}) => {
-    const runtimeCharts = charts.filter((chart) => chart.type !== "markdown");
+    const runtimeCharts = charts.filter((chart) => chart.type !== "markdown" && !chart.initialDataPending && chart.onReport && !chart.draft);
 
     if (runtimeCharts.length === 0) {
       if (showLoading) setRefreshLoading(false);
@@ -342,29 +385,6 @@ function PublicDashboard() {
       chartFilters: currentChartFilters?.[chart.id] || [],
     });
   };
-
-  useEffect(() => {
-    if (filterLoading || !project?.id || charts.length === 0 || hasRunInitialFiltering.current) {
-      return;
-    }
-
-    const runtimeChartIds = charts
-      .filter((chart) => chart.type !== "markdown")
-      .filter((chart) => _buildRuntimeRequest(chart, dashboardFilters, chartFilters).hasRuntimeFilters)
-      .map((chart) => chart.id);
-
-    hasRunInitialFiltering.current = true;
-
-    if (runtimeChartIds.length === 0) {
-      return;
-    }
-
-    setInitialRuntimeHydrationPending(true);
-    _runFiltering(dashboardFilters, runtimeChartIds, chartFilters)
-      .finally(() => {
-        setInitialRuntimeHydrationPending(false);
-      });
-  }, [project?.id, dashboardFilters, charts, chartFilters, filterLoading]);
 
   const _runChartRequest = (
     chart,
@@ -418,23 +438,6 @@ function PublicDashboard() {
       .then(() => _processChartBatches(chartsToProcess, currentFilters, currentChartFilters, options, index + batchSize, batchSize));
   };
 
-  const _runFiltering = (currentFilters = dashboardFilters, chartIds = null, currentChartFilters = chartFilters) => {
-    if (charts.length === 0) return Promise.resolve("done");
-
-    const chartsToProcess = (chartIds ? charts.filter((chart) => chartIds.includes(chart.id)) : charts)
-      .filter((chart) => chart.type !== "markdown");
-
-    setFilterLoading(true);
-    return _processChartBatches(chartsToProcess, currentFilters, currentChartFilters)
-      .then(() => {
-        setDashboardFilters(currentFilters);
-        setFilterLoading(false);
-      })
-      .catch(() => {
-        setFilterLoading(false);
-      });
-  };
-
   const _onChartFilterChange = (chartId, nextFilters) => {
     const updatedChartFilters = {
       ...chartFilters,
@@ -446,13 +449,11 @@ function PublicDashboard() {
     }
 
     setChartFilters(updatedChartFilters);
-    _runFiltering(dashboardFilters, [chartId], updatedChartFilters);
   };
 
   const _onApplyFilterValue = (filters) => {
     // URL variables are now handled by the backend, just apply dashboard filters
     setDashboardFilters(filters);
-    _runFiltering(filters);
   };
 
   const _onRemoveFilter = () => {
@@ -602,7 +603,7 @@ function PublicDashboard() {
   }
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" data-dashboard-loading={loading || !project.id || charts.some((chart) => chart.onReport && !chart.draft && chart.initialDataPending)}>
       <Helmet>
         <title>
           {newChanges.dashboardTitle || project.dashboardTitle || project.name || "Chartbrew dashboard"}
@@ -879,13 +880,7 @@ function PublicDashboard() {
               </div>
             )}
 
-            {initialRuntimeHydrationPending && charts?.length > 0 && (
-              <div className="flex min-h-[320px] items-center justify-center">
-                <Spinner size="lg" aria-label="Loading dashboard filters" />
-              </div>
-            )}
-
-            {!initialRuntimeHydrationPending && layouts && charts?.length > 0 && (
+            {layouts && charts?.length > 0 && (
               <div className="w-full">
                 <ResponsiveGridLayout
                   className="layout"
@@ -900,36 +895,44 @@ function PublicDashboard() {
                 >
                   {getReportOrder(charts, project.layoutOrder).map((id) => charts.find((chart) => String(chart.id) === id)).filter((c) => !c.draft && c.onReport).map((chart) => (
                     <div key={chart.id}>
-                      {chart.type === "markdown" ? (
-                        <TextWidget
-                          isPublic
-                          chart={chart}
-                          onEditLayout={() => {}}
-                          editingLayout={false}
-                          onCancelChanges={() => {}}
-                          onSaveChanges={() => {}}
-                          onEditContent={() => {}}
-                        />
-                      ) : (
-                        <Chart
-                          isPublic
-                          chart={chart}
-                          charts={charts}
-                          deferRendering
-                          className="chart-card"
-                          dashboardFilters={dashboardFilters?.[project.id] || []}
-                          chartFilters={chartFilters?.[chart.id] || []}
-                          onAddChartFilter={_onChartFilterChange}
-                          onClearChartFilter={_onChartFilterChange}
-                          onRefreshRuntimeChart={(chartId, options = {}) => {
-                            const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
-                            if (!selectedChart) return Promise.resolve(null);
-                            return _runChartRequest(selectedChart, dashboardFilters, chartFilters, options);
-                          }}
-                          showExport={project.Team?.allowReportExport}
-                          password={project.password || window.localStorage.getItem("reportPassword")}
-                        />
-                      )}
+                      <div className="h-full" data-chart-id={chart.id} ref={observeChart}>
+                        {chart.type === "markdown" ? (
+                          <TextWidget
+                            isPublic
+                            chart={chart}
+                            onEditLayout={() => {}}
+                            editingLayout={false}
+                            onCancelChanges={() => {}}
+                            onSaveChanges={() => {}}
+                            onEditContent={() => {}}
+                          />
+                        ) : (
+                          <DashboardChartContent
+                            chart={chart}
+                            loading={Boolean(chart.initialDataPending || !shouldSkipFiltering(chart, _buildRuntimeRequest(chart).filters, _buildRuntimeRequest(chart).variables))}
+                            onRetry={() => retryChart(chart.id)}
+                          >
+                            <Chart
+                              isPublic
+                              chart={chart}
+                              charts={charts}
+                              deferRendering={!searchParams.has("accessToken")}
+                              className="chart-card"
+                              dashboardFilters={dashboardFilters?.[project.id] || []}
+                              chartFilters={chartFilters?.[chart.id] || []}
+                              onAddChartFilter={_onChartFilterChange}
+                              onClearChartFilter={_onChartFilterChange}
+                              onRefreshRuntimeChart={(chartId, options = {}) => {
+                                const selectedChart = charts.find((chartItem) => chartItem.id === chartId);
+                                if (!selectedChart) return Promise.resolve(null);
+                                return _runChartRequest(selectedChart, dashboardFilters, chartFilters, options);
+                              }}
+                              showExport={project.Team?.allowReportExport}
+                              password={project.password || window.localStorage.getItem("reportPassword")}
+                            />
+                          </DashboardChartContent>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </ResponsiveGridLayout>

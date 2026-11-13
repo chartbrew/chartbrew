@@ -33,16 +33,16 @@ export const getProjects = createAsyncThunk(
 
 export const getProject = createAsyncThunk(
   "project/getProject",
-  async ({ project_id }) => {
+  async ({ project_id, configurationOnly = false }, { signal }) => {
     const token = getAuthToken();
-    const url = `${API_HOST}/project/${project_id}`;
+    const url = `${API_HOST}/project/${project_id}${configurationOnly ? "?view=configuration" : ""}`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
       "authorization": `Bearer ${token}`,
     });
 
-    const response = await fetch(url, { method, headers });
+    const response = await fetch(url, { method, headers, signal });
     if (!response.ok) {
       throw new Error(response.statusText);
     }
@@ -186,7 +186,7 @@ export const removeProject = createAsyncThunk(
 
 export const getPublicDashboard = createAsyncThunk(
   "project/getPublicDashboard",
-  async ({ brewName, password, token, queryParams }, thunkAPI) => {
+  async ({ brewName, password, token, queryParams, configurationOnly = false }, thunkAPI) => {
     let authToken;
     try {
       authToken = getAuthToken();
@@ -211,11 +211,13 @@ export const getPublicDashboard = createAsyncThunk(
     // Add all other query parameters (variables, theme, etc.)
     if (queryParams) {
       Object.keys(queryParams).forEach(key => {
-        if (key !== "pass" && key !== "token") {
+        if (key !== "pass" && key !== "password" && key !== "token") {
           urlParams.append(key, queryParams[key]);
         }
       });
     }
+
+    if (configurationOnly) urlParams.set("view", "configuration");
 
     if (urlParams.toString()) {
       url += `?${urlParams.toString()}`;
@@ -225,7 +227,7 @@ export const getPublicDashboard = createAsyncThunk(
       headers.append("pass", password);
     }
 
-    const response = await fetch(url, { headers, cache: "no-store" });
+    const response = await fetch(url, { headers, cache: "no-store", signal: thunkAPI.signal });
     if (!response.ok) {
       throw new Error(response.status);
     }
@@ -233,7 +235,11 @@ export const getPublicDashboard = createAsyncThunk(
     const project = await response.json();
 
     if (project.Charts) {
-      thunkAPI.dispatch(setCharts(project.Charts));
+      thunkAPI.signal.throwIfAborted();
+      thunkAPI.dispatch(setCharts(project.Charts.map((chart) => ({
+        ...chart,
+        initialDataPending: configurationOnly && chart.type !== "markdown",
+      }))));
     }
 
     return project;
@@ -242,7 +248,7 @@ export const getPublicDashboard = createAsyncThunk(
 
 export const getReport = createAsyncThunk(
   "project/getReport",
-  async ({ brewName, password, token, queryParams }, thunkAPI) => {
+  async ({ brewName, password, token, queryParams, configurationOnly = false }, thunkAPI) => {
     const authToken = getAuthToken();
     let url = queryParams?.accessToken
       ? `${API_HOST}/project/dashboard/${brewName}`
@@ -262,11 +268,13 @@ export const getReport = createAsyncThunk(
 
     if (queryParams) {
       Object.keys(queryParams).forEach(key => {
-        if (key !== "token") {
+        if (key !== "token" && key !== "pass" && key !== "password") {
           urlParams.append(key, queryParams[key]);
         }
       });
     }
+
+    if (configurationOnly) urlParams.set("view", "configuration");
 
     if (urlParams.toString()) {
       url += `?${urlParams.toString()}`;
@@ -276,7 +284,7 @@ export const getReport = createAsyncThunk(
       headers.append("pass", password);
     }
 
-    const response = await fetch(url, { headers, cache: "no-store" });
+    const response = await fetch(url, { headers, cache: "no-store", signal: thunkAPI.signal });
 
     if (!response.ok) {
       throw new Error(response.status);
@@ -285,7 +293,11 @@ export const getReport = createAsyncThunk(
     const project = await response.json();
 
     if (project.Charts) {
-      thunkAPI.dispatch(setCharts(project.Charts));
+      thunkAPI.signal.throwIfAborted();
+      thunkAPI.dispatch(setCharts(project.Charts.map((chart) => ({
+        ...chart,
+        initialDataPending: configurationOnly && chart.type !== "markdown",
+      }))));
     }
 
     return project;

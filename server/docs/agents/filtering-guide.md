@@ -50,13 +50,27 @@ The runtime payload is assembled on the client, sent to the server once, normali
 
 - `client/src/containers/ProjectDashboard/ProjectDashboard.jsx`
 - Owns both dashboard filter state and per-chart exposed filter state
+- Loads configuration first with `GET /project/:id?view=configuration`.
+- `useDashboardChartData` observes widgets within 200px of the viewport and queues up to four charts per batch, with at most two batches in flight.
+- `POST /project/:project_id/chart/batch` receives each chart's effective `filters` and `variables`. Initial loading and filter changes share this path; there is no preceding unfiltered data request.
+- Unfiltered reads use saved prepared results without triggering source refreshes. If a chart has datasets but no usable saved result, one shared in-flight operation computes the result, allowing source cache reads. Charts with no datasets retain their existing empty state.
+- Filtered reads use the runtime cache first and compute a result on a miss. The normal runtime cache rules for stale results apply.
+- Filter changes and navigation abort obsolete client requests. Request IDs prevent late batch responses from replacing newer results.
+- HTTP 429 responses pause batch requests according to `Retry-After`, with three attempts in total. The API exposes this header through CORS. Failed charts keep a retry action.
+- The authenticated batch endpoint checks dashboard access and all requested chart IDs, including draft visibility, before loading any results. Public dashboards and reports use the same client queue with their public batch endpoints.
 - Uses `client/src/modules/chartRuntimeFilters.js` to build one payload per chart
 
 ### Public Dashboards / Reports
 
 - `client/src/containers/PublicDashboard/PublicDashboard.jsx`
 - `client/src/containers/PublicDashboard/Report.jsx`
-- Use the same runtime payload builder as the private dashboard
+- Use the same runtime payload builder and viewport batch queue as the private dashboard.
+- Fetch configuration with `view=configuration`, then use `/project/dashboard/:brewName/charts` or `/project/:brewName/report/charts`.
+- `publicDashboardAccess` validates member scope, internal snapshot credentials, public visibility, share-token entity/policy/expiry, and passwords before configuration or batch results are read.
+- Every public batch restricts charts to `onReport=true` and `draft=false`. It projects runtime output onto the public chart configuration instead of returning private query/dataset settings.
+- URL variables and dashboard variables are merged under the share policy on the server for every batch; fixed policy values cannot be overridden when `allow_params=false`.
+- Passwords travel in the `pass` header. Initial requests and batches are cancelled when the URL or credentials change. A batch access failure clears displayed data and restores the access prompt.
+- Internal snapshot URLs load all published widgets through the bounded queue. Snapshot capture waits for `data-dashboard-loading=false` before taking the full-page image.
 
 ### Chart Widget
 

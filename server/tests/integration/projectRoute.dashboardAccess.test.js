@@ -105,7 +105,26 @@ describe("ProjectRoute legacy dashboard access", () => {
     app = await createTestApp();
     const projectRoute = require("../../api/ProjectRoute.js");
     projectRoute(app);
+    require("../../api/ChartRoute.js")(app);
     models = await getModels();
+  });
+
+  it("loads dashboard batches only within the permitted project and hides drafts from viewers", async () => {
+    const seeded = await seedDashboardAccessFixtures(models);
+    const chart = await models.Chart.findOne({ where: { project_id: seeded.allowedProject.id } });
+    const foreign = await models.Chart.findOne({ where: { project_id: seeded.restrictedProject.id } });
+    const body = (id) => ({ charts: [{ chart_id: id, filters: [], variables: {} }] });
+    const batch = (projectId, data) => request(app).post(`/project/${projectId}/chart/batch`)
+      .set("Authorization", `Bearer ${seeded.token}`).send(data);
+
+    const response = await batch(seeded.allowedProject.id, body(chart.id)).expect(200);
+    expect(response.body[0].chart.id).toBe(chart.id);
+    await batch(seeded.allowedProject.id, body(foreign.id)).expect(404);
+    await batch(seeded.restrictedProject.id, body(foreign.id)).expect(403);
+    await batch(seeded.allowedProject.id, { charts: Array(5).fill(body(chart.id).charts[0]) }).expect(400);
+    await models.Chart.update({ draft: true }, { where: { id: chart.id } });
+    await models.TeamRole.update({ role: "projectViewer" }, { where: { team_id: seeded.allowedProject.team_id } });
+    await batch(seeded.allowedProject.id, body(chart.id)).expect(404);
   });
 
   it("limits layout saves to dashboard editors and returns the saved revision", async () => {

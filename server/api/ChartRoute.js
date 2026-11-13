@@ -26,6 +26,7 @@ const checkChartShareAccess = require("../modules/chartShareAccess");
 const { verifyProjectPassword } = require("../modules/projectPassword");
 const { validateShareTokenPolicy, verifyShareToken } = require("../modules/shareToken");
 const settings = require("../settings");
+const { loadDashboardChartBatch } = require("../modules/dashboardChartBatch");
 
 const apiLimiter = (max = 10) => {
   return rateLimit({
@@ -209,7 +210,7 @@ module.exports = (app) => {
       const projectId = req.params.project_id || req.body?.project_id;
       const chartId = req.params.chart_id || req.body?.chart_id;
 
-      const project = await projectController.findById(projectId);
+      const project = await db.Project.findByPk(projectId, { attributes: ["id", "team_id", "ghost"] });
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
@@ -224,7 +225,7 @@ module.exports = (app) => {
 
       // check if the chart is part of the right project
       if (chartId && projectId) {
-        const chart = await chartController.findById(req.params.chart_id);
+        const chart = await chartController.findById(req.params.chart_id, null, { hydratePreparedData: false });
         if (!chart) {
           return res.status(404).json({ message: "Chart not found" });
         }
@@ -461,6 +462,16 @@ module.exports = (app) => {
       });
   });
   // --------------------------------------------------------
+
+  app.post("/project/:project_id/chart/batch", verifyToken, checkPermissions("readAny"), apiLimiter(50), async (req, res) => {
+    res.set("Cache-Control", "private, no-store");
+    try {
+      const charts = await loadDashboardChartBatch(req.params.project_id, req.body?.charts, req.user, chartController);
+      return res.json(charts);
+    } catch (error) {
+      return res.status(error.status || 500).json({ message: error.status ? error.message : "Could not load these charts. Try again." });
+    }
+  });
 
   /*
   ** Route to get all the charts for a project

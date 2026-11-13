@@ -3,10 +3,10 @@ const path = require("path");
 const fs = require("fs");
 const rateLimit = require("express-rate-limit");
 const { nanoid } = require("nanoid");
-const _ = require("lodash");
-const jwt = require("jsonwebtoken");
 
-const settings = require("../settings");
+const ChartController = require("../controllers/ChartController");
+const { loadDashboardChartBatch } = require("../modules/dashboardChartBatch");
+const { resolvePublicDashboardAccess } = require("../modules/publicDashboardAccess");
 
 const { saveDashboardLayout } = require("../modules/dashboardLayout");
 const ProjectController = require("../controllers/ProjectController");
@@ -17,8 +17,6 @@ const { saveReportAppearance } = require("../modules/reportAppearance");
 const accessControl = require("../modules/accessControl");
 const getUserFromToken = require("../modules/getUserFromToken");
 const db = require("../models/models");
-const { verifyProjectPassword } = require("../modules/projectPassword");
-const { validateShareTokenPolicy, verifyShareToken } = require("../modules/shareToken");
 const {
   MAX_LOGO_UPLOAD_SIZE_BYTES,
   buildSafeLogoFilename,
@@ -157,6 +155,7 @@ module.exports = (app) => {
   app.get("/project/:id", verifyToken, checkPermissions("readOwn"), (req, res) => {
     return projectController.findById(req.params.id, {
       refreshPreparedData: true,
+      hydratePreparedData: req.query.view !== "configuration",
       includeDrafts: !viewerRoles.includes(req.user.teamRole.role),
     })
       .then((project) => {
@@ -352,225 +351,48 @@ module.exports = (app) => {
   });
   // -------------------------------------------
 
-  /*
-  ** Route to get a project with a public dashboard
-  */
-  app.get("/project/dashboard/:brewName", apiLimiter(5, 15), getUserFromToken, async (req, res) => {
-    let processedProject;
+  const sendPublicDashboard = (report = false, batch = false) => async (req, res) => {
+    res.set("Cache-Control", "private, no-store");
     try {
-      const project = await projectController.getPublicDashboard(req.params.brewName);
-      processedProject = _.cloneDeep(project);
-      processedProject.setDataValue("password", "");
-
-      if (req.user) {
-        // now determine whether to show the dashboard or not
-        const teamRole = await teamController.getTeamRole(project.team_id, req.user.id);
-        const hasProjectAccess = teamRole?.projects?.some((projectId) => `${projectId}` === `${project.id}`);
-
-        if (
-          teamRole
-          && (
-            teamRoles.includes(teamRole.role)
-            || hasProjectAccess
-          )
-        ) {
-          const urlVariables = projectController._extractVariablesFromQuery(req.query);
-          if (Object.keys(urlVariables).length > 0) {
-            try {
-              const updatedProject = await projectController.applyVariablesToCharts(processedProject, urlVariables);
-              return res.status(200).send(updatedProject);
-            } catch (error) {
-              // oxlint-disable-next-line no-console
-              console.error("Failed to apply variables to dashboard:", error);
-            }
-          }
-
-          return res.status(200).send(processedProject);
-        }
-      }
-
-      // LEGACY/INTERNAL: Check for accessToken first (bypasses SharePolicy for snapshots/internal)
-      if (req.query.accessToken) {
-        try {
-          const decodedToken = jwt.verify(req.query.accessToken, settings.encryptionKey);
-          if (decodedToken.project_id === project.id) {
-            // Handle variables for legacy accessToken - not implemented yet
-            const urlVariables = projectController._extractVariablesFromQuery(req.query);
-            if (Object.keys(urlVariables).length > 0) {
-              try {
-                const updatedProject = await projectController
-                  .applyVariablesToCharts(processedProject, urlVariables);
-                return res.status(200).send(updatedProject);
-              } catch (error) {
-                // If variable application fails, return the project without variables
-                // oxlint-disable-next-line no-console
-                console.error("Failed to apply variables to dashboard:", error);
-              }
-            }
-
-            return res.status(200).send(processedProject);
-          }
-        } catch (error) {
-          // Token is invalid, continue with SharePolicy flow
-        }
-      }
-
-      // Check if there's a SharePolicy for this project
-      const sharePolicy = await db.SharePolicy.findOne({
-        where: {
-          entity_type: "Project",
-          entity_id: project.id,
-        },
+      const access = await resolvePublicDashboardAccess({
+        brewName: req.params.brewName,
+        password: getProjectPasswordInput(req),
+        queryParams: req.query,
+        user: req.user,
+        report,
       });
-
-      // If SharePolicy exists, check the policy
-      if (sharePolicy) {
-        if (sharePolicy.visibility === "disabled") {
-          return res.status(403).send("Share policy is disabled");
-        }
-
-        // SECURITY: SharePolicy tokens only work for public projects
-        if (!project.public) {
-          return res.status(401).send("Not authorized to access this page");
-        }
-
-        if (sharePolicy.visibility !== "public") {
-          // SharePolicy exists and requires token verification
-          if (!req.query.token) {
-            const isPasswordCorrect = await verifyProjectPassword(getProjectPasswordInput(req), project.password);
-            if (project.public
-              && project.passwordProtected
-              && isPasswordCorrect
-            ) {
-              // Allow password access for backwards compatibility if no token provided
-              return res.status(200).send(processedProject);
-            }
-            return res.status(401).send("Access token required");
-          }
-
-          try {
-            const decodedToken = verifyShareToken(req.query.token);
-            validateShareTokenPolicy(decodedToken, sharePolicy, "Project", project.id);
-
-            // SECURITY: If dashboard is password protected, require password even with valid token
-            if (project.passwordProtected) {
-              const isPasswordCorrect = await verifyProjectPassword(getProjectPasswordInput(req), project.password);
-              if (!isPasswordCorrect) {
-                return res.status(403).send("Enter the correct password");
-              }
-            }
-
-            // Handle variable filtering based on share policy
-            const urlVariables = projectController
-              ._extractVariablesFromQuery(req.query);
-            const finalVariables = projectController
-              ._mergeVariablesWithPolicy(urlVariables, sharePolicy);
-
-            // Apply variables to the charts if needed
-            if (Object.keys(finalVariables).length > 0) {
-              try {
-                const updatedProject = await projectController
-                  .applyVariablesToCharts(processedProject, finalVariables);
-                return res.status(200).send(updatedProject);
-              } catch (error) {
-                // If variable application fails, return the project without variables
-                // oxlint-disable-next-line no-console
-                console.error("Failed to apply variables to dashboard:", error);
-                return res.status(200).send(processedProject);
-              }
-            }
-
-            return res.status(200).send(processedProject);
-          } catch (tokenError) {
-            return res.status(401).send("Invalid or expired token");
-          }
-        }
+      const configurationOnly = batch || req.query.view === "configuration";
+      const project = await projectController.getPublicDashboard(access.project.brewName, {
+        hydratePreparedData: !configurationOnly,
+        refreshPreparedData: true,
+      });
+      project.setDataValue("password", "");
+      const urlVariables = projectController._extractVariablesFromQuery(req.query);
+      const resolveVariables = (variables) => {
+        const requested = { ...urlVariables, ...variables };
+        return access.policy ? projectController._mergeVariablesWithPolicy(requested, access.policy) : requested;
+      };
+      if (batch) {
+        const charts = await loadDashboardChartBatch(project.id, req.body?.charts, access.member ? req.user : null, new ChartController(), {
+          publicProject: project,
+          resolveVariables,
+          viewerScope: `public-project:${project.id}:policy:${access.policy?.id || "none"}`,
+        });
+        return res.json(charts);
       }
-
-      // Handle variables for projects without SharePolicy (backwards compatibility)
-      // SECURITY: URL variables only processed for public projects
-      if (project.public) {
-        const urlVariables = projectController._extractVariablesFromQuery(req.query);
-        if (Object.keys(urlVariables).length > 0) {
-          // SECURITY: If dashboard is password protected, require password for URL variables
-          if (project.passwordProtected) {
-            const isPasswordCorrect = await verifyProjectPassword(getProjectPasswordInput(req), project.password);
-            if (!isPasswordCorrect) {
-              return res.status(403).send("Enter the correct password");
-            }
-          }
-
-          try {
-            const updatedProject = await projectController
-              .applyVariablesToCharts(processedProject, urlVariables);
-            return res.status(200).send(updatedProject);
-          } catch (error) {
-            // If variable application fails, return the project without variables
-            // oxlint-disable-next-line no-console
-            console.error("Failed to apply variables to dashboard:", error);
-          }
-        }
-      }
-
-      if (project.public && !project.passwordProtected) {
-        return res.status(200).send(processedProject);
-      }
-
-      const isPasswordCorrect = await verifyProjectPassword(getProjectPasswordInput(req), project.password);
-      if (project.public && project.passwordProtected && isPasswordCorrect) {
-        return res.status(200).send(processedProject);
-      }
-
-      if (project.public && project.passwordProtected && !isPasswordCorrect) {
-        return res.status(403).send("Enter the correct password");
-      }
-
-      if (!project.public) return res.status(401).send("Not authorized to access this page");
-
-      return res.status(400).send("Cannot get the data");
+      if (configurationOnly) return res.json(project);
+      return res.json(await projectController.applyVariablesToCharts(project, resolveVariables({})));
     } catch (error) {
-      if (error && error.message === "404") {
-        return res.status(404).send(error);
-      }
-      return res.status(400).send(error);
+      return res.status(error.status || 400).json({ error: error.status ? error.message : "Could not load this dashboard." });
     }
-  });
-  // -------------------------------------------
+  };
 
-  /*
-  ** Route to get a project with a share policy
-  */
-  app.get("/project/:brew_name/report", apiLimiter(5, 15), getUserFromToken, async (req, res) => {
-    return projectController.findBySharePolicy(
-      req.params.brew_name, req.headers.pass, req.query, req.user,
-    )
-      .then((processedProject) => {
-        return res.status(200).send(processedProject);
-      })
-      .catch((error) => {
-        const errorMessage = error?.message || `${error}`;
-        if (
-          errorMessage.indexOf("401") > -1
-          || errorMessage === "Invalid share token"
-          || errorMessage === "Share policy has expired"
-          || error?.name === "JsonWebTokenError"
-          || error?.name === "TokenExpiredError"
-        ) {
-          return res.status(401).send({ error: "Not authorized" });
-        }
-        if (errorMessage === "Share policy is disabled") {
-          return res.status(403).send({ error: "Not authorized" });
-        }
-        if (errorMessage.indexOf("403") > -1) {
-          return res.status(403).send({ error: "Enter the correct password" });
-        }
-        if (errorMessage.indexOf("413") > -1) {
-          return res.status(413).send(error);
-        }
-        return res.status(400).send(error);
-      });
-  });
-  // -------------------------------------------
+  const publicBatchLimiter = rateLimit({ windowMs: 60000, limit: 50 });
+  const publicBatchAccessLimiter = rateLimit({ windowMs: 15 * 60000, limit: 5, skipSuccessfulRequests: true });
+  app.get("/project/dashboard/:brewName", apiLimiter(5, 15), getUserFromToken, sendPublicDashboard());
+  app.get("/project/:brewName/report", apiLimiter(5, 15), getUserFromToken, sendPublicDashboard(true));
+  app.post("/project/dashboard/:brewName/charts", publicBatchLimiter, publicBatchAccessLimiter, getUserFromToken, sendPublicDashboard(false, true));
+  app.post("/project/:brewName/report/charts", publicBatchLimiter, publicBatchAccessLimiter, getUserFromToken, sendPublicDashboard(true, true));
 
   /*
   ** Route to generate a dashboard template

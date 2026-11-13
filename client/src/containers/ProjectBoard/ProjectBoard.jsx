@@ -5,16 +5,16 @@ import { Alert, Button } from "@heroui/react";
 
 import { getProject, changeActiveProject, getProjects } from "../../slices/project";
 import { getTeam, getTeamMembers, selectTeam } from "../../slices/team";
-import { getProjectCharts } from "../../slices/chart";
+import { getChart, setCharts } from "../../slices/chart";
 import LoadingScreen from "../../components/LoadingScreen";
 
 function ProjectBoard() {
   const [result, setResult] = useState(null);
   const [retry, setRetry] = useState(0);
   const team = useSelector(selectTeam);
-  const { projectId } = useParams();
+  const { projectId, chartId } = useParams();
   const dispatch = useDispatch();
-  const requestKey = `${team?.id}:${projectId}`;
+  const requestKey = `${team?.id}:${projectId}:${chartId || ""}`;
 
   useEffect(() => {
     if (!projectId || !team?.id) return undefined;
@@ -33,14 +33,23 @@ function ProjectBoard() {
           run(getTeam(team.id)),
           run(getTeamMembers({ team_id: team.id })),
           run(getProjects({ team_id: team.id })),
-          run(getProjectCharts({ project_id: projectId })),
         ]);
         if (cancelled) return;
-        await run(getProject({ project_id: projectId }));
+        const project = await run(getProject({ project_id: projectId, configurationOnly: true }));
         if (cancelled) return;
+        const charts = project.Charts || [];
+        dispatch(setCharts(charts.map((chart) => ({
+          ...chart,
+          initialDataPending: chart.type !== "markdown",
+        }))));
+        if (chartId) {
+          await run(getChart({ project_id: projectId, chart_id: Number(chartId) }));
+          if (cancelled) return;
+        }
         dispatch(changeActiveProject(projectId));
         window.localStorage.setItem("__cb_active_team", team.id);
         setResult({ key: requestKey, error: false });
+
       } catch (error) {
         if (!cancelled) setResult({ key: requestKey, error: true });
       }
@@ -51,7 +60,7 @@ function ProjectBoard() {
       cancelled = true;
       requests.forEach((request) => request.abort());
     };
-  }, [projectId, team?.id, dispatch, requestKey, retry]);
+  }, [projectId, chartId, team?.id, dispatch, requestKey, retry]);
 
   if (result?.key !== requestKey) {
     return <LoadingScreen label="Loading dashboard" />;

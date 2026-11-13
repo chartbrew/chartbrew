@@ -108,7 +108,7 @@ app.use(chartImageBodyError);
 app.use(dataApiBodyError);
 app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(securityHeaders);
-app.use(cors());
+app.use(cors({ exposedHeaders: ["Retry-After"] }));
 //---------------------------------------
 
 app.get("/", (req, res) => {

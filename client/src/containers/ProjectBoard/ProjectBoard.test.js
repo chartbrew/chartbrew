@@ -13,8 +13,10 @@ async function setup() {
   let cleanup;
   let projectId = "1";
   const requests = [];
+  const chartLists = [];
   const dispatch = (action) => {
     if (action.type === "changeActiveProject") return action;
+    if (action.type === "setCharts") { chartLists.push(action.arg); return action; }
     const deferred = Promise.withResolvers();
     const request = {
       ...action,
@@ -52,7 +54,7 @@ async function setup() {
     },
     "../../slices/project": Object.fromEntries(["getProject", "getProjects", "changeActiveProject"].map((name) => [name, action(name)])),
     "../../slices/team": { ...Object.fromEntries(["getTeam", "getTeamMembers"].map((name) => [name, action(name)])), selectTeam: () => {} },
-    "../../slices/chart": { getProjectCharts: action("getProjectCharts") },
+    "../../slices/chart": { getChart: action("getChart"), setCharts: action("setCharts") },
     "../../components/LoadingScreen": { default: "loader" },
   };
   const context = vm.createContext({ window: { localStorage: { setItem() {} } } });
@@ -66,6 +68,7 @@ async function setup() {
 
   return {
     requests,
+    chartLists,
     render: () => { cursor = 0; return mod.namespace.default(); },
     commit: () => {
       if (effect) {
@@ -81,21 +84,22 @@ async function setup() {
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
-test("dashboard shows a loader before effects and until charts and project are ready", async () => {
+test("dashboard opens with placeholders without requesting unfiltered chart data", async () => {
   const app = await setup();
   assert.equal(app.render().type, "loader");
   app.commit();
-  for (const request of app.requests) {
-    if (request.type !== "getProjectCharts") request.resolve({});
-  }
+  app.requests.forEach((request) => request.resolve({}));
   await flush();
-  assert.equal(app.render().type, "loader");
-  app.requests.find(({ type }) => type === "getProjectCharts").resolve([]);
-  await flush();
-  assert.equal(app.render().type, "loader");
-  app.requests.find(({ type }) => type === "getProject").resolve({ id: 1 });
+  const projectRequest = app.requests.find(({ type }) => type === "getProject");
+  assert.equal(projectRequest.arg.configurationOnly, true);
+  projectRequest.resolve({ id: 1, Charts: [
+    { id: 1, type: "line" }, { id: 2, type: "markdown" }, { id: 3, type: "bar" },
+  ] });
+  app.requests.filter(({ type }) => type !== "getProject").forEach((request) => request.resolve({}));
   await flush();
   assert.equal(app.render().props.children.type, "outlet");
+  assert.deepEqual(app.chartLists[0].map((chart) => chart.initialDataPending), [true, false, true]);
+  assert.equal(app.requests.some(({ type }) => type === "getChart"), false);
   app.cleanup();
 });
 
@@ -110,29 +114,33 @@ test("failed requests show a retry action instead of a permanent loader", async 
   error.props.children.find((child) => child.type === "button").props.onPress();
   assert.equal(app.render().type, "loader");
   app.commit();
-  assert.ok(app.requests.slice(0, 4).every(({ aborted }) => aborted));
-  assert.equal(app.requests.length, 8);
+  assert.ok(app.requests.slice(0, 3).every(({ aborted }) => aborted));
+  assert.equal(app.requests.length, 6);
   app.cleanup();
   await flush();
 });
 
-test("navigation aborts old requests and does not show the previous dashboard", async () => {
+test("navigation aborts dashboard requests and hides the previous dashboard", async () => {
   const app = await setup();
   app.render();
   app.commit();
   app.requests.forEach((request) => request.resolve({}));
+  await flush();
+  app.requests.find(({ type }) => type === "getProject").resolve({ id: 1, Charts: [
+    { id: 11, type: "line" }, { id: 12, type: "bar" },
+  ] });
   await flush();
   const oldProject = app.requests.find(({ type }) => type === "getProject");
   app.navigate("2");
   assert.equal(app.render().type, "loader");
   app.commit();
   assert.equal(oldProject.aborted, true);
-  oldProject.resolve({ id: 1 });
   await flush();
+  assert.equal(app.requests.some(({ arg }) => arg?.chart_id === 12), false);
   assert.equal(app.render().type, "loader");
-  app.requests.filter(({ aborted }) => !aborted).forEach((request) => request.resolve([]));
+  app.requests.filter(({ aborted }) => !aborted).forEach((request) => request.resolve({ id: 2, Charts: [] }));
   await flush();
-  app.requests.find(({ type, arg }) => type === "getProject" && arg.project_id === "2").resolve({ id: 2 });
+  app.requests.find(({ type, arg }) => type === "getProject" && arg.project_id === "2").resolve({ id: 2, Charts: [] });
   await flush();
   assert.equal(app.render().props.children.type, "outlet");
   app.navigate("1");

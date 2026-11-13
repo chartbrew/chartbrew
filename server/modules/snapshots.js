@@ -85,7 +85,7 @@ module.exports.snapDashboard = async (dashboard, options = {}) => {
     }
 
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-    await page.waitForSelector("div.dashboard-container", { state: "visible", timeout: 60000 });
+    await page.waitForSelector('div.dashboard-container[data-dashboard-loading="false"]', { state: "visible", timeout: 60000 });
     await page.waitForTimeout(2000);
 
     const snapshotId = nanoid(20);
