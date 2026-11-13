@@ -1,6 +1,8 @@
 const { WebClient } = require("@slack/web-api");
 const crypto = require("crypto");
 
+const SLACK_SCOPES = "commands,chat:write,chat:write.public,im:write,im:history,users:read,app_mentions:read,channels:read,groups:read,files:write";
+
 const slackClientId = process.env.VITE_APP_SLACK_CLIENT_ID;
 const slackClientSecret = process.env.CB_SLACK_CLIENT_SECRET;
 
@@ -313,6 +315,7 @@ async function getChannels(botToken) {
 }
 
 module.exports = {
+  SLACK_SCOPES,
   verifySignature,
   exchangeCodeForToken,
   sendDM,

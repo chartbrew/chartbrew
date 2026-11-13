@@ -11,6 +11,7 @@ import {
   Separator,
   Modal,
   Switch,
+  TextField,
 } from "@heroui/react"
 import { LuHash, LuTrash } from "react-icons/lu"
 import toast from "react-hot-toast"
@@ -24,6 +25,9 @@ import {
   deleteIntegration,
 } from "../../../slices/integration"
 import { ButtonSpinner } from "../../../components/ButtonSpinner"
+import { API_HOST } from "../../../config/settings"
+import { getAuthToken } from "../../../modules/auth"
+import SlackConversations from "./SlackConversations"
 import { selectTeam } from "../../../slices/team"
 
 function SlackIntegration({ integration }) {
@@ -35,6 +39,11 @@ function SlackIntegration({ integration }) {
   const [allowAllChannels, setAllowAllChannels] = useState(
     integration?.config?.allowAllChannels ?? false
   )
+  const [accessMode, setAccessMode] = useState(integration.config?.accessMode || "admins-only")
+  const [allowAllDashboards, setAllowAllDashboards] = useState(integration.config?.allowAllDashboards ?? false)
+  const [dashboardIds, setDashboardIds] = useState(integration.config?.dashboardIds || [])
+  const [dashboards, setDashboards] = useState([])
+  const [dashboardError, setDashboardError] = useState(false)
   const [channels, setChannels] = useState([])
   const [loading, setLoading] = useState(false)
   const [channelsLoading, setChannelsLoading] = useState(false)
@@ -73,6 +82,35 @@ function SlackIntegration({ integration }) {
     }
   }, [integration?.id, team?.id, dispatch])
 
+  useEffect(() => {
+    const controller = new AbortController()
+    setDashboardError(false)
+    fetch(`${API_HOST}/apps/slack/${integration.id}/dashboards`, {
+      headers: { Authorization: `Bearer ${getAuthToken()}` }, signal: controller.signal,
+    }).then(async (response) => {
+      if (!response.ok) throw new Error()
+      const result = await response.json()
+      if (!controller.signal.aborted) setDashboards(result)
+    }).catch(() => { if (!controller.signal.aborted) setDashboardError(true) })
+    return () => controller.abort()
+  }, [integration.id])
+
+  const updateSlackAccess = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_HOST}/apps/slack/${integration.id}/upgrade`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      })
+      if (!response.ok) throw new Error("Slack access could not be updated. Try again.")
+      const result = await response.json()
+      window.location.assign(result.url)
+    } catch (error) {
+      toast.error(error.message)
+      setLoading(false)
+    }
+  }
+
   const handleSave = () => {
     if (name === "") {
       toast.error("Name cannot be empty")
@@ -88,6 +126,9 @@ function SlackIntegration({ integration }) {
     const newConfig = { ...currentConfig }
     
     newConfig.allowAllChannels = allowAllChannels
+    newConfig.accessMode = accessMode
+    newConfig.dashboardIds = dashboardIds
+    newConfig.allowAllDashboards = allowAllDashboards
     
     if (selectedChannels.length > 0) {
       newConfig.allowedChannels = selectedChannels
@@ -144,125 +185,170 @@ function SlackIntegration({ integration }) {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <div className="text-2xl font-semibold font-tight">
-            {integration?.name}
-          </div>
-          <div className="text-sm text-foreground-500">
-            {"Configure your Slack integration"}
-          </div>
-        </div>
-        <Button
-          variant="tertiary"
-          color="danger"
-          onPress={() => setDeleteModalOpen(true)}
-          size="sm"
-        >
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold font-tight">{integration?.name}</h1>
+        <Button variant="tertiary" color="danger" onPress={() => setDeleteModalOpen(true)} size="sm">
           <LuTrash size={18} />
-          Delete Integration
+          Delete integration
         </Button>
       </div>
 
-      <div className="h-4" />
-
-      <div className="flex flex-col bg-surface p-4 rounded-lg border border-divider gap-4">
-        <div className="flex flex-col gap-2">
-          <div className="font-semibold">Slack Workspace</div>
-          <div className="flex flex-row items-center justify-between">
+      <div className="flex flex-col gap-6 rounded-3xl border border-divider bg-surface p-6">
+        <section aria-labelledby="slack-connection-heading" className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
-              <div className="text-sm font-medium">
-                {integration?.config?.slack_team_name || "No Slack workspace"}
-              </div>
-              <div className="text-xs text-foreground-500">
-                {"Reconnect to change the Slack workspace"}
-              </div>
+              <h2 id="slack-connection-heading" className="text-lg font-semibold">Connection</h2>
+              <p className="text-sm text-muted">{integration?.config?.slack_team_name || "No Slack workspace"}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" size="sm" onPress={() => navigate("/integrations/slack/account")}>
+                Your Slack account
+              </Button>
+              <Button variant="secondary" size="sm" onPress={updateSlackAccess} isPending={loading}>
+                Update Slack access
+              </Button>
             </div>
           </div>
-        </div>
+          <TextField value={name} onChange={(value) => setName(value.slice(0, 20))} isRequired className="max-w-lg">
+            <Label>Integration name</Label>
+            <Input variant="secondary" placeholder="Slack integration name" maxLength={20} />
+          </TextField>
+        </section>
 
         <Separator />
 
-        <div className="flex flex-col gap-2">
-          <div className="font-semibold">Integration Name</div>
-          <Input
-            label="A name to recognize this integration"
-            placeholder="Slack integration name"
-            fullWidth
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value.slice(0, 20))
-            }}
-            variant="secondary"
-            required
-            description={`${name?.length || 0}/20 characters`}
-          />
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <div className="font-semibold">Allow All Channels</div>
-              <div className="text-sm text-foreground-500">
-                When enabled, Chartbrew can be used in all channels. When disabled, only selected channels are allowed.
-              </div>
-            </div>
-            <Switch
-              isSelected={allowAllChannels}
-              onChange={setAllowAllChannels}
-              size="sm"
-              aria-label="Allow all channels"
-            >
-              <Switch.Content>
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch.Content>
-            </Switch>
-          </div>
-        </div>
-
-        {!allowAllChannels && (
+        <section aria-labelledby="slack-access-heading" className="flex flex-col gap-5">
+          <h2 id="slack-access-heading" className="text-lg font-semibold">Access</h2>
           <div className="flex flex-col gap-2">
-            <div className="font-semibold">Allowed Channels</div>
-            <Select
-              placeholder="Select allowed channels"
-              selectionMode="multiple"
-              value={selectedChannels}
-              onChange={(value) => {
-                setSelectedChannels(value || [])
-              }}
-              variant="secondary"
-              isPending={channelsLoading}
-            >
-              <Label>Select allowed channels</Label>
+            <Select value={accessMode} onChange={setAccessMode} variant="secondary" className="max-w-lg">
+              <Label>Who can ask questions</Label>
               <Select.Trigger>
                 <Select.Value />
                 <Select.Indicator />
               </Select.Trigger>
-              <Description>Chartbrew can only be used in these channels. To see private channels in the list, add the app to the channel in Slack first.</Description>
               <Select.Popover>
-                <ListBox selectionMode="multiple">
-                  {channels.map((c) => (
-                    <ListBox.Item key={c.id} id={c.id} textValue={c.name}>
-                      <div className="flex flex-row items-center gap-2">
-                        <LuHash />
-                        <span>{c.name}</span>
-                        {c.is_private ? <Chip size="sm" variant="primary">Private</Chip> : null}
-                      </div>
+                <ListBox>
+                  {[
+                    ["admins-only", "Owners and admins"], ["team", "Team members"],
+                    ["team-and-clients", "Team members and clients"], ["everyone", "Everyone in allowed channels"],
+                  ].map(([id, label]) => (
+                    <ListBox.Item key={id} id={id} textValue={label}>
+                      {label}
                       <ListBox.ItemIndicator />
                     </ListBox.Item>
                   ))}
                 </ListBox>
               </Select.Popover>
             </Select>
+            <p className="text-sm text-muted">
+              {accessMode === "everyone"
+                ? "No account link is required. Anyone in allowed channels can read the available dashboards."
+                : "A linked Chartbrew account is required."}
+            </p>
           </div>
-        )}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+            <section aria-labelledby="slack-channels-heading" className="flex min-w-0 flex-col gap-3">
+              <h3 id="slack-channels-heading" className="font-semibold">Channels</h3>
+              <Switch isSelected={allowAllChannels} onChange={setAllowAllChannels} size="md" className="self-start">
+                <Switch.Content>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Label>Allow all channels</Label>
+                </Switch.Content>
+              </Switch>
+              {!allowAllChannels && (
+                <div className="flex flex-col gap-2">
+                  <Select
+                    placeholder="Select allowed channels"
+                    selectionMode="multiple"
+                    value={selectedChannels}
+                    onChange={(value) => {
+                      setSelectedChannels(value || [])
+                    }}
+                    variant="secondary"
+                    isPending={channelsLoading}
+                  >
+                    <Label>Selected channels</Label>
+                    <Select.Trigger className="h-auto min-h-10 py-2">
+                      <Select.Value className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+                        {({ defaultChildren, isPlaceholder, state }) => isPlaceholder ? defaultChildren : (
+                          state.selectedItems.map((item) => (
+                            <Chip key={item.key} color="accent" variant="soft" size="sm" className="max-w-full">
+                              <LuHash className="size-3 shrink-0" aria-hidden="true" />
+                              <span className="truncate">{item.textValue}</span>
+                            </Chip>
+                          ))
+                        )}
+                      </Select.Value>
+                      <Select.Indicator className="shrink-0" />
+                    </Select.Trigger>
+                    <Description>For private channels, add Chartbrew to the channel in Slack first.</Description>
+                    <Select.Popover>
+                      <ListBox selectionMode="multiple">
+                        {channels.map((c) => (
+                          <ListBox.Item key={c.id} id={c.id} textValue={c.name}>
+                            <div className="flex flex-row items-center gap-2">
+                              <LuHash className="size-3 shrink-0" aria-hidden="true" />
+                              <span>{c.name}</span>
+                              {c.is_private ? <Chip size="sm" variant="primary">Private</Chip> : null}
+                            </div>
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </div>
+              )}
 
-        <div className="h-2" />
+              <p className="text-sm text-muted">Replies are visible to everyone who can read the channel.</p>
+            </section>
+            <section aria-labelledby="slack-dashboards-heading" className="flex min-w-0 flex-col gap-3">
+              <h3 id="slack-dashboards-heading" className="font-semibold">Dashboards</h3>
+              <Switch isSelected={allowAllDashboards} onChange={setAllowAllDashboards} size="md" className="self-start" aria-describedby="allow-all-dashboards-description">
+                <Switch.Content>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Label>Allow all dashboards</Label>
+                </Switch.Content>
+              </Switch>
+              {!allowAllDashboards && (
+                <>
+                  <Select selectionMode="multiple" value={dashboardIds} onChange={setDashboardIds} variant="secondary" placeholder="Select dashboards">
+                    <Label>Selected dashboards</Label>
+                    <Select.Trigger className="h-auto min-h-10 py-2">
+                      <Select.Value className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+                        {({ defaultChildren, isPlaceholder, state }) => isPlaceholder ? defaultChildren : state.selectedItems.map((item) => (
+                          <Chip key={item.key} color="accent" variant="soft" size="sm">{item.textValue}</Chip>
+                        ))}
+                      </Select.Value>
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {dashboards.map((dashboard) => (
+                          <ListBox.Item key={dashboard.id} id={dashboard.id} textValue={dashboard.name}>
+                            {dashboard.name}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                  {dashboardError && <p role="alert" className="text-sm text-danger">Dashboards could not load. Reload this page to try again.</p>}
+                  {dashboardIds.length === 0 && <p className="text-sm">Select at least one dashboard to allow data access.</p>}
+                </>
+              )}
 
+              <p id="allow-all-dashboards-description" className="text-sm text-muted">Includes new dashboards automatically when enabled.</p>
+              <p className="text-sm text-muted">Linked users can only access dashboards permitted by their Chartbrew account.</p>
+            </section>
+          </div>
+        </section>
+
+        <Separator />
         <div className="flex flex-row justify-end">
           <Button
             color="primary"
@@ -275,6 +361,8 @@ function SlackIntegration({ integration }) {
           </Button>
         </div>
       </div>
+
+      <SlackConversations key={integration.id} integrationId={integration.id} channels={channels} />
 
       <Modal.Backdrop isOpen={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
         <Modal.Container size="xl">

@@ -4,6 +4,8 @@ const READ_TOOLS = new Set([
   "get_workspace_activity",
   "get_workspace_context",
   "read_chart_results",
+  "request_dashboard_snapshot",
+  "request_chart_preview",
   "list_kpi_reviews",
   "list_metric_monitors",
   "recommend_metric_monitors",
@@ -45,6 +47,8 @@ const ALLOWED_SECTIONS = new Set([
 ]);
 const TASK_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const TOOL_SECTIONS = new Map([
+  ["request_chart_preview", new Set(["dashboards"])],
+  ["request_dashboard_snapshot", new Set(["dashboards"])],
   ["read_chart_results", new Set(["dashboards"])],
   ["get_workspace_activity", new Set(["activity", "alerts", "health"])],
   ["get_workspace_context", new Set([

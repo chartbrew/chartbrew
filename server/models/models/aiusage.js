@@ -29,6 +29,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       comment: "OpenAI model used (e.g. gpt-4o-mini)"
     },
+    source: { type: DataTypes.STRING, allowNull: false, defaultValue: "app" },
+    integration_id: { type: DataTypes.UUID, allowNull: true },
+    integration_request_id: { type: DataTypes.UUID, allowNull: true },
     request_id: { type: DataTypes.UUID, allowNull: true },
     provider: { type: DataTypes.STRING, allowNull: true },
     provider_response_id: { type: DataTypes.STRING, allowNull: true },

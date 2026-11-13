@@ -2,6 +2,14 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { oauthReturnPath } from "./oauthReturn.js";
 
+test("Slack linking survives login without accepting a redirect URL", () => {
+  const token = "a".repeat(64);
+  assert.equal(oauthReturnPath(`?slackLink=${token}`), `/integrations/slack/account?token=${token}`);
+  for (const value of ["https://evil.example", "a".repeat(63), "../settings", ""]) {
+    assert.equal(oauthReturnPath(`?slackLink=${encodeURIComponent(value)}`), "/");
+  }
+});
+
 test("OAuth login returns only to a local consent request", () => {
   const id = "c3d6ac7e-2a64-4658-8559-264dcf5dd34a";
   assert.equal(oauthReturnPath(`?oauthRequest=${id}`), `/oauth/consent?request=${id}`);

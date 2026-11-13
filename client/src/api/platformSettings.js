@@ -27,8 +27,8 @@ export function getPlatformAnalytics(days, signal) {
   return settingsRequest(`/platform/analytics?days=${encodeURIComponent(days)}`, { signal });
 }
 
-export function getTeamAnalytics(teamId, days, signal) {
-  return settingsRequest(`/team/${encodeURIComponent(teamId)}/analytics?days=${encodeURIComponent(days)}`, { signal });
+export function getTeamAnalytics(teamId, days, signal, source = "all") {
+  return settingsRequest(`/team/${encodeURIComponent(teamId)}/analytics?days=${encodeURIComponent(days)}&source=${encodeURIComponent(source)}`, { signal });
 }
 
 export function updatePlatformSettings(settings) {

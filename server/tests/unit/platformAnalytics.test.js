@@ -25,3 +25,14 @@ it.each(["team", "platform"])("connects sparse %s request timings without replac
   expect(result.charts.outcomes.configuration.series[0].type).toBe("bar");
   expect(result.ai.charts.calls.configuration.series[0].connectNulls).toBe(false);
 });
+
+it("defaults to all usage and filters Slack without changing data request totals", async () => {
+  vi.spyOn(db.SourceExecution, "findAll").mockResolvedValue([]);
+  const usage = vi.spyOn(db.AiUsage, "findAll").mockResolvedValue([]);
+  await getTeamAnalytics(7, "7", new Date());
+  expect(usage.mock.calls[0][0].where).not.toHaveProperty("source");
+  await getTeamAnalytics(7, "7", new Date(), "slack");
+  expect(usage.mock.calls[1][0].where).toMatchObject({ team_id: 7, source: "slack" });
+  expect(db.SourceExecution.findAll.mock.calls[1][0].where).not.toHaveProperty("source");
+  await expect(getTeamAnalytics(7, "7", new Date(), "invalid")).rejects.toMatchObject({ statusCode: 400 });
+});

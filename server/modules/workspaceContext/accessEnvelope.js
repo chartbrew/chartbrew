@@ -31,6 +31,10 @@ function canReadHistoryMessage(message, envelope) {
     editableProjectIds: currentEditable,
     ...currentPermissions
   } = current;
+  if (previous.integrationId && previous.integrationId === current.integrationId) {
+    delete previousPermissions.userId;
+    delete currentPermissions.userId;
+  }
   if (!Array.isArray(visibleProjectIds) || !Array.isArray(editableProjectIds)) return false;
   if (!isDeepStrictEqual(previousPermissions, currentPermissions)) return false;
 
@@ -55,7 +59,7 @@ async function getWorkspaceAccessEnvelope(access) {
   if (editorRoles.includes(access.role)) {
     editableProjectIds = visibleProjectIds;
   }
-  const user = await db.User.findByPk(access.userId, {
+  const user = access.integrationId ? null : await db.User.findByPk(access.userId, {
     attributes: ["email"],
   });
   const reportingOnly = viewerRoles.includes(access.role);
@@ -75,6 +79,7 @@ async function getWorkspaceAccessEnvelope(access) {
     role: access.role,
     teamId: access.teamId,
     userId: access.userId,
+    ...(access.integrationId ? { integrationId: access.integrationId } : {}),
     visibleProjectIds,
   };
   const accessVersion = buildAccessVersion(historyAccessScope);
@@ -96,6 +101,7 @@ async function getWorkspaceAccessEnvelope(access) {
     role: access.role,
     teamId: access.teamId,
     userId: access.userId,
+    ...(access.integrationId ? { integrationId: access.integrationId } : {}),
     visibleProjectIds,
     workspaceOrchestratorEnabled: policy.workspaceOrchestratorEnabled,
     workspaceWritesEnabled: !reportingOnly

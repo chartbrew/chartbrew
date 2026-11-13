@@ -17,6 +17,7 @@ const compactNumberFormat = new Intl.NumberFormat("en", { notation: "compact", m
 
 function Analytics({ teamId }) {
   const [view, setView] = useState("requests");
+  const [source, setSource] = useState("all");
   const [days, setDays] = useState("30");
   const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState(null);
@@ -30,7 +31,7 @@ function Analytics({ teamId }) {
     setData(null);
     const request = teamId === undefined
       ? getPlatformAnalytics(days, controller.signal)
-      : getTeamAnalytics(teamId, days, controller.signal);
+      : getTeamAnalytics(teamId, days, controller.signal, source);
     request
       .then((result) => {
         if (!controller.signal.aborted) setData(result);
@@ -46,7 +47,7 @@ function Analytics({ teamId }) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [days, refresh, teamId]);
+  }, [days, refresh, teamId, source]);
 
   const isAi = view === "ai";
   const analytics = isAi ? data?.ai : data;
@@ -91,6 +92,24 @@ function Analytics({ teamId }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-muted">{period}</p>
         <div className="flex shrink-0 items-center gap-2">
+          {isAi && teamId !== undefined && (
+            <Select aria-label="Usage source" value={source} onChange={setSource} variant="secondary" className="w-44">
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {[["all", "All usage"], ["app", "Chartbrew"], ["slack", "Slack"], ["api", "API"]].map(([id, label]) => (
+                    <ListBox.Item key={id} id={id} textValue={label}>
+                      {label}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+          )}
           <Select
             aria-label="Period"
             className="w-40"

@@ -1,3 +1,4 @@
+const { getIntegrationContext } = require("../../../observations/integrationContext");
 const { aggregateUsage, withAiUsageContext } = require("../../usage");
 const { buildContextManifest } = require("../../../workspaceContext/contextManifest");
 const { escapeMarkdown } = require("../../../workspaceContext/deterministicSummary");
@@ -93,6 +94,10 @@ function getAllowedSplitToolNames({ envelope, options, policy }) {
     configuredTools = new Set(options.allowedToolNames);
   }
   const allowed = new Set([...SPLIT_RUNTIME_TOOLS].filter((tool) => configuredTools.has(tool)));
+  if (!getIntegrationContext()) {
+    allowed.delete("request_dashboard_snapshot");
+    allowed.delete("request_chart_preview");
+  }
   if (!options.aiSessionId) {
     allowed.delete("preview_kpi_review");
     allowed.delete("preview_metric_monitor");
@@ -109,7 +114,7 @@ function getAllowedSplitToolNames({ envelope, options, policy }) {
 function getTaskCatalog(allowedToolNames) {
   return [{
     allowedSections: ["dashboards"],
-    allowedTools: allowedToolNames.has("read_chart_results") ? ["read_chart_results"] : [],
+    allowedTools: ["read_chart_results", "request_dashboard_snapshot", "request_chart_preview"].filter((name) => allowedToolNames.has(name)),
     taskType: "read_workspace_section",
   }, {
     allowedSections: [...(TOOL_SECTIONS.get("get_workspace_activity") || [])],
@@ -434,6 +439,8 @@ async function executeSplitWorkspaceRequest({
   const bootstrapFacts = bootstrapNormalized.facts;
   const budget = createProviderBudget(policy);
   const pendingActions = [];
+  const chartPreviews = new Map();
+  const dashboardSnapshots = new Map();
   const roleCalls = { planner: 0, synthesis: 0, worker: 0 };
   const usageRecords = [];
   let externalProviderUsed = false;
@@ -660,8 +667,32 @@ async function executeSplitWorkspaceRequest({
             task,
             toolName: call.name,
           });
+          if (options.toolProgressCallback) {
+            try {
+              // oxlint-disable-next-line no-await-in-loop -- Finish the status edit before running this tool.
+              await options.toolProgressCallback(call.name, "start", undefined, definitionsByName.get(call.name)?.displayName);
+            } catch (_) { /* Progress must not stop tool execution. */ }
+          }
           // oxlint-disable-next-line no-await-in-loop
           const result = await toolRunner(call.name, payload);
+          if (call.name === "request_dashboard_snapshot" && result.status === "ready_for_delivery") {
+            dashboardSnapshots.set(result.projectId, result);
+          }
+          if (call.name === "request_chart_preview" && result.chart_id && !result.error) {
+            chartPreviews.set(String(result.chart_id), {
+              chartId: result.chart_id, chartName: result.name, projectId: result.project_id,
+              toolName: call.name, refreshRequested: result.refreshRequested === true,
+            });
+          }
+          if (call.name === "read_chart_results") {
+            (result.items || []).filter((item) => item.status === "available").forEach((item) => {
+              if (chartPreviews.has(String(item.chartId))) return;
+              chartPreviews.set(String(item.chartId), {
+                chartId: item.chartId, chartName: item.name, chartType: item.type,
+                projectId: item.project.id, dashboard: item.project, visibility: "dashboard", datasets: [], toolName: "read_chart_results",
+              });
+            });
+          }
           serverToolCallCount += 1;
           const pendingAction = getPendingAction(call.name, result);
           if (pendingAction) pendingActions.push(pendingAction);
@@ -790,6 +821,8 @@ async function executeSplitWorkspaceRequest({
       iterations: toolCallCount,
       message,
       pendingAction: visiblePendingAction,
+      chartPreviews: [...chartPreviews.values()],
+      dashboardSnapshots: [...dashboardSnapshots.values()],
       snapshots: [],
       usage: aggregateUsage(finalUsageRecords),
       usageRecords: finalUsageRecords,

@@ -151,7 +151,7 @@ module.exports = (app) => {
       if (!["teamOwner", "teamAdmin"].includes(teamRole?.role)) {
         return res.status(403).send({ error: "You do not have access to this team's analytics." });
       }
-      return res.send(await getTeamAnalytics(teamId, req.query.days));
+      return res.send(await getTeamAnalytics(teamId, req.query.days, undefined, req.query.source));
     } catch (error) {
       const statusCode = error.statusCode || 500;
       return res.status(statusCode).send({

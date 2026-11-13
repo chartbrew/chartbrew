@@ -11,6 +11,7 @@ import {
   LuInfo,
   LuSettings,
   LuShieldCheck,
+  LuSlack,
   LuUser,
   LuUsers,
 } from "react-icons/lu";
@@ -30,6 +31,10 @@ const ACCOUNT_ITEMS = [{
   icon: VscMcp,
   label: "MCP",
   path: "/settings/mcp",
+}, {
+  icon: LuSlack,
+  label: "Slack account",
+  path: "/integrations/slack/account",
 }];
 
 const TEAM_ITEMS = [{

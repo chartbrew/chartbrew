@@ -6,6 +6,7 @@ import { Spinner } from "@heroui/react";
 import { getIntegration, selectIntegrations } from "../../../slices/integration";
 import SlackIntegration from "./SlackIntegration";
 import WebhookIntegration from "./WebhookIntegration";
+import { selectUser } from "../../../slices/user";
 import { selectTeam } from "../../../slices/team";
 
 function Integration() {
@@ -14,6 +15,7 @@ function Integration() {
   const params = useParams();
   const dispatch = useDispatch();
   const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
   const integration = integrations.find((i) => i.id === params.integrationId);
   const initRef = useRef(false);
 
@@ -23,6 +25,10 @@ function Integration() {
       dispatch(getIntegration({ team_id: team?.id, integration_id: params.integrationId }));
     }
   }, [team?.id]);
+
+  if (!team?.TeamRoles?.some((role) => role.user_id === user.id && ["teamOwner", "teamAdmin"].includes(role.role))) {
+    return <p>Only team owners and admins can manage integrations.</p>;
+  }
 
   if (!integration?.id) {
     return (

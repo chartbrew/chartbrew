@@ -20,7 +20,7 @@
         "command": "/chartbrew",
         "url": "https://api.your-chartbrew-url.com/apps/slack/commands",
         "description": "Chartbrew commands",
-        "usage_hint": "help | connect | disconnect | status",
+        "usage_hint": "link | unlink | connect | disconnect | status | help",
         "should_escape": false
       }
     ]
@@ -29,7 +29,7 @@
     "redirect_urls": [
       "https://client.your-chartbrew-url.com/integrations/auth/slack/callback"
     ],
-      "scopes": {
+    "scopes": {
       "bot": [
         "commands",
         "chat:write",
@@ -38,7 +38,9 @@
         "users:read",
         "app_mentions:read",
         "channels:read",
-        "groups:read"
+        "groups:read",
+        "im:history",
+        "files:write"
       ]
     }
   },
@@ -46,8 +48,8 @@
     "event_subscriptions": {
       "request_url": "https://api.your-chartbrew-url.com/apps/slack/events",
       "bot_events": [
-        "app_home_opened",
-        "app_mention"
+        "app_mention",
+        "message.im"
       ]
     },
     "interactivity": {

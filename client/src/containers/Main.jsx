@@ -59,11 +59,17 @@ import AiModal from "./Ai/AiModal";
 import ActiveConversationBar from "./Ai/ActiveConversationBar";
 import Auth from "./Integrations/Auth/Auth";
 import SlackCallback from "./Integrations/Auth/SlackCallback";
+import SlackAccount from "./Integrations/Auth/SlackAccount";
 import Integration from "./Integrations/Integration/Integration";
 import NoAccessPage from "../components/NoAccessPage";
 import { shouldResumeOnboarding } from "./Onboarding/onboardingState";
 
 function authenticatePage() {
+  if (window.location.pathname === "/integrations/slack/account") {
+    const token = new URLSearchParams(window.location.search).get("token");
+    window.location.href = /^[a-f0-9]{64}$/.test(token || "") ? `/login?slackLink=${token}` : "/login";
+    return false;
+  }
   const preview = window.location.pathname.match(/^\/previews\/([1-9]\d*)$/);
   if (preview) {
     window.location.href = `/login?preview=${preview[1]}`;
@@ -281,6 +287,7 @@ function Main(props) {
                 <Route path="connections/:connectionId/templates" element={<ConnectionTemplates />} />
                 <Route path="datasets" element={<DatasetList />} />
                 <Route path="datasets/:datasetId" element={<Dataset />} />
+                <Route path="integrations/slack/account" element={<SlackAccount />} />
                 {canAccess("teamAdmin", user.id, team?.TeamRoles) ? (
                   <>
                     <Route path="integrations" element={<Integrations />} />

@@ -1,3 +1,5 @@
+const { startSlackWorker } = require("./apps/slack/queue");
+const { processRequest: processSlackRequest } = require("./apps/slack/conversations");
 const { startHomeSuggestions } = require("./crons/homeSuggestions");
 const { Queue, Worker, QueueEvents } = require("bullmq");
 const { createBullBoard } = require("@bull-board/api");
@@ -43,6 +45,9 @@ let datasetIntelligenceQueue;
 const setUpQueues = (app) => {
   const queuesToClose = [];
   const workersToClose = [];
+  const slack = startSlackWorker(processSlackRequest);
+  queuesToClose.push(slack.queue);
+  workersToClose.push(slack.worker);
   const queueEventsToClose = [];
   const homeSuggestions = startHomeSuggestions();
   app.set("homeSuggestionsQueue", homeSuggestions.queue);

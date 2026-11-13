@@ -10,6 +10,7 @@ import {
   getTeamIntegrations,
 } from "../../slices/integration";
 import { selectTeam } from "../../slices/team";
+import { selectUser } from "../../slices/user";
 import SlackIntegrationsList from "./components/SlackIntegrationsList";
 
 function Integrations() {
@@ -17,6 +18,7 @@ function Integrations() {
   const navigate = useNavigate();
 
   const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
   const initRef = useRef(false);
 
   useEffect(() => {
@@ -25,6 +27,10 @@ function Integrations() {
       initRef.current = true;
     }
   }, [team]);
+
+  if (!team?.TeamRoles?.some((role) => role.user_id === user.id && ["teamOwner", "teamAdmin"].includes(role.role))) {
+    return <p>Only team owners and admins can manage integrations.</p>;
+  }
 
   return (
     <div className="flex flex-col">

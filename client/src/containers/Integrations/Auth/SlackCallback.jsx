@@ -8,6 +8,7 @@ import { getAuthToken } from "../../../modules/auth";
 import { LuCircleCheck } from "react-icons/lu";
 
 function SlackCallback() {
+  const isUpgrade = new URLSearchParams(window.location.search).get("state")?.startsWith("upgrade_");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +30,7 @@ function SlackCallback() {
       return;
     }
 
-    const response = await fetch(`${API_HOST}/apps/slack/oauth/callback?code=${code}`, {
+    const response = await fetch(`${API_HOST}/apps/slack/oauth/callback?${new URLSearchParams({ code, state: new URLSearchParams(window.location.search).get("state") || "" })}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${getAuthToken()}`,
@@ -42,27 +43,24 @@ function SlackCallback() {
       return;
     }
     await response.json();
-    toast.success("Successfully added Chartbrew to your Slack workspace");
+    toast.success(isUpgrade ? "Slack access updated" : "Chartbrew added to Slack");
     setLoading(false);
   };
 
   return (
     <div>
       <div className="text-lg font-semibold font-tight">
-        Add Chartbrew to your Slack workspace
-      </div>
-      <div className="text-sm text-foreground-500">
-        {"Add Chartbrew to your Slack workspace to start using it"}
+        {isUpgrade ? "Update Slack access" : "Add Chartbrew to Slack"}
       </div>
 
       <div className="h-2" />
 
-      <div className="bg-surface p-4 rounded-lg border border-divider">
+      <div className="bg-surface p-4 rounded-3xl border border-divider">
         {loading && (
           <div className="flex flex-col items-center justify-center gap-2">
             <CupLoader label="Loading..." />
             <div className="text-center">
-              Please wait while we are adding Chartbrew to your Slack workspace...
+              {isUpgrade ? "Updating Slack access…" : "Connecting Slack…"}
             </div>
           </div>
         )}
@@ -73,13 +71,13 @@ function SlackCallback() {
               <LuCircleCheck className="text-success" size={42} />
             </div>
             <div className="text-center font-bold">
-              Successfully added Chartbrew to your Slack workspace
+              {isUpgrade ? "Slack access updated" : "Chartbrew added to Slack"}
             </div>
             <div className="text-center">
-              DM Chartbrew in Slack to get started and finish the setup:
+              {isUpgrade ? "Return to Slack. Link your personal account if you have not done so." : "Run this command in Slack to complete setup:"}
             </div>
             <div className="text-center">
-              <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">/chartbrew connect</code>
+              <code className="rounded-md bg-default/40 px-1.5 py-0.5 text-base text-default-700">{isUpgrade ? "/chartbrew link" : "/chartbrew connect"}</code>
             </div>
           </div>
         )}
@@ -88,11 +86,15 @@ function SlackCallback() {
           <Alert status="danger">
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Failed to add Chartbrew to your Slack workspace</Alert.Title>
-              <Alert.Description>Please try again.</Alert.Description>
-              <div className="mt-3">
-                <a href={`${API_HOST}/apps/slack/oauth/start`}><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
-              </div>
+              <Alert.Title>{isUpgrade ? "Slack access could not be updated" : "Slack could not be connected"}</Alert.Title>
+              <Alert.Description>{isUpgrade ? "Return to the Slack integration in Chartbrew and select Update Slack access again." : "Please try again."}</Alert.Description>
+              {!isUpgrade && (
+                <div className="mt-3">
+                  <a href={`${API_HOST}/apps/slack/oauth/start`}>
+                    <img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+                  </a>
+                </div>
+              )}
             </Alert.Content>
           </Alert>
         )}

@@ -1,3 +1,4 @@
+const { getIntegrationContext } = require("../modules/observations/integrationContext");
 const homeSuggestions = require("../modules/ai/homeSuggestions/service");
 const { withAiUsageContext } = require("../modules/ai/usage");
 const crypto = require("crypto");
@@ -257,7 +258,12 @@ function assertConversationOwnership(conversation, userId) {
     throw createAiError("Conversation not found", 404);
   }
 
-  if (`${conversation.user_id}` !== `${userId}`) {
+  const integration = getIntegrationContext();
+  if (integration && conversation.source === "slack"
+    && conversation.integration_id === integration.integrationId
+    && Number(conversation.team_id) === integration.teamId) return;
+
+  if (conversation.integration_id || `${conversation.user_id}` !== `${userId}`) {
     throw createAiError("Conversation does not belong to this user", 403);
   }
 }
@@ -412,14 +418,17 @@ async function getOrchestration(
   }
 
   // Keep the question even if the response fails or the user leaves the page.
-  await homeSuggestions.recordUserActivity(teamId, userId);
+  if (!getIntegrationContext()) await homeSuggestions.recordUserActivity(teamId, userId);
   await db.AiMessage.create({
     conversation_id: conversation.id, role: "user", content: question, sequence: messages.length,
+    ...(getIntegrationContext() ? { sensitive_workspace_context: true,
+      workspace_access_version: orchestrationOptions.workspaceAccessVersion,
+      workspace_access_scope: orchestrationOptions.workspaceHistoryAccessScope } : {}),
   });
 
   try {
     return await withAiUsageContext({ teamId, conversationId: conversation.id }, async () => {
-      const memoryResult = await runMemoryCommand({ question, teamId, userId, history: fullHistory });
+      const memoryResult = getIntegrationContext() ? null : await runMemoryCommand({ question, teamId, userId, history: fullHistory });
       const roleBoundary = memoryResult || await runDeterministicWorkspaceRequest({
         access,
         history: fullHistory,
@@ -579,6 +588,7 @@ async function getOrchestrationOptions(access, userId, aiSessionId) {
   const envelope = await getWorkspaceAccessEnvelope(access);
   const roleScope = getAiRoleScope(access, envelope);
   return {
+    toolProgressCallback: getIntegrationContext()?.toolProgressCallback,
     aiAccessMode: roleScope.accessMode,
     allowedProjectIds: access.allProjects ? undefined : access.projectIds,
     allowedEditableProjectIds: envelope.editableProjectIds,
@@ -887,7 +897,7 @@ async function confirmTypedEphemeralAction({ sessionId, teamId, userId }) {
 
 function respond(input) {
   return withAiUsageContext({ teamId: input.teamId }, async () => {
-    const fromSuggestion = await homeSuggestions.recordSubmission(input.teamId, input.userId, input.message);
+    const fromSuggestion = getIntegrationContext() ? null : await homeSuggestions.recordSubmission(input.teamId, input.userId, input.message);
     try {
       const result = await executeResponse(input);
       if (fromSuggestion) homeSuggestions.log("response_received");
@@ -975,7 +985,7 @@ async function executeResponse({
   const access = await getObservationAccess(teamId, userId);
   const envelope = await getWorkspaceAccessEnvelope(access);
   const resolvedSessionId = validateSessionId(sessionId);
-  await homeSuggestions.recordUserActivity(teamId, userId);
+  if (!getIntegrationContext()) await homeSuggestions.recordUserActivity(teamId, userId);
   let existingSession = await runtimeCache.getAiSession({
     sessionId: resolvedSessionId,
     teamId,

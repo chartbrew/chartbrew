@@ -205,7 +205,7 @@ describe("security advisory regressions", () => {
     const integration = { type: "slack", config: { bot_token: "test-secret", default_project_id: 1 }, update: vi.fn().mockResolvedValue({}) };
     vi.spyOn(db.Integration, "findOne").mockResolvedValue(integration);
     await integrations.update(1, { external_id: "T_OTHER", team_id: 8, config: { bot_token: "replaced", default_project_id: 99, allowAllChannels: true } }, 7);
-    expect(integration.update).toHaveBeenCalledWith({ config: { bot_token: "test-secret", default_project_id: 1, allowAllChannels: true, allowedChannels: [] } });
+    expect(integration.update).toHaveBeenCalledWith({ config: { bot_token: "test-secret", default_project_id: 1, allowAllChannels: true, allowedChannels: [], accessMode: "admins-only", dashboardIds: [], allowAllDashboards: false } });
     expect(integrations.toPublicIntegration({ toJSON: () => integration }).config).not.toHaveProperty("bot_token");
     expect(integration.config.bot_token).toBe("test-secret");
   });
@@ -214,7 +214,9 @@ describe("security advisory regressions", () => {
     const slack = require("../../apps/slack/utils/slackClient");
     vi.spyOn(slack, "exchangeCodeForToken").mockResolvedValue({ team_id: "T_VICTIM", team_name: "Victim", bot_token: "new-test-token" });
     vi.spyOn(slack, "sendDM").mockResolvedValue({});
-    const integration = { team_id: 7, config: { allowAllChannels: true, bot_token: "old" }, update: vi.fn().mockResolvedValue({}) };
+    vi.spyOn(db.SlackAccount, "findAll").mockResolvedValue([]);
+    vi.spyOn(db.SlackLinkToken, "destroy").mockResolvedValue(0);
+    const integration = { id: "slack-installation", team_id: 7, config: { allowAllChannels: true, bot_token: "old" }, update: vi.fn().mockResolvedValue({}) };
     vi.spyOn(db.Integration, "findOrCreate").mockResolvedValue([integration, false]);
     const SlackController = require("../../apps/slack/controllers/SlackController");
     await new SlackController().handleOAuthCallback("test-code");

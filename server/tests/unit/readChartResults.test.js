@@ -208,6 +208,17 @@ describe("read_chart_results", () => {
     expect(tool.description).toContain("Use FIRST");
   });
 
+  it.each([
+    "can you generate a line chart showing the daily token usage and give me the preview here?",
+    "Make a chart showing token usage",
+    "Show me a line chart showing daily token usage",
+    "Render the chart showing daily visits",
+    "Give me an overview and a preview of the token usage chart",
+    "Take a snapshot of the dashboard showing token usage",
+  ])("keeps chart delivery tools available for: %s", (question) => {
+    expect(isDashboardSummary(question)).toBe(false);
+  });
+
   it("routes dashboard summaries away from activity-only replies", () => {
     expect(isDashboardSummary("Summarize my dashboard")).toBe(true);
     expect(routeWorkspaceRequest({ message: "What happened on my dashboard?" })).toBeNull();
