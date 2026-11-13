@@ -71,6 +71,30 @@ describe("outboundTargetPolicy", () => {
       });
   });
 
+  const transitionAddresses = [
+    ["::ffff:0:7f00:1", "::ffff:0:a9fe:a9fe"],
+    ["::7f00:1", "::a9fe:a9fe"],
+    ["2002:7f00:1::", "2002:a9fe:a9fe::"],
+    ["2001:0:4136:e378:8000:63bf:80ff:fffe", "2001:0:4136:e378:8000:63bf:5601:5601"],
+    ["0:0:0:0:0:ffff:127.0.0.1", "0:0:0:0:0:ffff:169.254.169.254"],
+  ];
+
+  it.each(transitionAddresses)("checks embedded IPv4 in %s for literals and DNS answers", async (privateAddress, metadataAddress) => {
+    await expect(validateOutboundUrl(`http://[${privateAddress}]/`, { allowPrivateHost: false }))
+      .rejects.toMatchObject({ code: "SSRF_BLOCKED", reason: "private_network" });
+    await expect(validateOutboundUrl(`http://[${privateAddress}]/`, { allowPrivateHost: true }))
+      .resolves.toMatchObject({ allowPrivateHost: true });
+    await expect(validateOutboundUrl(`http://[${metadataAddress}]/`, { allowPrivateHost: true }))
+      .rejects.toMatchObject({ code: "SSRF_BLOCKED", reason: "metadata_endpoint" });
+
+    const lookup = vi.spyOn(dnsPromises, "lookup").mockResolvedValue([{ address: privateAddress, family: 6 }]);
+    await expect(validateOutboundUrl("http://api.example.com", { allowPrivateHost: false }))
+      .rejects.toMatchObject({ code: "SSRF_BLOCKED", reason: "private_network" });
+    lookup.mockResolvedValue([{ address: metadataAddress, family: 6 }]);
+    await expect(validateOutboundUrl("http://api.example.com", { allowPrivateHost: true }))
+      .rejects.toMatchObject({ code: "SSRF_BLOCKED", reason: "metadata_endpoint" });
+  });
+
   it("allows private literal IP targets when global policy allows them", async () => {
     process.env.CB_ALLOW_PRIVATE_NETWORK_CALLS = "true";
     const result = await validateOutboundUrl("http://10.0.0.12");
@@ -111,6 +135,14 @@ describe("outboundTargetPolicy", () => {
       code: "SSRF_BLOCKED",
       reason: "private_network",
     });
+  });
+
+  it("blocks scoped link-local DNS answers with a policy error", async () => {
+    vi.spyOn(dnsPromises, "lookup").mockResolvedValue([
+      { address: "fe80::1%eth0", family: 6 },
+    ]);
+    await expect(validateOutboundUrl("http://api.example.com", { allowPrivateHost: false }))
+      .rejects.toMatchObject({ code: "SSRF_BLOCKED", reason: "private_network" });
   });
 
   it("can limit an outbound feature to standard web ports", async () => {

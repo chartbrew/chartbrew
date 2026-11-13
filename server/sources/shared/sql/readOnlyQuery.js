@@ -25,8 +25,7 @@ const DANGEROUS_SQL_PATTERNS = [
   /\brevoke\b/i,
   /\bexec(ute)?\b/i,
   /\bcall\b/i,
-  /\bfile\s*\(/i,
-  /\burl\s*\(/i,
+  /\b(?:file|url|s3|remote|remoteSecure|mysql|postgresql)(?:Cluster)?["`]?\s*\(/i,
 ];
 
 function normalizeSqlQuery(query) {

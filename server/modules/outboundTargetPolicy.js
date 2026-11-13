@@ -152,8 +152,10 @@ function getNat64EmbeddedIpv4(address) {
 
 function expandIpv6(address) {
   // Returns an array of 8 numeric hextets, or null if not a valid IPv6 literal.
-  const stripped = address.replace(/^\[|\]$/g, "");
+  let stripped = address.replace(/^\[|\]$/g, "");
   if (net.isIP(stripped) !== 6) return null;
+  stripped = stripped.split("%")[0];
+  stripped = new URL(`http://[${stripped}]/`).hostname.slice(1, -1);
   const [head, tail] = stripped.split("::");
   const headParts = head ? head.split(":") : [];
   const tailParts = tail !== undefined && tail !== "" ? tail.split(":") : [];
@@ -181,17 +183,25 @@ function isMetadataAddress(address) {
 
 function getMappedIpv4(address) {
   const normalizedAddress = normalizeIpAddress(address).replace(/^\[|\]$/g, "");
-  if (normalizedAddress.startsWith("::ffff:")) {
-    const mappedIpv4 = normalizedAddress.replace("::ffff:", "");
-    if (net.isIP(mappedIpv4) === 4) return mappedIpv4;
+  const groups = expandIpv6(normalizedAddress);
+  if (!groups) return null;
 
-    const groups = expandIpv6(normalizedAddress);
-    if (!groups || groups[5] !== 0xffff) return null;
-
-    const lo = (groups[6] << 16) | groups[7];
-    return [(lo >>> 24) & 0xff, (lo >>> 16) & 0xff, (lo >>> 8) & 0xff, lo & 0xff].join(".");
+  const mappedOrCompatible = groups.slice(0, 5).every((group) => group === 0)
+    && (groups[5] === 0 || groups[5] === 0xffff);
+  const translated = groups.slice(0, 4).every((group) => group === 0)
+    && groups[4] === 0xffff && groups[5] === 0;
+  let ipv4;
+  if (mappedOrCompatible || translated) {
+    ipv4 = (groups[6] << 16) | groups[7];
+  } else if (groups[0] === 0x2002) {
+    ipv4 = (groups[1] << 16) | groups[2];
+  } else if (groups[0] === 0x2001 && groups[1] === 0) {
+    // Teredo stores the client IPv4 address with all bits inverted.
+    ipv4 = ~((groups[6] << 16) | groups[7]);
+  } else {
+    return getNat64EmbeddedIpv4(normalizedAddress);
   }
-  return getNat64EmbeddedIpv4(normalizedAddress);
+  return [(ipv4 >>> 24) & 0xff, (ipv4 >>> 16) & 0xff, (ipv4 >>> 8) & 0xff, ipv4 & 0xff].join(".");
 }
 
 function isPrivateOrReservedAddress(address) {
