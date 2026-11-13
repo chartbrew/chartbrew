@@ -1,6 +1,6 @@
 {
   "name": "chartbrew",
-  "version": "v6.0.0",
+  "version": "v6.0.1",
   "packageManager": "npm@11.11.0",
   "description": "",
   "main": "index.js",
