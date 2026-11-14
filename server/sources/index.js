@@ -10,6 +10,7 @@ const mcp = require("./plugins/mcp/mcp.plugin");
 const mongodb = require("./plugins/mongodb/mongodb.plugin");
 const mysql = require("./plugins/mysql/mysql.plugin");
 const postgres = require("./plugins/postgres/postgres.plugin");
+const privatusAnalytics = require("./plugins/privatusAnalytics/privatusAnalytics.plugin");
 const rdspostgres = require("./plugins/rdspostgres/rdspostgres.plugin");
 const rdsmysql = require("./plugins/rdsmysql/rdsmysql.plugin");
 const realtimedb = require("./plugins/realtimedb/realtimedb.plugin");
@@ -30,6 +31,7 @@ const sources = [
   mongodb,
   mysql,
   postgres,
+  privatusAnalytics,
   rdspostgres,
   rdsmysql,
   realtimedb,
