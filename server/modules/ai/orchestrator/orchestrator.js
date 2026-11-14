@@ -871,7 +871,7 @@ async function availableTools({ activeChartId } = {}) {
     {
       name: "validate_query",
       displayName: "Check query",
-      description: "Dry-run validation: syntax check or limit-1 execution.",
+      description: "Check SQL against the source safety rules without executing it. This does not verify database syntax or table access.",
       parameters: {
         type: "object",
         properties: {

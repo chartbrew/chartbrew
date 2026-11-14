@@ -1,6 +1,8 @@
+const { normalizeAiQuery } = require("./normalizeAiQuery");
+const { requireSupportedSourceForConnection } = require("../sourceSupport");
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
-const { normalizeTeamId, requireDatasetForTeam } = require("./teamScope");
+const { normalizeTeamId, requireDatasetForTeam, requireConnectionForTeam } = require("./teamScope");
 
 async function getDatasetCharts(dataset) {
   const chartDatasetConfigs = await db.ChartDatasetConfig.findAll({
@@ -79,14 +81,6 @@ async function updateDataset(payload) {
     // Find the existing dataset
     const dataset = await requireDatasetForTeam(dataset_id, normalizedTeamId);
 
-    // Update dataset fields (only if provided)
-    const datasetUpdates = {};
-    if (name !== undefined) datasetUpdates.name = name;
-
-    if (Object.keys(datasetUpdates).length > 0) {
-      await db.Dataset.update(datasetUpdates, { where: { id: dataset_id } });
-    }
-
     // Find and update the main data request
     const dataRequest = await db.DataRequest.findByPk(dataset.main_dr_id);
     if (!dataRequest) {
@@ -95,10 +89,22 @@ async function updateDataset(payload) {
 
     // Update data request fields (only if provided)
     const drUpdates = {};
-    if (query !== undefined) drUpdates.query = query;
+    if (query !== undefined) {
+      const connection = await requireConnectionForTeam(dataRequest.connection_id, normalizedTeamId);
+      const source = requireSupportedSourceForConnection(connection);
+      drUpdates.query = normalizeAiQuery(source, query);
+    }
     if (configuration !== undefined) drUpdates.configuration = configuration;
     if (variables !== undefined) drUpdates.variables = variables;
     if (transform !== undefined) drUpdates.transform = transform;
+
+    // Update dataset fields (only if provided)
+    const datasetUpdates = {};
+    if (name !== undefined) datasetUpdates.name = name;
+
+    if (Object.keys(datasetUpdates).length > 0) {
+      await db.Dataset.update(datasetUpdates, { where: { id: dataset_id } });
+    }
 
     if (Object.keys(drUpdates).length > 0) {
       await db.DataRequest.update(drUpdates, { where: { id: dataRequest.id } });

@@ -1,3 +1,4 @@
+const { normalizeClickhouseQuery } = require("./clickhouse.query");
 const createClickHouseClient = require("./clickhouse.client");
 
 class ClickHouseConnector {
@@ -22,11 +23,13 @@ class ClickHouseConnector {
 
   async query(queryString, params = {}) {
     try {
+      const query = normalizeClickhouseQuery(queryString);
       await this.connect();
 
       // Execute the query
       const result = await this.client.query({
-        query: queryString,
+        query,
+        clickhouse_settings: { readonly: 1 },
         format: "JSONEachRow",
         query_params: params
       });

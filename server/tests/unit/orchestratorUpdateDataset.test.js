@@ -9,6 +9,7 @@ const updateDataset = require("../../modules/ai/orchestrator/tools/updateDataset
 describe("AI orchestrator updateDataset tool", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({ id: 1, team_id: 7, type: "postgres" });
     global.clientUrl = "https://app.chartbrew.test";
   });
 
@@ -43,6 +44,7 @@ describe("AI orchestrator updateDataset tool", () => {
     vi.spyOn(db.DataRequest, "findByPk").mockResolvedValue({
       id: 1001,
       dataset_id: 99,
+      connection_id: 1,
     });
     vi.spyOn(db.DataRequest, "update").mockResolvedValue([1]);
     vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([{
@@ -89,6 +91,7 @@ describe("AI orchestrator updateDataset tool", () => {
     vi.spyOn(db.DataRequest, "findByPk").mockResolvedValue({
       id: 1001,
       dataset_id: 99,
+      connection_id: 1,
     });
     vi.spyOn(db.DataRequest, "update").mockResolvedValue([0]);
     vi.spyOn(db.ChartDatasetConfig, "findAll").mockResolvedValue([]);

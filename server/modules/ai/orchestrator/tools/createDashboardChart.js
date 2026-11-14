@@ -1,3 +1,4 @@
+const { normalizeAiQuery } = require("./normalizeAiQuery");
 const db = require("../../../../models/models");
 const { lockDashboard } = require("../../../dashboardLayout");
 const { appendCharts, breakpoints } = require("../../../../../shared/dashboard/layout.mjs");
@@ -82,7 +83,7 @@ async function prepareDashboardChart(payload, options = {}) {
       connection,
       spec,
     });
-    query = repairedPayload.query ?? query;
+    query = normalizeAiQuery(source, repairedPayload.query ?? query);
     configuration = repairedPayload.configuration;
     method = repairedPayload.method ?? method;
     route = repairedPayload.route ?? route;

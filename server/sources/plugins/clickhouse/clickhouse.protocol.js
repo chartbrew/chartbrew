@@ -1,3 +1,4 @@
+const { normalizeClickhouseQuery } = require("./clickhouse.query");
 const db = require("../../../models/models");
 const sourceExecution = require("../../../modules/sourceExecution");
 const drCacheController = require("../../../controllers/DataRequestCacheController");
@@ -50,15 +51,12 @@ async function withConnector(connection, callback) {
 }
 
 function getQueryToExecute({ processedQuery, dataRequest }) {
-  const query = processedQuery || dataRequest?.query;
-
-  if (typeof query !== "string" || query.trim().length === 0) {
-    const error = new Error("ClickHouse query is required");
+  try {
+    return normalizeClickhouseQuery(processedQuery || dataRequest?.query);
+  } catch (error) {
     error.auditStage = "query";
     throw error;
   }
-
-  return query;
 }
 
 function getSchema({ connection }) {
@@ -93,21 +91,22 @@ async function runDataRequest({
   processedQuery = null,
   auditContext = null,
 }) {
-  if (getCache) {
-    const drCache = await checkAndGetCache(connection.id, dataRequest);
-    if (drCache) {
-      await completeConnectorAudit(auditContext, {
-        cacheHit: true,
-        connectionType: "clickhouse",
-        ...serializeResponsePreview(drCache.responseData),
-      });
-      return drCache;
-    }
-  }
-
   try {
-    const savedConnection = await getSavedConnection(connection);
     const queryToExecute = getQueryToExecute({ processedQuery, dataRequest });
+
+    if (getCache) {
+      const drCache = await checkAndGetCache(connection.id, dataRequest);
+      if (drCache) {
+        await completeConnectorAudit(auditContext, {
+          cacheHit: true,
+          connectionType: "clickhouse",
+          ...serializeResponsePreview(drCache.responseData),
+        });
+        return drCache;
+      }
+    }
+
+    const savedConnection = await getSavedConnection(connection);
     const result = await withConnector(savedConnection, (clickhouse) => {
       return sourceExecution.runSourceExecution({
         connection: savedConnection, dataRequest, auditContext, cacheHit: false,
@@ -157,6 +156,7 @@ function generateQuery({
 }
 
 module.exports = {
+  normalizeQuery: normalizeClickhouseQuery,
   applyVariables({ dataRequest, variables }) {
     return applySqlVariables(dataRequest, variables, { escapeBackslash: true });
   },

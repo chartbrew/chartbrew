@@ -1,3 +1,4 @@
+const { normalizeAiQuery } = require("./normalizeAiQuery");
 const DatasetController = require("../../../../controllers/DatasetController");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
 const { repairSourceDatasetIntentAsync } = require("./sourceIntentRepair");
@@ -46,7 +47,7 @@ async function createDataset(payload) {
       connection,
       spec: payload.spec,
     });
-    query = repairedPayload.query ?? query;
+    query = normalizeAiQuery(source, repairedPayload.query ?? query);
     configuration = repairedPayload.configuration;
     method = repairedPayload.method ?? method;
     route = repairedPayload.route ?? route;

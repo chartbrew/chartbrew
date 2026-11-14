@@ -11,7 +11,7 @@ const DEFAULT_ROW_LIMIT = 1000;
 const MAX_ROW_LIMIT = 10000;
 const SQL_LIMIT_SOURCES = ["postgres", "mysql", "clickhouse"];
 
-const { normalizeSqlQuery } = require("../../../../sources/shared/sql/readOnlyQuery");
+const { normalizeAiQuery } = require("./normalizeAiQuery");
 
 function getSafeRowLimit(rowLimit) {
   const parsedRowLimit = Number(rowLimit);
@@ -57,11 +57,11 @@ async function runQuery(payload, options = {}) {
     let limitedQuery = query || null;
     if (limitedQuery) {
       if (SQL_LIMIT_SOURCES.includes(source.type)) {
-        limitedQuery = normalizeSqlQuery(limitedQuery);
+        limitedQuery = normalizeAiQuery(source, limitedQuery);
       }
 
       if (!hasLimitClause(limitedQuery) && SQL_LIMIT_SOURCES.includes(source.type)) {
-        limitedQuery = `${limitedQuery} LIMIT ${safeRowLimit}`;
+        limitedQuery = `${limitedQuery}\nLIMIT ${safeRowLimit}`;
       }
     }
 

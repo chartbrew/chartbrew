@@ -55,10 +55,10 @@ describe("run_query AI tool", () => {
     });
 
     expect(runDataRequestSpy).toHaveBeenCalledWith(expect.objectContaining({
-      processedQuery: "SELECT 1 LIMIT 1000",
+      processedQuery: "SELECT 1\nLIMIT 1000",
     }));
     expect(db.DataRequest.create).toHaveBeenCalledWith(expect.objectContaining({
-      query: "SELECT 1 LIMIT 1000",
+      query: "SELECT 1\nLIMIT 1000",
     }));
     expect(result.rows).toEqual([{ value: 1 }]);
   });
@@ -79,7 +79,7 @@ describe("run_query AI tool", () => {
     });
 
     expect(runDataRequestSpy).toHaveBeenCalledWith(expect.objectContaining({
-      processedQuery: "SELECT * FROM events LIMIT 10000",
+      processedQuery: "SELECT * FROM events\nLIMIT 10000",
     }));
   });
 

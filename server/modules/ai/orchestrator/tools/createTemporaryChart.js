@@ -1,3 +1,4 @@
+const { normalizeAiQuery } = require("./normalizeAiQuery");
 const db = require("../../../../models/models");
 const DatasetController = require("../../../../controllers/DatasetController");
 const ChartController = require("../../../../controllers/ChartController");
@@ -137,7 +138,7 @@ async function createTemporaryChart(payload) {
       connection,
       spec,
     });
-    query = repairedPayload.query ?? query;
+    query = normalizeAiQuery(source, repairedPayload.query ?? query);
     configuration = repairedPayload.configuration;
     method = repairedPayload.method ?? method;
     route = repairedPayload.route ?? route;
