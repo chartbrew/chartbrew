@@ -2638,7 +2638,11 @@ async function executeOrchestration(
   const slackInstructions = getIntegrationContext()
     ? "For an explicit chart preview request, call request_chart_preview with the existing chart ID, or use a chart creation tool when authorized and necessary. Reading chart results alone does not send a preview. Never substitute ASCII art, Unicode sparklines, text bars, or a code-block drawing for a chart. Slack delivery uses a native chart when supported, otherwise a chart image, with an Open in Chartbrew link as fallback. Do not claim that a chart was sent unless a preview tool succeeded."
     : "";
-  const systemPrompt = `${slackInstructions}\n\n${completionInstructions}\n\n${chartReadInstructions}\n\n${scopedSystemPrompt}\n\n${MEMORY_INSTRUCTIONS}\n\n${chartStudioInstructions}`;
+  const accountLinkInstructions = getIntegrationContext()?.accountLinkInstructions;
+  const linkGuidance = accountLinkInstructions
+    ? `If a request needs a linked account, give these Slack instructions: ${accountLinkInstructions}`
+    : "";
+  const systemPrompt = `${linkGuidance}\n\n${slackInstructions}\n\n${completionInstructions}\n\n${chartReadInstructions}\n\n${scopedSystemPrompt}\n\n${MEMORY_INSTRUCTIONS}\n\n${chartStudioInstructions}`;
   const modelName = openAiModel || "gpt-5.4-nano";
   const persistedMessages = [...sanitizedHistory];
   const modelMessages = sanitizedHistory.filter((message) => message.role !== "system");

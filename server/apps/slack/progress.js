@@ -55,7 +55,10 @@ function createSlackProgress(client, channel, ts) {
 
   return async (toolName, status, _details, displayName) => {
     if (!ts || status !== "start" || !displayName || updating) return;
-    const text = `${TOOL_EMOJIS[toolName] || "⚙️"} ${displayName}…`;
+    const label = displayName === toolName
+      ? toolName.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase())
+      : displayName;
+    const text = `${TOOL_EMOJIS[toolName] || "⚙️"} ${label}…`;
     if (text === lastText || Date.now() - lastUpdate < 2000) return;
     lastUpdate = Date.now();
     updating = true;

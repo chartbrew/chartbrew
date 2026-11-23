@@ -3,12 +3,33 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const db = require("../../models/models");
 const accounts = require("../../apps/slack/accounts");
 const slackClient = require("../../apps/slack/utils/slackClient");
+const SlackController = require("../../apps/slack/controllers/SlackController");
+const { WebClient } = require("@slack/web-api");
 
 beforeEach(() => vi.spyOn(slackClient, "sendDM").mockResolvedValue({ ok: true }));
 
 afterEach(() => vi.restoreAllMocks());
 
 describe("Slack personal account links", () => {
+  it.each([["7", 0], ["8", 1]])("only clears links when connecting to a different team (%s)", async (teamId, removals) => {
+    const integration = { id: "i", team_id: 7, config: {}, update: vi.fn() };
+    vi.spyOn(db.SlackAuthState, "findOne").mockResolvedValue({
+      expires_at: new Date(Date.now() + 60000), destroy: vi.fn(),
+    });
+    vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({ role: "teamOwner" });
+    vi.spyOn(db.Integration, "findOne").mockResolvedValue(integration);
+    vi.spyOn(db.Team, "findByPk").mockResolvedValue({ name: "Test team" });
+    vi.spyOn(db.SlackAccount, "findAll").mockResolvedValue([{ id: "a", integration_id: "i" }]);
+    const remove = vi.spyOn(db.SlackAccount, "destroy").mockResolvedValue(1);
+    vi.spyOn(db.SlackLinkToken, "destroy").mockResolvedValue(0);
+    vi.spyOn(WebClient.prototype, "apiCall").mockResolvedValue({ ok: true });
+
+    await new SlackController().handleAuthComplete("state", teamId, 1);
+
+    expect(remove).toHaveBeenCalledTimes(removals);
+    expect(integration.update).toHaveBeenCalledWith(expect.objectContaining({ team_id: teamId }));
+  });
+
   it("rejects malformed and expired link tokens", async () => {
     expect(() => accounts.hashToken("not-a-token")).toThrow("expired");
     vi.spyOn(db.SlackLinkToken, "findOne").mockResolvedValue(null);
@@ -57,6 +78,6 @@ describe("Slack personal account links", () => {
   it("requires a personal link even when the workspace has an API key", async () => {
     vi.spyOn(db.Integration, "findOne").mockResolvedValue({ id: "i", team_id: 7, apikey_id: "legacy", config: { bot_token: "test" } });
     vi.spyOn(db.SlackAccount, "findOne").mockResolvedValue(null);
-    await expect(accounts.resolveAccount("T1", "U1")).rejects.toThrow("/chartbrew link");
+    await expect(accounts.resolveAccount("T1", "U1")).rejects.toThrow("Open a direct message with the Chartbrew app in Slack. Send `/chartbrew link`");
   });
 });

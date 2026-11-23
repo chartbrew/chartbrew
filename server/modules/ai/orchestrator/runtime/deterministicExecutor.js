@@ -1,3 +1,4 @@
+const { getIntegrationContext } = require("../../../observations/integrationContext");
 const DigestController = require("../../../../controllers/DigestController");
 const MetricRecommendationController = require("../../../../controllers/MetricRecommendationController");
 const MonitorController = require("../../../../controllers/MonitorController");
@@ -153,10 +154,11 @@ async function runDeterministicWorkspaceRequest({
   }
   const boundaryMessage = getRoleBoundaryMessage(access.role, question);
   if (boundaryMessage) {
+    const linkInstructions = getIntegrationContext()?.accountLinkInstructions;
     return buildResult({
       context: {},
       history,
-      message: boundaryMessage,
+      message: linkInstructions ? `${boundaryMessage}\n\n${linkInstructions}` : boundaryMessage,
       purpose: "role_boundary",
       question,
     });

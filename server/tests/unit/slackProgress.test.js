@@ -13,6 +13,13 @@ describe("Slack progress updates", () => {
     });
   });
 
+  it("shows readable words when a tool supplies its key as the label", async () => {
+    const update = vi.fn();
+    const progress = createSlackProgress({ chat: { update } }, "C1", "progress");
+    await progress("create_temporary_chart", "start", null, "create_temporary_chart");
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ text: "📊 Create temporary chart…" }));
+  });
+
   it("limits edits and skips repeated labels", async () => {
     const clock = vi.spyOn(Date, "now").mockReturnValue(0);
     const update = vi.fn();

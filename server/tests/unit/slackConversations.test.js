@@ -4,6 +4,8 @@ const { WebClient } = require("@slack/web-api");
 const db = require("../../models/models");
 const ChartController = require("../../controllers/ChartController");
 const ChartImageController = require("../../controllers/ChartImageController");
+const { withIntegrationContext } = require("../../modules/observations/integrationContext");
+const { runDeterministicWorkspaceRequest } = require("../../modules/ai/orchestrator/runtime/deterministicExecutor");
 const accounts = require("../../apps/slack/accounts");
 const ai = require("../../controllers/AiController");
 const { channelAllowed, processRequest, resolveRequest } = require("../../apps/slack/conversations");
@@ -23,6 +25,17 @@ function identity() {
 afterEach(() => vi.restoreAllMocks());
 
 describe("Slack conversation boundaries and recovery", () => {
+  it("gives an unlinked channel user the DM command when chart creation needs an account", async () => {
+    const result = await withIntegrationContext({ accountLinkInstructions: accounts.LINK_INSTRUCTIONS }, () => (
+      runDeterministicWorkspaceRequest({
+        access: { role: "projectViewer" },
+        question: "Generate a line chart",
+        roleBoundaryOnly: true,
+      })
+    ));
+    expect(result.message).toContain("direct message with the Chartbrew app in Slack. Send `/chartbrew link`");
+  });
+
   it("uses the shared persistent request path with the linked person", async () => {
     const request = record({ id: "request", account_id: "account", status: "queued", messages: [],
       input: { workspaceId: "T1", slackUserId: "U1", channelId: "D1", threadTs: "123", question: "Show my metrics" } });
@@ -33,7 +46,7 @@ describe("Slack conversation boundaries and recovery", () => {
     const respond = vi.spyOn(ai, "respond").mockImplementation(async () => {
       const { getIntegrationContext } = require("../../modules/observations/integrationContext");
       await getIntegrationContext().toolProgressCallback("read_chart_results", "start", {}, "Read saved chart results");
-      return { message: "Your metrics", chartPreviews: [] };
+      return { message: "Your metrics", chartPreviews: [], usage: { totalTokens: 49691 } };
     });
     const api = vi.spyOn(WebClient.prototype, "apiCall").mockResolvedValue({ ts: "124" });
     await processRequest("request");
@@ -42,6 +55,8 @@ describe("Slack conversation boundaries and recovery", () => {
     }));
     expect(api.mock.calls.filter(([method]) => method === "chat.update").map(([, payload]) => payload.text))
       .toEqual(["📊 Read saved chart results…", "Your metrics"]);
+    const reply = api.mock.calls.filter(([method]) => method === "chat.update").at(-1)[1];
+    expect(reply.blocks).toEqual([{ type: "markdown", text: "Your metrics" }]);
     expect(request.status).toBe("complete");
   });
 

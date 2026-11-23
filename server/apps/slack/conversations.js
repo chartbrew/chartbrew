@@ -23,7 +23,7 @@ function channelAllowed(integration, channel) {
 
 async function assertSourceChannel(identity, channel) {
   if (channel.startsWith("D")) {
-    if (!identity.account.id) throw createHttpError("Ask in an allowed Slack channel, or link your Chartbrew account to use direct messages.", 403);
+    if (!identity.account.id) throw createHttpError(accounts.LINK_INSTRUCTIONS, 403);
     return;
   }
   if (!channelAllowed(identity.integration, channel)) throw createHttpError("Chartbrew is not allowed in this channel.", 403);
@@ -289,6 +289,7 @@ async function runRequest(requestId) {
   if (!request || request.status === "complete") return;
   const identity = await resolveRequest(request);
   return withIntegrationContext({
+    accountLinkInstructions: identity.account.id ? undefined : accounts.LINK_INSTRUCTIONS,
     integrationId: identity.integration.id, teamId: identity.access.teamId, userId: identity.account.user_id,
     resolveAccess: async () => (await resolveRequest(request)).access,
   }, () => withAiUsageContext({

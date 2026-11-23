@@ -7,6 +7,8 @@ const { getWorkspaceAccessEnvelope } = require("../../modules/workspaceContext/a
 const { getWorkspaceOrchestratorPolicy } = require("../../modules/workspaceContext/policy");
 const slackClient = require("./utils/slackClient");
 
+const LINK_INSTRUCTIONS = "Open a direct message with the Chartbrew app in Slack. Send `/chartbrew link`, then select Link account and confirm in Chartbrew.";
+
 function hashToken(token) {
   if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) {
     throw createHttpError("This link has expired. Run /chartbrew link again.", 400);
@@ -28,7 +30,7 @@ async function resolveAccount(workspaceId, slackUserId) {
     where: { integration_id: integration.id, slack_user_id: slackUserId, team_id: integration.team_id },
   });
   const mode = integration.config.accessMode || "admins-only";
-  if (!account && mode !== "everyone") throw createHttpError("Run /chartbrew link to link your Chartbrew account.", 403);
+  if (!account && mode !== "everyone") throw createHttpError(LINK_INSTRUCTIONS, 403);
   const access = account ? await getMemberAccess(integration.team_id, account.user_id) : {
     teamId: Number(integration.team_id), userId: null, role: "projectViewer", projectIds: [], allProjects: false,
     canConfigureTeam: false, teamAiEnabled: (await db.Team.findByPk(integration.team_id))?.aiEnabled !== false,
@@ -133,6 +135,6 @@ async function invalidateIntegration(integrationId) {
 }
 
 module.exports = {
-  completeLink, getIntegration, hashToken, inspectLink, invalidateIntegration,
+  LINK_INSTRUCTIONS, completeLink, getIntegration, hashToken, inspectLink, invalidateIntegration,
   resolveAccount, startLink, unlink,
 };

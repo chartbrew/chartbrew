@@ -3,7 +3,7 @@ const { nanoid } = require("nanoid");
 
 const db = require("../../../models/models");
 const TeamController = require("../../../controllers/TeamController");
-const { invalidateIntegration } = require("../accounts");
+const { invalidateIntegration, LINK_INSTRUCTIONS } = require("../accounts");
 
 const {
   exchangeCodeForToken,
@@ -201,7 +201,7 @@ class SlackController {
       } });
       await sendDM(botToken, slackUserId, account
         ? "This workspace is connected. Your personal account is linked. Mention @chartbrew in an allowed channel or ask a question here."
-        : "This workspace is connected. Run /chartbrew link to link your personal account.");
+        : `This workspace is connected. ${LINK_INSTRUCTIONS}`);
     } catch (error) {
       // oxlint-disable-next-line no-console
       console.error("handleStatus error:", error);
@@ -239,7 +239,8 @@ class SlackController {
           text: {
             type: "mrkdwn",
             text: "*Ask Questions:*\n"
-              + "Tag @chartbrew in any channel to ask questions about your data. Answers arrive in the same thread. Run `/chartbrew link` first.\n\n"
+              + "Tag @chartbrew in any channel to ask questions about your data. Answers arrive in the same thread.\n\n"
+              + `${LINK_INSTRUCTIONS}\n\n`
               + "*Example:* `@chartbrew how many users do I have?`\n\n"
               + "*Setup Commands:*\n"
               + "• `/chartbrew link` - Link your Chartbrew account\n"
@@ -542,7 +543,9 @@ class SlackController {
       throw new Error("Slack integration not found");
     }
 
-    await invalidateIntegration(integration.id);
+    if (Number(integration.team_id) !== Number(teamId)) {
+      await invalidateIntegration(integration.id);
+    }
 
     // Update integration config
     const updatedConfig = {
@@ -564,11 +567,12 @@ class SlackController {
 
     // Send success DM
     const integrationUrl = `${clientUrl}/integrations/${integration.id}`;
+    const personalSetup = `Need to link your personal account? ${LINK_INSTRUCTIONS}`;
     await sendDM(
       integration.config.bot_token,
       authState.external_user_id,
       {
-        text: `Successfully connected to Chartbrew team: ${team.name}`,
+        text: `Connected to ${team.name}. ${personalSetup}`,
         blocks: [
           {
             type: "section",
@@ -581,7 +585,7 @@ class SlackController {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: "Next steps:\n\n"
+              text: `${personalSetup}\n\n`
                 + `1. Edit app channel access from the <${integrationUrl}|integrations settings>\n`
                 + "2. Tag @chartbrew in your channels to ask questions about your data",
             },

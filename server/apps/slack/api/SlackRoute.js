@@ -246,7 +246,7 @@ module.exports = (app) => {
         if (!event.channel?.startsWith("C") && !event.channel?.startsWith("G")) return;
         const integration = await accounts.getIntegration(workspaceId).catch(() => null);
         if (integration) await new WebClient(integration.config.bot_token).chat.postEphemeral({
-          channel: event.channel, user: event.user, text: "Open the Chartbrew app's private chat in Slack to continue.",
+          channel: event.channel, user: event.user, text: error.message === accounts.LINK_INSTRUCTIONS ? accounts.LINK_INSTRUCTIONS : "Open the Chartbrew app's private chat in Slack to continue.",
         }).catch(() => {});
       });
     }
