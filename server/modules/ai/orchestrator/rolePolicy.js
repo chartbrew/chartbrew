@@ -1,4 +1,4 @@
-const { viewerRoles } = require("../../../../shared/roles.json");
+const { adminRoles, viewerRoles } = require("../../../../shared/roles.json");
 const { isCapabilityQuestion } = require("./capabilityHandler");
 const { routeWorkspaceRequest } = require("./runtime/deterministicRouter");
 
@@ -12,6 +12,8 @@ const VIEWER_REPORTING_AI_TOOLS = Object.freeze([
   "get_workspace_activity",
   "get_workspace_context",
   "read_chart_results",
+  "request_dashboard_snapshot",
+  "request_chart_preview",
   "list_dashboard_filters",
   "list_kpi_reviews",
   "list_metric_monitors",
@@ -74,7 +76,9 @@ function getAiRoleScope(access, envelope) {
   if (Array.isArray(envelope.editableProjectIds) && envelope.editableProjectIds.length > 0) {
     return {
       accessMode: AI_ACCESS_MODES.PROJECT_EDITOR,
-      allowedToolNames: [...PROJECT_EDITOR_AI_TOOLS],
+      allowedToolNames: access.integrationId && access.userId && adminRoles.includes(access.role)
+        ? [...PROJECT_EDITOR_AI_TOOLS, "create_chart", "create_temporary_chart"]
+        : [...PROJECT_EDITOR_AI_TOOLS],
     };
   }
   return {

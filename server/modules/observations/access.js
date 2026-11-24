@@ -2,6 +2,7 @@ const { teamRoles, editorRoles } = require("../../../shared/roles.json");
 const { Op } = require("sequelize");
 
 const db = require("../../models/models");
+const { getIntegrationContext } = require("./integrationContext");
 
 const TEAM_ADMIN_ROLES = new Set(["teamAdmin", "teamOwner"]);
 const PROJECT_EDITOR_ROLES = new Set(["projectAdmin", "projectEditor"]);
@@ -19,6 +20,15 @@ function normalizeProjectIds(projects) {
 }
 
 async function getObservationAccess(teamId, userId) {
+  const integration = getIntegrationContext();
+  if (integration) {
+    if (Number(teamId) !== integration.teamId || userId !== integration.userId) throw createHttpError("Access denied", 403);
+    return integration.resolveAccess();
+  }
+  return getMemberAccess(teamId, userId);
+}
+
+async function getMemberAccess(teamId, userId) {
   const teamRole = await db.TeamRole.findOne({
     include: [{
       model: db.Team,
@@ -60,9 +70,8 @@ function isDatasetVisible(dataset, access, projectId) {
 }
 
 function canEditProject(access, projectId) {
-  if (access.allProjects) return editorRoles.includes(access.role);
-  return PROJECT_EDITOR_ROLES.has(access.role)
-    && access.projectIds.includes(Number(projectId));
+  return editorRoles.includes(access.role)
+    && (access.allProjects || access.projectIds.includes(Number(projectId)));
 }
 
 function assertCanEditProject(access, projectId) {
@@ -85,6 +94,7 @@ module.exports = {
   canEditProject,
   createHttpError,
   getObservationAccess,
+  getMemberAccess,
   getProjectScope,
   isDatasetVisible,
   normalizeProjectIds,

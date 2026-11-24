@@ -499,6 +499,19 @@ function boundFacts(facts, maximumCharacters) {
 
 function normalizeToolResult(toolName, result = {}, store, options = {}) {
   let facts = [];
+  if (toolName === "request_chart_preview") {
+    facts = [store.addFact({ factType: "chart_result", label: result.name || "Chart preview",
+      projectId: result.project_id, state: result.error ? "unavailable" : "ready_for_delivery",
+      detail: result.error || result.guidance,
+    })];
+  }
+  if (toolName === "request_dashboard_snapshot") {
+    facts = [store.addFact({ factType: "dashboard", label: result.name || "Dashboard screenshot",
+      project: result.projectId ? { id: result.projectId, name: result.name } : null,
+      state: result.error ? "unavailable" : "ready_for_delivery",
+      detail: result.error || "Screenshot prepared for delivery in Slack. Saved view; no refresh.",
+    })];
+  }
   if (toolName === "read_chart_results") {
     facts = (result.items || []).map((item) => store.addFact({
       attributes: {

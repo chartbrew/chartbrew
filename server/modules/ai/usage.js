@@ -79,6 +79,9 @@ async function callAiProvider({ client, request, options, purpose, contextManife
   const record = {
     id: randomUUID(),
     request_id: context.requestId,
+    source: context.source || "app",
+    integration_id: context.integrationId || null,
+    integration_request_id: context.integrationRequestId || null,
     team_id: context.teamId,
     conversation_id: context.conversationId || null,
     provider: "openai",

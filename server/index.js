@@ -169,7 +169,12 @@ databasePreparation
     await refreshPlatformSettings();
     startPlatformSettingsRefresh();
 
-    const server = app.listen(port, app.settings.api, async () => {
+    const server = app.listen(port, app.settings.api, async (error) => {
+      if (error) {
+        console.error("Could not start the API:", error.message); // eslint-disable-line
+        process.exit(1);
+      }
+
       // Initialize Socket.IO
       await socketManager.initialize(server);
 

@@ -14,9 +14,10 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    integration_id: { type: DataTypes.UUID, allowNull: true },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       reference: {
         model: "User",
         key: "id",

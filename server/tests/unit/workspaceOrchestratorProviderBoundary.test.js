@@ -186,6 +186,29 @@ function parseRequestEnvelope(request) {
 }
 
 describe("workspace orchestrator provider boundary", () => {
+  it("stops before contacting the provider when billing rejects the Slack team", async () => {
+    const usage = require("../../modules/ai/usage");
+    const denied = Object.assign(new Error("Your team has no AI credits remaining."), { statusCode: 402 });
+    const before = vi.spyOn(usage, "beforeAiCall").mockRejectedValue(denied);
+    const create = vi.fn();
+    const fallbackRunner = vi.fn();
+
+    await expect(usage.withAiUsageContext({ teamId: access.teamId, source: "slack" }, () => runSplitWorkspaceRequest({
+      access,
+      accessEnvelopeReader: async () => buildEnvelope(),
+      activityReader: async () => buildActivity(),
+      availableTools: async () => [],
+      client: { responses: { create } },
+      fallbackRunner,
+      policy: getPolicy(),
+      question: "Prepare a workspace KPI review",
+    }))).rejects.toBe(denied);
+
+    expect(before).toHaveBeenCalledWith(expect.objectContaining({ team_id: access.teamId, source: "slack" }));
+    expect(create).not.toHaveBeenCalled();
+    expect(fallbackRunner).not.toHaveBeenCalled();
+  });
+
   it("keeps viewer tools and planner capabilities reporting-only", () => {
     const options = { aiAccessMode: AI_ACCESS_MODES.REPORTING_ONLY };
     const envelope = buildEnvelope({ editableProjectIds: [] });

@@ -238,6 +238,33 @@ describe("orchestrator Responses API adapters", () => {
     expect(prompt).not.toContain("One attempt only");
   });
 
+  it("returns available saved chart references without copying tool data", () => {
+    const previews = getChartPreviewsFromToolResults([{ name: "read_chart_results", content: JSON.stringify({ items: [
+      { chartId: 1, name: "Revenue", type: "line", project: { id: 7, name: "Sales" }, status: "available", tables: [{ values: [99] }] },
+      { chartId: 2, status: "unavailable" },
+    ] }) }]);
+    expect(previews).toHaveLength(1);
+    expect(previews[0]).toMatchObject({ chartId: 1, visibility: "dashboard", projectId: 7, toolName: "read_chart_results" });
+    expect(previews[0]).not.toHaveProperty("tables");
+  });
+
+  it.each([false, true])("keeps explicit chart results when dashboard reads overlap (read first: %s)", (readFirst) => {
+    const read = { name: "read_chart_results", content: JSON.stringify({ items: [
+      { chartId: 44, name: "Revenue", project: { id: 7 }, status: "available" },
+    ] }) };
+    const created = { name: "create_temporary_chart", content: JSON.stringify({ chart_id: 44, project_id: 7 }) };
+    const previews = getChartPreviewsFromToolResults(readFirst ? [read, created] : [created, read]);
+    expect(previews).toHaveLength(1);
+    expect(previews[0].toolName).toBe("create_temporary_chart");
+  });
+
+  it("returns an explicit Slack chart preview with its refresh request", () => {
+    const previews = getChartPreviewsFromToolResults([{ name: "request_chart_preview", content: JSON.stringify({
+      chart_id: 44, project_id: 7, name: "Token usage", refreshRequested: true,
+    }) }]);
+    expect(previews).toEqual([expect.objectContaining({ chartId: 44, toolName: "request_chart_preview", refreshRequested: true })]);
+  });
+
   it("returns bounded chart references for authenticated preview loading", () => {
     const previews = getChartPreviewsFromToolResults([{
       name: "create_temporary_chart",

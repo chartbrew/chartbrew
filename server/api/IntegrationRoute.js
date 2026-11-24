@@ -9,6 +9,7 @@ module.exports = (app) => {
   const checkAccess = (team_id, integration_id, user, teamAccess, integrationAccess) => {
     return teamController.getTeamRole(team_id, user.id)
       .then((teamRole) => {
+        if (teamAccess === "updateOwn" && !["teamOwner", "teamAdmin"].includes(teamRole.role)) throw new Error(401);
         const permission = accessControl.can(teamRole.role)[teamAccess]("team");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));

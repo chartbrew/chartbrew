@@ -85,9 +85,10 @@ function SlackAuth() {
       {_getAdminTeams().length > 0 && (
         <>
           <Select
+            variant="secondary"
             placeholder="Click to select a team"
-            value={`${selectedTeam?.id}` || null}
-            onChange={(value) => setSelectedTeam(teams.find((team) => `${team.id}` === `${value}`))}
+            value={selectedTeam?.id ?? null}
+            onChange={(value) => setSelectedTeam(teams.find((team) => team.id === value))}
             selectionMode="single"
             className="p-0"
             aria-label="Select a team option"

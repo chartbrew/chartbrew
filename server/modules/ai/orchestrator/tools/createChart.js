@@ -1,3 +1,5 @@
+const { getIntegrationContext } = require("../../../observations/integrationContext");
+const { getObservationAccess, isDatasetVisible, TEAM_ADMIN_ROLES } = require("../../../observations/access");
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
 const { getDatasetName } = require("../../../resolveChartDatasetOptions");
@@ -71,6 +73,14 @@ async function createChart(payload, options = {}) {
     // Get the dataset to get its legend for default values
     const normalizedTeamId = normalizeTeamId(team_id);
     const dataset = await requireDatasetForTeam(dataset_id, normalizedTeamId);
+    const project = await requireProjectForTeam(project_id, normalizedTeamId);
+    if (getIntegrationContext()) {
+      const access = await getObservationAccess(normalizedTeamId, payload.user_id);
+      if (!access.userId || !TEAM_ADMIN_ROLES.has(access.role) || !isDatasetVisible(dataset, access)
+        || (!project.ghost && !access.projectIds.includes(Number(project.id)))) {
+        throw new Error("Choose a dataset and dashboard available to your Slack account.");
+      }
+    }
     let dataRequest = null;
     if (Array.isArray(dataset.DataRequests) && dataset.DataRequests.length > 0) {
       dataRequest = dataset.DataRequests[0];
@@ -153,9 +163,6 @@ async function createChart(payload, options = {}) {
       goal: chartSpec.goal,
       visualization: visualization || chartSpec.visualization,
     });
-
-    // Check if project is a ghost project
-    const project = await requireProjectForTeam(project_id, normalizedTeamId);
 
     // Update dataset's project_ids to include this project (if not ghost and not already included)
     if (!project.ghost && !options.prepareOnly) {

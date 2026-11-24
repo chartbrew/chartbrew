@@ -68,6 +68,15 @@ describe("AI usage records", () => {
     expect(create).toHaveBeenCalledExactlyOnceWith(request, { maxRetries: 0 });
   });
 
+  it("keeps Slack source and request attribution through nested calls", async () => {
+    await usage.withAiUsageContext({ teamId: 7, source: "slack", integrationId: "integration", integrationRequestId: "turn" }, async () => {
+      await usage.withAiUsageContext({ teamId: 7, conversationId: "conversation" }, () => call());
+    });
+    expect((await model.findOne()).toJSON()).toMatchObject({
+      source: "slack", integration_id: "integration", integration_request_id: "turn", conversation_id: "conversation", total_tokens: 130,
+    });
+  });
+
   it("adds nested calls once and keeps teams and requests separate during parallel work", async () => {
     const results = await Promise.all([7, 8].map((teamId) => usage.withAiUsageContext({ teamId }, async () => {
       await call();

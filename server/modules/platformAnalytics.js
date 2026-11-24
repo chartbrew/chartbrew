@@ -45,7 +45,7 @@ function renderAnalytics(mark, data, measures) {
   return { configuration: result.configuration };
 }
 
-async function getAiAnalytics(from, now, dates, teamId) {
+async function getAiAnalytics(from, now, dates, teamId, source) {
   const quote = (name) => db.sequelize.getQueryInterface().queryGenerator.quoteIdentifier(name);
   const created = quote("createdAt");
   const day = literal(db.sequelize.getDialect() === "postgres"
@@ -59,6 +59,7 @@ async function getAiAnalytics(from, now, dates, teamId) {
     ],
     where: {
       ...(teamId !== undefined ? { team_id: teamId } : {}),
+      ...(source && source !== "all" ? { source } : {}),
       createdAt: { [Op.gte]: from, [Op.lt]: now },
       [Op.or]: [
         { usage_status: { [Op.in]: ["reported", "unknown", "pending"] } },
@@ -126,7 +127,7 @@ async function getAiAnalytics(from, now, dates, teamId) {
   };
 }
 
-async function getAnalytics(days = "30", now = new Date(), teamId) {
+async function getAnalytics(days = "30", now = new Date(), teamId, source) {
   if (typeof days !== "string" || !["7", "30", "90"].includes(days)) {
     throw Object.assign(new Error("Choose 7, 30, or 90 days."), { statusCode: 400 });
   }
@@ -218,7 +219,7 @@ async function getAnalytics(days = "30", now = new Date(), teamId) {
       outcomes: renderAnalytics("bar", points, outcomes),
       duration: durationChart,
     },
-    ai: await getAiAnalytics(from, now, points.map((item) => item.date), teamId),
+    ai: await getAiAnalytics(from, now, points.map((item) => item.date), teamId, source),
   };
 }
 
@@ -226,12 +227,13 @@ function getPlatformAnalytics(days, now) {
   return getAnalytics(days, now);
 }
 
-async function getTeamAnalytics(teamId, days, now) {
+async function getTeamAnalytics(teamId, days, now, source = "all") {
   if (!Number.isSafeInteger(teamId) || teamId <= 0) {
     throw Object.assign(new Error("Choose a valid team."), { statusCode: 400 });
   }
 
-  const analytics = await getAnalytics(days, now, teamId);
+  if (!["all", "app", "slack", "api"].includes(source)) throw Object.assign(new Error("Choose a valid usage source."), { statusCode: 400 });
+  const analytics = await getAnalytics(days, now, teamId, source);
   delete analytics.ai.models;
   return analytics;
 }

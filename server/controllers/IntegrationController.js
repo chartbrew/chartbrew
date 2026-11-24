@@ -29,13 +29,22 @@ async function update(id, data, teamId) {
   if (data.name !== undefined) updates.name = data.name;
   if (data.config !== undefined) {
     if (integration.type === "slack") {
-      const { allowAllChannels = false, allowedChannels = [] } = data.config;
+      const { allowAllChannels = false, allowedChannels = [], accessMode = "admins-only", dashboardIds = [], allowAllDashboards = false } = data.config;
       if (typeof allowAllChannels !== "boolean"
         || !Array.isArray(allowedChannels)
         || allowedChannels.some((channel) => typeof channel !== "string")) {
         throw new Error("Invalid channel settings");
       }
-      updates.config = { ...integration.config, allowAllChannels, allowedChannels };
+      if (typeof allowAllDashboards !== "boolean"
+        || !["admins-only", "team", "team-and-clients", "everyone"].includes(accessMode)
+        || !Array.isArray(dashboardIds) || dashboardIds.some((id) => !Number.isSafeInteger(id) || id <= 0)) {
+        throw new Error("Choose valid Slack access settings");
+      }
+      const projects = dashboardIds.length ? await db.Project.findAll({ where: { team_id: integration.team_id, ghost: false }, attributes: ["id"] }) : [];
+      if (dashboardIds.some((id) => !projects.some((project) => Number(project.id) === id))) {
+        throw new Error("Choose dashboards from this team");
+      }
+      updates.config = { ...integration.config, allowAllChannels, allowedChannels, accessMode, dashboardIds, allowAllDashboards };
     } else {
       updates.config = { url: data.config.url, slackMode: data.config.slackMode === true };
     }

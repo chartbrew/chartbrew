@@ -1,3 +1,4 @@
+const { getIntegrationContext } = require("../observations/integrationContext");
 const { randomUUID } = require("crypto");
 const db = require("../../models/models");
 const { createHttpError, getObservationAccess } = require("../observations/access");
@@ -79,6 +80,7 @@ async function runMemoryCommand({ question, teamId, userId, history = [] }) {
 }
 
 async function getMemoryContext(teamId, userId) {
+  if (getIntegrationContext()) return null;
   const policy = getWorkspaceOrchestratorPolicy();
   if (!userId || !policy.enabled || !policy.externalLearningContextEnabled) return null;
   const access = await getObservationAccess(teamId, userId);

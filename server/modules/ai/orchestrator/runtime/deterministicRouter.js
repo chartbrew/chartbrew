@@ -1,6 +1,7 @@
 function isDashboardSummary(message, projects = []) {
   const normalized = normalizeMessage(message);
-  if (/\b(create|build|add|delete|remove|edit|refresh)\b/.test(normalized)) return false;
+  if (isVisualizationAction(normalized)
+    || /\b(create|build|generate|make|render|preview|screenshot|snapshot|add|delete|remove|edit|refresh)\b/.test(normalized)) return false;
   const hasDashboard = /\b(dashboards?|charts?)\b/.test(normalized)
     || projects.some((project) => project.name && normalized.includes(project.name.toLowerCase()));
   return hasDashboard && /\b(summar\w*|overview|developments?|happened|happening|changed|changes|showing|performance|update on)\b/.test(normalized);

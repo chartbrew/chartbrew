@@ -1,3 +1,4 @@
+const { getIntegrationContext } = require("../../../observations/integrationContext");
 const { normalizeAiQuery } = require("./normalizeAiQuery");
 const db = require("../../../../models/models");
 const DatasetController = require("../../../../controllers/DatasetController");
@@ -119,6 +120,7 @@ async function createTemporaryChart(payload) {
         name,
       }, normalizedTeamId);
     }
+    if (getIntegrationContext()) throw new Error("Choose an existing dataset from an available dashboard.");
     if (!connection_id) {
       throw new Error("connection_id or dataset_id is required to create a temporary chart");
     }
