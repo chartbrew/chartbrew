@@ -72,6 +72,9 @@ describe("Slack chart dates", () => {
       resolveAccess: async () => access,
     }, () => loadChart(1, { account: { user_id: 4 }, access }));
     expect(JSON.parse(JSON.stringify(preview)).chart.timezone).toBe("Asia/Bangkok");
+    await expect(withIntegrationContext({ teamId: 7, userId: 4, resolveAccess: async () => access }, () => (
+      loadChart(1, { account: { user_id: 4 }, access }, { refresh: true, filters: [] })
+    ))).rejects.toThrow("cannot refresh");
   });
 });
 
@@ -89,6 +92,9 @@ describe("Explicit Slack chart previews", () => {
     }, () => requestChartPreview({ chart_id: 1, refresh: true }));
     expect(result.chart_id).toBe(1);
     expect(result.refreshRequested).toBe(canConfigureTeam);
+    const controls = chartBlocks({ chart, parsed: {}, canQuery: canConfigureTeam }, "request:0").blocks.at(-1).elements;
+    expect(controls.some((control) => control.action_id === "slack_refresh")).toBe(canConfigureTeam);
+    expect(controls.some((control) => control.action_id === "slack_data")).toBe(true);
     expect(result.guidance).toContain(canConfigureTeam ? "one-time update" : "cannot refresh");
   });
 

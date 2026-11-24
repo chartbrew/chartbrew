@@ -39,8 +39,9 @@ async function loadChart(chartId, identity, options = {}) {
   const canQuery = identity.access.canConfigureTeam || canEditProject(identity.access, chart.project_id);
   const role = await db.TeamRole.findOne({ where: { team_id: identity.access.teamId, user_id: identity.account.user_id } });
   const canShare = canExportChartImage(role, chart.project_id);
-  if (options.filters && !canQuery) throw createHttpError("You cannot change this chart's period in Slack.", 403);
-  if (options.refresh && canQuery) {
+  if (options.filters?.length && !canQuery) throw createHttpError("You cannot change this chart's period in Slack.", 403);
+  if (options.refresh && !canQuery) throw createHttpError("You cannot refresh this chart.", 403);
+  if (options.refresh) {
     const refreshed = await new ChartController().updateChartData(chart.id, { id: identity.account.user_id }, {
       filters: options.filters || [], runtimeOnly: true, skipSave: true, returnPreparedData: true,
     });
@@ -72,7 +73,8 @@ function chartBlocks(preview, reference, options = {}) {
   const url = `${process.env.VITE_APP_CLIENT_HOST}/previews/${chart.id}`;
   const elements = [{ type: "button", text: plain("Open in Chartbrew"), url }];
   if (!options.shared) {
-    elements.unshift(button("Refresh", "slack_refresh", reference), button("View data", "slack_data", reference));
+    elements.unshift(button("View data", "slack_data", reference));
+    if (preview.canQuery) elements.unshift(button("Refresh", "slack_refresh", reference));
     if (preview.canQuery && chart.isTimeseries) elements.push(button("Change period", "slack_period", reference));
     if (parsed.visibility === "temporary" && preview.canPlace) elements.push(button("Add to dashboard", "slack_place", reference));
   }

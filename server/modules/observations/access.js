@@ -70,9 +70,8 @@ function isDatasetVisible(dataset, access, projectId) {
 }
 
 function canEditProject(access, projectId) {
-  if (access.allProjects) return editorRoles.includes(access.role);
-  return PROJECT_EDITOR_ROLES.has(access.role)
-    && access.projectIds.includes(Number(projectId));
+  return editorRoles.includes(access.role)
+    && (access.allProjects || access.projectIds.includes(Number(projectId)));
 }
 
 function assertCanEditProject(access, projectId) {

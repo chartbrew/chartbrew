@@ -3,6 +3,9 @@ const audit = require("../../apps/slack/audit");
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const db = require("../../models/models");
 const { resolveAccount } = require("../../apps/slack/accounts");
+const { getAiRoleScope } = require("../../modules/ai/orchestrator/rolePolicy");
+const createChart = require("../../modules/ai/orchestrator/tools/createChart");
+const createTemporaryChart = require("../../modules/ai/orchestrator/tools/createTemporaryChart");
 const { authorize } = require("../../apps/slack/audit");
 const { withIntegrationContext } = require("../../modules/observations/integrationContext");
 const { getObservationAccess } = require("../../modules/observations/access");
@@ -53,7 +56,30 @@ it("grants no dashboards by default", async () => {
 it("limits owners to selected dashboards", async () => {
   integration.config.accessMode = "admins-only";
   db.TeamRole.findOne.mockResolvedValue({ role: "teamOwner", projects: [], Team: {} });
-  expect((await resolveAccount("T1", "U1")).access.projectIds).toEqual([1, 2]);
+  const { access, envelope } = await resolveAccount("T1", "U1");
+  expect(access.projectIds).toEqual([1, 2]);
+  expect(access.canConfigureTeam).toBe(false);
+  const { allowedToolNames } = getAiRoleScope(access, envelope);
+  expect(allowedToolNames).toEqual(expect.arrayContaining(["create_chart", "create_temporary_chart"]));
+  expect(allowedToolNames).not.toContain("create_dataset");
+});
+it("checks the current Slack dashboard and dataset before creating a chart", async () => {
+  db.TeamRole.findOne.mockResolvedValue({ role: "teamOwner", Team: {} });
+  const dataset = { id: 8, team_id: 7, project_ids: [1], DataRequests: [{ id: 5 }] };
+  vi.spyOn(db.Dataset, "findByPk").mockResolvedValue(dataset);
+  vi.spyOn(db.Project, "findByPk").mockImplementation(async (id) => ({ id, team_id: 7, ghost: false }));
+  const ChartController = require("../../controllers/ChartController");
+  const create = vi.spyOn(ChartController.prototype, "createWithChartDatasetConfigs").mockResolvedValue({ id: 4, name: "Visits" });
+  const payload = { team_id: 7, user_id: 4, project_id: 1, dataset_id: 8, name: "Visits", type: "line", xAxis: "day", yAxis: "visits", skipSnapshot: true };
+
+  await withIntegrationContext({ teamId: 7, userId: 4, resolveAccess: async () => (await resolveAccount("T1", "U1")).access }, async () => {
+    await expect(createChart(payload)).resolves.toMatchObject({ chart_id: 4 });
+    await expect(createChart({ ...payload, project_id: 3 })).rejects.toThrow("available to your Slack account");
+    dataset.project_ids = [3];
+    await expect(createChart(payload)).rejects.toThrow("available to your Slack account");
+    await expect(createTemporaryChart({ ...payload, dataset_id: null, connection_id: 2 })).rejects.toThrow("existing dataset");
+    expect(create).toHaveBeenCalledOnce();
+  });
 });
 it("denies client audit access", async () => {
   await expect(authorize("i", 4)).rejects.toMatchObject({ statusCode: 403 });
