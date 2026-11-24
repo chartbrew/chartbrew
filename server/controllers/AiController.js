@@ -223,7 +223,8 @@ async function runExternalWorkspaceOrchestration({
       options,
       question,
     });
-  } catch (_error) {
+  } catch (error) {
+    if (error.statusCode === 402) throw error;
     return runDeterministicWorkspaceRequest({
       access,
       allowPlannerFallback: true,
@@ -466,6 +467,7 @@ async function getOrchestration(
             orchestrationOptions,
           );
         } catch (providerError) {
+          if (providerError.statusCode === 402) throw providerError;
           const fallback = validatedContext.length === 0
             ? await runDeterministicWorkspaceRequest({
               access,
@@ -1056,6 +1058,7 @@ async function executeResponse({
         orchestrationOptions,
       );
     } catch (providerError) {
+      if (providerError.statusCode === 402) throw providerError;
       const fallback = validatedContext.length === 0
         ? await runDeterministicWorkspaceRequest({
           access,

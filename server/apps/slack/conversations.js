@@ -332,7 +332,9 @@ async function runRequest(requestId) {
           }, () => withAiUsageContext({ teamId: identity.access.teamId, conversationId: thread.conversation_id },
             () => execute(request, identity, thread, parent)));
         } catch (error) {
-          result = { message: error.statusCode ? error.message : "Chartbrew could not complete the request. Check Chartbrew before repeating a change.", error: "The request could not be completed.", cards: [] };
+          let message = error.statusCode ? error.message : "Chartbrew could not complete the request. Check Chartbrew before repeating a change.";
+          if (error.statusCode === 402) message += " Ask a team owner to check billing in Chartbrew.";
+          result = { message, error: "The request could not be completed.", cards: [] };
         }
         const latest = await resolveRequest(request);
         if (!canReadHistoryMessage({ sensitive_workspace_context: true,

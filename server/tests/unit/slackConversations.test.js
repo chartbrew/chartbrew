@@ -60,6 +60,27 @@ describe("Slack conversation boundaries and recovery", () => {
     expect(request.status).toBe("complete");
   });
 
+  it("replaces the waiting message with billing instructions when the team runs out of credits", async () => {
+    const request = record({ id: "request", account_id: "account", status: "queued", messages: [],
+      input: { workspaceId: "T1", slackUserId: "U1", channelId: "C1", threadTs: "123", question: "Show my metrics" } });
+    vi.spyOn(db.SlackRequest, "findByPk").mockResolvedValue(request);
+    vi.spyOn(db.SlackThread, "findOne").mockResolvedValue(record({ id: "thread", conversation_id: "conversation", channel_id: "C1", dm_channel: "C1", dm_thread_ts: "123" }));
+    vi.spyOn(db.AiConversation, "findByPk").mockResolvedValue({ message_count: 1 });
+    vi.spyOn(accounts, "resolveAccount").mockResolvedValue(identity());
+    const denied = Object.assign(new Error("Your team has no AI credits remaining."), { statusCode: 402 });
+    const respond = vi.spyOn(ai, "respond").mockRejectedValue(denied);
+    const api = vi.spyOn(WebClient.prototype, "apiCall").mockResolvedValue({ ts: "waiting" });
+
+    await processRequest("request");
+    await processRequest("request");
+
+    expect(api).toHaveBeenCalledWith("chat.update", expect.objectContaining({
+      channel: "C1", ts: "waiting", text: "Your team has no AI credits remaining. Ask a team owner to check billing in Chartbrew.",
+    }));
+    expect(respond).toHaveBeenCalledOnce();
+    expect(request.status).toBe("complete");
+  });
+
   it.each(["C1", "D1"])("replies in the original %s thread, including old redirected threads", async (channelId) => {
     const request = record({ id: "request", account_id: "account", status: "queued", messages: [],
       input: { workspaceId: "T1", slackUserId: "U1", channelId, threadTs: "original", question: "Show my metrics" } });

@@ -462,10 +462,11 @@ async function executeSplitWorkspaceRequest({
     ),
   });
 
-  const finishFallback = async () => {
+  const finishFallback = async (error) => {
     if (options.aiSessionId) {
       await pendingActionClearer({ access, sessionId: options.aiSessionId });
     }
+    if (error?.statusCode === 402) throw error;
     const fallback = await fallbackRunner({
       access,
       allowPlannerFallback: true,
@@ -827,8 +828,8 @@ async function executeSplitWorkspaceRequest({
       usage: aggregateUsage(finalUsageRecords),
       usageRecords: finalUsageRecords,
     };
-  } catch (_error) {
-    return finishFallback();
+  } catch (error) {
+    return finishFallback(error);
   }
 }
 
