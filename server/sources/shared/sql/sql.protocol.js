@@ -172,17 +172,8 @@ function getQueryToExecute({ processedQuery, dataRequest }) {
   return query;
 }
 
-async function prepareConnectionData({ connection }) {
-  try {
-    const testData = await testConnection({ connection });
-
-    return {
-      ...connection,
-      schema: testData.schema,
-    };
-  } catch {
-    return { ...connection };
-  }
+function prepareConnectionData({ connection }) {
+  return { ...connection, schema: null };
 }
 
 async function getSavedConnection(connection) {

@@ -14,19 +14,21 @@ const externalDbConnectionPath = require.resolve("../../sources/shared/sql/exter
 function requireSqlProtocolWithConnection(fakeConnection) {
   const originalSqlProtocolCache = require.cache[sqlProtocolPath];
   const originalExternalDbConnectionCache = require.cache[externalDbConnectionPath];
+  const openConnection = vi.fn(async () => fakeConnection);
 
   delete require.cache[sqlProtocolPath];
   require.cache[externalDbConnectionPath] = {
     id: externalDbConnectionPath,
     filename: externalDbConnectionPath,
     loaded: true,
-    exports: async () => fakeConnection,
+    exports: openConnection,
   };
 
   const mockedSqlProtocol = require(sqlProtocolPath);
 
   return {
     mockedSqlProtocol,
+    openConnection,
     restore() {
       delete require.cache[sqlProtocolPath];
 
@@ -44,6 +46,23 @@ function requireSqlProtocolWithConnection(fakeConnection) {
 }
 
 describe("shared SQL protocol", () => {
+  it("prepares settings for save without opening the database and clears the old schema", async () => {
+    const { mockedSqlProtocol, openConnection, restore } = requireSqlProtocolWithConnection();
+    const connection = {
+      type: "postgres",
+      connectionString: "postgres://new-host/analytics",
+      schema: { tables: ["old_table"] },
+    };
+
+    try {
+      expect(await mockedSqlProtocol.prepareConnectionData({ connection }))
+        .toEqual({ ...connection, schema: null });
+      expect(openConnection).not.toHaveBeenCalled();
+    } finally {
+      restore();
+    }
+  });
+
   it("describes PostgreSQL tables in their resolved search-path schemas", async () => {
     const describeTable = vi.fn().mockResolvedValue({ id: {}, total: {} });
     const query = vi.fn().mockResolvedValue([
