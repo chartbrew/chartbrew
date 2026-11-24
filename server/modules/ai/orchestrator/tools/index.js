@@ -3,6 +3,7 @@ const readChartResults = require("./readChartResults");
 const listConnections = require("./listConnections");
 const getSchema = require("./getSchema");
 const searchDatasets = require("./searchDatasets");
+const getDatasetQuery = require("./getDatasetQuery");
 const getDatasetIntelligence = require("./getDatasetIntelligence");
 const getWorkspaceActivity = require("./getWorkspaceActivity");
 const getWorkspaceContext = require("./getWorkspaceContext");
@@ -56,6 +57,7 @@ module.exports = {
   getSchema,
   searchDatasets,
   getDatasetIntelligence,
+  getDatasetQuery,
   getWorkspaceActivity,
   getWorkspaceContext,
   listMetricMonitors,

@@ -2,7 +2,7 @@ const { normalizeAiQuery } = require("./normalizeAiQuery");
 const { requireSupportedSourceForConnection } = require("../sourceSupport");
 const db = require("../../../../models/models");
 const ChartController = require("../../../../controllers/ChartController");
-const { normalizeTeamId, requireDatasetForTeam, requireConnectionForTeam } = require("./teamScope");
+const { normalizeTeamId, requireDatasetForTeam, requireConnectionForTeam, requireMainDataRequest } = require("./teamScope");
 
 async function getDatasetCharts(dataset) {
   const chartDatasetConfigs = await db.ChartDatasetConfig.findAll({
@@ -82,10 +82,7 @@ async function updateDataset(payload) {
     const dataset = await requireDatasetForTeam(dataset_id, normalizedTeamId);
 
     // Find and update the main data request
-    const dataRequest = await db.DataRequest.findByPk(dataset.main_dr_id);
-    if (!dataRequest) {
-      throw new Error("DataRequest not found for this dataset");
-    }
+    const dataRequest = await requireMainDataRequest(dataset);
 
     // Update data request fields (only if provided)
     const drUpdates = {};
@@ -126,7 +123,7 @@ async function updateDataset(payload) {
 
     return {
       dataset_id: updatedDataset.id,
-      data_request_id: updatedDataset.main_dr_id,
+      data_request_id: dataRequest.id,
       name: updatedDataset.name || updatedDataset.legend,
       dataset_url: `${global.clientUrl}/${normalizedTeamId}/dataset/${updatedDataset.id}`,
       updated_fields: {

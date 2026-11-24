@@ -41,7 +41,7 @@ describe("AI orchestrator updateDataset tool", () => {
       .mockResolvedValueOnce(dataset)
       .mockResolvedValueOnce(updatedDataset);
     vi.spyOn(db.Dataset, "update").mockResolvedValue([0]);
-    vi.spyOn(db.DataRequest, "findByPk").mockResolvedValue({
+    vi.spyOn(db.DataRequest, "findOne").mockResolvedValue({
       id: 1001,
       dataset_id: 99,
       connection_id: 1,
@@ -88,7 +88,7 @@ describe("AI orchestrator updateDataset tool", () => {
       .mockResolvedValueOnce(dataset)
       .mockResolvedValueOnce({ ...dataset, name: "New name" });
     vi.spyOn(db.Dataset, "update").mockResolvedValue([1]);
-    vi.spyOn(db.DataRequest, "findByPk").mockResolvedValue({
+    vi.spyOn(db.DataRequest, "findOne").mockResolvedValue({
       id: 1001,
       dataset_id: 99,
       connection_id: 1,

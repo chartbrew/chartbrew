@@ -19,6 +19,7 @@ const DatasetController = require("../../controllers/DatasetController");
 const createChart = require("../../modules/ai/orchestrator/tools/createChart");
 const createTemporaryChart = require("../../modules/ai/orchestrator/tools/createTemporaryChart");
 const generateQueryTool = require("../../modules/ai/orchestrator/tools/generateQuery");
+const getDatasetQuery = require("../../modules/ai/orchestrator/tools/getDatasetQuery");
 const getSchemaTool = require("../../modules/ai/orchestrator/tools/getSchema");
 const { sourceUsesSourceOwnedConfiguration } = require("../../modules/ai/orchestrator/sourceSupport");
 const {
@@ -734,6 +735,28 @@ describe("Source AI harness", () => {
     const execution = require("../../modules/sourceExecution");
     vi.spyOn(execution, "runSourceExecution").mockImplementation((_options, operation) => operation());
     delete global.openaiClient;
+  });
+
+  it("reads the main saved query without running it or returning connection settings", async () => {
+    const query = "SELECT region, COUNT(*) FROM metric_events GROUP BY region";
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({ id: 9, team_id: 7, main_dr_id: 12 });
+    vi.spyOn(db.DataRequest, "findOne").mockResolvedValue({ id: 12, connection_id: 4, query });
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({ id: 4, team_id: 7, type: "postgres" });
+
+    const result = await getDatasetQuery({ dataset_id: 9, team_id: 7 });
+
+    expect(db.DataRequest.findOne).toHaveBeenCalledWith(expect.objectContaining({
+      where: { dataset_id: 9, id: 12 },
+    }));
+    expect(result).toEqual({ dataset_id: 9, data_request_id: 12, connection_id: 4, dialect: "postgres", query });
+  });
+
+  it("rejects a saved query when the connection belongs to another team", async () => {
+    vi.spyOn(db.Dataset, "findByPk").mockResolvedValue({ id: 9, team_id: 7, main_dr_id: 12 });
+    vi.spyOn(db.DataRequest, "findOne").mockResolvedValue({ id: 12, connection_id: 4, query: "SELECT 1" });
+    vi.spyOn(db.Connection, "findByPk").mockResolvedValue({ id: 4, team_id: 8, type: "postgres" });
+
+    await expect(getDatasetQuery({ dataset_id: 9, team_id: 7 })).rejects.toThrow("Connection does not belong");
   });
 
   it.each(plannerContractFixtures)("$name satisfies the source-owned planner contract", async (fixture) => {

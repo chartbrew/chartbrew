@@ -55,7 +55,25 @@ async function requireDatasetForTeam(datasetId, teamId) {
   return dataset;
 }
 
+async function requireMainDataRequest(dataset) {
+  const dataRequest = await db.DataRequest.findOne({
+    where: {
+      dataset_id: dataset.id,
+      ...(dataset.main_dr_id ? { id: dataset.main_dr_id } : {}),
+    },
+    attributes: ["id", "connection_id", "query"],
+    order: [["id", "ASC"]],
+  });
+
+  if (!dataRequest) {
+    throw new Error("The dataset has no main data request");
+  }
+
+  return dataRequest;
+}
+
 module.exports = {
+  requireMainDataRequest,
   normalizeTeamId,
   requireProjectForTeam,
   requireConnectionForTeam,
