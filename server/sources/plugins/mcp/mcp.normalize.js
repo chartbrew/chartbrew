@@ -151,14 +151,14 @@ function isConversationIdBlock(value) {
     && Object.keys(row).length === 1 && typeof row.conversation_id === "string";
 }
 
-function normalizeToolResult(result) {
+function normalizeToolResult(result, { posthogSql = false, warnings = [] } = {}) {
   if (result?.task || ["task", "input_required"].includes(result?.resultType)) {
     throw createMcpError(
       "MCP_INTERACTIVE_RESULT",
       "This MCP tool needs an interactive or long-running workflow that datasets do not support."
     );
   }
-  const content = Array.isArray(result?.content) ? result.content : [];
+  let content = Array.isArray(result?.content) ? result.content : [];
   if (result?.isError) {
     const message = content
       .filter((block) => block?.type === "text")
@@ -166,6 +166,19 @@ function normalizeToolResult(result) {
       .join("\n")
       .slice(0, 2000);
     throw createMcpError("MCP_TOOL_ERROR", message || "The MCP tool returned an error.");
+  }
+  if (posthogSql) {
+    content = content.map((block) => {
+      if (block?.type !== "text") return block;
+      const notice = block.text.match(/^\s*(\[Row limit\][^\r\n]*)\r?\n/);
+      if (!notice) return block;
+      warnings.push(notice[1]);
+      return { ...block, text: block.text.slice(notice[0].length).trimStart() };
+    });
+    if (content.length > 1) {
+      content = content.filter((block) => !(block?.type === "text"
+        && block.text.startsWith("This request carried no usable `conversation_id` or MCP session.")));
+    }
   }
   if (result?.structuredContent !== undefined) return result.structuredContent;
 

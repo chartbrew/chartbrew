@@ -11,6 +11,7 @@ const {
   failConnectorAudit,
 } = require("../../shared/connectorRuntime");
 const { MCP_LIMITS } = require("./mcp.constants");
+const { getMcpProvider } = require("./mcp.toolSelection");
 const { withMcpClient } = require("./mcp.client");
 const { discoverMcpConnection } = require("./mcp.discovery");
 const { normalizeToolResult, selectToolOutput, validateOutput } = require("./mcp.normalize");
@@ -433,6 +434,7 @@ async function executeTool(connection, dataRequest, approvalUse = "datasets") {
     assertToolApproved(connection, tool, approvalUse);
     validateArguments(tool, config.arguments);
 
+    const warnings = [];
     const normalizedResult = await sourceExecution.runSourceExecution({ connection, dataRequest, cacheHit: false }, async () => {
       const result = await client.callTool({
         name: tool.name,
@@ -449,9 +451,10 @@ async function executeTool(connection, dataRequest, approvalUse = "datasets") {
           annotations: tool.annotations,
         },
       });
-      return normalizeToolResult(result);
+      const posthogSql = tool.name === "execute-sql" && getMcpProvider(connection.host)?.id === "posthog";
+      return normalizeToolResult(result, { posthogSql, warnings });
     });
-    return { data: selectToolOutput(normalizedResult, config.output), config, tool };
+    return { data: selectToolOutput(normalizedResult, config.output), config, tool, warnings };
   });
 }
 
@@ -486,6 +489,7 @@ async function runDataRequest({
       dataRequest,
       responseData: {
         data: execution.data,
+        ...(execution.warnings.length ? { warnings: execution.warnings } : {}),
         configuration: {
           source: "mcp",
           tool: execution.tool.name,

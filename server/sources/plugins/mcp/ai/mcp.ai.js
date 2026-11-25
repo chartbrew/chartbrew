@@ -1250,7 +1250,7 @@ async function previewConfiguration({ connection, configuration, rowLimit = 25 }
       : [],
     rowCount: rows.length,
     suggestedBindings,
-    warnings: previewWarnings(limitedRows, suggestedBindings),
+    warnings: [...(execution.warnings || []), ...previewWarnings(limitedRows, suggestedBindings)],
   };
 }
 

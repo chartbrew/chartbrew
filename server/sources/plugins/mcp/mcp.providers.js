@@ -18,6 +18,8 @@ module.exports = [{
       "Use read-data-schema to discover events, properties, and property values before building an unfamiliar query. Inspect its live input schema; tool arguments can change.",
       "For read-data-schema and execute-sql, include every required argument from its live schema. When context is required, describe the final requested analysis.",
       "Use execute-sql for chart rows. read-data-schema is for field discovery, not the final dataset. Request named scalar columns and rows, not a prose answer.",
+      "For a top-N request, use a stable ORDER BY with a tie-breaker and the requested LIMIT. For complete results, aggregate or filter to the requested scope. A [Row limit] notice means rows are missing. Do not add an arbitrary LIMIT to pass preview or claim a single page is complete.",
+      "Standalone dataset queries use the connection's default project. Do not invent a conversation_id or save a temporary conversation_id in a dataset. If a different project is requested, verify the query targets that project before using its rows.",
       "Preserve the event, visitor/session/event measure, filters, and date range in follow-ups. A change of grouping usually needs a new query and dataset.",
     ],
     topics: [{

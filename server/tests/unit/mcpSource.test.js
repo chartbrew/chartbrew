@@ -122,12 +122,14 @@ describe("MCP planning and repair", () => {
     const connection = { ...createConnection(queryTool()), host: "https://mcp.posthog.com/mcp" };
     const general = mcpAi.getCapabilities({ connection, question: "Show paid orders" });
     expect(general.instructions).toContain("read-data-schema");
+    expect(general.instructions).toContain("[Row limit]");
     expect(general.instructions).not.toContain("$geoip_latitude");
     expect(mcpAi.listResources({ connection, question: "Show visits by coordinates" }).instructions).toContain("properties.$geoip_latitude");
     expect(general.discoveryAccess).toEqual([{ tool: "read-data-schema", status: "unavailable" }]);
     connection.host = "https://another.example/mcp";
     connection.schema.mcp.server = { name: "PostHog", instructions: "Load PostHog rules" };
     expect(mcpAi.getCapabilities({ connection, question: "Show a map" }).instructions).not.toContain("PostHog");
+    expect(mcpAi.getCapabilities({ connection }).instructions).not.toContain("[Row limit]");
     expect(mcpAi.listResources({ connection, question: "Show a map" }).instructions).toBeUndefined();
   });
 
@@ -649,6 +651,19 @@ describe("MCP result and variable handling", () => {
     expect(normalizeToolResult({ content: [
       { type: "text", text: JSON.stringify({ conversation_id: "chat-1" }) },
     ] })).toEqual({ conversation_id: "chat-1" });
+  });
+
+  it("keeps PostHog rows and reports the row limit separately", () => {
+    const table = { type: "text", text: "latitude|longitude|city|visits\n13.6984|100.4638|Bangkok|353" };
+    const notice = { type: "text", text: "This request carried no usable `conversation_id` or MCP session. Tools that rely on the active project use the default project (ID 18362)." };
+    const partial = { ...table, text: `[Row limit] The query has no LIMIT.\n\n${table.text}` };
+    const warnings = [];
+    expect(normalizeToolResult({ content: [partial, notice] }, { posthogSql: true, warnings }))
+      .toEqual([{ latitude: 13.6984, longitude: 100.4638, city: "Bangkok", visits: 353 }]);
+    expect(warnings).toEqual(["[Row limit] The query has no LIMIT."]);
+    expect(normalizeToolResult({ content: [table, notice] }, { posthogSql: true }))
+      .toEqual([{ latitude: 13.6984, longitude: 100.4638, city: "Bangkok", visits: 353 }]);
+    expect(normalizeToolResult({ content: [table, notice] })).toHaveLength(2);
   });
 
   it("turns pipe, markdown, and CSV text tables into object rows", () => {
