@@ -915,14 +915,14 @@ describe("source registry", () => {
     const result = await mongodbProtocol.testConnection({
       connection: {
         type: "mongodb",
-        connectionString: "mongodb://user:pass@example.com:27017/app",
+        connectionString: "mongodb://user:pass@8.8.8.8:27017/app",
       },
     });
 
     expect(result).toEqual({ success: true });
     expect(createConnection).toHaveBeenCalledWith(
-      "mongodb://user:pass@example.com:27017/app",
-      {}
+      "mongodb://user:pass@8.8.8.8:27017/app",
+      expect.objectContaining({ proxyHost: "127.0.0.1", proxyPort: expect.any(Number) })
     );
     expect(listCollections).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalled();
@@ -942,17 +942,18 @@ describe("source registry", () => {
     const result = await mongodbProtocol.testUnsavedConnection({
       connection: {
         type: "mongodb",
-        connectionString: "mongodb://user:pass@example.com:27017/app",
+        connectionString: "mongodb://user:pass@8.8.8.8:27017/app",
       },
     });
 
     expect(result).toEqual({ success: true, collections: [{ name: "users" }] });
     expect(createConnection).toHaveBeenCalledWith(
-      "mongodb://user:pass@example.com:27017/app",
-      {
+      "mongodb://user:pass@8.8.8.8:27017/app",
+      expect.objectContaining({
+        proxyHost: "127.0.0.1",
         connectTimeoutMS: 30000,
         serverSelectionTimeoutMS: 30000,
-      }
+      })
     );
     expect(toArray).toHaveBeenCalled();
     expect(close).toHaveBeenCalled();

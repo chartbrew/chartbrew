@@ -4,6 +4,7 @@ const { Queue } = require("bullmq");
 
 const db = require("../../../models/models");
 const drCacheController = require("../../../controllers/DataRequestCacheController");
+const getMongoOutboundOptions = require("./mongodb.outbound");
 const assembleMongoUrl = require("../../../modules/assembleMongoUrl");
 const validateMongoQuery = require("../../../modules/validateMongoQuery");
 const { generateMongoQuery } = require("../../../modules/ai/generateMongoQuery");
@@ -257,10 +258,11 @@ function getConnectionUrl(connection) {
 
 async function createMongoConnection(connection, options = {}) {
   const savedConnection = await getSavedConnection(connection);
-  const mongoConnection = mongoose.createConnection(
-    getConnectionUrl(savedConnection),
-    getMongoConnectionOptions(options)
-  );
+  const uri = getConnectionUrl(savedConnection);
+  const mongoConnection = mongoose.createConnection(uri, {
+    ...getMongoConnectionOptions(options),
+    ...await getMongoOutboundOptions(uri),
+  });
   await mongoConnection.asPromise();
   return {
     savedConnection,

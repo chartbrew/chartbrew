@@ -171,6 +171,7 @@ function expandIpv6(address) {
 }
 
 function isMetadataAddress(address) {
+  if (net.isIP(address) === 6 && new URL(`http://[${address.split("%")[0]}]/`).hostname === "[fd00:ec2::254]") return true;
   if (METADATA_IP_ADDRESSES.has(address)) return true;
 
   const translatedIpv4 = getMappedIpv4(address);
@@ -319,7 +320,12 @@ async function validateOutboundUrl(targetUrl, context = {}) {
     }
   }
 
-  const normalizedHostname = normalizeHostname(parsedUrl.hostname);
+  const validation = await validateOutboundHostname(parsedUrl.hostname, context, targetUrl);
+  return { ...validation, url: parsedUrl.toString() };
+}
+
+async function validateOutboundHostname(hostname, context, targetUrl) {
+  const normalizedHostname = normalizeHostname(hostname);
   if (!normalizedHostname) {
     throw createPolicyError(
       "invalid_url",
@@ -373,7 +379,6 @@ async function validateOutboundUrl(targetUrl, context = {}) {
   }
 
   return {
-    url: parsedUrl.toString(),
     hostname: normalizedHostname,
     allowPrivateHost,
     resolvedAddresses: resolvedAddresses.map((entry) => entry.address),
@@ -387,4 +392,5 @@ module.exports = {
   parseStrictBoolean,
   getGlobalAllowPrivateNetworkCalls,
   validateOutboundUrl,
+  validateOutboundHostname,
 };

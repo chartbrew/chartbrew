@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const db = require("../../models/models");
+const getMongoOutboundOptions = require("../../sources/plugins/mongodb/mongodb.outbound");
 const assembleMongoUrl = require("../../modules/assembleMongoUrl");
 
 /**
@@ -99,6 +100,7 @@ async function updateMongoSchema(connection) {
 
     // Connect to MongoDB
     mongoConnection = mongoose.createConnection(mongoUrl, {
+      ...await getMongoOutboundOptions(mongoUrl),
       connectTimeoutMS: 30000,
       socketTimeoutMS: 30000,
     });

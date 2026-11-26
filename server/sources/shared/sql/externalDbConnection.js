@@ -1,7 +1,21 @@
 const Sequelize = require("sequelize");
+const net = require("net");
+const { databaseHostname, resolveDatabaseTarget, databasePort } = require("../databaseTarget");
 const fs = require("fs");
 const { createTunnel } = require("tunnel-ssh");
+const encodeDatabaseUrlPassword = require("../../../modules/encodeDatabaseUrlPassword");
 const { decryptFileSync } = require("../../../modules/fileEncryption");
+
+class DatabaseSocket extends net.Socket {
+  constructor(target) {
+    super();
+    this.target = target;
+  }
+
+  connect() {
+    return super.connect(this.target);
+  }
+}
 
 // Create SSH tunnel function
 const createSshTunnel = async (sshConfig, dbConfig) => {
@@ -68,22 +82,41 @@ const createSshTunnel = async (sshConfig, dbConfig) => {
 };
 
 module.exports = async (connection) => {
-  const name = connection.dbName;
-  const username = connection.username || "";
-  const password = connection.password || "";
-  const host = connection.host || "localhost";
-  const { port, connectionString } = connection;
   const dialect = connection.type;
+  if (!["postgres", "mysql"].includes(dialect)) throw new Error("Unsupported database type.");
 
-  let sequelize;
-  let sshTunnel = null;
+  let { dbName, username, password, host, port } = connection;
+  let params = new URLSearchParams();
+  if (connection.connectionString) {
+    let url;
+    try {
+      url = new URL(encodeDatabaseUrlPassword(connection.connectionString));
+    } catch {
+      throw new Error("Enter a valid database connection URL.");
+    }
+    if (url.protocol.replace("postgresql:", "postgres:") !== `${dialect}:`) {
+      throw new Error("The connection URL must match the database type.");
+    }
+    params = url.searchParams;
+    for (const key of params.keys()) {
+      if (!["search_path", "ssl", "sslmode", "application_name", "connect_timeout"].includes(key)) {
+        throw new Error("Unsupported database connection URL option.");
+      }
+    }
+    host = url.hostname;
+    port = url.port || port;
+    dbName = decodeURIComponent(url.pathname.slice(1));
+    username = decodeURIComponent(url.username);
+    password = decodeURIComponent(url.password);
+  }
 
-  const connectionConfig = {
-    host,
-    port,
-    dialect,
-    logging: false,
-  };
+  host = databaseHostname(host || "localhost");
+  port = databasePort(port, dialect === "postgres" ? 5432 : 3306);
+  const address = await resolveDatabaseTarget(host);
+  let socketTarget = { host: address, port };
+  let sshTunnel;
+  const dialectOptions = {};
+  const connectionConfig = { host, port, dialect, dialectOptions, logging: false };
 
   let sslOptions = null;
 
@@ -141,94 +174,51 @@ module.exports = async (connection) => {
     }
   }
 
-  // Setup SSH tunnel if enabled
-  if (connection.useSsh) {
-    try {
-      const sshConfig = {
-        host: connection.sshHost,
-        port: parseInt(connection.sshPort, 10) || 22,
-        username: connection.sshUsername,
-        password: connection.sshPassword,
-        privateKey: connection.sshPrivateKey,
-        passphrase: connection.sshPassphrase,
-        jumpHost: connection.sshJumpHost,
-        jumpPort: connection.sshJumpPort
-      };
-
-      const dbConfig = {
-        host,
-        port
-      };
-
-      // Create SSH tunnel
-      sshTunnel = await createSshTunnel(sshConfig, dbConfig);
-
-      connectionConfig.host = "127.0.0.1";
-      connectionConfig.port = sshTunnel.port;
-    } catch (error) {
-      console.error("Failed to establish SSH tunnel:", error); // oxlint-disable-line no-console
-      throw new Error(`SSH tunnel error: ${error.message}`);
+  if (params.has("ssl") && !connection.ssl) {
+    const ssl = params.get("ssl");
+    if (["1", "true"].includes(ssl)) sslOptions = { rejectUnauthorized: true };
+    else if (ssl === "no-verify") sslOptions = { rejectUnauthorized: false };
+    else if (!["0", "false"].includes(ssl)) throw new Error("Unsupported database SSL setting.");
+  }
+  const sslMode = params.get("sslmode");
+  if (sslMode && !connection.ssl) {
+    if (["require", "no-verify"].includes(sslMode)) {
+      sslOptions = { rejectUnauthorized: false };
+    } else if (["prefer", "verify-full", "verify-ca"].includes(sslMode)) {
+      sslOptions = { rejectUnauthorized: true };
+    } else if (sslMode !== "disable") {
+      throw new Error("Unsupported database SSL mode.");
     }
   }
+  if (sslOptions) dialectOptions.ssl = sslOptions;
+  if (params.has("application_name")) dialectOptions.application_name = params.get("application_name");
+  if (params.has("connect_timeout")) dialectOptions.connectionTimeoutMillis = Number(params.get("connect_timeout")) * 1000;
 
-  if (connectionString) {
-    // extract each element from the string so that we can encode the password
-    // this is needed when the password contains symbols that are not URI-friendly
-    const cs = connectionString;
-    let newConnectionString = "";
-
-    const protocol = cs.substring(0, cs.indexOf("//") + 2);
-    newConnectionString = cs.replace(protocol, "");
-
-    const username = newConnectionString.substring(0, newConnectionString.indexOf(":"));
-    newConnectionString = cs.replace(protocol + username, "");
-
-    const password = encodeURIComponent(newConnectionString.substring(1, newConnectionString.lastIndexOf("@")));
-
-    const hostAndOpt = cs.substring(cs.lastIndexOf("@"));
-
-    newConnectionString = `${protocol}${username}:${password}${hostAndOpt}`;
-
-    if (dialect === "postgres") {
-      const searchPath = new URL(newConnectionString).searchParams.get("search_path");
-      if (searchPath !== null) {
-        connectionConfig.hooks = {
-          afterConnect: async (client) => {
-            await client.query("SELECT pg_catalog.set_config('search_path', $1, false)", [searchPath]);
-          },
-        };
-      }
-    }
-
-    connectionConfig.dialectOptions = {
-      ssl: sslOptions,
+  if (dialect === "postgres" && params.has("search_path")) {
+    connectionConfig.hooks = {
+      afterConnect: (client) => client.query("SELECT pg_catalog.set_config('search_path', $1, false)", [params.get("search_path")]),
     };
-
-    // check if a postgres connection needs SSL
-    if (newConnectionString.indexOf("sslmode=require") > -1 && dialect === "postgres" && !connection.ssl) {
-      newConnectionString = newConnectionString.replace("?sslmode=require", "");
-      newConnectionString = newConnectionString.replace("&sslmode=require", "");
-      connectionConfig.dialectOptions = {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        },
-      };
-    }
-
-    sequelize = new Sequelize(newConnectionString, connectionConfig);
-  // else just connect with each field from the form
-  } else {
-    if (sslOptions) {
-      connectionConfig.dialectOptions = {
-        ssl: sslOptions,
-      };
-    }
-
-    sequelize = new Sequelize(name, username, password, connectionConfig);
   }
+
+  if (connection.useSsh) {
+    sshTunnel = await createSshTunnel({
+      host: await resolveDatabaseTarget(connection.sshHost),
+      port: databasePort(connection.sshPort, 22),
+      username: connection.sshUsername,
+      password: connection.sshPassword,
+      privateKey: connection.sshPrivateKey,
+      passphrase: connection.sshPassphrase,
+    }, socketTarget);
+    socketTarget = { host: "127.0.0.1", port: sshTunnel.port };
+  }
+
+  // Keep the original host for TLS. Each pooled socket uses the approved address.
+  dialectOptions.stream = dialect === "mysql"
+    ? () => net.createConnection(socketTarget)
+    : () => new DatabaseSocket(socketTarget);
 
   try {
+    const sequelize = new Sequelize(dbName, username || "", password || "", connectionConfig);
     await sequelize.authenticate();
 
     // Add the SSH tunnel to the sequelize instance so we can close it later

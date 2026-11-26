@@ -162,7 +162,7 @@ describe("source execution boundaries", () => {
     const find = vi.fn().mockReturnValue({ toArray });
     const client = { asPromise: vi.fn(), close: vi.fn(), collection: () => ({ find }) };
     vi.spyOn(mongoose, "createConnection").mockReturnValue(client);
-    db.Connection.findByPk.mockResolvedValue({ ...connection, type: "mongodb", connectionString: "mongodb://example.com/test" });
+    db.Connection.findByPk.mockResolvedValue({ ...connection, type: "mongodb", connectionString: "mongodb://8.8.8.8/test" });
     await expect(mongo.runChartQuery({ connection: { id: 4 }, query: 'collection("orders").find({})' })).rejects.toThrow("Mongo query failed");
     expect(find).toHaveBeenCalledTimes(1);
     expect(toArray).toHaveBeenCalledTimes(1);

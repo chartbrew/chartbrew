@@ -18,7 +18,7 @@ describe("external PostgreSQL search path", () => {
     try {
       connection = await externalDbConnection({
         type: "postgres",
-        connectionString: `postgres://user:password@localhost/database?search_path=${encodeURIComponent(searchPath)}`,
+        connectionString: `postgres://user:password@8.8.8.8/database?search_path=${encodeURIComponent(searchPath)}`,
       });
       const firstClient = { query: vi.fn().mockResolvedValue() };
       const secondClient = { query: vi.fn().mockResolvedValue() };
@@ -44,7 +44,7 @@ describe("external PostgreSQL search path", () => {
     try {
       connection = await externalDbConnection({
         type: "postgres",
-        connectionString: "postgres://user:password@localhost/database",
+        connectionString: "postgres://user:password@8.8.8.8/database",
       });
       const client = { query: vi.fn() };
       await connection.runHooks("afterConnect", client);

@@ -1,3 +1,8 @@
+const http = require("http");
+const https = require("https");
+const net = require("net");
+const createPinnedLookup = require("../../../modules/createPinnedLookup");
+const { databaseHostname, databasePort, resolveDatabaseTarget } = require("../../shared/databaseTarget");
 const { createClient } = require("@clickhouse/client");
 const { decryptFileSync } = require("../../../modules/fileEncryption");
 
@@ -15,9 +20,15 @@ const createClickHouseClient = async (connection) => {
     sslKey
   } = connection;
 
-  // Base configuration
+  const target = databaseHostname(host);
+  const hostname = net.isIPv6(target) ? `[${target}]` : target;
+  const url = new URL(`http${ssl ? "s" : ""}://${hostname}:${databasePort(port, ssl ? 8443 : 8123)}`);
+  const canonicalHost = url.hostname.replace(/^\[|\]$/g, "");
+  const address = await resolveDatabaseTarget(canonicalHost);
+  const agentOptions = { keepAlive: true, lookup: createPinnedLookup(canonicalHost, [address]) };
+
   const config = {
-    url: `http${ssl ? "s" : ""}://${host}:${port || (ssl ? 8443 : 8123)}`,
+    url: url.href,
     username,
     password,
     database: dbName,
@@ -28,13 +39,14 @@ const createClickHouseClient = async (connection) => {
 
   // SSL configuration if enabled
   if (ssl && (sslMode === "verify-full" || sslMode === "verify-ca")) {
-    config.tls = {
+    Object.assign(agentOptions, {
       rejectUnauthorized: sslMode === "verify-full" || sslMode === "verify-ca",
       ca: sslCa ? decryptFileSync(sslCa) : undefined,
       cert: sslCert ? decryptFileSync(sslCert) : undefined,
       key: sslKey ? decryptFileSync(sslKey) : undefined
-    };
+    });
   }
+  config.http_agent = ssl ? new https.Agent(agentOptions) : new http.Agent(agentOptions);
 
   try {
     const client = createClient(config);
