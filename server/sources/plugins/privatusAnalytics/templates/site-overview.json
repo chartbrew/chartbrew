@@ -1,0 +1,401 @@
+{
+  "id": "privatusAnalytics-site-overview",
+  "slug": "site-overview",
+  "version": 1,
+  "source": "privatusAnalytics",
+  "name": "Privatus Analytics Site Overview",
+  "description": "Starter charts for traffic, top pages, sources, countries and devices from one Privatus Analytics site.",
+  "requiredConnection": {
+    "type": "api",
+    "subType": "privatusAnalytics"
+  },
+  "datasets": [
+    {
+      "id": "daily_traffic",
+      "name": "Privatus Analytics daily traffic",
+      "description": "Visitors, visits and pageviews per day for the last 90 days",
+      "icon": "ChartLine",
+      "fieldsSchema": {
+        "root.data.series[].date": "date",
+        "root.data.series[].visitors": "number",
+        "root.data.series[].visits": "number",
+        "root.data.series[].pageviews": "number",
+        "root.data.series[].bounce_rate": "number",
+        "root.data.series[].visit_duration": "number"
+      },
+      "dataRequest": {
+        "route": "/stats/timeseries.json?period=90d&interval=day"
+      }
+    },
+    {
+      "id": "headline_metrics",
+      "name": "Privatus Analytics headline metrics",
+      "description": "Totals for the last 30 days",
+      "icon": "Users",
+      "fieldsSchema": {
+        "root.data.metrics.visitors": "number",
+        "root.data.metrics.visits": "number",
+        "root.data.metrics.pageviews": "number",
+        "root.data.metrics.bounce_rate": "number",
+        "root.data.metrics.views_per_visit": "number",
+        "root.data.metrics.visit_duration": "number"
+      },
+      "dataRequest": {
+        "route": "/stats/aggregate.json?period=30d"
+      }
+    },
+    {
+      "id": "top_pages",
+      "name": "Privatus Analytics top pages",
+      "description": "Most viewed pages in the last 30 days",
+      "icon": "FileText",
+      "fieldsSchema": {
+        "root.data.rows[].value": "string",
+        "root.data.rows[].share": "number",
+        "root.data.rows[].pageviews": "number",
+        "root.data.rows[].visits": "number"
+      },
+      "dataRequest": {
+        "route": "/breakdown/page.json?period=30d&limit=10"
+      }
+    },
+    {
+      "id": "top_channels",
+      "name": "Privatus Analytics traffic channels",
+      "description": "Where visits came from in the last 30 days",
+      "icon": "ChartBar",
+      "fieldsSchema": {
+        "root.data.rows[].value": "string",
+        "root.data.rows[].share": "number",
+        "root.data.rows[].visitors": "number",
+        "root.data.rows[].visits": "number",
+        "root.data.rows[].pageviews": "number"
+      },
+      "dataRequest": {
+        "route": "/breakdown/channel.json?period=30d&limit=10"
+      }
+    },
+    {
+      "id": "top_referrers",
+      "name": "Privatus Analytics top referrers",
+      "description": "Sites that sent the most visitors in the last 30 days",
+      "icon": "ChartBar",
+      "fieldsSchema": {
+        "root.data.rows[].value": "string",
+        "root.data.rows[].share": "number",
+        "root.data.rows[].visitors": "number",
+        "root.data.rows[].visits": "number",
+        "root.data.rows[].pageviews": "number"
+      },
+      "dataRequest": {
+        "route": "/breakdown/referrer.json?period=30d&limit=10"
+      }
+    },
+    {
+      "id": "top_countries",
+      "name": "Privatus Analytics countries",
+      "description": "Visitors by country in the last 30 days",
+      "icon": "ChartBar",
+      "fieldsSchema": {
+        "root.data.rows[].value": "string",
+        "root.data.rows[].share": "number",
+        "root.data.rows[].visitors": "number",
+        "root.data.rows[].visits": "number",
+        "root.data.rows[].pageviews": "number"
+      },
+      "dataRequest": {
+        "route": "/breakdown/country.json?period=30d&limit=10"
+      }
+    },
+    {
+      "id": "devices",
+      "name": "Privatus Analytics devices",
+      "description": "Visitors by device type in the last 30 days",
+      "icon": "ChartPie",
+      "fieldsSchema": {
+        "root.data.rows[].value": "string",
+        "root.data.rows[].share": "number",
+        "root.data.rows[].visitors": "number",
+        "root.data.rows[].visits": "number",
+        "root.data.rows[].pageviews": "number"
+      },
+      "dataRequest": {
+        "route": "/breakdown/device.json?period=30d&limit=5"
+      }
+    }
+  ],
+  "charts": [
+    {
+      "id": "traffic-trend",
+      "name": "Visitors and pageviews",
+      "description": "Daily visitors and pageviews.",
+      "icon": "ChartLine",
+      "type": "line",
+      "requiredDatasetIds": [
+        "daily_traffic"
+      ],
+      "chart": {
+        "displayLegend": true,
+        "includeZeros": true,
+        "timeInterval": "day"
+      },
+      "layoutIntent": {
+        "kind": "trend",
+        "priority": 10
+      },
+      "cdcs": [
+        {
+          "datasetTemplateId": "daily_traffic",
+          "xAxis": "root.data.series[].date",
+          "yAxis": "root.data.series[].visitors",
+          "yAxisOperation": "sum",
+          "dateField": "root.data.series[].date",
+          "legend": "Visitors",
+          "datasetColor": "rgba(38, 166, 154, 1)",
+          "fillColor": "rgba(38, 166, 154, 0.14)",
+          "fill": true
+        },
+        {
+          "datasetTemplateId": "daily_traffic",
+          "xAxis": "root.data.series[].date",
+          "yAxis": "root.data.series[].pageviews",
+          "yAxisOperation": "sum",
+          "dateField": "root.data.series[].date",
+          "legend": "Pageviews",
+          "datasetColor": "rgba(66, 133, 244, 1)",
+          "fill": false
+        }
+      ]
+    },
+    {
+      "id": "visitors-kpi",
+      "name": "Visitors",
+      "description": "Visitors in the last 30 days.",
+      "icon": "Users",
+      "type": "kpi",
+      "requiredDatasetIds": [
+        "headline_metrics"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 10
+      },
+      "cdc": {
+        "datasetTemplateId": "headline_metrics",
+        "xAxis": "root.data.metrics.visitors",
+        "yAxis": "root.data.metrics.visitors",
+        "yAxisOperation": "none",
+        "legend": "Visitors",
+        "datasetColor": "rgba(38, 166, 154, 1)"
+      }
+    },
+    {
+      "id": "pageviews-kpi",
+      "name": "Pageviews",
+      "description": "Pageviews in the last 30 days.",
+      "icon": "FileText",
+      "type": "kpi",
+      "requiredDatasetIds": [
+        "headline_metrics"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 20
+      },
+      "cdc": {
+        "datasetTemplateId": "headline_metrics",
+        "xAxis": "root.data.metrics.pageviews",
+        "yAxis": "root.data.metrics.pageviews",
+        "yAxisOperation": "none",
+        "legend": "Pageviews",
+        "datasetColor": "rgba(38, 166, 154, 1)"
+      }
+    },
+    {
+      "id": "bounce-rate-kpi",
+      "name": "Bounce rate",
+      "description": "Percent of visits that saw one page, last 30 days.",
+      "icon": "ChartLine",
+      "type": "kpi",
+      "requiredDatasetIds": [
+        "headline_metrics"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true
+      },
+      "layoutIntent": {
+        "kind": "kpi",
+        "priority": 30
+      },
+      "cdc": {
+        "datasetTemplateId": "headline_metrics",
+        "xAxis": "root.data.metrics.bounce_rate",
+        "yAxis": "root.data.metrics.bounce_rate",
+        "yAxisOperation": "none",
+        "legend": "Bounce rate %",
+        "datasetColor": "rgba(38, 166, 154, 1)"
+      }
+    },
+    {
+      "id": "top-pages",
+      "name": "Top pages",
+      "description": "Most viewed pages.",
+      "icon": "ChartBar",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "top_pages"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "horizontal": true
+      },
+      "layoutIntent": {
+        "kind": "comparison",
+        "priority": 10
+      },
+      "cdc": {
+        "datasetTemplateId": "top_pages",
+        "xAxis": "root.data.rows[].value",
+        "yAxis": "root.data.rows[].pageviews",
+        "yAxisOperation": "none",
+        "legend": "Pageviews",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "fillColor": "rgba(66, 133, 244, 0.14)",
+        "fill": true
+      }
+    },
+    {
+      "id": "traffic-channels",
+      "name": "Traffic channels",
+      "description": "Visitors by channel, such as search, social or email.",
+      "icon": "ChartBar",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "top_channels"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "horizontal": true
+      },
+      "layoutIntent": {
+        "kind": "comparison",
+        "priority": 20
+      },
+      "cdc": {
+        "datasetTemplateId": "top_channels",
+        "xAxis": "root.data.rows[].value",
+        "yAxis": "root.data.rows[].visitors",
+        "yAxisOperation": "none",
+        "legend": "Visitors",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "fillColor": "rgba(66, 133, 244, 0.14)",
+        "fill": true
+      }
+    },
+    {
+      "id": "top-referrers",
+      "name": "Top referrers",
+      "description": "Sites that sent you the most visitors.",
+      "icon": "ChartBar",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "top_referrers"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "horizontal": true
+      },
+      "layoutIntent": {
+        "kind": "comparison",
+        "priority": 30
+      },
+      "cdc": {
+        "datasetTemplateId": "top_referrers",
+        "xAxis": "root.data.rows[].value",
+        "yAxis": "root.data.rows[].visitors",
+        "yAxisOperation": "none",
+        "legend": "Visitors",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "fillColor": "rgba(66, 133, 244, 0.14)",
+        "fill": true
+      }
+    },
+    {
+      "id": "top-countries",
+      "name": "Countries",
+      "description": "Visitors by country.",
+      "icon": "ChartBar",
+      "type": "bar",
+      "requiredDatasetIds": [
+        "top_countries"
+      ],
+      "chart": {
+        "displayLegend": false,
+        "includeZeros": true,
+        "horizontal": true
+      },
+      "layoutIntent": {
+        "kind": "comparison",
+        "priority": 40
+      },
+      "cdc": {
+        "datasetTemplateId": "top_countries",
+        "xAxis": "root.data.rows[].value",
+        "yAxis": "root.data.rows[].visitors",
+        "yAxisOperation": "none",
+        "legend": "Visitors",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "fillColor": "rgba(66, 133, 244, 0.14)",
+        "fill": true
+      }
+    },
+    {
+      "id": "devices",
+      "name": "Devices",
+      "description": "Visitors on desktop, mobile and tablet.",
+      "icon": "ChartPie",
+      "type": "doughnut",
+      "requiredDatasetIds": [
+        "devices"
+      ],
+      "chart": {
+        "displayLegend": true,
+        "includeZeros": true,
+        "horizontal": false
+      },
+      "layoutIntent": {
+        "kind": "comparison",
+        "priority": 50
+      },
+      "cdc": {
+        "datasetTemplateId": "devices",
+        "xAxis": "root.data.rows[].value",
+        "yAxis": "root.data.rows[].visitors",
+        "yAxisOperation": "none",
+        "legend": "Visitors",
+        "datasetColor": "rgba(66, 133, 244, 1)",
+        "fill": false,
+        "multiFill": true,
+        "fillColor": [
+          "rgba(66, 133, 244, 0.85)",
+          "rgba(38, 166, 154, 0.85)",
+          "rgba(255, 152, 0, 0.85)",
+          "rgba(238, 96, 2, 0.85)",
+          "rgba(15, 196, 87, 0.85)"
+        ]
+      }
+    }
+  ]
+}
