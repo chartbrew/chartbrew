@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Popover, Link, ProgressCircle,
-  Alert,
-  cn,
+  Alert, Card,
 } from "@heroui/react";
 import moment from "moment";
 import { Helmet } from "react-helmet-async";
@@ -19,6 +18,8 @@ import CupLoader from "../components/CupLoader";
 import ChartRenderer from "./Chart/components/ChartRenderer";
 import ChartFilters from "./Chart/components/ChartFilters";
 import useInterval from "../modules/useInterval";
+import kpiFont from "../../../shared/visualization/kpiFont.json" with { type: "json" };
+import { getClientPresetImplementation } from "../visualization/presetRegistry";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import useChartSize from "../modules/useChartSize";
@@ -38,13 +39,13 @@ function EmbeddedChart() {
   const [conditions, setConditions] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [redraw, setRedraw] = useState(true);
-  const [isSnapshot, setIsSnapshot] = useState(false);
   const [showChart, setShowChart] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
   const { setTheme } = useTheme();
   const [searchParams] = useSearchParams();
+  const isSnapshot = searchParams.has("isSnapshot");
   const filterRef = useRef(null);
   const chartSize = useChartSize(chart?.layout);
   
@@ -53,7 +54,7 @@ function EmbeddedChart() {
     try {
       const result = await dispatch(getEmbeddedChart({
         embed_id: params.chartId,
-        snapshot: searchParams.has("isSnapshot"),
+        snapshot: isSnapshot,
         token: searchParams.get("token"),
         queryParams: Object.fromEntries(searchParams),
         password,
@@ -62,6 +63,12 @@ function EmbeddedChart() {
         setError(result.error.message === "PASSWORD_REQUIRED" ? "password" : true);
         setChart({});
       } else {
+        if (isSnapshot) {
+          await Promise.all([
+            document.fonts.load("14px Inter"),
+            document.fonts.load(`600 24px "${kpiFont.family}"`),
+          ]);
+        }
         setError(false);
         setChartPassword(password);
         setChart(result.payload);
@@ -81,7 +88,6 @@ function EmbeddedChart() {
 
   useEffect(() => {
     document.body.style.backgroundColor = "transparent";
-    setIsSnapshot(searchParams.has("isSnapshot"));
     setLoading(true);
     loadChart();
     const theme = searchParams.get("theme");
@@ -215,6 +221,32 @@ function EmbeddedChart() {
     );
   }
 
+  const chartBody = (
+    <ChartRenderer
+      chart={chart}
+      embedded
+      height={pageHeight - 100}
+      redraw={redraw}
+      redrawComplete={() => setRedraw(false)}
+    />
+  );
+
+  if (isSnapshot) {
+    const ready = getClientPresetImplementation(chart.type) !== "echarts" || !redraw;
+    return (
+      <div id="chart-container" className="h-dvh bg-background p-3" data-snapshot-ready={ready}>
+        <Card className="h-full border border-divider bg-surface shadow-none">
+          <Card.Header className="min-w-0 pb-0">
+            <Text className="block truncate text-sm font-medium">{chart.name}</Text>
+          </Card.Header>
+          <Card.Content className="min-h-0 flex-1 overflow-hidden">
+            {chartBody}
+          </Card.Content>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container} id="chart-container">
       <Helmet>
@@ -240,12 +272,12 @@ function EmbeddedChart() {
           <div>
             <Text className="text-sm font-medium">{chart.name}</Text>
             <div className="flex flex-row items-center">
-              {!dataLoading && !isSnapshot && (
+              {!dataLoading && (
                 <>
                   <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart)}`}</span>
                 </>
               )}
-              {dataLoading && !isSnapshot && (
+              {dataLoading && (
                 <>
                   <ProgressCircle className="w-4 h-4" aria-label="Updating chart" />
                   <div className="w-2" />
@@ -255,7 +287,7 @@ function EmbeddedChart() {
             </div>
           </div>
 
-          {chart.render?.configuration && !isSnapshot && (
+          {chart.render?.configuration && (
             <div>
               {_checkIfFilters() && (
                 <div className="flex items-start gap-1">
@@ -294,17 +326,9 @@ function EmbeddedChart() {
         </Row>
       </div>
       <div className="h-2" />
-      {chart && (
-        <div className={cn("h-[calc(100vh-100px)]", isSnapshot && "bg-surface")}>
-          <ChartRenderer
-            chart={chart}
-            embedded
-            height={pageHeight - 100}
-            redraw={redraw}
-            redrawComplete={() => setRedraw(false)}
-          />
-        </div>
-      )}
+      <div className="h-[calc(100vh-100px)]">
+        {chartBody}
+      </div>
       <div className="h-4" />
     </div>
   );

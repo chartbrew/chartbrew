@@ -181,8 +181,8 @@ describe("chart sharing follows dashboard settings", () => {
 describe("internal chart snapshots", () => {
   it("binds a short-lived credential to the chart and keeps it out of image paths", async () => {
     const page = {
-      setViewportSize: vi.fn(), goto: vi.fn(), waitForSelector: vi.fn(),
-      waitForTimeout: vi.fn(), screenshot: vi.fn(),
+      route: vi.fn(), goto: vi.fn(), evaluate: vi.fn(),
+      locator: () => ({ waitFor: vi.fn(), screenshot: vi.fn() }),
     };
     const browser = { newPage: vi.fn().mockResolvedValue(page), close: vi.fn() };
     vi.spyOn(require("playwright").chromium, "launch").mockResolvedValue(browser);

@@ -2,14 +2,11 @@ const { getIntegrationContext } = require("../../modules/observations/integratio
 const moment = require("moment-timezone");
 const db = require("../../models/models");
 const ChartController = require("../../controllers/ChartController");
-const ChartImageController = require("../../controllers/ChartImageController");
-const { loadPreparedSnapshot } = require("../../modules/preparedSnapshot");
-const { assertPreparedRows } = require("../../modules/chartImage/imageLimits");
-const { getImagePreset, formatLastUpdated } = require("../../modules/chartImage/imageMetadata");
-const { canExportChartImage } = require("../../modules/chartImage/imageAccess");
+const snapshots = require("../../modules/snapshots");
+const { authorizeChartImage, canExportChartImage } = require("../../modules/chartImage/imageAccess");
 const { getPreview } = require("../../controllers/ChartPreviewController");
 const { canEditProject, createHttpError } = require("../../modules/observations/access");
-const { nativeChart, section, button, plain } = require("./utils/resultBlocks");
+const { section, button, plain } = require("./utils/resultBlocks");
 
 async function requestChartPreview(payload) {
   const context = getIntegrationContext();
@@ -34,7 +31,6 @@ async function loadChart(chartId, identity, options = {}) {
   const preview = await getPreview(chartId, identity.account.user_id);
   if (Number(preview.teamId) !== identity.access.teamId) throw createHttpError("Chart unavailable.", 403);
   let chart = preview.chart;
-  let preparedData;
   const project = await db.Project.findByPk(chart.project_id, { attributes: ["timezone"] });
   const canQuery = identity.access.canConfigureTeam || canEditProject(identity.access, chart.project_id);
   const role = await db.TeamRole.findOne({ where: { team_id: identity.access.teamId, user_id: identity.account.user_id } });
@@ -42,26 +38,19 @@ async function loadChart(chartId, identity, options = {}) {
   if (options.filters?.length && !canQuery) throw createHttpError("You cannot change this chart's period in Slack.", 403);
   if (options.refresh && !canQuery) throw createHttpError("You cannot refresh this chart.", 403);
   if (options.refresh) {
-    const refreshed = await new ChartController().updateChartData(chart.id, { id: identity.account.user_id }, {
-      filters: options.filters || [], runtimeOnly: true, skipSave: true, returnPreparedData: true,
+    chart = await new ChartController().updateChartData(chart.id, { id: identity.account.user_id }, {
+      filters: options.filters || [], runtimeOnly: true, skipSave: true,
     });
-    chart = refreshed.chart;
-    preparedData = refreshed.preparedData;
-  } else {
-    const snapshot = await loadPreparedSnapshot(chart.id);
-    if (snapshot?.preparedData && snapshot.preparedData.generatedAt === chart.render?.generatedAt) preparedData = snapshot.preparedData;
   }
   chart = { ...(chart.toJSON ? chart.toJSON() : chart), timezone: project?.timezone || "UTC" };
-  return { ...preview, chart, preparedData, filters: options.filters || [], canQuery, canShare };
+  return { ...preview, chart, filters: options.filters || [], canQuery, canShare };
 }
 
 function chartBlocks(preview, reference, options = {}) {
   const { chart, parsed } = preview;
   const timezone = moment.tz.zone(chart.timezone || "") ? chart.timezone : "UTC";
   const blocks = [];
-  const native = options.fallback ? null : nativeChart(chart);
-  if (native) blocks.push(native);
-  else if (preview.fileId) blocks.push({ type: "image", slack_file: { id: preview.fileId }, alt_text: String(chart.name).slice(0, 2000) });
+  if (preview.fileId) blocks.push({ type: "image", slack_file: { id: preview.fileId }, alt_text: String(chart.name).slice(0, 2000) });
   else blocks.push(section(chart.name || "Chart"));
   const metric = ["avg", "kpi", "gauge"].includes(chart.type) ? chart.render?.metadata?.metrics?.[0] : null;
   if (metric) blocks.push(section(`${metric.label || chart.name}: ${metric.value ?? metric.valueNumber ?? "No value"}`));
@@ -93,38 +82,26 @@ function chartBlocks(preview, reference, options = {}) {
 }
 
 async function addImage(preview, identity, client, channel, assertDeliveryAccess, threadTs) {
-  if (preview.fileId || !preview.preparedData) return preview;
   try {
-    const imageController = new ChartImageController({
-      ...(identity.account.user_id == null ? {
-        authorize: async () => {
-          await loadChart(preview.chart.id, identity);
-          return { chartId: preview.chart.id, projectId: preview.chart.project_id, teamId: identity.access.teamId, userId: null };
-        },
-      } : {}),
-      loadDocument: async (_access, request) => {
-        assertPreparedRows(preview.preparedData);
-        const preset = getImagePreset(preview.preparedData);
-        return { preset, operationalCodes: [], document: {
-          ...request, chart: preview.chart, visualization: preview.chart.visualization,
-          preparedData: preview.preparedData, renderContext: { timezone: preview.chart.timezone },
-          content: { ...request.content, title: { ...request.content.title, text: preview.chart.name } },
-          metadata: { dateRange: "", lastUpdated: formatLastUpdated(preview.chart.render?.updatedAt, request.locale, preview.chart.timezone) },
-        } };
-      },
-    });
-    const png = await imageController.render({
-      params: { chart_id: preview.chart.id, project_id: preview.chart.project_id },
-      user: { id: identity.account.user_id }, body: { version: 1 },
-    });
+    const checkExport = async () => {
+      if (identity.account.user_id != null) {
+        await authorizeChartImage({
+          chartId: preview.chart.id, projectId: preview.chart.project_id, userId: identity.account.user_id,
+        });
+      }
+    };
+    await checkExport();
+    if (preview.fileId && preview.fileChannel === channel) return preview;
+    const png = await snapshots.snapChartPreview(preview.chart);
     await assertDeliveryAccess();
+    await checkExport();
     const response = await client.files.uploadV2({
       channel_id: channel, thread_ts: threadTs || undefined, file: png, filename: "chart.png", title: preview.chart.name,
     });
     const fileId = response.files?.[0]?.files?.[0]?.id || response.files?.[0]?.id;
-    return { ...preview, fileId: fileId || null };
+    return { ...preview, fileId: fileId || null, fileChannel: channel };
   } catch (_) {
-    return preview;
+    return preview.fileId ? { ...preview, fileId: null } : preview;
   }
 }
 

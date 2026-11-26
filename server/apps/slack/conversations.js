@@ -14,7 +14,7 @@ const { getSlackQueue } = require("./queue");
 const { canReadHistoryMessage } = require("../../modules/workspaceContext/accessEnvelope");
 const accounts = require("./accounts");
 const { addImage, chartBlocks, editableDashboards, loadChart } = require("./charts");
-const { answerBlocks, dataTable, nativeChart, plain, section } = require("./utils/resultBlocks");
+const { answerBlocks, dataTable, plain, section } = require("./utils/resultBlocks");
 
 function channelAllowed(integration, channel) {
   return integration.config?.allowAllChannels === true
@@ -222,12 +222,10 @@ async function deliver(request, identity, thread, parent, client) {
     } else {
       const cardIndex = payloads[index].cardIndex;
       if (cardIndex !== undefined) {
-        let card = result.cards[cardIndex];
-        if (!nativeChart(card.chart)) {
-          card = await addImage(card, current, client, channel, assertDeliveryAccess, threadTs);
-          result.cards[cardIndex] = card;
-          await request.update({ result });
-        }
+        const card = await addImage(result.cards[cardIndex], current, client, channel, assertDeliveryAccess, threadTs);
+        await assertDeliveryAccess();
+        result.cards[cardIndex] = card;
+        await request.update({ result });
         payloads[index] = { ...chartBlocks(card, `${request.id}:${cardIndex}`, {
           shared: isShared, canShare: channel !== thread.channel_id && !thread.channel_id.startsWith("D"),
         }), cardIndex };
@@ -244,16 +242,7 @@ async function deliver(request, identity, thread, parent, client) {
         sent = await send({ ...payload, unfurl_links: false, unfurl_media: false });
       } catch (error) {
         if (error.data?.error !== "invalid_blocks") throw error;
-        const cardIndex = payloads[index].cardIndex;
-        if (cardIndex !== undefined) {
-          const card = await addImage(result.cards[cardIndex], current, client, channel, assertDeliveryAccess, threadTs);
-          result.cards[cardIndex] = card;
-          await request.update({ result });
-          payload.blocks = chartBlocks(card, `${request.id}:${cardIndex}`, {
-            fallback: true, shared: isShared, canShare: channel !== thread.channel_id && !thread.channel_id.startsWith("D"),
-          }).blocks;
-        }
-        const fallback = payload.blocks.filter((block) => !["data_visualization", "data_table", "markdown"].includes(block.type));
+        const fallback = payload.blocks.filter((block) => !["data_table", "markdown"].includes(block.type));
         if (payload.blocks.some((block) => block.type === "markdown")) {
           for (let offset = 0; offset < payload.text.length; offset += 2800) {
             fallback.push(section(payload.text.slice(offset, offset + 2800)));
