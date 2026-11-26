@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const { WebClient } = require("@slack/web-api");
 const db = require("../../models/models");
 const ChartController = require("../../controllers/ChartController");
-const ChartImageController = require("../../controllers/ChartImageController");
+const snapshots = require("../../modules/snapshots");
 const { withIntegrationContext } = require("../../modules/observations/integrationContext");
 const { runDeterministicWorkspaceRequest } = require("../../modules/ai/orchestrator/runtime/deterministicExecutor");
 const accounts = require("../../apps/slack/accounts");
@@ -116,13 +116,15 @@ describe("Slack conversation boundaries and recovery", () => {
     vi.spyOn(db.Chart, "unscoped").mockReturnValue({ findOne: vi.fn().mockResolvedValue(null) });
     vi.spyOn(db.Project, "findByPk").mockResolvedValue({ timezone: "UTC" });
     vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({ role: "teamOwner" });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({ id: 2, team_id: 7 });
+    vi.spyOn(db.Chart, "findOne").mockResolvedValue(chart);
     vi.spyOn(ChartController.prototype, "findById").mockResolvedValue(chart);
     const api = vi.spyOn(WebClient.prototype, "apiCall").mockResolvedValue({ ts: "reply" });
     Object.defineProperty(request.result.cards[0].parsed, "visibility", { get: () => {
       expect(api).toHaveBeenCalledWith("chat.update", expect.objectContaining({ text: "The complete written answer" }));
       return "dashboard";
     } });
-    const render = vi.spyOn(ChartImageController.prototype, "render").mockImplementation(async () => {
+    const render = vi.spyOn(snapshots, "snapChartPreview").mockImplementation(async () => {
       expect(api).toHaveBeenCalledWith("chat.update", expect.objectContaining({ text: "The complete written answer", channel: "C1", ts: "progress" }));
       throw new Error("Render failed");
     });
@@ -182,7 +184,6 @@ describe("Slack conversation boundaries and recovery", () => {
 
   it("resolves a follow-up screenshot and delivers one image in the shared thread", async () => {
     const { requestDashboardSnapshot } = require("../../apps/slack/dashboardSnapshot");
-    const snapshots = require("../../modules/snapshots");
     const fs = require("node:fs/promises");
     const current = { ...identity(), access: { ...identity().access, projectIds: [2], allProjects: false },
       integration: { ...identity().integration, id: "integration" } };
@@ -236,18 +237,26 @@ describe("Slack conversation boundaries and recovery", () => {
     vi.spyOn(db.Chart, "unscoped").mockReturnValue({ findOne: vi.fn().mockResolvedValue(null) });
     vi.spyOn(db.Project, "findByPk").mockResolvedValue({ timezone: "UTC" });
     vi.spyOn(db.TeamRole, "findOne").mockResolvedValue({ role: "teamOwner" });
+    vi.spyOn(db.Project, "findOne").mockResolvedValue({ id: 2, team_id: 7 });
+    vi.spyOn(db.Chart, "findOne").mockResolvedValue(chart);
     vi.spyOn(ChartController.prototype, "findById").mockResolvedValue(chart);
-    const update = vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue({ chart });
+    const update = vi.spyOn(ChartController.prototype, "updateChartData").mockResolvedValue(chart);
     vi.spyOn(ai, "respond").mockResolvedValue({ message: "Here is token usage.", chartPreviews: [
       { chartId: 99, toolName: "read_chart_results" },
       { chartId: 1, toolName: "request_chart_preview", refreshRequested: refresh },
     ] });
-    const api = vi.spyOn(WebClient.prototype, "apiCall").mockResolvedValue({ ts: "reply" });
+    vi.spyOn(snapshots, "snapChartPreview").mockResolvedValue(Buffer.from("png"));
+    const api = vi.spyOn(WebClient.prototype, "apiCall").mockImplementation(async (method) => {
+      if (method === "files.getUploadURLExternal") return { upload_url: "https://example.com", file_id: "F1" };
+      if (method === "files.completeUploadExternal") return { files: [{ id: "F1" }] };
+      return { ts: "reply" };
+    });
+    vi.spyOn(WebClient.prototype, "makeRequest").mockResolvedValue({ status: 200, data: "ok", headers: {} });
     await processRequest("request");
     expect(update).toHaveBeenCalledTimes(refresh ? 1 : 0);
     expect(request.result.cards).toHaveLength(1);
     expect(api).toHaveBeenCalledWith("chat.postMessage", expect.objectContaining({ channel: "C1", thread_ts: "original",
-      blocks: expect.arrayContaining([expect.objectContaining({ type: "data_visualization", title: "Token usage" })]),
+      blocks: expect.arrayContaining([expect.objectContaining({ type: "image", slack_file: { id: "F1" }, alt_text: "Token usage" })]),
     }));
     expect(request.status).toBe("complete");
   });

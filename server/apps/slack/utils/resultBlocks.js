@@ -10,43 +10,6 @@ function button(label, action, value) {
   return { type: "button", text: plain(label, 75), action_id: action, value };
 }
 
-function nativeChart(chart) {
-  const layers = chart.visualization?.layers || [];
-  const settings = chart.visualization?.settings || {};
-  if (!["line", "bar", "pie"].includes(chart.type) || !layers.length
-    || layers.some((layer) => layer.mark !== chart.type || (layer.stack && layer.stack !== "none"))
-    || settings.isLogarithmic || settings.logarithmic || settings.dashedLastPoint
-    || settings.minValue != null || settings.maxValue != null
-    || layers.some((layer) => layer.encoding?.value?.formula)) return null;
-  const tables = Object.values(chart.render?.tabularData || {});
-  if (tables.length !== 1 || !tables[0].length) return null;
-  const rows = tables[0];
-  if (!Object.hasOwn(rows[0], "Category")) return null;
-  const names = Object.keys(rows[0]).filter((key) => key !== "Category");
-  const categories = rows.map((row) => String(row.Category));
-  if (!names.length || names.length > 12 || names.some((name) => name.length > 20)
-    || categories.some((label) => !label || label.length > 20)
-    || new Set(categories).size !== categories.length
-    || rows.some((row) => names.some((name) => typeof row[name] !== "number" || !Number.isFinite(row[name])))) return null;
-  let payload;
-  if (chart.type === "pie") {
-    if (names.length !== 1 || rows.length > 12 || rows.some((row) => row[names[0]] <= 0)) return null;
-    payload = { type: "pie", segments: rows.map((row, index) => ({ label: categories[index], value: row[names[0]] })) };
-  } else {
-    if (rows.length > 20) return null;
-    const series = chart.render.configuration?.series || [];
-    if (series.some((item) => item.markLine?.data?.length || item.yAxisIndex > 0)) return null;
-    const filled = series.filter((item) => item.areaStyle);
-    if (filled.length && filled.length !== series.length) return null;
-    payload = {
-      type: filled.length ? "area" : chart.type,
-      series: names.map((name) => ({ name, data: rows.map((row, index) => ({ label: categories[index], value: row[name] })) })),
-      axis_config: { categories },
-    };
-  }
-  return { type: "data_visualization", title: String(chart.name || "Chart").slice(0, 50), chart: payload };
-}
-
 function dataTable(chart) {
   const blocks = [];
   for (const [name, source] of Object.entries(chart.render?.tabularData || {})) {
@@ -121,4 +84,4 @@ function answerBlocks(result, reference) {
   return { text: clean.slice(0, 39000) || "Chartbrew result", blocks, replies: replies.map((reply) => reply.label) };
 }
 
-module.exports = { answerBlocks, button, dataTable, nativeChart, plain, section };
+module.exports = { answerBlocks, button, dataTable, plain, section };
